@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext } from 'react';
@@ -7,9 +6,9 @@ import { Firestore } from 'firebase/firestore';
 import { Auth } from 'firebase/auth';
 
 interface FirebaseContextType {
-  app: FirebaseApp;
-  db: Firestore;
-  auth: Auth;
+  app: FirebaseApp | null;
+  db: Firestore | null;
+  auth: Auth | null;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | null>(null);
@@ -21,9 +20,9 @@ export function FirebaseProvider({
   auth 
 }: { 
   children: React.ReactNode;
-  app: FirebaseApp;
-  db: Firestore;
-  auth: Auth;
+  app: FirebaseApp | null;
+  db: Firestore | null;
+  auth: Auth | null;
 }) {
   return (
     <FirebaseContext.Provider value={{ app, db, auth }}>
@@ -34,9 +33,9 @@ export function FirebaseProvider({
 
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
-  if (!context) throw new Error('useFirebase must be used within a FirebaseProvider');
+  // Return null instead of throwing to allow app to render even if Firebase isn't ready
   return context;
 };
 
-export const useFirestore = () => useFirebase().db;
-export const useAuth = () => useFirebase().auth;
+export const useFirestore = () => useFirebase()?.db ?? null;
+export const useAuth = () => useFirebase()?.auth ?? null;
