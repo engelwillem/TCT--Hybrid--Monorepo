@@ -8,6 +8,7 @@ import { getUiNavItems } from "@/lib/navigation";
 import FloatingBottomNav from "@/components/core/FloatingBottomNav";
 import DesktopSidebarNav from "@/components/core/DesktopSidebarNav";
 import { IconChevronRight } from "@/components/icons/AppIcons";
+import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -48,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
-  if (!mounted) return <div className="min-h-screen bg-background" />;
+  if (!mounted) return <div className="min-h-screen bg-slate-950" />;
 
   const isLanding = pathname === "/";
   const title = pathname.split('/').filter(Boolean).pop() || 'Today';
