@@ -8,6 +8,7 @@ import { getUiNavItems } from "@/lib/navigation";
 import FloatingBottomNav from "@/components/core/FloatingBottomNav";
 import DesktopSidebarNav from "@/components/core/DesktopSidebarNav";
 import { IconChevronRight } from "@/components/icons/AppIcons";
+import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
