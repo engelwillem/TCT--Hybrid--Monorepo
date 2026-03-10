@@ -28,10 +28,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLanding]);
 
+  // Hydration guard to prevent SSR mismatch
   if (!mounted) {
     return (
-      <div className="bg-background min-h-dvh flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+      <div className="bg-[#fafafa] dark:bg-[#050505] min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
       </div>
     );
   }
@@ -41,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       "bg-[#fafafa] dark:bg-[#050505] flex selection:bg-brand/20 transition-colors duration-500 overflow-x-hidden min-h-screen",
     )}>
       {/* Ambient Background Decoration (from Laravel) */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none">
         <div className="absolute -left-[10%] -top-[10%] h-[60%] w-[60%] rounded-full bg-indigo-200/20 blur-[120px] dark:bg-indigo-900/10" />
         <div className="absolute -right-[5%] top-[10%] h-[50%] w-[50%] rounded-full bg-sky-200/20 blur-[100px] dark:bg-sky-900/10" />
         <div className="absolute bottom-[10%] left-[20%] h-[40%] w-[40%] rounded-full bg-rose-200/10 blur-[110px] dark:bg-rose-900/5" />

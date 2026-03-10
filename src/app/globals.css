@@ -1,4 +1,3 @@
-
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
@@ -6,23 +5,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Dynamic Design Tokens */
   --font-body: "Inter", sans-serif;
+  --font-serif: "DM Serif Display", serif;
   --font-headline: "Inter", sans-serif;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* Semantic HSL mapping - Refined for better Contrast */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  --color-brand: hsl(var(--brand));
-  --color-brand-foreground: hsl(var(--brand-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
 
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
@@ -30,94 +34,183 @@
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
+
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  --shadow-soft: 0 10px 30px -10px rgb(0 0 0 / 0.08), 0 4px 12px -6px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 20px 40px -12px rgb(0 0 0 / 0.12), 0 8px 16px -8px rgb(0 0 0 / 0.06);
+  --shadow-premium: 0 32px 64px -16px rgb(0 0 0 / 0.18), 0 16px 32px -12px rgb(0 0 0 / 0.08);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height); }
+    from {
+      height: 0;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
   }
+
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height); }
-    to { height: 0; }
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0;
+    }
   }
 }
 
 @layer base {
   :root {
-    /* Brand: Indigo/Blue vibe with warmer neutral background */
-    --background: 210 20% 98%;
-    --foreground: 224 71% 4%;
+    /* Main Layout Colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --brand: 221 83% 53%;
-    --brand-foreground: 210 40% 98%;
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 8% 46%;
-    --accent: 187 83% 45%;
-    --accent-foreground: 210 40% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 221 83% 53%;
-    --radius: 1.25rem;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 1.5rem;
+
+    /* Brand Tokens from Laravel */
+    --brand: 201 100% 50%;
+    --brand-foreground: 0 0% 8%;
+
+    /* Specific Surface Tokens */
+    --surface: 0 0% 100%;
+    --surface-foreground: 0 0% 8%;
+    --surface-muted: 0 0% 96%;
+    --surface-elevated: 0 0% 98%;
+    --surface-dark: 0 0% 10%;
+    --surface-dark-foreground: 0 0% 98%;
   }
+
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 6%;
-    --card-foreground: 213 31% 91%;
-    --brand: 217 91% 60%;
-    --brand-foreground: 210 40% 98%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-    --accent: 187 83% 45%;
-    --accent-foreground: 210 40% 98%;
-    --border: 223 47% 11%;
-    --input: 223 47% 11%;
-    --ring: 224.3 76.3% 48%;
-  }
-}
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
 
-@layer components {
-  /* Fluid Typography */
-  .tct-h1 {
-    @apply text-[26px] md:text-[32px] font-bold tracking-tight leading-tight;
-  }
-  .tct-h2 {
-    @apply text-[20px] md:text-[24px] font-bold tracking-tight;
-  }
-  .tct-label {
-    @apply text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground;
-  }
-  
-  /* Reader Prose Optimization */
-  .reader-prose {
-    @apply leading-relaxed md:leading-loose text-[18px] md:text-[20px] space-y-6 selection:bg-brand/20;
-  }
-
-  /* Layout Utilities */
-  .mobile-container {
-    @apply mx-auto w-full max-w-md min-h-dvh flex flex-col bg-background shadow-2xl relative overflow-x-hidden border-x border-border/10;
-  }
-
-  .glass-effect {
-    @apply backdrop-blur-2xl bg-white/70 dark:bg-black/70 border border-white/20 dark:border-white/10;
-  }
-
-  .bottom-nav-blur {
-    @apply backdrop-blur-2xl bg-white/80 dark:bg-black/80;
+    --brand: 201 100% 50%;
+    --brand-foreground: 0 0% 8%;
+    --surface: 0 0% 8%;
+    --surface-foreground: 0 0% 98%;
+    --surface-muted: 0 0% 12%;
+    --surface-elevated: 0 0% 14%;
+    --surface-dark: 0 0% 6%;
+    --surface-dark-foreground: 0 0% 98%;
   }
 }
 
 @layer base {
-  * { @apply border-border; }
-  body { 
-    @apply bg-background text-foreground font-body antialiased;
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground selection:bg-brand/20 selection:text-brand font-body antialiased overflow-x-hidden;
     /* iOS Safe Area Support */
     padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer utilities {
+
+  /* Premium Effects from Laravel */
+  .bg-grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+    @apply pointer-events-none opacity-[0.03] contrast-150;
+  }
+
+  .bg-mesh {
+    background-color: transparent;
+    background-image:
+      radial-gradient(at 0% 0%, hsla(199, 100%, 50%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(280, 100%, 50%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(180, 100%, 50%, 0.15) 0px, transparent 50%);
+  }
+
+  .glass-nav {
+    background: hsl(var(--background) / 0.7);
+    backdrop-filter: blur(18px);
+    @apply border-t border-black/5 dark:border-white/5;
+  }
+
+  /* Pressable buttons with UX shadow feedback */
+  .tct-pressable {
+    @apply transition-all duration-150 active:scale-[0.97] active:shadow-none;
+  }
+
+  /* Synchronized Typography Scale */
+  .tct-serif {
+    font-family: var(--font-serif);
+    @apply tracking-tight;
+  }
+
+  .tct-brand-gradient {
+    background: linear-gradient(to bottom right, hsl(var(--brand)), hsl(var(--brand) / 0.8));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    @apply font-bold;
+  }
+
+  .tct-h1 {
+    @apply text-[22px] leading-[1.15] font-semibold tracking-tight md:text-[28px];
+  }
+
+  .tct-h2 {
+    @apply text-[18px] leading-[1.2] font-semibold tracking-tight md:text-[20px];
+  }
+
+  .tct-label {
+    @apply text-[11px] font-medium uppercase tracking-wider text-muted-foreground md:text-[12px];
+  }
+
+  .tct-body {
+    @apply text-[15px] leading-[1.6] text-foreground md:text-[16px];
+  }
+
+  .shadow-premium {
+    box-shadow: var(--shadow-premium);
   }
 }
