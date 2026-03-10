@@ -18,8 +18,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isLanding = pathname === "/";
 
-  // Lock scroll for landing page
+  // Lock scroll for landing page only if mounted to avoid layout shifts
   useEffect(() => {
+    if (!mounted) return;
     if (isLanding) {
       document.body.style.overflow = "hidden";
       document.body.style.height = "100dvh";
@@ -27,9 +28,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = "auto";
       document.body.style.height = "auto";
     }
-  }, [isLanding]);
+  }, [isLanding, mounted]);
 
-  // Prevent flash during hydration
+  // Robust hydration guard
   if (!mounted) {
     return (
       <div className="bg-[#020617] min-h-screen flex items-center justify-center">
@@ -40,13 +41,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen bg-[#020617] text-white selection:bg-brand/20 overflow-x-hidden">
+      {/* Background layer (z-0) */}
       <Background />
 
       <div className="relative z-10 flex min-h-screen">
+        {/* Navigation - Hidden on landing page (/) */}
         {!isLanding && <DesktopSidebar />}
 
         <div className={cn(
-          "flex-1 flex flex-col min-h-screen",
+          "flex-1 flex flex-col min-h-screen relative z-20",
           !isLanding && "pb-24 md:pb-0"
         )}>
           <main className="flex-1">
@@ -64,6 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </AnimatePresence>
           </main>
 
+          {/* Bottom Navigation - Mobile Only, hidden on landing */}
           {!isLanding && (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden w-full max-w-md px-6">
               <BottomNav />

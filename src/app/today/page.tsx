@@ -9,7 +9,7 @@ import { ThrowingCard } from "@/components/core/ThrowingCard";
 
 export default function TodayPage() {
   return (
-    <div className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-2">
+    <div className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-6 px-4">
       {/* 1. Header with dynamic greeting */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -19,7 +19,7 @@ export default function TodayPage() {
         <GreetingHeader />
       </motion.div>
 
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* 2. Quick action grid */}
         <ThrowingCard index={0}>
           <ActionShortcutBar />
@@ -30,28 +30,27 @@ export default function TodayPage() {
           <DailyVerseHeroCard />
         </ThrowingCard>
 
-        {/* 4. Mock Feed / Additional Cards */}
+        {/* 4. Content placeholder */}
         <ThrowingCard index={2}>
-          <div className="rounded-3xl border border-dashed border-border/40 p-12 flex flex-col items-center justify-center text-center space-y-3 bg-white/10 backdrop-blur-sm">
-            <div className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-              ✨
+          <div className="rounded-[44px] border border-dashed border-white/10 p-12 flex flex-col items-center justify-center text-center space-y-4 bg-white/5 backdrop-blur-sm">
+            <div className="w-16 h-16 rounded-3xl bg-brand/10 flex items-center justify-center text-brand shadow-lg">
+              <span className="text-2xl">✨</span>
             </div>
-            <div className="space-y-1">
-              <h3 className="font-bold text-slate-700">Konten lainnya sedang disiapkan</h3>
-              <p className="text-xs text-muted-foreground max-w-[240px]">
-                Feed komunitas dan refleksi harian akan muncul di sini setelah integrasi API Laravel selesai.
+            <div className="space-y-2">
+              <h3 className="tct-serif text-2xl font-normal text-white">Segera Hadir</h3>
+              <p className="text-sm text-white/40 max-w-[280px] mx-auto">
+                Feed komunitas dan refleksi harian sedang kami siapkan untuk pertumbuhan iman Anda.
               </p>
             </div>
           </div>
         </ThrowingCard>
       </div>
 
-      {/* Decorative Brand Tagline */}
       <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
+        animate={{ opacity: 0.3 }}
         transition={{ delay: 1.5 }}
-        className="text-[10px] font-bold uppercase tracking-[0.3em] text-center mt-12 text-slate-400"
+        className="text-[10px] font-black uppercase tracking-[0.4em] text-center mt-20 text-white/50"
       >
         Terpilih • Terhubung • Bertumbuh
       </motion.p>
