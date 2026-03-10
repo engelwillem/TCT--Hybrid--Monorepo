@@ -1,115 +1,48 @@
-# Log files & OS metadata
-*.log
+# 1. Base Ignores
+node_modules/
+.next/
+out/
+build/
 .DS_Store
-Thumbs.db
-.npm-cache
-/.npm-cache
+*.log
+*.tmp
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
-# Environment & Secrets
+# 2. Environment & Secrets
 .env
-.env.*
-!.env.example
-/auth.json
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+auth.json
 
-# Decoupled Architecture: Laravel Backend
+# 3. Local Backend & Documentation (DO NOT COMMIT)
 /backend-api/
-
-# Keep root clean for Next.js (Firebase Studio)
-/.npm-cache
-/.modified
-/ERROR FIREBASE STUDIO.md
-/componentss.json
-/response.html
-
-# Deployment Scripts (Laravel/cPanel specific)
-/deploy.sh
-/rollback.sh
-/healthcheck.sh
-/deploy-local.js
-/cpanel_Panduan_SSH_Key_Local.md
-/PANDUAN AUTO DEPLOY CPANEL.md
-/DEPLOY CPANEL COMMAND.md
-/KEAMANAN WEB CPANEL.md
-/LOG DEPLOY TERMINAL CPANEL.md
-/CPANEL_DEPLOY_RUNBOOK.md
-/AUDIT SERVER CPANEL.md
-/MITIGASI DEPLOY CPANEL.md
-/AUDIT CPANEL DEPLOY.md
-/SCRIPT DEPLOY DI CPANEL.md
-/BETA DEPLOY GUIDE.md
-/MASTER_BOOK_DEPLOY_CPANEL.md
-/DIAGRAM DEPLOY.md
-/PROMPT* DEPLOY SH.MD
-/GUIDE DEPLOY CPANEL.md
-
-# Build & Cache
-/node_modules/
-/.next/
-/dist/
-/public/build/
-/public/hot/
-
-# AI & Project Documentation (Local)
+/docs/
 /*.md
 !/README.md
-!/PROGRESS DECOUPLE.md
-/TECH_STACK_PROPOSAL.md
-/CPANEL_NEXTJS_ARCHITECTURE.md
-/01_System_Prompt_*.md
-/02_Enterprise_SOP_*.md
-/03_Developer_Team_*.md
-/04_AI_Agent_*.md
-/05_DevSecOps_*.md
-/06_Secure_Code_*.md
-/07_CI_CD.md
-/BIBLE ENGINE PROMPT.md
-/ROLE AI WEB AUDITOR.md
-/VERSEHUB_FEATURE_*.md
-/SAFE_*_Blueprint.md
-/architecture_*.md
-/implementation_plan*.md
-/walkthrough*.md
-/UI-UX *.md
-/DASHBOARD *.md
-/Master_Blueprint_*.md
-/spiritual_journey_*.md
-/versehub_*.md
-/community_*.md
-/final_*.md
-/relationship_map_*.md
-/participation_engine_*.md
-/post_interaction_*.md
-/seed_*.md
-/service_layer_*.md
-/technical_implementation_*.md
-/*.png
-/*.jpg
-/*.jpeg
-/public/brand/TCT_logo_*.png
+/componentss.json
+/components.json
+/response.html
+/ERROR FIREBASE STUDIO.md
 
-# Temporary Files
-tmp_*
-tmp-*
-.tmp*
-*.tmp
-*.zip
-*.tar.gz
-*.tgz
-*.7z
-*.rar
-stats.html
-
-# Next.js Specific (Keep these)
+# 4. Whitelist Essential Next.js Files (FOR COMMIT)
 !/src/
-!/next.config.ts
-!/next-env.d.ts
+!/public/
 !/package.json
 !/package-lock.json
 !/tsconfig.json
+!/next.config.ts
+!/next-env.d.ts
 !/apphosting.yaml
-!/public/
-!/README.md
+!/postcss.config.mjs
+!/.gitignore
+!/.gitattributes
 
-# Maintain .gitignore itself
-!.gitignore
-PROGRESS DECOUPLE.md
+# 5. OS/IDE Specific
+.idx/
+.vscode/
+.idea/
+.npm-cache
+.modified
