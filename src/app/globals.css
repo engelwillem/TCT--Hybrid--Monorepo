@@ -1,23 +1,35 @@
 @import "tailwindcss";
 
 @theme {
-  --font-body: var(--font-inter), sans-serif;
-  --font-serif: var(--font-instrument-serif), serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DM Serif Display", serif;
 
-  --color-background: hsl(222 47% 2%);
-  --color-foreground: hsl(210 40% 98%);
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(0 0% 3.9%);
 
-  --color-brand: hsl(199 89% 48%);
-  --color-brand-foreground: #ffffff;
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(0 0% 3.9%);
 
-  --color-accent: hsl(180 75% 45%);
-  --color-border: hsl(217.2 32.6% 17.5%);
+  --color-primary: hsl(0 0% 9%);
+  --color-primary-foreground: hsl(0 0% 98%);
 
-  --radius-xl: 44px;
-  --radius-lg: 24px;
-  --radius-md: 16px;
+  --color-muted: hsl(0 0% 96.1%);
+  --color-muted-foreground: hsl(0 0% 45.1%);
 
-  --shadow-premium: 0 32px 64px -16px rgba(0, 0, 0, 0.4), 0 16px 32px -12px rgba(0, 0, 0, 0.3);
+  --color-accent: hsl(0 0% 96.1%);
+  --color-accent-foreground: hsl(0 0% 9%);
+
+  --color-border: hsl(0 0% 89.8%);
+  --color-brand: hsl(201 100% 50%);
+  --color-brand-foreground: hsl(0 0% 8%);
+
+  --radius-xl: 1.5rem;
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+
+  --shadow-soft: 0 10px 30px -10px rgb(0 0 0 / 0.08), 0 4px 12px -6px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 20px 40px -12px rgb(0 0 0 / 0.12), 0 8px 16px -8px rgb(0 0 0 / 0.06);
+  --shadow-premium: 0 32px 64px -16px rgb(0 0 0 / 0.18), 0 16px 32px -12px rgb(0 0 0 / 0.08);
 }
 
 @layer base {
@@ -26,10 +38,14 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body antialiased;
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    min-height: 100vh;
+    @apply bg-background text-foreground font-sans antialiased;
+    color: hsl(var(--foreground));
+  }
+
+  /* Safe areas for mobile */
+  :root {
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -38,12 +54,22 @@
     font-family: var(--font-serif);
   }
 
-  .glass-effect {
-    @apply backdrop-blur-xl bg-white/[0.03] border border-white/10;
+  .tct-brand-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500;
   }
 
-  .tct-brand-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-cyan-400 to-blue-500;
+  .bg-surface {
+    background: white;
+    color: hsl(0 0% 3.9%);
+  }
+
+  .dark .bg-surface {
+    background: hsl(0 0% 8%);
+    color: hsl(0 0% 98%);
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-xl bg-white/70 border-t border-black/5 dark:bg-black/40 dark:border-white/5;
   }
 
   .bg-grain {
@@ -52,8 +78,8 @@
     @apply pointer-events-none opacity-[0.02] contrast-150;
   }
 
-  .shadow-soft {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  .tct-pressable {
+    @apply transition-all duration-150 active:scale-[0.97] active:shadow-none;
   }
 
   /* GPU Acceleration for background elements */
