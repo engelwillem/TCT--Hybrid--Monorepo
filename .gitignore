@@ -48,11 +48,11 @@ Thumbs.db
 /dist/
 /public/build/
 /public/hot/
-/postcss.config.mjs
 
 # AI & Project Documentation (Local)
 /*.md
 !/README.md
+!/PROGRESS DECOUPLE.md
 /TECH_STACK_PROPOSAL.md
 /CPANEL_NEXTJS_ARCHITECTURE.md
 /01_System_Prompt_*.md
@@ -112,4 +112,4 @@ stats.html
 
 # Maintain .gitignore itself
 !.gitignore
-TECH_STACK_PROPOSAL.md
+PROGRESS DECOUPLE.md

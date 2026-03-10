@@ -46,6 +46,19 @@ Sebelum menjalankan, siapkan env:
 
 Frontend akan memanggil endpoint Next.js `/api/*` yang diproxy ke Laravel (`LARAVEL_API_BASE_URL`).
 
+## Firebase Studio
+
+Agar tetap jalan di Firebase Studio (frontend-only), gunakan:
+
+```bash
+npm install
+npm run dev:studio
+```
+
+Catatan:
+- Jika `LARAVEL_API_BASE_URL` belum tersedia, UI tetap bisa render karena service layer memakai fallback mock saat API gagal.
+- Untuk mode production decoupled penuh, backend Laravel harus aktif dan `LARAVEL_API_BASE_URL` harus mengarah ke backend tersebut.
+
 ## Deployment
 
 - **Frontend Next.js**: Tencent Serverless Pages (atau platform serverless lain).
