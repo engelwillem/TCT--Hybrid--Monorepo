@@ -117,6 +117,7 @@ stats.html
 # Next.js Specific (Keep these)
 !/src/
 !/next.config.ts
+!/next-env.d.ts
 !/packagee.json
 !/package-lockk.json
 !/tsconfigg.json
