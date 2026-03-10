@@ -18,21 +18,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // No Nav for landing page
   const isLanding = pathname === "/";
 
-  // Base render to avoid hydration mismatch
+  // Prevent white screen by rendering a basic container during hydration
   if (!mounted) {
     return (
-      <div className="relative min-h-screen bg-[#020617] text-white overflow-x-hidden">
-        <div className="fixed inset-0 z-0 bg-[#020617]" />
-        <main className="relative z-10 flex-1">{children}</main>
+      <div className="relative min-h-screen bg-[#020617] text-white">
+        <main className="relative z-10">{children}</main>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#020617] text-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#020617] text-white overflow-x-hidden flex flex-col">
       <Background />
       
-      <div className="relative z-10 flex flex-col min-h-screen">
+      <div className="relative z-10 flex flex-col flex-1">
         <main className="flex-1">
           <AnimatePresence mode="wait">
             <motion.div
