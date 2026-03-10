@@ -11,28 +11,15 @@ Thumbs.db
 !.env.example
 /auth.json
 
-# Laravel Backend (IGNORED for this Next.js Repo)
-/app/
-/bootstrap/
-/config/
-/database/
-/resources/
-/routes/
-/storage/
-/tests/
-/vendor/
-/artisan
-/composer.json
-/composer.lock
-/*.laravel.json
-/phpunit.xml
-/tailwind.config.js
-/tailwind.config.ts
-/vite.config.js
-/postcss.config.js
-/.editorconfig
-/.gitattributes
-/.styleci.yml
+# Decoupled Architecture: Laravel Backend
+/backend-api/
+
+# Keep root clean for Next.js (Firebase Studio)
+/.npm-cache
+/.modified
+/ERROR FIREBASE STUDIO.md
+/componentss.json
+/response.html
 
 # Deployment Scripts (Laravel/cPanel specific)
 /deploy.sh

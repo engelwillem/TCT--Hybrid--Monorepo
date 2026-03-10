@@ -1,0 +1,17 @@
+* text=auto eol=lf
+
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.tar.gz binary
+*.tgz binary
+
+/.github export-ignore
+CHANGELOG.md export-ignore
