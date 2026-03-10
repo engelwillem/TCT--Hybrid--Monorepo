@@ -7,14 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImagePlus, Send } from "lucide-react";
-import { MOCK_USERS } from "../mock";
+import { CommunityUser } from "../types";
 
 interface PostComposerProps {
   onPost: (text: string) => void;
+  currentUser?: CommunityUser;
 }
 
-export function PostComposer({ onPost }: PostComposerProps) {
+export function PostComposer({ onPost, currentUser }: PostComposerProps) {
   const [text, setText] = useState("");
+  const avatarUrl = currentUser?.avatarUrl;
+  const initials = (currentUser?.name?.[0] || "M").toUpperCase();
 
   const handlePost = () => {
     if (!text.trim()) return;
@@ -27,8 +30,8 @@ export function PostComposer({ onPost }: PostComposerProps) {
       <CardContent className="p-4 space-y-4">
         <div className="flex gap-3">
           <Avatar className="w-10 h-10">
-            <AvatarImage src={MOCK_USERS.me.avatarUrl} />
-            <AvatarFallback>ME</AvatarFallback>
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <Textarea 

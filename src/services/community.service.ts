@@ -1,99 +1,303 @@
 /**
  * @fileOverview Community Service Layer
- * 
- * Provides an async API boundary for community-related operations.
- * Currently uses in-memory state initialized with mock data.
+ *
+ * Laravel API is the primary source of truth.
+ * Mock in-memory state remains as a local fallback when API is unreachable.
  */
 
-import { CommunityPost, CommunityComment, CommunityUser } from "@/features/community/types";
+import { CommunityPost, CommunityComment } from "@/features/community/types";
 import { MOCK_POSTS, MOCK_COMMENTS, MOCK_USERS } from "@/features/community/mock";
+import { getAppAccessToken } from "@/services/app-auth-token";
 
-// In-memory "database"
 let posts: CommunityPost[] = [...MOCK_POSTS];
 let comments: CommunityComment[] = [...MOCK_COMMENTS];
 
-/**
- * Simulate network delay
- */
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+interface ApiEnvelope<T> {
+  data?: T;
+}
+
+interface ApiPost {
+  id: string;
+  text: string;
+  imageUrl?: string;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
+  counts: {
+    likes: number;
+    comments: number;
+    bookmarks: number;
+  };
+  isLiked: boolean;
+  isBookmarked: boolean;
+}
+
+interface ApiComment {
+  id: string;
+  postId: string;
+  text: string;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
+}
+
+const mapApiPost = (post: ApiPost): CommunityPost => ({
+  id: String(post.id),
+  text: post.text || "",
+  imageUrl: post.imageUrl,
+  createdAt: post.createdAt || "Baru saja",
+  author: {
+    id: String(post.author?.id || ""),
+    name: post.author?.name || "Member",
+    avatarUrl: post.author?.avatarUrl,
+  },
+  counts: {
+    likes: Number(post.counts?.likes || 0),
+    comments: Number(post.counts?.comments || 0),
+    bookmarks: Number(post.counts?.bookmarks || 0),
+  },
+  isLiked: Boolean(post.isLiked),
+  isBookmarked: Boolean(post.isBookmarked),
+});
+
+const mapApiComment = (comment: ApiComment): CommunityComment => ({
+  id: String(comment.id),
+  postId: String(comment.postId),
+  text: comment.text || "",
+  createdAt: comment.createdAt || "Baru saja",
+  author: {
+    id: String(comment.author?.id || ""),
+    name: comment.author?.name || "Member",
+    avatarUrl: comment.author?.avatarUrl,
+  },
+});
+
+const buildHeaders = (needsAuth = false): HeadersInit => {
+  let headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (needsAuth) {
+    const token = getAppAccessToken();
+    if (token) {
+      headers = {
+        ...headers,
+        Authorization: `Bearer ${token}`,
+      };
+    }
+  }
+
+  return headers;
+};
+
+async function parseJson<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
 
 export const CommunityService = {
-  /**
-   * Fetches the list of all posts
-   */
   async listPosts(): Promise<CommunityPost[]> {
-    await delay(300); // Simulate API latency
-    return [...posts];
+    try {
+      const response = await fetch("/api/community/posts", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch posts: ${response.status}`);
+
+      const payload = await parseJson<ApiEnvelope<{ posts: ApiPost[] }>>(response);
+      const nextPosts = (payload?.data?.posts ?? []).map(mapApiPost);
+
+      if (nextPosts.length > 0) {
+        posts = nextPosts;
+      }
+
+      return nextPosts.length > 0 ? nextPosts : [...posts];
+    } catch {
+      await delay(150);
+      return [...posts];
+    }
   },
 
-  /**
-   * Creates a new post
-   */
   async createPost(text: string, imageUrl?: string): Promise<CommunityPost> {
-    await delay(500);
-    const newPost: CommunityPost = {
-      id: Date.now().toString(),
-      text,
-      imageUrl,
-      createdAt: "Baru saja",
-      author: MOCK_USERS.me,
-      counts: { likes: 0, comments: 0, bookmarks: 0 },
-      isLiked: false,
-      isBookmarked: false,
-    };
-    posts = [newPost, ...posts];
-    return newPost;
+    try {
+      const response = await fetch("/api/community/posts", {
+        method: "POST",
+        headers: buildHeaders(true),
+        body: JSON.stringify({ text, imageUrl }),
+      });
+
+      if (!response.ok) throw new Error(`Failed to create post: ${response.status}`);
+
+      const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
+      if (!payload?.data?.post) throw new Error("Malformed create post payload");
+
+      const created = mapApiPost(payload.data.post);
+      posts = [created, ...posts.filter((item) => item.id !== created.id)];
+      return created;
+    } catch {
+      await delay(150);
+      const newPost: CommunityPost = {
+        id: Date.now().toString(),
+        text,
+        imageUrl,
+        createdAt: "Baru saja",
+        author: MOCK_USERS.me,
+        counts: { likes: 0, comments: 0, bookmarks: 0 },
+        isLiked: false,
+        isBookmarked: false,
+      };
+
+      posts = [newPost, ...posts];
+      return newPost;
+    }
   },
 
-  /**
-   * Toggles the like status of a post
-   */
   async toggleLike(postId: string): Promise<void> {
-    await delay(100);
-    posts = posts.map(p => 
-      p.id === postId 
-        ? { ...p, isLiked: !p.isLiked, counts: { ...p.counts, likes: p.counts.likes + (p.isLiked ? -1 : 1) } } 
-        : p
-    );
+    try {
+      const response = await fetch(`/api/community/posts/${postId}/pray`, {
+        method: "POST",
+        headers: buildHeaders(true),
+      });
+
+      if (!response.ok) throw new Error(`Failed to toggle pray reaction: ${response.status}`);
+
+      const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
+      if (payload?.data?.post) {
+        const updated = mapApiPost(payload.data.post);
+        posts = posts.map((item) => (item.id === postId ? updated : item));
+      }
+    } catch {
+      await delay(80);
+      posts = posts.map((item) =>
+        item.id === postId
+          ? {
+              ...item,
+              isLiked: !item.isLiked,
+              counts: {
+                ...item.counts,
+                likes: item.counts.likes + (item.isLiked ? -1 : 1),
+              },
+            }
+          : item,
+      );
+    }
   },
 
-  /**
-   * Toggles the bookmark status of a post
-   */
   async toggleBookmark(postId: string): Promise<void> {
-    await delay(100);
-    posts = posts.map(p => 
-      p.id === postId ? { ...p, isBookmarked: !p.isBookmarked } : p
-    );
+    try {
+      const response = await fetch(`/api/community/posts/${postId}/bookmark`, {
+        method: "POST",
+        headers: buildHeaders(true),
+      });
+
+      if (!response.ok) throw new Error(`Failed to toggle bookmark: ${response.status}`);
+
+      const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
+      if (payload?.data?.post) {
+        const updated = mapApiPost(payload.data.post);
+        posts = posts.map((item) => (item.id === postId ? updated : item));
+      }
+    } catch {
+      await delay(80);
+      posts = posts.map((item) =>
+        item.id === postId
+          ? {
+              ...item,
+              isBookmarked: !item.isBookmarked,
+            }
+          : item,
+      );
+    }
   },
 
-  /**
-   * Fetches comments for a specific post
-   */
   async listComments(postId: string): Promise<CommunityComment[]> {
-    await delay(200);
-    return comments.filter(c => c.postId === postId);
+    try {
+      const response = await fetch(`/api/community/posts/${postId}/comments`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch comments: ${response.status}`);
+
+      const payload = await parseJson<ApiEnvelope<{ comments: ApiComment[] }>>(response);
+      const nextComments = (payload?.data?.comments ?? []).map(mapApiComment);
+
+      comments = [
+        ...comments.filter((item) => item.postId !== postId),
+        ...nextComments,
+      ];
+
+      return nextComments;
+    } catch {
+      await delay(100);
+      return comments.filter((item) => item.postId === postId);
+    }
   },
 
-  /**
-   * Adds a comment to a post
-   */
   async addComment(postId: string, text: string): Promise<CommunityComment> {
-    await delay(400);
-    const newComment: CommunityComment = {
-      id: Date.now().toString(),
-      postId,
-      text,
-      createdAt: "Baru saja",
-      author: MOCK_USERS.me,
-    };
-    comments = [...comments, newComment];
-    
-    // Update comment count in posts
-    posts = posts.map(p => 
-      p.id === postId ? { ...p, counts: { ...p.counts, comments: p.counts.comments + 1 } } : p
-    );
+    try {
+      const response = await fetch(`/api/community/posts/${postId}/comments`, {
+        method: "POST",
+        headers: buildHeaders(true),
+        body: JSON.stringify({ text }),
+      });
 
-    return newComment;
-  }
+      if (!response.ok) throw new Error(`Failed to add comment: ${response.status}`);
+
+      const payload = await parseJson<ApiEnvelope<{ comment: ApiComment }>>(response);
+      if (!payload?.data?.comment) throw new Error("Malformed comment payload");
+
+      const created = mapApiComment(payload.data.comment);
+      comments = [...comments, created];
+      posts = posts.map((item) =>
+        item.id === postId
+          ? {
+              ...item,
+              counts: {
+                ...item.counts,
+                comments: item.counts.comments + 1,
+              },
+            }
+          : item,
+      );
+
+      return created;
+    } catch {
+      await delay(120);
+      const newComment: CommunityComment = {
+        id: Date.now().toString(),
+        postId,
+        text,
+        createdAt: "Baru saja",
+        author: MOCK_USERS.me,
+      };
+
+      comments = [...comments, newComment];
+      posts = posts.map((item) =>
+        item.id === postId
+          ? {
+              ...item,
+              counts: {
+                ...item.counts,
+                comments: item.counts.comments + 1,
+              },
+            }
+          : item,
+      );
+
+      return newComment;
+    }
+  },
 };
