@@ -1,4 +1,3 @@
-
 @import "tailwindcss";
 
 @theme {
@@ -22,12 +21,13 @@
 }
 
 @layer base {
-  :root {
-    --brand: 199 89% 48%;
+  * {
+    @apply border-border outline-ring-shadow;
   }
-  
   body {
-    @apply bg-background text-foreground selection:bg-brand/20 selection:text-brand font-body antialiased overflow-x-hidden;
+    @apply bg-background text-foreground font-body antialiased selection:bg-brand/20 selection:text-brand;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
 }
 

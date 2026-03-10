@@ -1,23 +1,22 @@
-
 "use client";
 
 import React from 'react';
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Sparkles, LogIn, Users } from "lucide-react";
+import { ArrowRight, LogIn, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-6 md:p-12 overflow-hidden">
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center p-6 overflow-hidden">
       {/* Header */}
       <header className="fixed top-0 left-0 w-full flex items-center justify-between p-8 z-50">
-        <div className="tct-serif text-2xl font-normal flex items-center gap-2">
+        <div className="tct-serif text-2xl font-normal flex items-center gap-2 text-white">
           TheChoosen<span className="text-brand font-bold">Talks</span>
         </div>
-        <Button asChild variant="ghost" className="rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white">
+        <Button asChild variant="ghost" className="rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white">
           <Link href="/today" className="flex items-center gap-2">
-            <LogIn className="w-4 h-4" />
+            <LogIn size={16} />
             <span>Mulai</span>
           </Link>
         </Button>
@@ -36,7 +35,7 @@ export default function LandingPage() {
             transition={{ duration: 4, repeat: Infinity }}
             className="w-20 h-20 rounded-3xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20"
           >
-            <Users className="w-10 h-10 text-slate-950" />
+            <Users size={40} className="text-slate-950" />
           </motion.div>
         </div>
 
@@ -50,10 +49,10 @@ export default function LandingPage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <Button asChild size="lg" className="h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-lg hover:shadow-cyan-500/40 hover:scale-[1.02] transition-all active:scale-95 border-none cursor-pointer">
+          <Button asChild size="lg" className="h-16 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-lg hover:shadow-cyan-500/40 transition-all border-none">
             <Link href="/today" className="flex items-center justify-center gap-3 w-full">
               <span>Buka Sekarang</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight size={20} />
             </Link>
           </Button>
 
@@ -68,7 +67,7 @@ export default function LandingPage() {
         </div>
       </motion.div>
 
-      {/* Scroll Hint */}
+      {/* Footer Branding */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.4 }}
