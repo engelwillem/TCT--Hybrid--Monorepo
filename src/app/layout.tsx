@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import React from 'react';
-import '@/app/globals.css';
+import './globals.css';
 import { AppShell } from '@/layouts/AppShell';
 import { Toaster } from '@/components/ui/toaster';
 
