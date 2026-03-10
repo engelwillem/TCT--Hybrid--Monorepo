@@ -1,11 +1,12 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
-import { motion, AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { Background } from "@/components/core/Background";
 import { cn } from "@/lib/utils";
-import React, { useState, useEffect } from "react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isLanding = pathname === "/";
 
-  // State locking for landing page to prevent scroll
+  // Lock scroll for landing page
   useEffect(() => {
     if (isLanding) {
       document.body.style.overflow = "hidden";
@@ -28,77 +29,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLanding]);
 
-  // Hydration guard to prevent SSR mismatch
+  // Prevent flash during hydration
   if (!mounted) {
     return (
-      <div className="bg-[#fafafa] dark:bg-[#050505] min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
+      <div className="bg-[#020617] min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className={cn(
-      "bg-[#fafafa] dark:bg-[#050505] flex selection:bg-brand/20 transition-colors duration-500 overflow-x-hidden min-h-screen",
-    )}>
-      {/* Ambient Background Decoration (from Laravel) */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none">
-        <div className="absolute -left-[10%] -top-[10%] h-[60%] w-[60%] rounded-full bg-indigo-200/20 blur-[120px] dark:bg-indigo-900/10" />
-        <div className="absolute -right-[5%] top-[10%] h-[50%] w-[50%] rounded-full bg-sky-200/20 blur-[100px] dark:bg-sky-900/10" />
-        <div className="absolute bottom-[10%] left-[20%] h-[40%] w-[40%] rounded-full bg-rose-200/10 blur-[110px] dark:bg-rose-900/5" />
-      </div>
+    <div className="relative min-h-screen bg-[#020617] text-white selection:bg-brand/20 overflow-x-hidden">
+      <Background />
 
-      {!isLanding && <DesktopSidebar />}
+      <div className="relative z-10 flex min-h-screen">
+        {!isLanding && <DesktopSidebar />}
 
-      <div className={cn(
-        "flex-1 flex flex-col transition-all duration-500 relative z-10",
-        "mx-auto w-full max-w-6xl px-4",
-        !isLanding ? "md:bg-background/40 min-h-screen" : "min-h-screen bg-transparent"
-      )}>
-        {!isLanding && (
-          <header className="sticky top-0 z-40 bg-surface-muted/80 backdrop-blur-sm md:static md:bg-transparent md:backdrop-blur-none transition-all duration-300">
-            <div className="flex items-center justify-between py-4 px-2 md:hidden">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center text-brand-foreground shadow-premium">
-                  <span className="text-[10px] font-black uppercase">TC</span>
-                </div>
-                <h1 className="tct-h2 text-foreground font-extrabold tracking-tight">TheChosen</h1>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-muted/50 border border-border/50 flex items-center justify-center text-foreground font-bold shadow-soft">
-                  <span className="text-xs">U</span>
-                </div>
-              </div>
-            </div>
-          </header>
-        )}
-
-        <main className={cn(
-          "flex-1 flex justify-center",
-          isLanding ? "w-full" : "pb-32 md:pb-12"
+        <div className={cn(
+          "flex-1 flex flex-col min-h-screen",
+          !isLanding && "pb-24 md:pb-0"
         )}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className={cn(
-                "w-full transition-all duration-500",
-                "max-w-[420px] md:max-w-none md:flex-1"
-              )}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+          <main className="flex-1">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full w-full"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </main>
 
-        {!isLanding && (
-          <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center md:hidden">
-            <BottomNav />
-          </div>
-        )}
+          {!isLanding && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden w-full max-w-md px-6">
+              <BottomNav />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
