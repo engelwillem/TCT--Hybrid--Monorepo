@@ -1,253 +1,129 @@
+# Log files & OS metadata
 *.log
 .DS_Store
 Thumbs.db
+.npm-cache
+/.npm-cache
+
+# Environment & Secrets
 .env
 .env.*
 !.env.example
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
 /auth.json
-/node_modules
-/npm-cache
-/.npm-cache
-# Build artifacts (Vite) should not be committed.
-/public/build
-/public/css/filament
-/public/js/filament
-/public/fonts/filament
-/public/hot
-/public/storage_broken_backup_*
-/storage/*.key
-/storage/pail
-/storage/logs/*
-/storage/framework/cache/data/*
-/storage/framework/sessions/*
-/storage/framework/views/*
-/storage/framework/testing/*
-/storage/app/public/avatars/*
-/storage/app/ayt/*.csv
-/storage/app/private/*
-!/storage/app/.gitignore
-!/storage/app/public/.gitignore
-!/storage/app/private/.gitignore
-!/storage/framework/.gitignore
-!/storage/framework/cache/.gitignore
-!/storage/framework/cache/data/.gitignore
-!/storage/framework/sessions/.gitignore
-!/storage/framework/testing/.gitignore
-!/storage/framework/views/.gitignore
-!/storage/logs/.gitignore
-/vendor
-/.tmp
-/.vite
-/.cache
-/.turbo
-/dist
-/Controllers
-/js
-/views
+
+# Laravel Backend (IGNORED for this Next.js Repo)
+/app/
+/bootstrap/
+/config/
+/database/
+/resources/
+/routes/
+/storage/
+/tests/
+/vendor/
+/artisan
+/composer.json
+/composer.lock
+/package.json
+/package-lock.json
+/phpunit.xml
+/tailwind.config.js
+/tailwind.config.ts
+/vite.config.js
+/postcss.config.js
+/tsconfig.json
+/.editorconfig
+/.gitattributes
+/.styleci.yml
+
+# Deployment Scripts (Laravel/cPanel specific)
+/deploy.sh
+/rollback.sh
+/healthcheck.sh
+/deploy-local.js
+/cpanel_Panduan_SSH_Key_Local.md
+/PANDUAN AUTO DEPLOY CPANEL.md
+/DEPLOY CPANEL COMMAND.md
+/KEAMANAN WEB CPANEL.md
+/LOG DEPLOY TERMINAL CPANEL.md
+/CPANEL_DEPLOY_RUNBOOK.md
+/AUDIT SERVER CPANEL.md
+/MITIGASI DEPLOY CPANEL.md
+/AUDIT CPANEL DEPLOY.md
+/SCRIPT DEPLOY DI CPANEL.md
+/BETA DEPLOY GUIDE.md
+/MASTER_BOOK_DEPLOY_CPANEL.md
+/DIAGRAM DEPLOY.md
+/PROMPT* DEPLOY SH.MD
+/GUIDE DEPLOY CPANEL.md
+
+# Build & Cache
+/node_modules/
+/.next/
+/dist/
+/public/build/
+/public/hot/
+/postcss.config.mjs
+
+# AI & Project Documentation (Local)
+/*.md
+!/README.md
+/TECH_STACK_PROPOSAL.md
+/CPANEL_NEXTJS_ARCHITECTURE.md
+/01_System_Prompt_*.md
+/02_Enterprise_SOP_*.md
+/03_Developer_Team_*.md
+/04_AI_Agent_*.md
+/05_DevSecOps_*.md
+/06_Secure_Code_*.md
+/07_CI_CD.md
+/BIBLE ENGINE PROMPT.md
+/ROLE AI WEB AUDITOR.md
+/VERSEHUB_FEATURE_*.md
+/SAFE_*_Blueprint.md
+/architecture_*.md
+/implementation_plan*.md
+/walkthrough*.md
+/UI-UX *.md
+/DASHBOARD *.md
+/Master_Blueprint_*.md
+/spiritual_journey_*.md
+/versehub_*.md
+/community_*.md
+/final_*.md
+/relationship_map_*.md
+/participation_engine_*.md
+/post_interaction_*.md
+/seed_*.md
+/service_layer_*.md
+/technical_implementation_*.md
+/*.png
+/*.jpg
+/*.jpeg
+/public/brand/TCT_logo_*.png
+
+# Temporary Files
 tmp_*
 tmp-*
 .tmp*
 *.tmp
-stats.html
 *.zip
 *.tar.gz
 *.tgz
 *.7z
 *.rar
-/tmp_og*.png
-/tmp-avatar.png
-/.tmp_*
-/.tmp*.txt
-/.tmp*.html
-/php.ini
-/docs/
-/ROLE AI WEB AUDITOR.md
-Homestead.json
-Homestead.yaml
-GUIDE DEPLOY CPANEL
-OUTPUT YANG DIHARAPKAN.md
-/database/database.sqlite
-PROGRESS.md
-GUIDE DEPLOY CPANEL.md
-PROGRESS.md
-01_System_Prompt_AI_Coding_Assistant.md
-02_Enterprise_SOP_Secure_Audit.md
-03_Developer_Team_Guideline.md
-04_AI_Agent_Automation_Safe_Mode.md
-05_DevSecOps_Pipeline_Policy.md
-06_Secure_Code_Web_Reliability_Auditor_Role.md
-Struktur Page Sabbat School Lesson.md
-BUILDandBENCHMARK.md
-DeskripsiDesignWeb.md
-FOCUS-CHAIN-LIST.md
-RENCANA SELANJUTNYA.md
-UI-UX LandingPage.md
-UI-UX LoginPage.md
-UI-UX RegisterPage.md
-DASHBOARD IT TCT.md
-DASHBOARD NON-IT TCT.md
-UI-UX ADMIN DASHBOARD.md
-UI-UX ADMIN DASHBOARD HYBRID.md
-cpanel_Panduan_SSH_Key_Local.md
-07_CI_CD.md
-PANDUAN AUTO DEPLOY CPANEL.md
-migrate_output_2.txt
-migrate_output.txt
-openai.chatgpt-0.5.80@win32-x64.vsix
-build.tar.gz
-push_error.txt
-ui_ux_audit_report.md
-today_page_audit.md
-DEPLOY CPANEL COMMAND.md
-KEAMANAN WEB CPANEL.md
-implementation_plan.md
-walkthrough.md
-CARD PADDING SIZE.md
+stats.html
 
-# Local sibling projects / scratch workspaces (do not publish)
-/NextJS/
-/NextJS--*/
-/TCT--*/
-/Laravel--*/
+# Next.js Specific (Keep these)
+!/src/
+!/next.config.ts
+!/packagee.json
+!/package-lockk.json
+!/tsconfigg.json
+!/apphosting.yaml
+!/public/
+!/README.md
 
-# Local ad-hoc reports
-/design_upgrade_report.md
-/UI-UX PROMPT TCT LANDING PAGE.md
-UI-UX PROMPT TCT TODAY PAGE.md
-database_design.md
-engagement_engine_strategy.md
-feed_composition_engine.md
-hybrid_feed_strategy.md
-today_page_structure.md
-
-# Local planning / blueprint docs (non-production)
-Master_Blueprint_Faith_Community_Engagement_Engine.md
-final_engagement_engine_blueprint.md
-frontend_architecture_design.md
-implementation_plan_phase_9.md
-implementation_roadmap.md
-participation_engine_design.md
-post_interaction_design.md
-relationship_map_optimizations.md
-seed_admin_strategy.md
-seeding_strategy.md
-service_layer_design.md
-technical_implementation_plan.md
-media__*.png
-Architectural_Vision_and_Standards.md
-architectural_audit_report.md
-Community_Interaction_Architecture.md
-Community_Post_Types_and_Behavior.md
-Daily_Automation_Architecture.md
-Filament_Admin_Workflow_Design.md
-file_level_implementation_plan.md
-implementation_plan_phase_10.md
-implementation_plan_phase_11.md
-implementation_plan_phase_12.md
-implementation_plan_phase_17.md
-interaction_model_audit.md
-premium_ui_ux_audit.md
-premium_ui_ux_walkthrough.md
-Safe_AI_Assisted_Prompt_Architecture.md
-SAFE_Engagement_Architecture_Master_Blueprint.md
-Safe_System_Accounts_Architecture.md
-Service_Layer_Design_Engagement_Engine.md
-SCRIPT DEPLOY DI CPANEL.md
-BIBLE ENGINE PROMPT.md
-VERSEHUB_FEATURE_ARCHITECTURE_REPORT.md
-ask_the_bible_experience_design.md
-implementation_plan_final_polish.md
-implementation_plan_phase_27.md
-implementation_plan_phase_28.md
-implementation_plan_phase_29.md
-implementation_plan_phase_30c.md
-implementation_plan_phase_30d.md
-implementation_plan_phase_30e.md
-Minimal_Schema_and_Enum_Extensions.md
-study_paths_design.md
-transparent_mentor_layer_design.md
-task.md
-verse_relationship_engine_design.md
-versehub_architecture_audit.md
-versehub_data_model_design.md
-versehub_feature_architecture.md
-versehub_implementation_plan.md
-versehub_file_implementation_plan.md
-versehub_mentor_master_blueprint.md
-VerseHub_Mentor_System_Blueprint.md
-versehub_og_design_system.md
-versehub_og_implementation_strategy.md
-versehub_product_definition.md
-versehub_sharing_architecture.md
-versehub_ux_experience_design.md
-walkthrough_community_mobile.md
-walkthrough_content_deduplication.md
-walkthrough_post_composer_polish.md
-walkthrough_versehub_mentor.md
-BIBLE_ENGINE_EXECUTION_REPORT.md
-KPI Query VerseHub.md
-TROUBLESHOOTING WEB DI CPANEL.md
-CPANEL_DEPLOY_RUNBOOK.md
-LOG DEPLOY TERMINAL CPANEL.md
-hero-home.png
-h2s-mid1.png
-h2s-mid2.png
-h2s-top.png
-.playwright-mcp/page-2026-03-07T18-02-38-883Z.png
-.playwright-mcp/page-2026-03-07T18-04-32-592Z.png
-.playwright-mcp/page-2026-03-07T18-04-32-794Z.png
-prompt_codex_audit_cpanel.md
-AUDIT SERVER CPANEL.md
-MITIGASI DEPLOY CPANEL.md
-MIGRASI Sqlite--MySqL.md
-spiritual_journey_overhaul_list_1772921210000.png
-spiritual_journey_overhaul_list_1772921210000.png
-today_guest_verify_1772921220000.png
-spiritual_journey_overhaul_top_1772921200000.png
-MySqL Log Install.md
-ERROR WEB.md
-ASET OG WA PER AYAT.md
-community_layouts_showcase_1772949800000.png
-final_ui_audit_verify_1772950500000.png
-rollback_verse_card_verify_1772950620000.png
-rollback_verse_card_verify_final_1772950680000.png
-browser_tab_logo_1772950780000.png
-browser_tab_logo_large_1772950800000.png
-favicon_logo_1772950720000.png
-verify_4_5_aspect_ratio_1772950860000.png
-resources/js/Components/community/MemberPostCard.tsx
-landing_page_refinement_final_verify_1772951100000.png
-landing_page_refinement_verify_1772951040000.png
-landing_page_refined_final_verify_1772951160000.png
-landing_page_refined_mobile_verify_1772951160000.png
-rollback_verify_landing_1772951520000.png
-verify_brand_logo_auth_1772951220000.png
-verify_brand_logo_landing_1772951220000.png
-public/brand/TCT_logo_favicon_32.png
-public/brand/TCT_logo_social_1024.png
-public/brand/TCT_logo_web_128.png
-public/brand/TCT_logo_web_256.png
-public/brand/TCT_logo_web_512.png
-TCT_logo_premium_browser.svg
-.playwright-mcp/page-2026-03-08T10-58-50-193Z.png
-public/images/the-shepherd.png
-BETA DEPLOY GUIDE.md
-admin_login_snapshot.md
-DIAGRAM DEPLOY.md
-MASTER_BOOK_DEPLOY_CPANEL.md
-PROMPT1 DEPLOY SH.MD
-PROMPT2 DEPLOY SH.MD
-PROMPT3 DEPLOY SH.MD
-PROMPT4 DEPLOY SH.MD
-GIT FLOW YML.md
-AUDIT CPANEL DEPLOY.md
+# Maintain .gitignore itself
+!.gitignore
+TECH_STACK_PROPOSAL.md
