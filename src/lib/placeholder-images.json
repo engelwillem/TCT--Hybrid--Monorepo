@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-today",
+      "description": "Morning sunrise over a calm lake",
+      "imageUrl": "https://picsum.photos/seed/talks1/600/400",
+      "imageHint": "morning sunrise"
+    },
+    {
+      "id": "user-1",
+      "description": "Portrait of a smiling person",
+      "imageUrl": "https://picsum.photos/seed/talks2/200/200",
+      "imageHint": "portrait person"
+    },
+    {
+      "id": "community-group",
+      "description": "Group of diverse people talking",
+      "imageUrl": "https://picsum.photos/seed/talks3/600/400",
+      "imageHint": "community group"
+    },
+    {
+      "id": "bible-verse",
+      "description": "A close up of an open book",
+      "imageUrl": "https://picsum.photos/seed/talks4/600/400",
+      "imageHint": "bible book"
+    }
+  ]
+}

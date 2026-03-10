@@ -1,0 +1,123 @@
+
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Dynamic Design Tokens */
+  --font-body: "Inter", sans-serif;
+  --font-headline: "Inter", sans-serif;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Semantic HSL mapping - Refined for better Contrast */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
+@layer base {
+  :root {
+    /* Brand: Indigo/Blue vibe with warmer neutral background */
+    --background: 210 20% 98%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --brand: 221 83% 53%;
+    --brand-foreground: 210 40% 98%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 8% 46%;
+    --accent: 187 83% 45%;
+    --accent-foreground: 210 40% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+    --radius: 1.25rem;
+  }
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 6%;
+    --card-foreground: 213 31% 91%;
+    --brand: 217 91% 60%;
+    --brand-foreground: 210 40% 98%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --accent: 187 83% 45%;
+    --accent-foreground: 210 40% 98%;
+    --border: 223 47% 11%;
+    --input: 223 47% 11%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer components {
+  /* Fluid Typography */
+  .tct-h1 {
+    @apply text-[26px] md:text-[32px] font-bold tracking-tight leading-tight;
+  }
+  .tct-h2 {
+    @apply text-[20px] md:text-[24px] font-bold tracking-tight;
+  }
+  .tct-label {
+    @apply text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground;
+  }
+  
+  /* Reader Prose Optimization */
+  .reader-prose {
+    @apply leading-relaxed md:leading-loose text-[18px] md:text-[20px] space-y-6 selection:bg-brand/20;
+  }
+
+  /* Layout Utilities */
+  .mobile-container {
+    @apply mx-auto w-full max-w-md min-h-dvh flex flex-col bg-background shadow-2xl relative overflow-x-hidden border-x border-border/10;
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-2xl bg-white/70 dark:bg-black/70 border border-white/20 dark:border-white/10;
+  }
+
+  .bottom-nav-blur {
+    @apply backdrop-blur-2xl bg-white/80 dark:bg-black/80;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { 
+    @apply bg-background text-foreground font-body antialiased;
+    /* iOS Safe Area Support */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
