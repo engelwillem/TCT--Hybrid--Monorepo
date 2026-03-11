@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
-import { DM_Serif_Display, Inter } from 'next/font/google';
+import { Instrument_Serif, Inter } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/layouts/AppShell';
 import { Toaster } from '@/components/ui/toaster';
@@ -13,7 +13,7 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-const dmSerifDisplay = DM_Serif_Display({
+const instrumentSerif = Instrument_Serif({
   weight: '400',
   subsets: ['latin'],
   display: 'swap',
@@ -85,8 +85,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${inter.variable} ${dmSerifDisplay.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased text-[15px] leading-[1.6] md:text-[16px]" suppressHydrationWarning>
+    <html lang="id" className={`${inter.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
+      <body className="antialiased bg-slate-950" suppressHydrationWarning>
         <FirebaseClientProvider>
           <FirebaseAuthSync />
           <AppShell>

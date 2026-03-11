@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
-  if (!mounted) return <div className="min-h-screen bg-background" />;
+  if (!mounted) return <div className="min-h-screen bg-slate-950" />;
 
   const isLanding = pathname === "/";
   // Logic to determine page title from pathname (Parity with app.blade.php logic)

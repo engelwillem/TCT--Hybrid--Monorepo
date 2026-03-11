@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function ChannelsPage() {
   return (
@@ -31,8 +32,4 @@ export default function ChannelsPage() {
       </div>
     </div>
   );
-}
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
 }
