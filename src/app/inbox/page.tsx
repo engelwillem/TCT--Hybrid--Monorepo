@@ -1,71 +1,150 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, MoreVertical, Edit2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Mail, MessageSquare, Search, ArrowLeft, MoreVertical, Circle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const messages = [
-  { id: 1, name: "Sarah Miller", text: "That verse you shared today really helped me.", time: "10:30 AM", unread: true },
-  { id: 2, name: "Morning Prayer Group", text: "John: We'll start in 5 minutes everyone!", time: "9:15 AM", unread: false },
-  { id: 3, name: "David Chen", text: "Are you coming to the talk tonight?", time: "Yesterday", unread: false },
-  { id: 4, name: "System", text: "Welcome to TheChoosenTalks! Complete your profile...", time: "Feb 18", unread: false },
-];
+type InboxItem = {
+    message_id: number;
+    preview: string;
+    is_unread: boolean;
+    created_at: string;
+    partner: {
+        id: number;
+        name: string;
+        online: boolean;
+        avatar?: string;
+    };
+};
 
 export default function InboxPage() {
-  return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="p-6 space-y-5 sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="tct-h1 text-brand">Inbox</h2>
-          <div className="flex items-center gap-2">
-             <button className="p-2.5 rounded-full bg-muted/40 hover:bg-muted transition-colors text-muted-foreground active:scale-90">
-              <Edit2 size={18} />
-            </button>
-            <button className="p-2.5 rounded-full bg-muted/40 hover:bg-muted transition-colors text-muted-foreground active:scale-90">
-              <MoreVertical size={18} />
-            </button>
-          </div>
-        </div>
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-brand" size={18} />
-          <Input 
-            placeholder="Search conversations..." 
-            className="pl-12 rounded-2xl bg-muted/40 border-none h-12 text-sm focus-visible:ring-brand/20 transition-all font-medium" 
-          />
-        </div>
-      </div>
+    const router = useRouter();
+    const [inbox, setInbox] = useState<InboxItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'primary' | 'general' | 'requests'>('primary');
 
-      <div className="flex-1 px-4 pb-10 space-y-1">
-        {messages.map((msg, i) => (
-          <motion.div 
-            key={msg.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-            className="p-4 flex gap-4 hover:bg-muted/30 transition-all cursor-pointer active:bg-muted/50 rounded-3xl group"
-          >
-            <div className="relative">
-              <Avatar className="w-14 h-14 ring-4 ring-background shadow-md group-hover:scale-105 transition-transform">
-                <AvatarImage src={`https://picsum.photos/seed/user-msg${msg.id}/100/100`} />
-                <AvatarFallback>{msg.name[0]}</AvatarFallback>
-              </Avatar>
-              {msg.unread && (
-                <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand rounded-full border-[3px] border-background animate-pulse"></div>
-              )}
+    useEffect(() => {
+        // Mocking parity data for Inbox Index
+        setTimeout(() => {
+            setInbox([
+                {
+                    message_id: 1,
+                    preview: 'Halo, bagaimana kabarmu hari ini?',
+                    is_unread: true,
+                    created_at: '2024-03-11T10:00:00Z',
+                    partner: { id: 10, name: 'Budi Santoso', online: true }
+                },
+                {
+                    message_id: 2,
+                    preview: 'Terima kasih atas renungannya.',
+                    is_unread: false,
+                    created_at: '2024-03-10T15:30:00Z',
+                    partner: { id: 11, name: 'Sari Wijaya', online: false }
+                }
+            ]);
+            setLoading(false);
+        }, 800);
+    }, []);
+
+    const formatTime = (iso: string) => {
+        const d = new Date(iso);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+                <div className="h-10 w-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
             </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <div className="flex justify-between items-center mb-0.5">
-                <span className="font-extrabold text-[15px] truncate text-foreground">{msg.name}</span>
-                <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{msg.time}</span>
-              </div>
-              <p className={`text-sm truncate leading-snug tracking-tight ${msg.unread ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'}`}>
-                {msg.text}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+            {/* Header Parity */}
+            <header className="sticky top-0 z-50 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60 px-4 py-4">
+                <div className="mx-auto max-w-2xl flex items-center justify-between">
+                    <button onClick={() => router.push('/today')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white active:scale-95 transition-all">
+                        <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    <h1 className="font-bold text-lg">Inbox</h1>
+                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white active:scale-95 transition-all text-slate-400">
+                        <Search className="h-5 w-5" />
+                    </button>
+                </div>
+            </header>
+
+            <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+                {/* Stats Header Parity */}
+                <div className="p-5 rounded-[28px] bg-white shadow-soft ring-1 ring-black/[0.03]">
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="text-sm font-bold text-slate-900 tracking-tight">Pesan Masuk</p>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{inbox.length} Percakapan</span>
+                    </div>
+                    
+                    {/* Tabs Bar Parity */}
+                    <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
+                        {(['primary', 'general', 'requests'] as const).map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={cn(
+                                    "rounded-xl py-2 text-[11px] font-bold capitalize transition-all",
+                                    activeTab === tab ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
+                                )}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Conversation List Parity */}
+                <div className="grid gap-2.5">
+                    {inbox.length === 0 ? (
+                        <div className="p-12 text-center rounded-[32px] bg-white/50 border border-dashed border-slate-200">
+                            <Mail className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                            <p className="text-sm font-bold text-slate-400">Belum ada percakapan</p>
+                        </div>
+                    ) : (
+                        inbox.map(item => (
+                            <button
+                                key={item.message_id}
+                                onClick={() => router.push(`/inbox/${item.partner.id}`)}
+                                className="group flex items-center gap-4 p-5 rounded-[32px] bg-white shadow-soft ring-1 ring-black/[0.02] transition-all hover:bg-slate-50 active:scale-[0.98]"
+                            >
+                                <div className="relative flex-none">
+                                    <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold shadow-sm">
+                                        {item.partner.name.slice(0, 1)}
+                                    </div>
+                                    {item.partner.online && (
+                                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
+                                    )}
+                                </div>
+                                
+                                <div className="flex-1 min-w-0 text-left">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="font-bold text-[15px] text-slate-900 truncate">{item.partner.name}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 whitespace-nowrap">{formatTime(item.created_at)}</p>
+                                    </div>
+                                    <p className={cn(
+                                        "text-[13px] line-clamp-1 leading-snug",
+                                        item.is_unread ? "text-slate-900 font-bold" : "text-slate-500 font-medium"
+                                    )}>
+                                        {item.preview}
+                                    </p>
+                                </div>
+                                
+                                {item.is_unread && (
+                                    <div className="h-2 w-2 rounded-full bg-blue-500 flex-none" />
+                                )}
+                            </button>
+                        ))
+                    )}
+                </div>
+            </main>
+        </div>
+    );
 }

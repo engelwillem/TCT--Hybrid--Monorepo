@@ -1,102 +1,228 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, Edit3, ChevronRight, Bookmark, Shield, Bell, HelpCircle, LogOut } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    User, 
+    Mail, 
+    Lock, 
+    ShieldCheck, 
+    LogOut, 
+    Camera, 
+    ChevronRight, 
+    ArrowLeft,
+    CheckCircle2,
+    AlertCircle,
+    Smartphone,
+    Trash2,
+    Grid
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import MobileAppLayout from '@/Layouts/MobileAppLayout';
+import DarkCard from '@/components/core/DarkCard';
+import AccordionCard from '@/components/core/AccordionCard';
+import PrimaryCTA from '@/components/core/PrimaryCTA';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function ProfilePage() {
-  const menuItems = [
-    { icon: Bookmark, label: "Saved Talks", color: "text-blue-500 bg-blue-500/10" },
-    { icon: Bell, label: "Notifications", color: "text-orange-500 bg-orange-500/10" },
-    { icon: Shield, label: "Privacy & Safety", color: "text-green-500 bg-green-500/10" },
-    { icon: HelpCircle, label: "Help Center", color: "text-purple-500 bg-purple-500/10" },
-  ];
+    const router = useRouter();
+    
+    // Mocking auth user parity
+    const user = {
+        name: 'Willem Engel',
+        email: 'willem.engel@example.com',
+        avatarUrl: null,
+        is_admin: true,
+        email_verified_at: '2024-01-01'
+    };
 
-  return (
-    <div className="flex flex-col h-full bg-background animate-in fade-in duration-1000">
-      <header className="p-8 pb-4 flex items-center justify-between">
-        <h2 className="tct-h1 text-brand">Profile</h2>
-        <Button variant="ghost" size="icon" className="rounded-full bg-muted/50">
-          <Settings size={20} />
-        </Button>
-      </header>
+    const [loading, setLoading] = useState(false);
+    const [journeyBadge, setJourneyBadge] = useState(12);
+    const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+    const [twoFactorPassword, setTwoFactorPassword] = useState('');
+    
+    const [profileData, setProfileData] = useState({
+        name: user.name,
+        email: user.email
+    });
 
-      <div className="px-6 space-y-8 pb-10">
-        {/* Profile Header */}
-        <section className="text-center space-y-4">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative inline-block"
-          >
-            <Avatar className="w-28 h-28 mx-auto ring-4 ring-brand/10 p-1.5 bg-background shadow-xl">
-              <AvatarImage src="https://picsum.photos/seed/myprofile/200/200" />
-              <AvatarFallback>TC</AvatarFallback>
-            </Avatar>
-            <Button size="icon" className="absolute bottom-1 right-1 h-9 w-9 rounded-2xl shadow-lg border-2 border-background">
-              <Edit3 size={16} />
-            </Button>
-          </motion.div>
-          <div className="space-y-1">
-            <h3 className="tct-h2">The Chosen User</h3>
-            <p className="text-muted-foreground text-sm font-medium">@chosen_one_2025</p>
-          </div>
-          <div className="flex justify-center gap-3">
-            <Badge variant="secondary" className="bg-brand/10 text-brand border-none h-7 px-3">Level 12</Badge>
-            <Badge variant="secondary" className="bg-accent/10 text-accent border-none h-7 px-3">340 Points</Badge>
-          </div>
-        </section>
+    const logout = () => {
+        router.push('/login');
+    };
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: "Talks", val: "24" },
-            { label: "Followers", val: "1.2k" },
-            { label: "Prayers", val: "85" },
-          ].map((stat) => (
-            <Card key={stat.label} className="border-none bg-muted/30 shadow-none text-center p-3 rounded-2xl">
-              <p className="font-bold text-xl text-brand">{stat.val}</p>
-              <p className="tct-label text-[9px] mt-1">{stat.label}</p>
-            </Card>
-          ))}
-        </div>
+    return (
+        <MobileAppLayout 
+            title="Profile" 
+            activeNavId="settings" 
+            backHref="/today"
+            rightAction={
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <button className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-900 text-white shadow-lg active:scale-95 transition-all">
+                            <Grid className="h-5 w-5" />
+                        </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 p-2 bg-slate-900 border-white/10 text-white rounded-[24px] shadow-2xl">
+                        <button 
+                            onClick={logout}
+                            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-rose-400"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            <span className="text-sm font-bold">Log out</span>
+                        </button>
+                    </PopoverContent>
+                </Popover>
+            }
+        >
+            <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+                
+                {/* Hero Profile Card Parity */}
+                <DarkCard className="relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                        <User className="h-32 w-32 rotate-12" />
+                    </div>
+                    
+                    <div className="relative z-10 flex flex-col items-center text-center">
+                        <div className="relative group">
+                            <div className="h-24 w-24 rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold ring-4 ring-white/5">
+                                {user.name.slice(0, 1).toUpperCase()}
+                            </div>
+                            <button className="absolute bottom-0 right-0 h-9 w-9 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110 active:scale-90">
+                                <Camera className="h-4 w-4" />
+                            </button>
+                        </div>
+                        
+                        <h2 className="mt-6 text-xl font-bold tracking-tight">{user.name}</h2>
+                        <p className="text-white/50 text-sm font-medium">{user.email}</p>
+                        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Verified Account</span>
+                        </div>
+                    </div>
+                </DarkCard>
 
-        {/* Account Menu */}
-        <div className="space-y-4">
-          <span className="tct-label px-1">Settings & Account</span>
-          <div className="bg-card rounded-3xl shadow-sm overflow-hidden ring-1 ring-border/50 divide-y divide-border/30">
-            {menuItems.map((item, i) => (
-              <motion.button 
-                key={item.label}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="w-full flex items-center justify-between p-5 hover:bg-muted/30 active:bg-muted/50 transition-colors group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`${item.color} p-2.5 rounded-2xl group-hover:scale-110 transition-transform`}>
-                    <item.icon size={20} />
-                  </div>
-                  <span className="text-sm font-bold">{item.label}</span>
+                <div className="space-y-4">
+                    {/* Admin Gateway Parity */}
+                    {user.is_admin && (
+                        <AccordionCard 
+                            title="Gateway Operasional" 
+                            description="Admin backoffice & status monitoring"
+                            className="ring-2 ring-cyan-400/20"
+                        >
+                            <div className="space-y-4 pt-2">
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <p className="text-sm font-bold">Status Harian</p>
+                                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 uppercase tracking-widest">Healthy</span>
+                                    </div>
+                                    <p className="text-xs text-white/50 leading-relaxed mb-4">Semua sistem berjalan normal. Tidak ada aksi mendesak yang diperlukan hari ini.</p>
+                                    <div className="grid gap-2">
+                                        <Button className="w-full justify-start h-11 bg-white text-slate-950 hover:bg-slate-100 rounded-xl font-bold text-xs px-4">
+                                            Open Admin Control Center
+                                        </Button>
+                                        <Button variant="outline" className="w-full justify-start h-11 border-white/10 bg-transparent hover:bg-white/5 text-white rounded-xl font-bold text-xs px-4">
+                                            View Performance KPI
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </AccordionCard>
+                    )}
+
+                    {/* Journey Stats Parity */}
+                    <AccordionCard title="Your Spiritual Journey">
+                        <button 
+                            onClick={() => router.push('/versehub/id/my-spiritual-journey')}
+                            className="flex items-center justify-between w-full p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group"
+                        >
+                            <div className="text-left">
+                                <p className="text-sm font-bold">Track your growth</p>
+                                <p className="text-xs text-white/50 mt-1 font-medium">Lihat riwayat hafalan dan catatan batin</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {journeyBadge > 0 && (
+                                    <span className="h-5 min-w-[20px] px-1.5 flex items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold">
+                                        {journeyBadge}
+                                    </span>
+                                )}
+                                <ChevronRight className="h-4 w-4 text-white/20 group-hover:text-cyan-400 transition-colors" />
+                            </div>
+                        </button>
+                    </AccordionCard>
+
+                    {/* Profile Information Parity */}
+                    <AccordionCard title="Informasi Personal">
+                        <form className="space-y-5 pt-2">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                                <Input 
+                                    value={profileData.name}
+                                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                                    className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-cyan-400/50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Alamat Email</label>
+                                <Input 
+                                    value={profileData.email}
+                                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                                    className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-cyan-400/50"
+                                />
+                            </div>
+                            <PrimaryCTA label="Simpan Perubahan" size="md" />
+                        </form>
+                    </AccordionCard>
+
+                    {/* Security Parity */}
+                    <AccordionCard title="Keamanan & Akses">
+                        <div className="space-y-6 pt-2">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-xl bg-cyan-400/10 flex items-center justify-center text-cyan-400">
+                                            <ShieldCheck className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold">Two-Factor Auth</p>
+                                            <p className="text-[10px] font-medium text-white/40">Status: {twoFactorEnabled ? 'Aktif' : 'Tidak Aktif'}</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
+                                        className={cn(
+                                            "px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
+                                            twoFactorEnabled ? "bg-rose-500/10 text-rose-400" : "bg-cyan-400 text-slate-950"
+                                        )}
+                                    >
+                                        {twoFactorEnabled ? 'Disable' : 'Enable'}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Ubah Password</label>
+                                <div className="grid gap-3">
+                                    <Input type="password" placeholder="Password lama" className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                                    <Input type="password" placeholder="Password baru" className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                                    <Button className="w-full bg-white/10 hover:bg-white/15 h-12 rounded-xl font-bold text-sm">Update Password</Button>
+                                </div>
+                            </div>
+                        </div>
+                    </AccordionCard>
+
+                    {/* Danger Zone Parity */}
+                    <div className="pt-8">
+                        <button className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border border-rose-500/20 text-rose-500 hover:bg-rose-500/5 transition-colors group">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="text-xs font-bold uppercase tracking-widest">Hapus Akun Permanen</span>
+                        </button>
+                        <p className="text-center mt-4 text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">The Chosen Talks • 2024</p>
+                    </div>
                 </div>
-                <ChevronRight size={18} className="text-muted-foreground/50 group-hover:text-brand transition-colors" />
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-        <Button variant="outline" className="w-full h-14 border-destructive/20 text-destructive hover:bg-destructive/5 rounded-2xl font-bold gap-2">
-          <LogOut size={18} />
-          Sign Out
-        </Button>
-        
-        <div className="text-center pt-2">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em]">TheChosenTalks v1.0.42 • Beta</p>
-        </div>
-      </div>
-    </div>
-  );
+            </div>
+        </MobileAppLayout>
+    );
 }

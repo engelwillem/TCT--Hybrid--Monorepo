@@ -1,0 +1,163 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { BookOpen, Clock, ChevronRight, Sparkles, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+
+interface StudyPath {
+    id: number;
+    slug: string;
+    title_id: string;
+    title_en: string;
+    description_id: string;
+    description_en: string;
+    cover_color: string;
+    difficulty: string;
+    estimated_minutes: number;
+}
+
+export default function StudyPathsIndexPage() {
+    const params = useParams();
+    const router = useRouter();
+    const lang = params?.lang as string || 'id';
+    const isId = lang === 'id';
+
+    const [paths, setPaths] = useState<StudyPath[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Mocking study paths data for parity
+        setTimeout(() => {
+            setPaths([
+                { 
+                    id: 1, 
+                    slug: 'dasar-iman', 
+                    title_id: 'Dasar-Dasar Iman', 
+                    title_en: 'Fundamentals of Faith',
+                    description_id: 'Pelajari dasar-dasar kepercayaan Kristen melalui ayat-ayat kunci.',
+                    description_en: 'Learn the core of Christian beliefs through key verses.',
+                    cover_color: 'amber',
+                    difficulty: 'Beginner',
+                    estimated_minutes: 15
+                },
+                { 
+                    id: 2, 
+                    slug: 'khotbah-di-bukit', 
+                    title_id: 'Khotbah di Bukit', 
+                    title_en: 'Sermon on the Mount',
+                    description_id: 'Eksplorasi pengajaran Yesus yang paling mendalam dalam Matius 5-7.',
+                    description_en: 'Explore Jesus’ most profound teaching in Matthew 5-7.',
+                    cover_color: 'sky',
+                    difficulty: 'Intermediate',
+                    estimated_minutes: 45
+                }
+            ]);
+            setLoading(false);
+        }, 800);
+    }, []);
+
+    return (
+        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+            {/* Header parity */}
+            <div className="sticky top-0 z-40 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60 transition-all">
+                <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
+                    <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 active:scale-95">
+                        <X className="h-4 w-4" />
+                    </button>
+                    <h1 className="font-bold text-lg">{isId ? 'Jalur Belajar' : 'Study Paths'}</h1>
+                    <div className="w-10" />
+                </div>
+            </div>
+
+            <div className="relative mx-auto max-w-4xl px-4 py-12">
+                <header className="mb-12 text-center">
+                    <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200 shadow-sm border border-amber-100">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Scripture Guide
+                    </div>
+                    <h2 className="tct-brand-gradient text-4xl font-bold tracking-tight mb-4">
+                        {isId ? 'Jalur Belajar' : 'Study Paths'}
+                    </h2>
+                    <p className="mt-3 text-base text-slate-500 max-w-lg mx-auto leading-relaxed">
+                        {isId
+                            ? 'Ikuti kurikulum ayat-ayat Alkitab yang dikurasi untuk pertumbuhanmu.'
+                            : 'Follow curated Bible verse paths designed for your growth.'}
+                    </p>
+                </header>
+
+                {loading ? (
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        {[1, 2].map(i => <div key={i} className="h-48 bg-slate-200/50 rounded-[32px] animate-pulse" />)}
+                    </div>
+                ) : (
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        {paths.map((path) => (
+                            <button
+                                key={path.id}
+                                onClick={() => router.push(`/versehub/${lang}/study/${path.slug}`)}
+                                className="group relative flex flex-col overflow-hidden rounded-[32px] bg-white p-7 text-left shadow-soft ring-1 ring-slate-200/60 transition-all hover:-translate-y-1 hover:shadow-xl hover:ring-amber-300/50"
+                            >
+                                {/* Accent Background Parity */}
+                                <div className={cn(
+                                    "absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-10 blur-2xl transition-opacity group-hover:opacity-25",
+                                    path.cover_color === 'amber' && "bg-amber-500",
+                                    path.cover_color === 'sky' && "bg-sky-500",
+                                    path.cover_color === 'green' && "bg-emerald-500",
+                                    path.cover_color === 'rose' && "bg-rose-500"
+                                )} />
+
+                                <div className="flex flex-1 flex-col relative z-10">
+                                    <div className="mb-6 flex items-center justify-between">
+                                        <span className={cn(
+                                            "rounded-full px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest ring-1",
+                                            path.cover_color === 'amber' && "bg-amber-50 text-amber-700 ring-amber-200/50",
+                                            path.cover_color === 'sky' && "bg-sky-50 text-sky-700 ring-sky-200/50",
+                                            path.cover_color === 'green' && "bg-emerald-50 text-emerald-700 ring-emerald-200/50",
+                                            path.cover_color === 'rose' && "bg-rose-50 text-rose-700 ring-rose-200/50"
+                                        )}>
+                                            {path.difficulty}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
+                                            <Clock className="h-3.5 w-3.5" />
+                                            {path.estimated_minutes}m
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
+                                        {isId ? path.title_id : path.title_en}
+                                    </h3>
+                                    <p className="mt-3 line-clamp-2 text-sm text-slate-500 leading-relaxed">
+                                        {isId ? path.description_id : path.description_en}
+                                    </p>
+
+                                    <div className="mt-8 flex items-center justify-between pt-5 border-t border-slate-50">
+                                        <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
+                                            <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-amber-50">
+                                                <BookOpen className="h-4 w-4 group-hover:text-amber-500" />
+                                            </div>
+                                            {isId ? 'Mulai Belajar' : 'Start Learning'}
+                                        </div>
+                                        <ChevronRight className="h-5 w-5 text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-amber-500" />
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {!loading && paths.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="mb-4 rounded-full bg-slate-50 p-6 text-slate-300">
+                            <BookOpen className="h-10 w-10" />
+                        </div>
+                        <p className="text-slate-500">
+                            {isId ? 'Belum ada jalur belajar tersedia.' : 'No study paths available yet.'}
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
