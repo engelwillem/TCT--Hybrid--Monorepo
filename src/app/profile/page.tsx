@@ -19,7 +19,7 @@ import {
     Grid
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import MobileAppLayout from '@/Layouts/MobileAppLayout';
+import MobileAppLayout from '@/layouts/MobileAppLayout';
 import DarkCard from '@/components/core/DarkCard';
 import AccordionCard from '@/components/core/AccordionCard';
 import PrimaryCTA from '@/components/core/PrimaryCTA';

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus } from 'lucide-react';
-import MobileAppLayout from '@/Layouts/MobileAppLayout';
+import MobileAppLayout from '@/layouts/MobileAppLayout';
 import SegmentedTabs from '@/components/core/SegmentedTabs';
 import { cn } from '@/lib/utils';
 

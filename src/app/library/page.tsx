@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import MobileAppLayout from '@/Layouts/MobileAppLayout';
+import MobileAppLayout from '@/layouts/MobileAppLayout';
 import ListItemWithChips from '@/components/core/ListItemWithChips';
 import SegmentedTabs from '@/components/core/SegmentedTabs';
 import { IconSearch } from '@/components/icons/AppIcons';

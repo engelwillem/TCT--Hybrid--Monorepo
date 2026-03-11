@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, Filter, Heart, MessageCircle, Share2 } from 'lucide-react';
-import MobileAppLayout from '@/Layouts/MobileAppLayout';
+import MobileAppLayout from '@/layouts/MobileAppLayout';
 import ListItemWithChips from '@/components/core/ListItemWithChips';
 import PrimaryCTA from '@/components/core/PrimaryCTA';
 import SegmentedTabs from '@/components/core/SegmentedTabs';
