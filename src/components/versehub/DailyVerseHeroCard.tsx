@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bookmark, Share2 } from 'lucide-react';
+import { Bookmark, Share2, Book } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DailyVerse } from '@/types/versehub-daily';
 
@@ -252,7 +252,7 @@ export default function DailyVerseHeroCard({
                         `}
                         style={revealStyle(0)}
                     >
-                        <CardTitle className="text-xs font-semibold text-slate-700">✨ Ayat Kekuatanku</CardTitle>
+                        <CardTitle className="inline-flex items-center text-xs font-semibold text-slate-700"><Book className="h-4 w-4 mr-1.5 text-brand" /> Ayat Kekuatanku</CardTitle>
                     </div>
                 </div>
             </CardHeader>

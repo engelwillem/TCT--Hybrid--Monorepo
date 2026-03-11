@@ -1,8 +1,7 @@
 'use client';
 
 import { useUser } from '@/firebase/auth/use-user';
-import { MessageSquare, Bell } from 'lucide-react';
-
+import { MessageSquare, Bell, Calendar } from 'lucide-react';
 export default function GreetingHeader() {
     const { user } = useUser();
     const userName = user?.displayName ?? 'Friend';
@@ -18,11 +17,7 @@ export default function GreetingHeader() {
     };
 
     const getGreetingEmoji = () => {
-        if (h < 5) return '🌙';
-        if (h < 11) return '☀️';
-        if (h < 15) return '🌤️';
-        if (h < 19) return '🌇';
-        return '✨';
+        return <Calendar className="h-3.5 w-3.5 text-slate-400" />;
     };
 
     const dateLabel = now.toLocaleDateString('id-ID', {
@@ -38,9 +33,8 @@ export default function GreetingHeader() {
                 <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-cyan-400/15 blur-2xl" />
                 <div className="pointer-events-none absolute bottom-0 left-10 h-20 w-20 rounded-full bg-blue-400/10 blur-2xl" />
 
-                {/* Date pill */}
                 <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 px-3 py-1 text-[11px] font-semibold text-slate-500 dark:bg-white/8 dark:text-slate-400">
-                    <span>{getGreetingEmoji()}</span>
+                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     <span>{dateLabel}</span>
                 </div>
 
