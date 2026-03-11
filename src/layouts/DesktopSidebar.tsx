@@ -1,91 +1,121 @@
+'use client';
 
-"use client";
+import { cn } from '@/lib/utils';
+import AppIcon from '@/components/system/AppIcon';
+import Link from 'next/link';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { House, Grid2x2, Users, BookOpenText, Settings, Sparkles, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+type NavItem = {
+    id: string;
+    label: string;
+    icon: any;
+};
 
-const navItems = [
-  { label: "Home", icon: House, href: "/today" },
-  { label: "Channels", icon: Grid2x2, href: "/channels" },
-  { label: "Community", icon: Users, href: "/community" },
-  { label: "Bible", icon: BookOpenText, href: "/versehub/id" },
-  { label: "Settings", icon: Settings, href: "/profile" },
-];
+type DesktopSidebarNavProps = {
+    activeId?: string;
+    navItems: NavItem[];
+    isAuthenticated: boolean;
+    userName?: string;
+    userEmail?: string;
+    initials?: string;
+    appName?: string;
+    communityName?: string;
+    className?: string;
+};
 
-export function DesktopSidebar() {
-  const pathname = usePathname();
+export default function DesktopSidebarNav({
+    activeId,
+    navItems,
+    isAuthenticated,
+    userName,
+    userEmail,
+    initials,
+    appName = 'TheChosenTalks',
+    communityName = 'Chosen People',
+    className,
+}: DesktopSidebarNavProps) {
+    const isTodaySidebar = activeId === 'home';
 
-  return (
-    <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-card border-r border-border/50 z-50 p-8 space-y-10 shadow-xl">
-      <div className="flex items-center gap-3 px-2">
-        <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand/30">
-          <Sparkles size={26} />
-        </div>
-        <div className="flex flex-col">
-          <h1 className="text-xl font-black tracking-tighter leading-none">TheChosen</h1>
-          <span className="tct-label text-[10px] opacity-60">Talks • Premium</span>
-        </div>
-      </div>
-
-      <nav className="flex-1 space-y-2">
-        <p className="tct-label px-4 mb-4">Main Menu</p>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group relative",
-                isActive 
-                  ? "text-brand bg-brand/5 font-extrabold shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-            >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={cn(isActive && "scale-110 transition-transform")} />
-              <span className="text-sm font-bold tracking-tight">{item.label}</span>
-              
-              {isActive && (
-                <motion.div 
-                  layoutId="sidebar-active"
-                  className="absolute left-0 w-1.5 h-8 bg-brand rounded-r-full shadow-[2px_0_8px_rgba(var(--brand),0.4)]"
-                />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="space-y-6">
-        <div className="p-6 bg-muted/40 rounded-3xl space-y-4 border border-border/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center text-brand text-sm font-black ring-2 ring-brand/5">
-              TC
+    return (
+        <aside
+            className={cn(
+                'flex flex-col gap-4 rounded-3xl bg-surface p-6 shadow-soft',
+                className,
+            )}
+            style={{ position: 'sticky', top: '2rem', alignSelf: 'start' }}
+        >
+            <div>
+                <p
+                    className={cn(
+                        isTodaySidebar
+                            ? 'tct-brand-gradient text-base font-bold tracking-tight'
+                            : 'text-xs font-medium uppercase tracking-wide text-muted-foreground',
+                    )}
+                >
+                    {isTodaySidebar ? 'Choose n Talks' : appName}
+                </p>
+                {!isTodaySidebar ? (
+                    <p className="tct-brand-gradient mt-1 text-lg font-semibold">{communityName}</p>
+                ) : null}
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-extrabold truncate">Chosen User</span>
-              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Premium Member</span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-             <Button variant="ghost" size="icon" className="flex-1 h-10 rounded-xl hover:bg-muted bg-background">
-               <Settings size={18} className="text-muted-foreground" />
-             </Button>
-             <Button variant="ghost" size="icon" className="flex-1 h-10 rounded-xl hover:bg-destructive/10 text-destructive bg-background">
-               <LogOut size={18} />
-             </Button>
-          </div>
-        </div>
-        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] text-center">
-          v1.0.42 • STABLE
-        </p>
-      </div>
-    </aside>
-  );
+
+            <nav className="mt-2 space-y-1">
+                {navItems.map((item) => {
+                    const isActive = item.id === activeId;
+                    
+                    // Route mapping (simplified for component parity)
+                    const routeMap: Record<string, string> = {
+                        home: '/today',
+                        channels: '/channels',
+                        library: '/community',
+                        bible: '/versehub/id',
+                        settings: '/profile',
+                    };
+                    const href = routeMap[item.id] || '/';
+
+                    const baseClass = cn(
+                        'group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-all duration-200',
+                        isActive
+                            ? 'bg-surface/70 text-foreground ring-1 ring-black/5 dark:ring-white/10'
+                            : 'text-muted-foreground hover:bg-surface-muted hover:text-foreground',
+                    );
+
+                    return (
+                        <Link
+                            key={item.id}
+                            href={href}
+                            className={baseClass}
+                        >
+                            <AppIcon
+                                icon={item.icon}
+                                variant="nav"
+                                active={isActive}
+                                className={cn(
+                                    isActive
+                                        ? 'text-foreground'
+                                        : 'text-muted-foreground group-hover:text-foreground',
+                                )}
+                            />
+                            <span className="flex-1">{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {isAuthenticated ? (
+                <div className="mt-auto flex items-center gap-3 rounded-2xl bg-surface-muted p-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-sm font-semibold">
+                        {initials}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                            {userName}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                            {userEmail}
+                        </p>
+                    </div>
+                </div>
+            ) : null}
+        </aside>
+    );
 }

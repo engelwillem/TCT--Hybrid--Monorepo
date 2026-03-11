@@ -4,11 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "@/firebase/auth/use-user";
-import { getUiNavItems } from "@/lib/navigation";
-import FloatingBottomNav from "@/components/core/FloatingBottomNav";
-import DesktopSidebarNav from "@/components/core/DesktopSidebarNav";
+import FloatingBottomNav from "@/layouts/BottomNav";
+import DesktopSidebarNav from "@/layouts/DesktopSidebar";
 import { IconChevronRight } from "@/components/icons/AppIcons";
 import { cn } from "@/lib/utils";
+import { getUiNavItems } from "@/lib/navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAuthenticated = !!user;
   const navItems = getUiNavItems(isAuthenticated);
 
-  // Identify active nav item based on pathname
+  // Identify active nav item based on pathname for parity
   const activeNavId = navItems.find(item => pathname.startsWith(item.href))?.id || 'home';
 
   const [mounted, setMounted] = useState(false);
@@ -43,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleBack = () => {
     if (window.history.length > 1) {
-      router.back();
+      window.history.back();
     } else {
       router.push('/today');
     }
@@ -52,32 +52,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!mounted) return <div className="min-h-screen bg-background" />;
 
   const isLanding = pathname === "/";
-  const title = pathname.split('/').filter(Boolean).pop() || 'Today';
-  const formattedTitle = title.charAt(0).toUpperCase() + title.slice(1);
+  // Logic to determine page title from pathname (Parity with app.blade.php logic)
+  const getPageTitle = (path: string) => {
+      if (path === '/') return 'TheChosenTalks';
+      if (path === '/today') return 'Today';
+      if (path === '/community') return 'Community';
+      if (path.startsWith('/channels')) return 'Channels';
+      if (path === '/profile') return 'Profile';
+      if (path === '/inbox') return 'Inbox';
+      return 'TheChosenTalks';
+  };
+  const title = getPageTitle(pathname);
 
   return (
     <div className="relative min-h-screen bg-[#fafafa] dark:bg-[#050505] overflow-x-hidden">
-      {/* Ambient Background Layers (Parity with Laravel) */}
+      {/* Ambient Background Layers (Parity with Laravel app.blade.php / MobileAppLayout) */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -left-[10%] -top-[10%] h-[60%] w-[60%] rounded-full bg-indigo-200/20 blur-[120px] dark:bg-indigo-900/10" />
         <div className="absolute -right-[5%] top-[10%] h-[50%] w-[50%] rounded-full bg-sky-200/20 blur-[100px] dark:bg-sky-900/10" />
         <div className="absolute bottom-[10%] left-[20%] h-[40%] w-[40%] rounded-full bg-rose-200/10 blur-[110px] dark:bg-rose-900/5" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-8 pb-32">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8">
         <div className="flex items-start gap-8">
-          {/* Desktop Sidebar */}
-          <div className="hidden md:flex md:w-72 md:flex-col md:gap-4 sticky top-8 h-fit align-start">
-            <DesktopSidebarNav
-              activeId={activeNavId}
-              navItems={navItems}
-              isAuthenticated={isAuthenticated}
-            />
-          </div>
+          {/* Desktop Sidebar (Parity with DesktopSidebarNav.tsx) */}
+          {!isLanding && (
+            <div className="hidden md:flex md:w-72 md:flex-col md:gap-4 sticky top-8 h-fit align-start">
+              <DesktopSidebarNav
+                activeId={activeNavId}
+                navItems={navItems as any}
+                isAuthenticated={isAuthenticated}
+                userName={user?.displayName || ''}
+                userEmail={user?.email || ''}
+                initials={user?.displayName?.slice(0, 1).toUpperCase() || 'U'}
+              />
+            </div>
+          )}
 
           {/* Main Content Column */}
-          <div className="w-full md:flex-1 mx-auto max-w-[420px] md:mx-0 md:max-w-none">
-            {/* Sticky Header (Mobile Only / Responsive Logic) */}
+          <div className={cn("w-full md:flex-1 mx-auto", isLanding ? "max-w-none" : "max-w-[420px] md:mx-0 md:max-w-none")}>
+            {/* Sticky Header (Parity with MobileAppLayout.tsx) */}
             {!isLanding && (
               <motion.header
                 initial={false}
@@ -98,14 +112,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
 
                 <h1 className="tct-brand-gradient text-lg font-bold">
-                  {formattedTitle}
+                  {title}
                 </h1>
 
                 <div className="w-12" /> {/* Right Action Spacer */}
               </motion.header>
             )}
 
-            <main className={cn(isLanding ? "" : "mt-6")}>
+            <main className={cn(isLanding ? "" : "mt-6", "relative min-h-[calc(100vh-200px)]")}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={pathname}
@@ -123,11 +137,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Floating Mobile Nav */}
+      {/* Floating Mobile Nav (Parity with FloatingBottomNav.tsx) */}
       {!isLanding && (
         <div className="fixed inset-x-0 z-50 flex justify-center md:hidden bottom-[calc(24px+env(safe-area-inset-bottom))]">
           <FloatingBottomNav
-            items={navItems}
+            items={navItems as any}
             activeId={activeNavId}
             onChange={(id) => {
               const href = navItems.find(n => n.id === id)?.href || '/today';
