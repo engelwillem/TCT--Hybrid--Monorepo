@@ -3,11 +3,19 @@
 import { cn } from '@/lib/utils';
 import AppIcon from '@/components/system/AppIcon';
 import Link from 'next/link';
+import type { LucideIcon } from 'lucide-react';
+
+type NavItem = {
+    id: string;
+    label: string;
+    icon: LucideIcon;
+    href?: string;
+};
 
 type DesktopSidebarNavProps = {
     activeId?: string;
     className?: string;
-    navItems: any[];
+    navItems?: NavItem[];
     isAuthenticated?: boolean;
     user?: any;
     appName?: string;
@@ -17,7 +25,7 @@ type DesktopSidebarNavProps = {
 export default function DesktopSidebarNav({
     activeId,
     className,
-    navItems,
+    navItems = [],
     isAuthenticated = false,
     user,
     appName = 'TheChosenTalks',

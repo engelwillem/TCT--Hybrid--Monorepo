@@ -261,17 +261,17 @@ export function VersehubReaderPage({ lang: initialLang }: VersehubReaderPageProp
     }, []);
 
     const navItems = [
-        { id: 'bible', label: 'Bible', icon: <Library /> },
-        { id: 'community', label: 'Community', icon: <Compass /> },
-        { id: 'journey', label: 'Journey', icon: <History /> },
-        { id: 'settings', label: 'Settings', icon: <Zap /> },
+        { id: 'bible', label: 'Bible', icon: Library, href: `/versehub/${lang}` },
+        { id: 'community', label: 'Community', icon: Compass, href: '/community' },
+        { id: 'journey', label: 'Journey', icon: History, href: `/versehub/${lang}/my-spiritual-journey` },
+        { id: 'settings', label: 'Settings', icon: Zap, href: '/profile' },
     ];
 
     return (
         <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-[#FAFAF8] text-slate-900'}`}>
             <div className="mx-auto w-full max-w-6xl px-4 py-4 md:py-6">
                 <div className="flex items-start gap-8">
-                    {!isFocusMode && <DesktopSidebarNav activeId="bible" />}
+                    {!isFocusMode && <DesktopSidebarNav activeId="bible" navItems={navItems} />}
 
                     <div className="w-full md:flex-1">
                         {/* Sticky Header parity */}
