@@ -1,20 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    User, 
-    Mail, 
-    Lock, 
     ShieldCheck, 
     LogOut, 
     Camera, 
     ChevronRight, 
-    ArrowLeft,
     CheckCircle2,
-    AlertCircle,
-    Smartphone,
     Trash2,
     Grid
 } from 'lucide-react';
@@ -39,10 +32,8 @@ export default function ProfilePage() {
         email_verified_at: '2024-01-01'
     };
 
-    const [loading, setLoading] = useState(false);
     const [journeyBadge, setJourneyBadge] = useState(12);
     const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-    const [twoFactorPassword, setTwoFactorPassword] = useState('');
     
     const [profileData, setProfileData] = useState({
         name: user.name,

@@ -3,11 +3,13 @@
 import { cn } from '@/lib/utils';
 import AppIcon from '@/components/system/AppIcon';
 import Link from 'next/link';
+import type { LucideIcon } from 'lucide-react';
 
 type NavItem = {
     id: string;
     label: string;
-    icon: any;
+    icon: LucideIcon;
+    href?: string;
 };
 
 type DesktopSidebarNavProps = {
@@ -69,7 +71,7 @@ export default function DesktopSidebarNav({
                         bible: '/versehub/id',
                         profile: '/profile',
                     };
-                    const href = (item as any).href || routeMap[item.id] || '/';
+                    const href = item.href || routeMap[item.id] || '/';
 
                     const baseClass = cn(
                         'group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-all duration-200',
