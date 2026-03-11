@@ -19,8 +19,6 @@ export const uiNavItems: UiNavItem[] = [
 ];
 
 export function getUiNavItems(isAuthenticated: boolean): UiNavItem[] {
-    if (isAuthenticated) return uiNavItems;
-
-    // Guest users only see Channels and Bible
-    return uiNavItems.filter((item) => item.id === 'channels' || item.id === 'bible');
+    // Unhidden: returning all items for frontend demonstration
+    return uiNavItems;
 }

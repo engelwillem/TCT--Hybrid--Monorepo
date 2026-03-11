@@ -72,7 +72,6 @@ function postToCardProps(
     const textPosition: 'above' | 'below' = rawTextPosition === 'above' ? 'above' : 'below';
 
     return {
-        key: p.id,
         authorName: author.name ?? 'Unknown',
         authorAvatar: author.avatar_url,
         isOfficial: Boolean(author.is_official),
