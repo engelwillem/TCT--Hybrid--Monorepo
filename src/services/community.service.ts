@@ -7,12 +7,22 @@
 
 import { CommunityPost, CommunityComment } from "@/features/community/types";
 import { MOCK_POSTS, MOCK_COMMENTS, MOCK_USERS } from "@/features/community/mock";
-import { getAppAccessToken } from "@/services/app-auth-token";
+import { clearAppAccessToken, getAppAccessToken } from "@/services/app-auth-token";
 
 let posts: CommunityPost[] = [...MOCK_POSTS];
 let comments: CommunityComment[] = [...MOCK_COMMENTS];
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 
 interface ApiEnvelope<T> {
   data?: T;
@@ -98,6 +108,12 @@ const buildHeaders = (needsAuth = false): HeadersInit => {
   return headers;
 };
 
+function handleAuthFailure(status: number) {
+  if (status === 401 || status === 403) {
+    clearAppAccessToken();
+  }
+}
+
 async function parseJson<T>(response: Response): Promise<T | null> {
   try {
     return (await response.json()) as T;
@@ -106,15 +122,23 @@ async function parseJson<T>(response: Response): Promise<T | null> {
   }
 }
 
+async function assertOk(response: Response, message: string): Promise<void> {
+  if (response.ok) return;
+
+  handleAuthFailure(response.status);
+  throw new ApiError(`${message}: ${response.status}`, response.status);
+}
+
 export const CommunityService = {
   async listPosts(): Promise<CommunityPost[]> {
     try {
       const response = await fetch("/api/community/posts", {
         method: "GET",
         cache: "no-store",
+        headers: buildHeaders(true),
       });
 
-      if (!response.ok) throw new Error(`Failed to fetch posts: ${response.status}`);
+      await assertOk(response, "Failed to fetch posts");
 
       const payload = await parseJson<ApiEnvelope<{ posts: ApiPost[] }>>(response);
       const nextPosts = (payload?.data?.posts ?? []).map(mapApiPost);
@@ -131,95 +155,58 @@ export const CommunityService = {
   },
 
   async createPost(text: string, imageUrl?: string): Promise<CommunityPost> {
-    try {
-      const response = await fetch("/api/community/posts", {
-        method: "POST",
-        headers: buildHeaders(true),
-        body: JSON.stringify({ text, imageUrl }),
-      });
+    const response = await fetch("/api/community/posts", {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify({ text, imageUrl }),
+    });
 
-      if (!response.ok) throw new Error(`Failed to create post: ${response.status}`);
+    await assertOk(response, "Failed to create post");
 
-      const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
-      if (!payload?.data?.post) throw new Error("Malformed create post payload");
-
-      const created = mapApiPost(payload.data.post);
-      posts = [created, ...posts.filter((item) => item.id !== created.id)];
-      return created;
-    } catch {
-      await delay(150);
-      const newPost: CommunityPost = {
-        id: Date.now().toString(),
-        text,
-        imageUrl,
-        createdAt: "Baru saja",
-        author: MOCK_USERS.me,
-        counts: { likes: 0, comments: 0, bookmarks: 0 },
-        isLiked: false,
-        isBookmarked: false,
-      };
-
-      posts = [newPost, ...posts];
-      return newPost;
+    const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
+    if (!payload?.data?.post) {
+      throw new ApiError("Malformed create post payload", 502);
     }
+
+    const created = mapApiPost(payload.data.post);
+    posts = [created, ...posts.filter((item) => item.id !== created.id)];
+    return created;
   },
 
-  async toggleLike(postId: string): Promise<void> {
-    try {
-      const response = await fetch(`/api/community/posts/${postId}/pray`, {
-        method: "POST",
-        headers: buildHeaders(true),
-      });
+  async toggleLike(postId: string): Promise<CommunityPost> {
+    const response = await fetch(`/api/community/posts/${postId}/pray`, {
+      method: "POST",
+      headers: buildHeaders(true),
+    });
 
-      if (!response.ok) throw new Error(`Failed to toggle pray reaction: ${response.status}`);
+    await assertOk(response, "Failed to toggle pray reaction");
 
-      const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
-      if (payload?.data?.post) {
-        const updated = mapApiPost(payload.data.post);
-        posts = posts.map((item) => (item.id === postId ? updated : item));
-      }
-    } catch {
-      await delay(80);
-      posts = posts.map((item) =>
-        item.id === postId
-          ? {
-              ...item,
-              isLiked: !item.isLiked,
-              counts: {
-                ...item.counts,
-                likes: item.counts.likes + (item.isLiked ? -1 : 1),
-              },
-            }
-          : item,
-      );
+    const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
+    if (!payload?.data?.post) {
+      throw new ApiError("Malformed pray payload", 502);
     }
+
+    const updated = mapApiPost(payload.data.post);
+    posts = posts.map((item) => (item.id === postId ? updated : item));
+    return updated;
   },
 
-  async toggleBookmark(postId: string): Promise<void> {
-    try {
-      const response = await fetch(`/api/community/posts/${postId}/bookmark`, {
-        method: "POST",
-        headers: buildHeaders(true),
-      });
+  async toggleBookmark(postId: string): Promise<CommunityPost> {
+    const response = await fetch(`/api/community/posts/${postId}/bookmark`, {
+      method: "POST",
+      headers: buildHeaders(true),
+    });
 
-      if (!response.ok) throw new Error(`Failed to toggle bookmark: ${response.status}`);
+    await assertOk(response, "Failed to toggle bookmark");
 
-      const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
-      if (payload?.data?.post) {
-        const updated = mapApiPost(payload.data.post);
-        posts = posts.map((item) => (item.id === postId ? updated : item));
-      }
-    } catch {
-      await delay(80);
-      posts = posts.map((item) =>
-        item.id === postId
-          ? {
-              ...item,
-              isBookmarked: !item.isBookmarked,
-            }
-          : item,
-      );
+    const payload = await parseJson<ApiEnvelope<{ post: ApiPost }>>(response);
+    if (!payload?.data?.post) {
+      throw new ApiError("Malformed bookmark payload", 502);
     }
+
+    const updated = mapApiPost(payload.data.post);
+    posts = posts.map((item) => (item.id === postId ? updated : item));
+    return updated;
   },
 
   async listComments(postId: string): Promise<CommunityComment[]> {
@@ -247,57 +234,33 @@ export const CommunityService = {
   },
 
   async addComment(postId: string, text: string): Promise<CommunityComment> {
-    try {
-      const response = await fetch(`/api/community/posts/${postId}/comments`, {
-        method: "POST",
-        headers: buildHeaders(true),
-        body: JSON.stringify({ text }),
-      });
+    const response = await fetch(`/api/community/posts/${postId}/comments`, {
+      method: "POST",
+      headers: buildHeaders(true),
+      body: JSON.stringify({ text }),
+    });
 
-      if (!response.ok) throw new Error(`Failed to add comment: ${response.status}`);
+    await assertOk(response, "Failed to add comment");
 
-      const payload = await parseJson<ApiEnvelope<{ comment: ApiComment }>>(response);
-      if (!payload?.data?.comment) throw new Error("Malformed comment payload");
-
-      const created = mapApiComment(payload.data.comment);
-      comments = [...comments, created];
-      posts = posts.map((item) =>
-        item.id === postId
-          ? {
-              ...item,
-              counts: {
-                ...item.counts,
-                comments: item.counts.comments + 1,
-              },
-            }
-          : item,
-      );
-
-      return created;
-    } catch {
-      await delay(120);
-      const newComment: CommunityComment = {
-        id: Date.now().toString(),
-        postId,
-        text,
-        createdAt: "Baru saja",
-        author: MOCK_USERS.me,
-      };
-
-      comments = [...comments, newComment];
-      posts = posts.map((item) =>
-        item.id === postId
-          ? {
-              ...item,
-              counts: {
-                ...item.counts,
-                comments: item.counts.comments + 1,
-              },
-            }
-          : item,
-      );
-
-      return newComment;
+    const payload = await parseJson<ApiEnvelope<{ comment: ApiComment }>>(response);
+    if (!payload?.data?.comment) {
+      throw new ApiError("Malformed comment payload", 502);
     }
+
+    const created = mapApiComment(payload.data.comment);
+    comments = [...comments, created];
+    posts = posts.map((item) =>
+      item.id === postId
+        ? {
+            ...item,
+            counts: {
+              ...item.counts,
+              comments: item.counts.comments + 1,
+            },
+          }
+        : item,
+    );
+
+    return created;
   },
 };

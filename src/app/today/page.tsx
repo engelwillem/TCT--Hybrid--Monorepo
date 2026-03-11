@@ -91,7 +91,7 @@ export default function TodayPage() {
     const items = hybridFeed;
     const firstItems = items.slice(0, 2);
     const restItems = items.slice(2);
-    const ritualVerse = rituals?.today_verse ?? null;
+    const ritualVerse = (rituals as any)?.today_verse ?? null;
     const ritualRef = String(
         ritualVerse?.ref ??
         dailyVerse?.ref ??

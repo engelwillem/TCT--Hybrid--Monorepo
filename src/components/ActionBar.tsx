@@ -6,7 +6,7 @@ import AppIcon from '@/components/system/AppIcon';
 import { useUser } from '@/firebase/auth/use-user';
 import { motion } from 'framer-motion';
 
-type ActionBarProps = {
+export type ActionBarProps = {
     postType?: string;
     prayLabel?: string;
     prayed?: boolean;

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { getApps } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onIdTokenChanged } from "firebase/auth";
 import { clearAppAccessToken, setAppAccessToken } from "@/services/app-auth-token";
 
 export function FirebaseAuthSync() {
@@ -10,7 +10,7 @@ export function FirebaseAuthSync() {
     if (getApps().length === 0) return;
 
     const auth = getAuth(getApps()[0]);
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
       if (!user) {
         clearAppAccessToken();
         return;
@@ -26,15 +26,23 @@ export function FirebaseAuthSync() {
           body: JSON.stringify({ idToken }),
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403 || response.status === 422) {
+            clearAppAccessToken();
+          }
+          return;
+        }
 
-        const payload = await response.json();
+        const payload = await response.json().catch(() => null);
         const token = payload?.data?.token;
         if (typeof token === "string" && token.length > 0) {
           setAppAccessToken(token);
+          return;
         }
+
+        clearAppAccessToken();
       } catch {
-        // Keep app usable even when backend sync is unreachable.
+        // Keep the previous token when the backend is temporarily unreachable.
       }
     });
 

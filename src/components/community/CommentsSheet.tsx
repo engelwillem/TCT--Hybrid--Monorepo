@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import { cn } from '@/lib/utils';
 import { Send, MessageSquare } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -80,7 +82,7 @@ export default function CommentsSheet({
         return roots;
     }, [safeComments]);
 
-    const renderNode = (node: ThreadNode, depth = 0): JSX.Element => {
+    const renderNode = (node: ThreadNode, depth = 0): React.JSX.Element => {
         const c = node.comment;
         return (
             <div key={c.id} className="relative">

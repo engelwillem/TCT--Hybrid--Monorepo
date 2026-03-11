@@ -58,14 +58,15 @@ export function CommunityPage() {
 
   const toggleLike = async (postId: string) => {
     const originalPosts = [...posts];
-    setPosts(posts.map(p => 
-      p.id === postId 
-        ? { ...p, isLiked: !p.isLiked, counts: { ...p.counts, likes: p.counts.likes + (p.isLiked ? -1 : 1) } } 
+    setPosts((prev) => prev.map((p) =>
+      p.id === postId
+        ? { ...p, isLiked: !p.isLiked, counts: { ...p.counts, likes: p.counts.likes + (p.isLiked ? -1 : 1) } }
         : p
     ));
 
     try {
-      await CommunityService.toggleLike(postId);
+      const updatedPost = await CommunityService.toggleLike(postId);
+      setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
     } catch (error) {
       setPosts(originalPosts);
       console.error("Failed to toggle like", error);
@@ -74,10 +75,11 @@ export function CommunityPage() {
 
   const toggleBookmark = async (postId: string) => {
     const originalPosts = [...posts];
-    setPosts(posts.map(p => p.id === postId ? { ...p, isBookmarked: !p.isBookmarked } : p));
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, isBookmarked: !p.isBookmarked } : p));
 
     try {
-      await CommunityService.toggleBookmark(postId);
+      const updatedPost = await CommunityService.toggleBookmark(postId);
+      setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
     } catch (error) {
       setPosts(originalPosts);
       console.error("Failed to toggle bookmark", error);

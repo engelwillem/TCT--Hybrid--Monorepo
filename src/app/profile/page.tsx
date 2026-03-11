@@ -81,10 +81,6 @@ export default function ProfilePage() {
                 
                 {/* Hero Profile Card Parity */}
                 <DarkCard className="relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-10">
-                        <User className="h-32 w-32 rotate-12" />
-                    </div>
-                    
                     <div className="relative z-10 flex flex-col items-center text-center">
                         <div className="relative group">
                             <div className="h-24 w-24 rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold ring-4 ring-white/5">

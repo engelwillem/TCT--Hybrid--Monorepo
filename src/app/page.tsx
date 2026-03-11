@@ -1,141 +1,88 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import React, { useRef, useState } from "react";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import Link from "next/link";
-import { 
-  ArrowRight, 
-  BookMarked, 
-  BookOpen, 
-  LogIn, 
-  Plus, 
-  Sparkles, 
-  Users 
+import {
+  ArrowRight,
+  BookMarked,
+  BookOpen,
+  LogIn,
+  Plus,
+  Sparkles,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/* ─────────────────────────── Background Parity ────────────────────────── */
+/* ─────────────────────────── Background ────────────────────────── */
 function Background() {
     return (
         <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-            {/* Base gradient */}
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-teal-950" />
-
-            {/* Particle texture */}
-            <div
-                className={cn(
-                    'absolute inset-0',
-                    'bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)]',
-                    'bg-[length:24px_24px]',
-                    'animate-[twinkle_10s_ease-in-out_infinite]',
-                )}
-            />
-
-            {/* Grain Texture (Assumes .bg-grain is defined in globals.css) */}
+            <div className={cn(
+                'absolute inset-0',
+                'bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)]',
+                'bg-[length:24px_24px]',
+                'animate-[twinkle_10s_ease-in-out_infinite]',
+            )} />
             <div className="bg-grain absolute inset-0 mix-blend-overlay" />
-            <div className="absolute inset-0 bg-[url('/grain.png')] opacity-20 pointer-events-none mix-blend-overlay" />
-
-            {/* Glow orbs */}
             <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-3xl animate-[floatA_16s_ease-in-out_infinite]" />
             <div className="absolute bottom-[-200px] right-[-200px] h-[560px] w-[560px] rounded-full bg-blue-600/8 blur-3xl animate-[floatB_20s_ease-in-out_infinite]" />
             <div className="absolute bottom-[-160px] left-[-200px] h-[520px] w-[520px] rounded-full bg-teal-500/8 blur-3xl animate-[floatC_22s_ease-in-out_infinite]" />
-
-            <style jsx global>{`
-                @keyframes floatA {
-                    0%, 100% { transform: translate(-50%, 0px) scale(1); }
-                    50%       { transform: translate(-50%, 22px) scale(1.04); }
-                }
-                @keyframes floatB {
-                    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-                    50%       { transform: translate(-20px, -16px) scale(1.06); opacity: 1; }
-                }
-                @keyframes floatC {
-                    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-                    50%       { transform: translate(20px, -12px) scale(1.04); opacity: 0.9; }
-                }
-                @keyframes twinkle {
-                    0%, 100% { opacity: 0.18; }
-                    50%       { opacity: 0.32; }
-                }
-                @keyframes shine {
-                    from { transform: translateX(-100%) skewX(-15deg); }
-                    to   { transform: translateX(250%)  skewX(-15deg); }
-                }
+            <style>{`
+                @keyframes floatA { 0%,100%{transform:translate(-50%,0) scale(1)} 50%{transform:translate(-50%,22px) scale(1.04)} }
+                @keyframes floatB { 0%,100%{transform:translate(0,0) scale(1);opacity:.7} 50%{transform:translate(-20px,-16px) scale(1.06);opacity:1} }
+                @keyframes floatC { 0%,100%{transform:translate(0,0) scale(1);opacity:.6} 50%{transform:translate(20px,-12px) scale(1.04);opacity:.9} }
+                @keyframes twinkle { 0%,100%{opacity:.18} 50%{opacity:.32} }
+                @keyframes shine { from{transform:translateX(-100%) skewX(-15deg)} to{transform:translateX(250%) skewX(-15deg)} }
             `}</style>
         </div>
     );
 }
 
-/* ─────────────────────────── Pill Badge ─────────────────────────── */
+/* ─────────────────────────── Badge ─────────────────────────── */
 function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
     return (
-        <span
-            className={cn(
-                'inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50 backdrop-blur-sm',
-                className,
-            )}
-        >
+        <span className={cn('inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50 backdrop-blur-sm', className)}>
             {children}
         </span>
     );
 }
 
 /* ─────────────────────────── Feature Card ─────────────────────────── */
-function FeatureCard({
-    icon: Icon,
-    title,
-    description,
-    href,
-    ctaLabel = 'Buka',
-    accent = 'cyan',
-    animateOnView = true,
-}: {
-    icon: any;
+type Accent = 'cyan' | 'violet' | 'emerald' | 'blue';
+
+function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', accent = 'cyan' }: {
+    icon: React.ElementType;
     title: string;
     description: string;
     href: string;
     ctaLabel?: string;
-    accent?: 'cyan' | 'violet' | 'emerald' | 'blue';
-    animateOnView?: boolean;
+    accent?: Accent;
 }) {
-    const accentMap = {
-        cyan: { icon: 'bg-cyan-400/10 text-cyan-400', glow: 'rgba(34,211,238,0.22)', border: 'rgba(34,211,238,0.30)' },
-        violet: { icon: 'bg-violet-400/10 text-violet-400', glow: 'rgba(167,139,250,0.22)', border: 'rgba(167,139,250,0.30)' },
-        emerald: { icon: 'bg-emerald-400/10 text-emerald-400', glow: 'rgba(52,211,153,0.22)', border: 'rgba(52,211,153,0.30)' },
-        blue: { icon: 'bg-blue-400/10 text-blue-400', glow: 'rgba(96,165,250,0.22)', border: 'rgba(96,165,250,0.30)' },
-    }[accent];
+    const accentMap: Record<Accent, { icon: string; glow: string }> = {
+        cyan:    { icon: 'bg-cyan-400/10 text-cyan-400',     glow: 'rgba(34,211,238,0.22)' },
+        violet:  { icon: 'bg-violet-400/10 text-violet-400', glow: 'rgba(167,139,250,0.22)' },
+        emerald: { icon: 'bg-emerald-400/10 text-emerald-400',glow: 'rgba(52,211,153,0.22)' },
+        blue:    { icon: 'bg-blue-400/10 text-blue-400',     glow: 'rgba(96,165,250,0.22)' },
+    };
+    const { icon: iconCls, glow } = accentMap[accent];
 
     return (
-        <motion.article
-            initial={animateOnView ? { opacity: 0, y: 28 } : undefined}
-            whileInView={animateOnView ? { opacity: 1, y: 0 } : undefined}
-            viewport={animateOnView ? { once: true, amount: 0.15 } : undefined}
-            transition={animateOnView ? { duration: 0.5 } : undefined}
-            whileHover={{ y: -5, scale: 1.012 }}
-            whileTap={{ scale: 0.985 }}
-            className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20"
-            style={{
-                ['--glow' as any]: accentMap.glow,
-                ['--border' as any]: accentMap.border,
-            }}
-        >
-            <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(400px_circle_at_0%_0%,var(--glow),transparent_60%)]" />
-
+        <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20">
+            <div
+                className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{ background: `radial-gradient(400px circle at 0% 0%, ${glow}, transparent 60%)` }}
+            />
             <div className="relative z-10 flex flex-1 flex-col">
-                <div className={cn('mb-5 flex h-11 w-11 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3', accentMap.icon)}>
+                <div className={cn('mb-5 flex h-11 w-11 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3', iconCls)}>
                     <Icon className="h-5 w-5" />
                 </div>
-
                 <h3 className="mb-2 text-base font-semibold text-white">{title}</h3>
                 <p className="flex-1 text-sm leading-relaxed text-white/50">{description}</p>
-
                 <div className="mt-5">
-                    <Button
-                        asChild
-                        variant="outline"
-                        className="h-9 w-full rounded-full border-white/12 bg-white/[0.03] px-4 text-xs font-semibold tracking-wide text-white/60 backdrop-blur-sm transition-all duration-300 hover:border-white/25 hover:bg-white/8 hover:text-white active:scale-[0.98] relative overflow-hidden group/btn"
-                    >
+                    <Button asChild variant="outline" className="h-9 w-full rounded-full border-white/12 bg-white/[0.03] px-4 text-xs font-semibold tracking-wide text-white/60 backdrop-blur-sm transition-all duration-300 hover:border-white/25 hover:bg-white/8 hover:text-white active:scale-[0.98] relative overflow-hidden group/btn">
                         <Link href={href} className="group/cta inline-flex items-center justify-center gap-1.5">
                             <span className="relative z-10">{ctaLabel}</span>
                             <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover/cta:translate-x-1 relative z-10" />
@@ -144,7 +91,7 @@ function FeatureCard({
                     </Button>
                 </div>
             </div>
-        </motion.article>
+        </article>
     );
 }
 
@@ -152,8 +99,10 @@ function FeatureCard({
 function QuickAccessLauncher() {
     const [open, setOpen] = useState(false);
     const items = [
-        { href: '/channels', label: 'Channels', icon: BookOpen, tone: 'from-violet-400 to-fuchsia-500' },
-        { href: '/versehub/id', label: 'Bible', icon: BookMarked, tone: 'from-blue-400 to-indigo-500' },
+        { href: '/channels',    label: 'Channels',  icon: BookOpen,   tone: 'from-violet-400 to-fuchsia-500' },
+        { href: '/versehub/id', label: 'Bible',      icon: BookMarked, tone: 'from-blue-400 to-indigo-500' },
+        { href: '/today',       label: 'Today',      icon: Sparkles,   tone: 'from-cyan-400 to-teal-500' },
+        { href: '/community',   label: 'Community',  icon: Users,      tone: 'from-emerald-400 to-green-500' },
     ];
 
     return (
@@ -171,7 +120,7 @@ function QuickAccessLauncher() {
                             <motion.div key={item.href} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.045 }}>
                                 <Link href={item.href} className="group flex w-[88px] flex-col items-center gap-2 rounded-2xl bg-slate-900/90 px-2 py-3 ring-1 ring-white/12 shadow-[0_8px_28px_rgba(0,0,0,0.50)] backdrop-blur-md transition-all hover:bg-slate-800/90 hover:ring-white/22 active:scale-[0.96]">
                                     <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm flex-shrink-0', item.tone)}>
-                                        <item.icon className="h-4.5 w-4.5 text-slate-950" />
+                                        <item.icon className="h-4 w-4 text-slate-950" />
                                     </span>
                                     <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50 group-hover:text-white/75 transition-colors">{item.label}</span>
                                 </Link>
@@ -198,28 +147,11 @@ function QuickAccessLauncher() {
     );
 }
 
-/* ─────────────────────────── Sticky Stack Scene ─────────────────────────── */
-function StickyStackScene({ children, zIndex, isLast = false, isDesktop = true }: { children: React.ReactNode; zIndex: number; isLast?: boolean; isDesktop?: boolean; }) {
-    const sceneRef = useRef<HTMLDivElement | null>(null);
-    const { scrollYProgress } = useScroll({ target: sceneRef, offset: ['start start', 'end start'] });
-
-    const opacity = useTransform(scrollYProgress, [0, 0.42, 1], isLast ? [1, 1, 1] : [1, 1, isDesktop ? 0.28 : 0.65]);
-    const scale = useTransform(scrollYProgress, [0, 0.45, 1], isLast ? [1, 1, 1] : [1, 1, isDesktop ? 0.975 : 0.99]);
-    const y = useTransform(scrollYProgress, [0, 0.45, 1], isLast ? [0, 0, 0] : [0, 0, isDesktop ? -14 : -6]);
-
-    return (
-        <div ref={sceneRef} className={cn('relative', isDesktop ? 'h-[62vh]' : 'h-[56vh]')}>
-            <motion.div style={{ opacity, scale, y, zIndex }} className={cn('sticky flex items-center justify-center px-2', isDesktop ? 'top-[6vh]' : 'top-[4vh]')}>
-                {children}
-            </motion.div>
-        </div>
-    );
-}
-
+/* ─────────────────────────── Hero Icon Row ─────────────────────────── */
 function HeroIconRow() {
     const items = [
         { icon: BookOpen, label: 'Read' },
-        { icon: Users, label: 'Share' },
+        { icon: Users,    label: 'Share' },
         { icon: Sparkles, label: 'Inspiring' },
     ];
     return (
@@ -236,22 +168,46 @@ function HeroIconRow() {
     );
 }
 
+/* ─────────────────────────── Dot Indicator ─────────────────────────── */
+function DotIndicator({ count, active }: { count: number; active: number }) {
+    return (
+        <div className="flex items-center gap-2 mt-8">
+            {Array.from({ length: count }).map((_, i) => (
+                <div
+                    key={i}
+                    className={cn(
+                        "rounded-full transition-all duration-500",
+                        i === active ? "w-6 h-2 bg-cyan-400" : "w-2 h-2 bg-white/20"
+                    )}
+                />
+            ))}
+        </div>
+    );
+}
+
+/* ─────────────────────────── Feature Items ─────────────────────────── */
+const featureItems = [
+    { icon: BookOpen,   title: 'Channels',   description: 'Pelajaran terstruktur termasuk Sabbath School untuk pendalaman iman yang sistematis.', href: '/channels',    accent: 'violet'  as Accent },
+    { icon: BookMarked, title: 'Bible',       description: 'Alkitab reader modern dengan pelacakan perjalanan rohani dan refleksi pribadi.',        href: '/versehub/id', accent: 'blue'    as Accent },
+    { icon: Sparkles,   title: 'Today',       description: 'Inspirasi harian, ayat hari ini, dan ringkasan aktivitas rohani Anda.',                 href: '/today',       accent: 'cyan'    as Accent },
+    { icon: Users,      title: 'Community',   description: 'Berbagi berkat, berdiskusi, dan bertumbuh bersama saudara seiman.',                      href: '/community',   accent: 'emerald' as Accent },
+];
+
 /* ─────────────────────────── Landing Page ─────────────────────────── */
 export default function LandingPage() {
-    const [isDesktop, setIsDesktop] = useState(false);
-    
-    useEffect(() => {
-        const mediaQuery = window.matchMedia('(min-width: 1024px)');
-        const sync = () => setIsDesktop(mediaQuery.matches);
-        sync();
-        mediaQuery.addEventListener('change', sync);
-        return () => mediaQuery.removeEventListener('change', sync);
-    }, []);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [activeIndex, setActiveIndex] = useState(0);
 
-    const featureItems = [
-        { icon: BookOpen, title: 'Channels', description: 'Pelajaran terstruktur termasuk Sabbath School untuk pendalaman iman yang sistematis.', href: '/channels', accent: 'violet' as const },
-        { icon: BookMarked, title: 'Bible', description: 'Alkitab reader modern dengan pelacakan perjalanan rohani dan refleksi.', href: '/versehub/id', accent: 'blue' as const },
-    ];
+    const { scrollYProgress } = useScroll({
+        target: containerRef,
+        offset: ["start start", "end end"],
+    });
+
+    // Map scroll 0→1 into 4 equal segments — one card per segment
+    useMotionValueEvent(scrollYProgress, "change", (latest) => {
+        const idx = Math.min(Math.floor(latest * featureItems.length), featureItems.length - 1);
+        setActiveIndex(idx);
+    });
 
     return (
         <div className="relative min-h-screen scroll-smooth text-white selection:bg-cyan-400/30 overflow-x-hidden">
@@ -262,15 +218,14 @@ export default function LandingPage() {
                 <span className="tct-serif text-xl font-normal tracking-tight sm:text-2xl">
                     TheChoosen<span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Talks</span>
                 </span>
-                <div className="flex items-center gap-4">
-                    <Button asChild variant="ghost" className="h-10 rounded-full bg-white/5 px-4 text-xs font-semibold text-white/70 ring-1 ring-white/10 hover:bg-white/10">
-                        <Link href="/today" className="inline-flex items-center gap-1.5"><LogIn size={14} /> Login</Link>
-                    </Button>
-                </div>
+                <Button asChild variant="ghost" className="h-10 rounded-full bg-white/5 px-4 text-xs font-semibold text-white/70 ring-1 ring-white/10 hover:bg-white/10">
+                    <Link href="/today" className="inline-flex items-center gap-1.5"><LogIn size={14} /> Login</Link>
+                </Button>
             </header>
 
-            {/* Hero Section */}
             <main className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-16 pt-4 sm:px-8">
+
+                {/* ── Hero Section ── */}
                 <section className="flex min-h-[85dvh] flex-col items-center justify-center pb-10 pt-6">
                     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-[500px]">
                         <div className="w-full rounded-[44px] border border-white/10 bg-white/[0.04] px-8 py-12 text-center backdrop-blur-2xl sm:px-12 sm:py-14 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
@@ -297,24 +252,50 @@ export default function LandingPage() {
                     </motion.div>
                 </section>
 
-                {/* Features Sticky Stack */}
-                <section className="relative py-12">
-                    <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-                        <StickyStackScene zIndex={40} isDesktop={isDesktop}>
-                            <div className="w-full max-w-3xl text-center">
-                                <Badge className="mb-5"><Sparkles size={12} /> Platform Fitur</Badge>
-                                <h2 className="tct-serif text-3xl sm:text-5xl">Satu Platform, Banyak Cara<br className="hidden sm:block" /> Untuk Bertumbuh.</h2>
-                                <p className="mx-auto mt-4 max-w-2xl text-white/45">Didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.</p>
+                {/* ── Features Sticky Section ──
+                    Strategy: tall scroll container (400vh) + sticky inner panel.
+                    scrollYProgress 0→1 maps to card index 0→3.
+                    AnimatePresence mode="wait" ensures only ONE card renders at a time.
+                    This eliminates all overlapping/stacking visual bugs.
+                */}
+                <section ref={containerRef} className="relative h-[400vh]">
+                    <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+                        <div className="mx-auto w-full max-w-6xl px-5 sm:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+                            {/* Left column: fixed heading + dots */}
+                            <div className="space-y-6">
+                                <Badge><Sparkles size={12} /> Platform Fitur</Badge>
+                                <h2 className="tct-serif text-4xl sm:text-6xl leading-[1.1] tracking-tight">
+                                    Satu Platform,<br />
+                                    <span className="text-white/40">Banyak Cara</span><br />
+                                    <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Bertumbuh.</span>
+                                </h2>
+                                <p className="text-lg text-white/45 max-w-md leading-relaxed">
+                                    Didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya melalui ekosistem yang terintegrasi.
+                                </p>
+                                <DotIndicator count={featureItems.length} active={activeIndex} />
                             </div>
-                        </StickyStackScene>
-                        {featureItems.map((item, index) => (
-                            <StickyStackScene key={item.title} zIndex={30 - index} isLast={index === featureItems.length - 1} isDesktop={isDesktop}>
-                                <div className="w-full max-w-xl"><FeatureCard {...item} animateOnView={false} /></div>
-                            </StickyStackScene>
-                        ))}
+
+                            {/* Right column: ONE card at a time via AnimatePresence */}
+                            <div className="w-full max-w-xl mx-auto">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={activeIndex}
+                                        initial={{ opacity: 0, y: 48, scale: 0.96 }}
+                                        animate={{ opacity: 1, y: 0,  scale: 1    }}
+                                        exit={{    opacity: 0, y: -48, scale: 0.96 }}
+                                        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                                    >
+                                        <FeatureCard {...featureItems[activeIndex]} />
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
+
+                        </div>
                     </div>
                 </section>
 
+                {/* ── Footer ── */}
                 <footer className="border-t border-white/5 pb-32 pt-16 text-center">
                     <h2 className="text-sm font-bold uppercase tracking-[0.3em] text-cyan-400/40 mb-3">Terpilih • Terhubung • Bertumbuh</h2>
                     <p className="text-xs text-white/25">© 2026 — TheChoosenTalks. Built for the Chosen People.</p>
@@ -324,6 +305,7 @@ export default function LandingPage() {
                         <a href="https://instagram.com/willberth.channel/" target="_blank" className="hover:text-white/60">Instagram</a>
                     </div>
                 </footer>
+
             </main>
 
             <QuickAccessLauncher />

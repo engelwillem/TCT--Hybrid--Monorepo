@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, CheckCircle2, Circle, Play, ArrowRight, Info, Share2, X } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, Circle, Play, ArrowRight, Info, Share2, X, Clock, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SharePanel from '@/components/versehub/SharePanel';
 
@@ -291,8 +291,9 @@ export default function StudyPathShowPage() {
                 onClose={() => setShareOpen(false)}
                 title={isId ? path.title_id : path.title_en}
                 subtitle={isId ? path.description_id : path.description_en}
-                url={window.location.href}
+                url={typeof window !== 'undefined' ? window.location.href : ''}
                 lang={lang}
+                ogImageUrl="/og-image.png"
             />
         </div>
     );
