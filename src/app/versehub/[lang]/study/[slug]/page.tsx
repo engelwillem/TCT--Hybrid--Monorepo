@@ -85,11 +85,11 @@ export default function StudyPathShowPage() {
     const progressPercent = Math.round((completedCount / totalSteps) * 100);
 
     return (
-        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+        <div className="min-h-screen bg-slate-950 text-white pb-20">
             {/* Header Parity */}
-            <div className="sticky top-0 z-40 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60">
+            <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
                 <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
-                    <button onClick={() => router.push(`/versehub/${lang}/study`)} className="h-10 w-10 flex items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 active:scale-95">
+                    <button onClick={() => router.push(`/versehub/${lang}/study`)} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 active:scale-95">
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <h1 className="font-bold text-lg">{isId ? path.title_id : path.title_en}</h1>

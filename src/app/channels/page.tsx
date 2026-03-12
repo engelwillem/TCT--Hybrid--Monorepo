@@ -106,9 +106,9 @@ export default function ChannelsPage() {
     const filteredLessons = lessonStates;
 
     return (
-        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+        <div className="min-h-screen bg-slate-950 text-white pb-20">
             {/* App Head Overlay Parity */}
-            <div className="sticky top-0 z-40 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60 transition-all">
+            <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5 transition-all">
                 <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
                     <h1 className="font-bold text-lg">Channels</h1>
                     <div className="w-10" />
@@ -120,7 +120,7 @@ export default function ChannelsPage() {
                 <motion.section 
                     initial={{ opacity: 0, y: 16 }} 
                     animate={{ opacity: 1, y: 0 }} 
-                    className="overflow-hidden rounded-[32px] bg-white shadow-soft ring-1 ring-black/[0.04]"
+                    className="overflow-hidden rounded-[32px] bg-slate-800/60 ring-1 ring-white/10 backdrop-blur-sm"
                 >
                     <div className="relative h-48 md:h-56">
                         <img
@@ -152,14 +152,14 @@ export default function ChannelsPage() {
                         </Button>
 
                         {/* Tabs Bar Parity */}
-                        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
+                        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-900 p-1.5 ring-1 ring-white/10">
                              {(['current', 'past', 'upcoming'] as const).map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setSeriesTab(tab)}
                                     className={cn(
                                         "rounded-xl py-2 text-[11px] font-bold transition-all",
-                                        seriesTab === tab ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
+                                        seriesTab === tab ? "bg-slate-700 text-white shadow-sm" : "text-slate-500"
                                     )}
                                 >
                                     {tab === 'current' ? 'Aktif' : tab === 'past' ? 'Lalu' : 'Mendatang'}
@@ -168,12 +168,12 @@ export default function ChannelsPage() {
                         </div>
 
                         {/* Lesson Progress Parity */}
-                        <div className="space-y-3 rounded-[24px] bg-slate-50 p-5 ring-1 ring-slate-100">
+                        <div className="space-y-3 rounded-[24px] bg-slate-900 p-5 ring-1 ring-white/10">
                             <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold text-slate-800 tracking-tight">Lessons</p>
+                                <p className="text-xs font-bold text-white tracking-tight">Lessons</p>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">0/{lessonStates.length} Completed</p>
                             </div>
-                            <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
                                 <div className="h-full bg-cyan-500 w-0" />
                             </div>
 
@@ -185,13 +185,13 @@ export default function ChannelsPage() {
                                              router.push(`/channels/sabbath-school/${selectedQuarter?.year}/q${selectedQuarter?.quarter}/lesson/${lesson.lesson_number}`);
                                         }}
                                         className={cn(
-                                            "flex items-center justify-between p-4 rounded-2xl bg-white ring-1 ring-black/[0.02] shadow-sm transition-all text-left",
-                                            isCurrent ? "ring-cyan-500/30 bg-cyan-50/50" : ""
+                                            "flex items-center justify-between p-4 rounded-2xl bg-slate-800 ring-1 ring-white/5 transition-all text-left",
+                                            isCurrent ? "ring-cyan-500/40 bg-cyan-900/20" : ""
                                         )}
                                     >
                                         <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Lesson {lesson.lesson_number}</p>
-                                            <p className="font-bold text-sm text-slate-900 mt-1">{lesson.title}</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Lesson {lesson.lesson_number}</p>
+                                            <p className="font-bold text-sm text-white mt-1">{lesson.title}</p>
                                         </div>
                                         {isCurrent && <span className="bg-cyan-500 rounded-full px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-widest">Sekarang</span>}
                                     </button>
@@ -205,7 +205,7 @@ export default function ChannelsPage() {
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
                          <h3 className="text-lg font-bold tracking-tight">Channel Lainnya</h3>
-                         <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full ring-1 ring-cyan-100">
+                         <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 bg-cyan-900/30 px-3 py-1 rounded-full ring-1 ring-cyan-500/30">
                             {channels.length} Kanal
                          </span>
                     </div>
@@ -215,7 +215,7 @@ export default function ChannelsPage() {
                             <button
                                 key={channel.slug}
                                 onClick={() => router.push(`/channels/${channel.slug}`)}
-                                className="group flex flex-col overflow-hidden rounded-[32px] bg-white shadow-soft ring-1 ring-black/[0.04] transition-all hover:-translate-y-1 hover:shadow-xl"
+                                className="group flex flex-col overflow-hidden rounded-[32px] bg-slate-800/60 ring-1 ring-white/10 transition-all hover:-translate-y-1 hover:shadow-xl"
                             >
                                 <div className="relative h-32 w-full overflow-hidden">
                                     <img
@@ -226,7 +226,7 @@ export default function ChannelsPage() {
                                 </div>
                                 <div className="p-4 pt-3 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <p className="font-bold text-sm tracking-tight text-slate-900 line-clamp-1">{channel.title}</p>
+                                        <p className="font-bold text-sm tracking-tight text-white line-clamp-1">{channel.title}</p>
                                         <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">{channel.description}</p>
                                     </div>
                                     <div className="mt-4 flex items-center justify-between">
@@ -234,7 +234,7 @@ export default function ChannelsPage() {
                                             <div className="h-1 w-1 bg-emerald-500 rounded-full animate-pulse" />
                                             <span className="text-[9px] font-bold text-slate-400">{channel.members_count} anggota</span>
                                         </div>
-                                        <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-cyan-500 transition-colors" />
+                                        <ArrowRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-cyan-400 transition-colors" />
                                     </div>
                                 </div>
                             </button>

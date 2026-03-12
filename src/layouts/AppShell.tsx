@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Removed unused getPageTitle logic to clean up file.
 
   return (
-    <div className="relative min-h-screen bg-[#fafafa] dark:bg-[#050505] overflow-x-hidden">
+    <div className="relative min-h-screen bg-slate-950 overflow-x-hidden">
       {/* Ambient Background Layers (Parity with Laravel app.blade.php / MobileAppLayout) */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -left-[10%] -top-[10%] h-[60%] w-[60%] rounded-full bg-indigo-200/20 blur-[120px] dark:bg-indigo-900/10" />
