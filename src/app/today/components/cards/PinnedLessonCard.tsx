@@ -37,18 +37,18 @@ export default function PinnedLessonCard({ pinned }: Props) {
               : 'Start';
 
     return (
-        <Card className="overflow-hidden rounded-3xl bg-white/40 dark:bg-white/5 border-0 shadow-[0_8px_32px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.03] dark:ring-white/[0.08] backdrop-blur-xl">
+        <Card className="overflow-hidden rounded-[40px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
             <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="secondary" className="rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-0">
+                    <Badge variant="secondary" className="rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-[0.15em] text-amber-500 shadow-sm">
                         Pinned • Today’s Lesson
                     </Badge>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+                    <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest">
                         ~{lesson.estimated_minutes} min
                     </p>
                 </div>
 
-                <CardTitle className="mt-2 text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 font-serif">
+                <CardTitle className="mt-2 text-2xl md:text-3xl font-bold text-sky-400 leading-tight tracking-tight">
                     {lesson.title}
                 </CardTitle>
 

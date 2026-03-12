@@ -91,8 +91,8 @@ export default function ProfilePage() {
                             </button>
                         </div>
                         
-                        <h2 className="mt-6 text-xl font-bold tracking-tight">{user.name}</h2>
-                        <p className="text-white/50 text-sm font-medium">{user.email}</p>
+                        <h2 className="mt-6 text-2xl font-bold tracking-tight text-sky-400">{user.name}</h2>
+                        <p className="text-amber-500/80 text-sm font-bold tracking-wide">{user.email}</p>
                         <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <CheckCircle2 className="h-3 w-3" />
                             <span className="text-[10px] font-bold uppercase tracking-widest">
@@ -137,8 +137,8 @@ export default function ProfilePage() {
                             className="flex items-center justify-between w-full p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group"
                         >
                             <div className="text-left">
-                                <p className="text-sm font-bold">Track your growth</p>
-                                <p className="text-xs text-white/50 mt-1 font-medium">Lihat riwayat hafalan dan catatan batin</p>
+                                <p className="text-sm font-bold text-white">Track your growth</p>
+                                <p className="text-xs text-amber-500/60 mt-1 font-bold">Lihat riwayat hafalan dan catatan batin</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 {journeyBadge > 0 && (
@@ -158,7 +158,7 @@ export default function ProfilePage() {
                             onSubmit={(event) => event.preventDefault()}
                         >
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                                <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Nama Lengkap</label>
                                 <Input 
                                     value={profileData.name}
                                     onChange={(e) => setProfileData({...profileData, name: e.target.value})}
@@ -166,7 +166,7 @@ export default function ProfilePage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Alamat Email</label>
+                                <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Alamat Email</label>
                                 <Input 
                                     value={profileData.email}
                                     onChange={(e) => setProfileData({...profileData, email: e.target.value})}
@@ -187,8 +187,8 @@ export default function ProfilePage() {
                                             <ShieldCheck className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold">Two-Factor Auth</p>
-                                            <p className="text-[10px] font-medium text-white/40">Status: {twoFactorEnabled ? 'Aktif' : 'Tidak Aktif'}</p>
+                                            <p className="text-sm font-bold text-white">Two-Factor Auth</p>
+                                            <p className="text-[10px] font-bold text-amber-500/40 uppercase tracking-wider">Status: {twoFactorEnabled ? 'Aktif' : 'Tidak Aktif'}</p>
                                         </div>
                                     </div>
                                     <button 
@@ -204,7 +204,7 @@ export default function ProfilePage() {
                             </div>
                             
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Ubah Password</label>
+                                <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Ubah Password</label>
                                 <div className="grid gap-3">
                                     <Input type="password" placeholder="Password lama" className="h-12 bg-white/5 border-white/10 rounded-xl" />
                                     <Input type="password" placeholder="Password baru" className="h-12 bg-white/5 border-white/10 rounded-xl" />

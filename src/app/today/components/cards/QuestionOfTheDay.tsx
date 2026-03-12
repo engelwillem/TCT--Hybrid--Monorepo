@@ -27,17 +27,17 @@ export default function QuestionOfTheDay({
     };
 
     return (
-        <Card className="overflow-hidden rounded-[32px] border-0 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-soft ring-1 ring-emerald-200/50 dark:ring-emerald-500/10 backdrop-blur-sm">
+        <Card className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
             <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
-                        <HelpCircle className="h-4 w-4" />
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                        <HelpCircle className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">Pertanyaan Hari Ini</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">Pertanyaan Hari Ini</span>
                 </div>
 
-                <div className="space-y-4">
-                    <h3 className="text-lg md:text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
+                <div className="space-y-6">
+                    <h3 className="text-2xl font-bold leading-tight tracking-tight text-white mb-4">
                         {question}
                     </h3>
 
@@ -60,8 +60,8 @@ export default function QuestionOfTheDay({
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] font-medium text-emerald-600/70 dark:text-emerald-400/70">
-                        <MessageCircle className="h-3 w-3" />
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.15em]">
+                        <MessageCircle className="h-3.5 w-3.5" />
                         <span>{count} orang sudah menjawab</span>
                     </div>
                 </div>

@@ -28,22 +28,22 @@ export default function GreetingHeader() {
 
     return (
         <div className="-mx-4 px-4 pb-4 pt-2 md:mx-0 md:px-0 md:pb-0">
-            <div className="relative overflow-hidden rounded-3xl border border-white/40 bg-white/70 px-6 py-5 shadow-sm backdrop-blur-xl dark:border-white/8 dark:bg-slate-900/60">
+            <div className="relative overflow-hidden rounded-[3rem] border border-white/10 bg-white/[0.02] px-8 py-7 shadow-2xl backdrop-blur-2xl">
                 {/* Gradient accent blobs */}
                 <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-cyan-400/15 blur-2xl" />
                 <div className="pointer-events-none absolute bottom-0 left-10 h-20 w-20 rounded-full bg-blue-400/10 blur-2xl" />
 
-                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 px-3 py-1 text-[11px] font-semibold text-slate-500 dark:bg-white/8 dark:text-slate-400">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-[10px] font-bold text-amber-500 shadow-sm uppercase tracking-[0.15em]">
+                    <Calendar className="h-3.5 w-3.5" />
                     <span>{dateLabel}</span>
                 </div>
 
                 <div className="flex items-end justify-between gap-4">
                     <div className="min-w-0">
-                        <p className="mb-0.5 text-[12px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+                        <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
                             Good {getDayPart()}, {userName}
                         </p>
-                        <h1 className="tct-serif tct-brand-gradient truncate text-[26px] font-normal leading-tight md:text-4xl">
+                        <h1 className="tct-serif bg-gradient-to-r from-sky-400 via-white to-sky-400 bg-clip-text text-transparent truncate text-3xl font-bold leading-tight md:text-5xl">
                             Chosen People
                         </h1>
                     </div>

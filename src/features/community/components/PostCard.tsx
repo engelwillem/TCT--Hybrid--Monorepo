@@ -32,8 +32,8 @@ export function PostCard({ post, comments, onAddComment, onLike, onBookmark, cur
             <AvatarFallback>{post.author.name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm truncate">{post.author.name}</p>
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{post.createdAt}</p>
+            <p className="font-bold text-sm truncate text-white"> {post.author.name}</p>
+            <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-[0.15em]">{post.createdAt}</p>
           </div>
           <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
             <MoreHorizontal size={18} className="text-muted-foreground" />

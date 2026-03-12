@@ -15,21 +15,21 @@ export default function ReflectionCard({
         : `/journal/new`;
 
     return (
-        <Card className="relative overflow-hidden rounded-3xl border-0 bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-950/20 dark:to-slate-900/40 shadow-sm ring-1 ring-amber-100/60 dark:ring-amber-500/10 backdrop-blur-sm">
+        <Card className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
             {/* Accent blob */}
             <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-300/20 blur-2xl" />
 
             <CardContent className="relative p-5">
-                <div className="mb-3 flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
-                        <BookHeart className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <div className="mb-4 flex items-center gap-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                        <BookHeart className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">
                         Jurnal Pribadi
                     </span>
                 </div>
 
-                <p className="text-base font-semibold leading-snug text-slate-800 dark:text-slate-100">
+                <p className="text-xl font-bold leading-tight tracking-tight text-white mb-4">
                     {payload.prompt}
                 </p>
 
