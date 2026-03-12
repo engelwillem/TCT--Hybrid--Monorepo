@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ChevronLeft, Share2, Users, MessageSquare, BookOpen, Heart, Bookmark } from 'lucide-react';
+import { ChevronLeft, Share2, Users, MessageSquare, Heart, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAppAccessToken } from '@/services/app-auth-token';
 
@@ -149,11 +148,14 @@ export default function WeeklyChannelPostPage() {
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 mb-8 leading-tight">
                             {post.title}
                         </h1>
-                        
-                        <div 
-                            dangerouslySetInnerHTML={{ __html: post.content }}
-                            className="reader-prose text-[17px] leading-relaxed text-slate-700 space-y-6"
-                        />
+                        {post.content ? (
+                            <div
+                                dangerouslySetInnerHTML={{ __html: post.content }}
+                                className="reader-prose text-[17px] leading-relaxed text-slate-700 space-y-6"
+                            />
+                        ) : (
+                            <p className="text-sm font-medium text-slate-500">Konten belum tersedia.</p>
+                        )}
                     </div>
                     
                     {/* Action Bar inside card Parity */}
