@@ -19,6 +19,7 @@ import MentorPanel from '@/components/versehub/MentorPanel';
 import EndOfChapterPrompt from '@/components/versehub/EndOfChapterPrompt';
 import ReflectionComposer from '@/components/versehub/ReflectionComposer';
 import SharePanel from '@/components/versehub/SharePanel';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 // Types (derived from Reader.tsx)
 interface Verse {
@@ -54,9 +55,11 @@ const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(
 
 interface VersehubReaderPageProps {
     lang: string;
+    mode?: 'landing' | 'chapter';
+    initialChapterRef?: string | null;
 }
 
-export function VersehubReaderPage({ lang: initialLang }: VersehubReaderPageProps) {
+export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initialChapterRef = null }: VersehubReaderPageProps) {
     const router = useRouter();
     const params = useParams();
     const searchParams = useSearchParams();
@@ -64,8 +67,8 @@ export function VersehubReaderPage({ lang: initialLang }: VersehubReaderPageProp
     
     // In a real migration, these would come from an API or initial props
     // For now, we'll maintain state parity with mock/empty data that can be populated
-    const [isAuthenticated, setIsAuthenticated] = useState(true); // Mocking auth for visibility
-    const [isChapter, setIsChapter] = useState(!!params?.id);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isChapter, setIsChapter] = useState(mode === 'chapter');
     const [chapter_label, setChapterLabel] = useState('');
     const [activeBook, setActiveBook] = useState<string | null>(null);
     const [verses, setVerses] = useState<Verse[]>([]);
@@ -150,6 +153,16 @@ export function VersehubReaderPage({ lang: initialLang }: VersehubReaderPageProp
         setTimeout(() => setToast(null), 3000);
     };
 
+    useEffect(() => {
+        const refreshAuthState = () => {
+            setIsAuthenticated(Boolean(getAppAccessToken()));
+        };
+
+        refreshAuthState();
+        window.addEventListener('storage', refreshAuthState);
+        return () => window.removeEventListener('storage', refreshAuthState);
+    }, []);
+
     // Placeholder for actual data fetching
     useEffect(() => {
         // Here we would fetch books, initial verses (if any), and user states
@@ -172,7 +185,40 @@ export function VersehubReaderPage({ lang: initialLang }: VersehubReaderPageProp
             setProgressTotal(21);
             setProgressVerse(16);
         }
-    }, [isChapter]);
+    }, [isChapter, initialChapterRef, mode]);
+
+    useEffect(() => {
+        setIsChapter(mode === 'chapter');
+        if (mode !== 'chapter') return;
+
+        const chapterRef = (initialChapterRef ?? '').trim().toLowerCase();
+        const match = chapterRef.match(/^([a-z0-9]+)[-_.]?(\d+)$/);
+        if (!match) return;
+
+        const nextBook = match[1];
+        const nextChapter = Number(match[2]);
+        if (!nextBook || !Number.isFinite(nextChapter)) return;
+
+        const token = getAppAccessToken();
+        if (!token) return;
+
+        fetch(`/api/versehub/${lang}/actions?book=${encodeURIComponent(nextBook)}&chapter=${nextChapter}`, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            cache: 'no-store',
+        })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((json) => {
+                if (!json?.actions || typeof json.actions !== 'object') return;
+                setActions(json.actions as Record<string, VerseState>);
+            })
+            .catch(() => {
+                // Keep client-side state when API is not reachable.
+            });
+    }, [initialChapterRef, lang, mode]);
 
     // Navigation and Interaction Handlers
     const handleBack = () => router.back();
@@ -217,10 +263,32 @@ export function VersehubReaderPage({ lang: initialLang }: VersehubReaderPageProp
         
         // Persist to API
         try {
+            const token = getAppAccessToken();
+            if (!token) return;
+
+            const parsed = key.match(/^([a-z0-9]+)-(\d+)-(\d+)$/i);
+            if (!parsed) return;
+
+            const payload: Record<string, unknown> = {
+                book: parsed[1].toLowerCase(),
+                chapter: Number(parsed[2]),
+                verse: Number(parsed[3]),
+            };
+
+            if (Object.prototype.hasOwnProperty.call(patch, 'favorite')) payload.favorite = next.favorite;
+            if (Object.prototype.hasOwnProperty.call(patch, 'bookmarked')) payload.bookmarked = next.bookmarked;
+            if (Object.prototype.hasOwnProperty.call(patch, 'highlighted')) payload.highlighted = next.highlighted;
+            if (Object.prototype.hasOwnProperty.call(patch, 'highlightColor')) payload.highlightColor = next.highlightColor;
+            if (Object.prototype.hasOwnProperty.call(patch, 'note')) payload.note = next.note;
+
             await fetch(`/api/versehub/${lang}/actions`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, ...patch }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(payload),
             });
         } catch (err) {
             console.error('Failed to persist action', err);

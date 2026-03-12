@@ -79,7 +79,7 @@ export default function UnifiedVerseHubPage() {
 
     // If it's a chapter, delegating to the Reader Page
     if (isChapter) {
-        return <VersehubReaderPage lang={lang} />;
+        return <VersehubReaderPage lang={lang} mode="chapter" initialChapterRef={slug} />;
     }
 
     if (loading || !verse) {

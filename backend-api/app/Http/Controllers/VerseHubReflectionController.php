@@ -20,13 +20,26 @@ class VerseHubReflectionController extends Controller
             'is_private' => 'boolean',
         ]);
 
-        ReflectionResponse::create([
+        $reflection = ReflectionResponse::create([
             'user_id' => $request->user()->id,
             'verse_ref' => $request->verse_ref,
             'question_text' => $request->question_text,
             'answer_text' => $request->answer_text,
             'is_private' => $request->is_private ?? true,
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => [
+                    'id' => (string) $reflection->id,
+                    'verse_ref' => (string) $reflection->verse_ref,
+                    'question_text' => (string) $reflection->question_text,
+                    'answer_text' => (string) $reflection->answer_text,
+                    'is_private' => (bool) $reflection->is_private,
+                    'created_at' => optional($reflection->created_at)?->toIso8601String(),
+                ],
+            ], 201);
+        }
 
         return back()->with('success', $lang === 'id' ? 'Refleksi tersimpan.' : 'Reflection saved.');
     }
@@ -39,6 +52,20 @@ class VerseHubReflectionController extends Controller
         $reflections = ReflectionResponse::where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => [
+                    'items' => $reflections->items(),
+                    'meta' => [
+                        'current_page' => $reflections->currentPage(),
+                        'last_page' => $reflections->lastPage(),
+                        'per_page' => $reflections->perPage(),
+                        'total' => $reflections->total(),
+                    ],
+                ],
+            ]);
+        }
 
         return Inertia::render('VerseHub/MySpiritualJourney', [
             'lang' => $lang,

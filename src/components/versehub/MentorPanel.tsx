@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from 'react';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 interface MentorInsights {
     reflection_questions?: string[];
@@ -92,8 +93,14 @@ export default function MentorPanel({
     function ensureInsights() {
         if (insightsFetched || insightsLoading) return;
         setInsightsLoading(true);
+        const token = getAppAccessToken();
+        const headers: HeadersInit = {
+            Accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
         fetch(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor`, {
-            headers: { Accept: 'application/json' },
+            headers,
         })
             .then((r) => (r.ok ? r.json() : null))
             .then((json) => {
@@ -120,6 +127,12 @@ export default function MentorPanel({
         e.preventDefault();
         const q = question.trim();
         if (!q || askLoading) return;
+        const token = getAppAccessToken();
+        if (!token) {
+            setAskError('Sesi login tidak ditemukan. Silakan login ulang.');
+            return;
+        }
+
         setAskLoading(true);
         setAskResult(null);
         setAskError(null);
@@ -129,6 +142,7 @@ export default function MentorPanel({
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ question: q }),
         })

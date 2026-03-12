@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
-import { 
-    ShieldCheck, 
-    LogOut, 
-    Camera, 
-    ChevronRight, 
+import {
+    ShieldCheck,
+    LogOut,
+    Camera,
+    ChevronRight,
     CheckCircle2,
     Trash2,
     Grid
@@ -20,35 +20,268 @@ import PrimaryCTA from '@/components/core/PrimaryCTA';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { clearAppAccessToken, getAppAccessToken } from '@/services/app-auth-token';
+
+type ApiProfilePayload = {
+    data?: {
+        user?: {
+            id?: string;
+            name?: string;
+            email?: string;
+            is_admin?: boolean;
+            email_verified_at?: string | null;
+            avatar_url?: string | null;
+        };
+        twoFactor?: {
+            enabled?: boolean;
+            recoveryCodesRemaining?: number;
+        };
+    };
+};
 
 export default function ProfilePage() {
     const router = useRouter();
     const { user: authUser } = useUser();
-    
-    const user = {
+    const [loading, setLoading] = useState(true);
+
+    const [user, setUser] = useState({
         name: authUser?.displayName || 'Guest User',
         email: authUser?.email || 'guest@example.com',
         avatarUrl: authUser?.photoURL || null,
         is_admin: false,
         email_verified_at: authUser?.emailVerified ? 'verified' : null,
-    };
+    });
 
     const [journeyBadge, setJourneyBadge] = useState(12);
     const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-    
     const [profileData, setProfileData] = useState({
         name: user.name,
-        email: user.email
+        email: user.email,
     });
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    useEffect(() => {
+        const token = getAppAccessToken();
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
+        let isActive = true;
+        const loadProfile = async () => {
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+
+                const payload = (await response.json()) as ApiProfilePayload;
+                const apiUser = payload?.data?.user;
+                if (!isActive || !apiUser) return;
+
+                const nextUser = {
+                    name: apiUser.name || 'Guest User',
+                    email: apiUser.email || 'guest@example.com',
+                    avatarUrl: apiUser.avatar_url || authUser?.photoURL || null,
+                    is_admin: Boolean(apiUser.is_admin),
+                    email_verified_at: apiUser.email_verified_at || null,
+                };
+
+                setUser(nextUser);
+                setProfileData({
+                    name: nextUser.name,
+                    email: nextUser.email,
+                });
+                setTwoFactorEnabled(Boolean(payload?.data?.twoFactor?.enabled));
+            } catch {
+                // Keep fallback UI state.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+
+        loadProfile();
+
+        return () => {
+            isActive = false;
+        };
+    }, [authUser?.photoURL]);
 
     const logout = () => {
-        router.push('/login');
+        clearAppAccessToken();
+        router.push('/');
     };
 
+    const handleProfileSave = async (event: React.FormEvent) => {
+        event.preventDefault();
+        const token = getAppAccessToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/profile', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(profileData),
+            });
+            if (!response.ok) return;
+
+            const payload = await response.json();
+            const updated = payload?.data;
+            if (!updated) return;
+
+            setUser((prev) => ({
+                ...prev,
+                name: updated.name ?? prev.name,
+                email: updated.email ?? prev.email,
+                avatarUrl: updated.avatar_url ?? prev.avatarUrl,
+                email_verified_at: updated.email_verified_at ?? prev.email_verified_at,
+            }));
+        } catch {
+            // Keep current state.
+        }
+    };
+
+    const handlePasswordUpdate = async () => {
+        const token = getAppAccessToken();
+        if (!token || !currentPassword || !newPassword || !confirmPassword) return;
+
+        try {
+            const response = await fetch('/api/profile/password', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    password: newPassword,
+                    password_confirmation: confirmPassword,
+                }),
+            });
+            if (!response.ok) return;
+
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch {
+            // Keep current state.
+        }
+    };
+
+    const handleTwoFactorToggle = async () => {
+        const token = getAppAccessToken();
+        if (!token) return;
+
+        if (!twoFactorEnabled) {
+            const password = window.prompt('Masukkan password saat ini untuk mengaktifkan 2FA:');
+            if (!password) return;
+
+            try {
+                const setup = await fetch('/api/profile/two-factor/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ current_password: password }),
+                });
+                if (!setup.ok) return;
+
+                const code = window.prompt('Masukkan kode OTP authenticator untuk konfirmasi 2FA:');
+                if (!code) return;
+
+                const confirm = await fetch('/api/profile/two-factor/confirm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        current_password: password,
+                        code,
+                    }),
+                });
+                if (confirm.ok) setTwoFactorEnabled(true);
+            } catch {
+                // Keep current state.
+            }
+            return;
+        }
+
+        const password = window.prompt('Masukkan password saat ini untuk menonaktifkan 2FA:');
+        if (!password) return;
+        const code = window.prompt('Masukkan OTP atau recovery code:');
+        if (!code) return;
+
+        try {
+            const disable = await fetch('/api/profile/two-factor', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    current_password: password,
+                    code,
+                }),
+            });
+            if (disable.ok) setTwoFactorEnabled(false);
+        } catch {
+            // Keep current state.
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const token = getAppAccessToken();
+        if (!token) return;
+        const password = window.prompt('Masukkan password untuk konfirmasi hapus akun:');
+        if (!password) return;
+
+        try {
+            const response = await fetch('/api/profile', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ password }),
+            });
+            if (!response.ok) return;
+            clearAppAccessToken();
+            router.push('/');
+        } catch {
+            // Keep current state.
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
     return (
-        <MobileAppLayout 
-            title="Profile" 
-            activeNavId="profile" 
+        <MobileAppLayout
+            title="Profile"
+            activeNavId="profile"
             backHref="/today"
             rightAction={
                 <Popover>
@@ -58,7 +291,7 @@ export default function ProfilePage() {
                         </button>
                     </PopoverTrigger>
                     <PopoverContent align="end" className="w-56 p-2 bg-slate-900 border-white/10 text-white rounded-[24px] shadow-2xl">
-                        <button 
+                        <button
                             onClick={logout}
                             className="flex w-full items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-rose-400"
                         >
@@ -70,8 +303,6 @@ export default function ProfilePage() {
             }
         >
             <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
-                
-                {/* Hero Profile Card Parity */}
                 <DarkCard className="relative overflow-hidden">
                     <div className="relative z-10 flex flex-col items-center text-center">
                         <div className="relative group">
@@ -90,7 +321,7 @@ export default function ProfilePage() {
                                 <Camera className="h-4 w-4" />
                             </button>
                         </div>
-                        
+
                         <h2 className="mt-6 text-2xl font-bold tracking-tight text-sky-400">{user.name}</h2>
                         <p className="text-amber-500/80 text-sm font-bold tracking-wide">{user.email}</p>
                         <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -103,10 +334,9 @@ export default function ProfilePage() {
                 </DarkCard>
 
                 <div className="space-y-4">
-                    {/* Admin Gateway Parity */}
                     {user.is_admin && (
-                        <AccordionCard 
-                            title="Gateway Operasional" 
+                        <AccordionCard
+                            title="Gateway Operasional"
                             description="Admin backoffice & status monitoring"
                             className="ring-2 ring-cyan-400/20"
                         >
@@ -130,9 +360,8 @@ export default function ProfilePage() {
                         </AccordionCard>
                     )}
 
-                    {/* Journey Stats Parity */}
                     <AccordionCard title="Your Spiritual Journey">
-                        <button 
+                        <button
                             onClick={() => router.push('/versehub/id/my-spiritual-journey')}
                             className="flex items-center justify-between w-full p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group"
                         >
@@ -151,25 +380,21 @@ export default function ProfilePage() {
                         </button>
                     </AccordionCard>
 
-                    {/* Profile Information Parity */}
                     <AccordionCard title="Informasi Personal">
-                        <form
-                            className="space-y-5 pt-2"
-                            onSubmit={(event) => event.preventDefault()}
-                        >
+                        <form className="space-y-5 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Nama Lengkap</label>
-                                <Input 
+                                <Input
                                     value={profileData.name}
-                                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                                     className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-cyan-400/50"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Alamat Email</label>
-                                <Input 
+                                <Input
                                     value={profileData.email}
-                                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                                     className="h-12 bg-white/5 border-white/10 rounded-xl focus:ring-cyan-400/50"
                                 />
                             </div>
@@ -177,7 +402,6 @@ export default function ProfilePage() {
                         </form>
                     </AccordionCard>
 
-                    {/* Security Parity */}
                     <AccordionCard title="Keamanan & Akses">
                         <div className="space-y-6 pt-2">
                             <div className="space-y-4">
@@ -191,8 +415,9 @@ export default function ProfilePage() {
                                             <p className="text-[10px] font-bold text-amber-500/40 uppercase tracking-wider">Status: {twoFactorEnabled ? 'Aktif' : 'Tidak Aktif'}</p>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
+                                    <button
+                                        type="button"
+                                        onClick={handleTwoFactorToggle}
                                         className={cn(
                                             "px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
                                             twoFactorEnabled ? "bg-rose-500/10 text-rose-400" : "bg-cyan-400 text-slate-950"
@@ -202,21 +427,21 @@ export default function ProfilePage() {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Ubah Password</label>
                                 <div className="grid gap-3">
-                                    <Input type="password" placeholder="Password lama" className="h-12 bg-white/5 border-white/10 rounded-xl" />
-                                    <Input type="password" placeholder="Password baru" className="h-12 bg-white/5 border-white/10 rounded-xl" />
-                                    <Button className="w-full bg-white/10 hover:bg-white/15 h-12 rounded-xl font-bold text-sm">Update Password</Button>
+                                    <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Password lama" className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password baru" className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Konfirmasi password baru" className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                                    <Button type="button" onClick={handlePasswordUpdate} className="w-full bg-white/10 hover:bg-white/15 h-12 rounded-xl font-bold text-sm">Update Password</Button>
                                 </div>
                             </div>
                         </div>
                     </AccordionCard>
 
-                    {/* Danger Zone Parity */}
                     <div className="pt-8">
-                        <button className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border border-rose-500/20 text-rose-500 hover:bg-rose-500/5 transition-colors group">
+                        <button type="button" onClick={handleDeleteAccount} className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border border-rose-500/20 text-rose-500 hover:bg-rose-500/5 transition-colors group">
                             <Trash2 className="h-4 w-4" />
                             <span className="text-xs font-bold uppercase tracking-widest">Hapus Akun Permanen</span>
                         </button>
@@ -227,3 +452,4 @@ export default function ProfilePage() {
         </MobileAppLayout>
     );
 }
+
