@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase/auth/use-user';
 import { 
     ShieldCheck, 
     LogOut, 
@@ -22,14 +23,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 export default function ProfilePage() {
     const router = useRouter();
+    const { user: authUser } = useUser();
     
-    // Mocking auth user parity
     const user = {
-        name: 'Willem Engel',
-        email: 'willem.engel@example.com',
-        avatarUrl: null,
-        is_admin: true,
-        email_verified_at: '2024-01-01'
+        name: authUser?.displayName || 'Guest User',
+        email: authUser?.email || 'guest@example.com',
+        avatarUrl: authUser?.photoURL || null,
+        is_admin: false,
+        email_verified_at: authUser?.emailVerified ? 'verified' : null,
     };
 
     const [journeyBadge, setJourneyBadge] = useState(12);
@@ -47,7 +48,7 @@ export default function ProfilePage() {
     return (
         <MobileAppLayout 
             title="Profile" 
-            activeNavId="settings" 
+            activeNavId="profile" 
             backHref="/today"
             rightAction={
                 <Popover>
@@ -74,9 +75,17 @@ export default function ProfilePage() {
                 <DarkCard className="relative overflow-hidden">
                     <div className="relative z-10 flex flex-col items-center text-center">
                         <div className="relative group">
-                            <div className="h-24 w-24 rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold ring-4 ring-white/5">
-                                {user.name.slice(0, 1).toUpperCase()}
-                            </div>
+                            {user.avatarUrl ? (
+                                <img
+                                    src={user.avatarUrl}
+                                    alt={user.name}
+                                    className="h-24 w-24 rounded-full object-cover ring-4 ring-white/5"
+                                />
+                            ) : (
+                                <div className="h-24 w-24 rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold ring-4 ring-white/5">
+                                    {user.name.slice(0, 1).toUpperCase()}
+                                </div>
+                            )}
                             <button className="absolute bottom-0 right-0 h-9 w-9 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110 active:scale-90">
                                 <Camera className="h-4 w-4" />
                             </button>
@@ -86,7 +95,9 @@ export default function ProfilePage() {
                         <p className="text-white/50 text-sm font-medium">{user.email}</p>
                         <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <CheckCircle2 className="h-3 w-3" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Verified Account</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest">
+                                {user.email_verified_at ? 'Verified Account' : 'Guest Session'}
+                            </span>
                         </div>
                     </div>
                 </DarkCard>
@@ -142,7 +153,10 @@ export default function ProfilePage() {
 
                     {/* Profile Information Parity */}
                     <AccordionCard title="Informasi Personal">
-                        <form className="space-y-5 pt-2">
+                        <form
+                            className="space-y-5 pt-2"
+                            onSubmit={(event) => event.preventDefault()}
+                        >
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Nama Lengkap</label>
                                 <Input 

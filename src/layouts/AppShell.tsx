@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
-  const isAuthenticated = true; // Forced true to unhide features
+  const isAuthenticated = Boolean(user);
   const navItems = getUiNavItems(isAuthenticated);
 
   // Identify active nav item based on pathname for parity
@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex md:w-72 md:flex-col md:gap-4 sticky top-8 h-fit align-start">
               <DesktopSidebarNav
                 activeId={activeNavId}
-                navItems={navItems as any}
+                navItems={navItems}
                 isAuthenticated={isAuthenticated}
                 userName={user?.displayName || ''}
                 userEmail={user?.email || ''}
@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!isLanding && (
         <div className="fixed inset-x-0 z-50 flex justify-center md:hidden bottom-[calc(24px+env(safe-area-inset-bottom))]">
           <FloatingBottomNav
-            items={navItems as any}
+            items={navItems}
             activeId={activeNavId}
             onChange={(id) => {
               const href = navItems.find(n => n.id === id)?.href || '/today';

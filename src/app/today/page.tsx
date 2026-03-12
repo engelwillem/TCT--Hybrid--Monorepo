@@ -2,7 +2,7 @@
 
 import MobileAppLayout from '@/layouts/MobileAppLayout';
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 // Atomic Sections
 import GreetingHeader from './components/sections/GreetingHeader';
@@ -33,7 +33,7 @@ const slugifyRef = (ref: string) =>
         .replace(/^-+|-+$/g, '');
 
 type FeedItem = {
-    id: number;
+    id: number | string;
     type: string;
     payload: any;
     interactions?: any;
@@ -46,30 +46,87 @@ type PinnedLesson = {
     progress: { state: 'start' | 'continue' | 'completed' };
 } | null;
 
-export default function TodayPage() {
-    // Mocking data for now as we don't have the API integration yet
-    // This maintains pure visual parity
-    const pinnedLesson: PinnedLesson = null;
-    const hybridFeed: FeedItem[] = [
-        {
-            id: 1,
-            type: 'system_reflection',
-            payload: {
-                title: 'Kekuatan dalam Kelemahan',
-                text: 'Tuhan menunjukkan kuasa-Nya paling nyata saat kita mengakui kelemahan kita.',
-                verseRef: '2 Korintus 12:9'
-            }
-        },
-        {
-            id: 2,
-            type: 'prayer_request',
-            payload: {
-                author: { name: 'Sarah' },
-                text: 'Mohon doa untuk kesehatan ibu saya yang sedang dalam masa pemulihan.',
-                title: 'Doa untuk Kesembuhan'
-            }
+type TodayApiHighlight = {
+    id: string;
+    text: string;
+    imageUrl: string | null;
+    createdAt: string | null;
+    author: {
+        id: string;
+        name: string;
+        avatarUrl: string | null;
+    };
+    counts: {
+        likes: number;
+        comments: number;
+        bookmarks: number;
+    };
+    isLiked: boolean;
+    isBookmarked: boolean;
+};
+
+type TodayApiResponse = {
+    data?: {
+        dailyVerse?: DailyVerse | null;
+        highlights?: TodayApiHighlight[];
+    };
+};
+
+const fallbackDailyVerse: DailyVerse = {
+    ref: 'mzm-23-1',
+    reference: 'Mazmur 23:1',
+    quote: 'TUHAN adalah gembalaku, takkan kekurangan aku.'
+};
+
+const fallbackFeed: FeedItem[] = [
+    {
+        id: 1,
+        type: 'system_reflection',
+        payload: {
+            title: 'Kekuatan dalam Kelemahan',
+            text: 'Tuhan menunjukkan kuasa-Nya paling nyata saat kita mengakui kelemahan kita.',
+            verseRef: '2 Korintus 12:9'
         }
-    ];
+    },
+    {
+        id: 2,
+        type: 'prayer_request',
+        payload: {
+            author: { name: 'Sarah' },
+            text: 'Mohon doa untuk kesehatan ibu saya yang sedang dalam masa pemulihan.',
+            title: 'Doa untuk Kesembuhan'
+        }
+    }
+];
+
+function mapHighlightToFeedItem(highlight: TodayApiHighlight): FeedItem {
+    return {
+        id: highlight.id,
+        type: 'member_post',
+        payload: {
+            author: {
+                name: highlight.author?.name ?? 'Member',
+                avatar_url: highlight.author?.avatarUrl ?? undefined,
+            },
+            text: highlight.text,
+            image_path: highlight.imageUrl ?? undefined,
+            created_at: highlight.createdAt ?? undefined,
+            stats: {
+                likes_count: highlight.counts?.likes ?? 0,
+                comments_count: highlight.counts?.comments ?? 0,
+            },
+        },
+        interactions: {
+            is_liked: Boolean(highlight.isLiked),
+            is_bookmarked: Boolean(highlight.isBookmarked),
+        },
+    };
+}
+
+export default function TodayPage() {
+    const pinnedLesson: PinnedLesson = null;
+    const [apiDailyVerse, setApiDailyVerse] = useState<DailyVerse | null>(null);
+    const [apiHighlights, setApiHighlights] = useState<FeedItem[]>([]);
     const feed: FeedItem[] = [];
     const rituals = {
         reflection_prompt: {
@@ -81,12 +138,46 @@ export default function TodayPage() {
             reference: "Inspiratif"
         }
     };
-    const dailyVerse: DailyVerse = {
-        ref: 'mzm-23-1',
-        reference: 'Mazmur 23:1',
-        quote: 'TUHAN adalah gembalaku, takkan kekurangan aku.'
-    };
+    const dailyVerse = apiDailyVerse ?? fallbackDailyVerse;
     const welcomeVerse = undefined;
+    const hybridFeed = apiHighlights.length > 0 ? apiHighlights : fallbackFeed;
+
+    useEffect(() => {
+        let isActive = true;
+
+        const loadTodayData = async () => {
+            try {
+                const response = await fetch('/api/today', {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) return;
+
+                const payload = (await response.json()) as TodayApiResponse;
+                if (!isActive) return;
+
+                const nextDailyVerse = payload?.data?.dailyVerse ?? null;
+                const nextHighlights = Array.isArray(payload?.data?.highlights)
+                    ? payload.data.highlights.map(mapHighlightToFeedItem)
+                    : [];
+
+                setApiDailyVerse(nextDailyVerse);
+                setApiHighlights(nextHighlights);
+            } catch {
+                // Keep the visual fallback when the backend is unreachable.
+            }
+        };
+
+        loadTodayData();
+
+        return () => {
+            isActive = false;
+        };
+    }, []);
 
     const items = hybridFeed;
     const firstItems = items.slice(0, 2);
