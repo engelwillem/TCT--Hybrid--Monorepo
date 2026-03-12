@@ -3,7 +3,7 @@ set -euo pipefail
 
 RELEASE_PATH=""
 BASE_URL=""
-URLS="/ /today /versehub/id"
+URLS="/api/v1/today /api/v1/community/posts"
 REQUIRED_BIBLE_MIN="1"
 SKIP_HTTP="0"
 
