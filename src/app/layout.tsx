@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
 import { DM_Serif_Display, Inter } from 'next/font/google';
@@ -24,7 +25,7 @@ const APP_NAME = 'TheChosenTalks';
 const TAGLINE = 'The Chosen People';
 const DEFAULT_TITLE = `${APP_NAME} - ${TAGLINE}`;
 const DEFAULT_DESCRIPTION = 'Komunitas web app untuk Chosen People: ayat harian, komunitas iman, dan perjalanan rohani bertumbuh bersama.';
-const DEFAULT_OG_IMAGE = 'https://thechoosentalks.com/og/versehub-bg.png'; // Updated to full URL for parity
+const DEFAULT_OG_IMAGE = 'https://thechoosentalks.com/og/versehub-bg.png';
 
 export const viewport: Viewport = {
   themeColor: '#0f172a',
@@ -53,12 +54,6 @@ export const metadata: Metadata = {
         url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: DEFAULT_TITLE,
-      },
-      {
-        url: DEFAULT_OG_IMAGE,
-        width: 300,
-        height: 300,
         alt: DEFAULT_TITLE,
       },
     ],
