@@ -34,3 +34,30 @@ Git:
 
 Catatan: ada perubahan docs lama (`docs/core/architecture/laravel-hybrid/*` deleted + untracked mirror docs) yang saya sengaja tidak ikut commit agar tidak mengganggu scope integrasi API-first.
 
+Sudah saya set aturan minimum single-branch (`main`) dan saya push ke `origin/main` commit `f8a8fba`.
+
+Yang sudah diimplementasikan:
+- Frontend checks sekarang jalan di setiap push ke `main`, lalu auto-trigger Tencent Edge via deploy hook:
+  - [frontend-monorepo-checks.yml](/e:/thechoosentalksnext/.github/workflows/frontend-monorepo-checks.yml)
+- Backend checks terpisah untuk PR/push yang menyentuh backend:
+  - [backend-monorepo-checks.yml](/e:/thechoosentalksnext/.github/workflows/backend-monorepo-checks.yml)
+- PR checklist agar backend/frontend tidak drift:
+  - [pull_request_template.md](/e:/thechoosentalksnext/.github/pull_request_template.md)
+- SOP + policy resmi branch/CI:
+  - [SOP.md](/e:/thechoosentalksnext/docs/core/architecture/laravel-decoupled-hybrid/SOP.md)
+  - [BRANCH_CI_MINIMUM_POLICY.md](/e:/thechoosentalksnext/docs/core/architecture/laravel-decoupled-hybrid/BRANCH_CI_MINIMUM_POLICY.md)
+
+Hidden bug yang ikut saya bereskan:
+- Perbaikan syntax JSX di [profile page.tsx](/e:/thechoosentalksnext/src/app/profile/page.tsx) yang sebelumnya bikin `typecheck` gagal.
+
+Validasi lokal setelah perubahan:
+- `npm run typecheck` ✅
+- `npm run build` ✅
+
+Agar otomatis penuh di platform:
+1. Set GitHub secret `TENCENT_EDGE_DEPLOY_HOOK_URL` (wajib, kalau kosong workflow akan gagal by design).
+2. Aktifkan branch protection `main` dan jadikan required checks:
+   - `Frontend Monorepo Checks / frontend-checks`
+   - `Backend Monorepo Checks / backend-checks`
+3. Biarkan backend deploy tetap via [backend-cpanel-deploy.yml](/e:/thechoosentalksnext/.github/workflows/backend-cpanel-deploy.yml) (khusus perubahan `backend-api/**`).
+
