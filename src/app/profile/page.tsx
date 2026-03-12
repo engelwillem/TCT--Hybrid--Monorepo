@@ -385,7 +385,6 @@ export default function ProfilePage() {
                         <form className="space-y-5 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Nama Lengkap</label>
-                                <Input
                                 <Input 
                                     value={profileData.name}
                                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
@@ -394,7 +393,6 @@ export default function ProfilePage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-amber-500/50 uppercase tracking-[0.2em] ml-1">Alamat Email</label>
-                                <Input
                                 <Input 
                                     value={profileData.email}
                                     onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
@@ -455,4 +453,3 @@ export default function ProfilePage() {
         </MobileAppLayout>
     );
 }
-

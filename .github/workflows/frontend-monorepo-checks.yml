@@ -5,18 +5,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.idx/**'
-      - 'src/**'
-      - 'public/**'
-      - 'apphosting.yaml'
-      - 'components.json'
-      - 'next.config.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'postcss.config.mjs'
-      - 'tsconfig.json'
-      - '.github/workflows/frontend-monorepo-checks.yml'
   pull_request:
     paths:
       - '.idx/**'
@@ -38,6 +26,8 @@ concurrency:
 jobs:
   frontend-checks:
     runs-on: ubuntu-latest
+    env:
+      TENCENT_EDGE_DEPLOY_HOOK_URL: ${{ secrets.TENCENT_EDGE_DEPLOY_HOOK_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,3 +47,13 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+      - name: Trigger Tencent Edge deploy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          test -n "$TENCENT_EDGE_DEPLOY_HOOK_URL"
+          curl --fail --show-error --silent \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"ref\":\"${GITHUB_SHA}\"}" \
+            "$TENCENT_EDGE_DEPLOY_HOOK_URL"
