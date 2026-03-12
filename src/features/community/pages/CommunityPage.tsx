@@ -89,8 +89,8 @@ export function CommunityPage() {
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-700">
       <header className="p-8 pb-4 space-y-2">
-        <h2 className="tct-h1 text-brand">Komunitas</h2>
-        <p className="text-muted-foreground text-sm leading-relaxed">
+        <h2 className="text-3xl font-bold tracking-tight text-sky-400">Komunitas</h2>
+        <p className="text-amber-500/80 text-sm font-bold tracking-wide leading-relaxed">
           Tempat berbagi inspirasi, doa, dan pertumbuhan bersama.
         </p>
       </header>

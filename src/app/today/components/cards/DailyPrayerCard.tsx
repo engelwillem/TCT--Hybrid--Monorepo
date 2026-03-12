@@ -25,16 +25,16 @@ export default function DailyPrayerCard({
     };
 
     return (
-        <Card className="overflow-hidden rounded-[32px] border-0 bg-sky-50/50 dark:bg-sky-950/20 shadow-soft ring-1 ring-sky-200/50 dark:ring-sky-500/10 backdrop-blur-sm">
+        <Card className="overflow-hidden rounded-[40px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
             <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col items-center text-center space-y-5">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400">
-                        <Sparkles className="h-6 w-6" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                        <Sparkles className="h-7 w-7" />
                     </div>
 
-                    <div className="space-y-2">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-400">Doa Hari Ini</span>
-                        <p className="text-lg md:text-xl font-medium leading-relaxed text-slate-800 dark:text-slate-100 italic font-serif">
+                    <div className="space-y-3">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">Doa Hari Ini</span>
+                        <p className="text-xl md:text-2xl font-bold leading-relaxed text-white italic font-serif">
                             "{prayer}"
                         </p>
                     </div>
@@ -43,17 +43,17 @@ export default function DailyPrayerCard({
                         <Button
                             onClick={toggleAmin}
                             className={cn(
-                                "h-12 px-8 rounded-2xl font-bold shadow-lg transition-all active:scale-[0.98]",
+                                "h-14 px-10 rounded-2xl font-bold shadow-2xl transition-all active:scale-[0.95] text-xs tracking-widest uppercase",
                                 saidAmin
                                     ? "bg-sky-500 text-white hover:bg-sky-600 shadow-sky-500/20"
-                                    : "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 hover:bg-sky-50 ring-1 ring-sky-100 dark:ring-sky-800"
+                                    : "bg-white text-slate-950 hover:bg-slate-200"
                             )}
                         >
                             <span className="mr-2">🙌</span>
                             {saidAmin ? 'Kami Mengamini' : 'Sebut AMIN'}
                         </Button>
 
-                        <p className="text-[11px] font-bold text-sky-400 uppercase tracking-widest">
+                        <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-[0.2em]">
                             {count} Chosen People Mengamini
                         </p>
                     </div>

@@ -81,14 +81,14 @@ export default function QuoteCard({
     };
 
     return (
-        <Card className="overflow-hidden rounded-[32px] border-0 bg-white/40 dark:bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.03] dark:ring-white/[0.08] backdrop-blur-xl">
+        <Card className="overflow-hidden rounded-[40px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
             <CardContent className="px-5 pb-5 pt-5 md:px-7 md:pb-7 md:pt-7">
                 <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[11px] font-bold tracking-wider uppercase text-slate-500 ring-1 ring-black/5">
+                    <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-3 py-1 text-[10px] font-bold tracking-[0.2em] uppercase text-amber-500 shadow-sm">
                             Quotes
                         </span>
-                        <span className="text-[12px] font-medium text-slate-400">Today Reflection</span>
+                        <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Today Reflection</span>
                     </div>
                     <Sparkles className="h-4 w-4 text-cyan-400/40" />
                 </div>
@@ -141,12 +141,12 @@ export default function QuoteCard({
                     </button>
                 </div>
 
-                <div className="mt-5 relative overflow-hidden rounded-2xl bg-white/30 dark:bg-black/20 p-6 md:p-8 ring-1 ring-black/[0.02] dark:ring-white/[0.04]">
-                    <p className="relative font-serif text-[22px] leading-[1.6] tracking-tight text-slate-800 dark:text-slate-100 md:text-[26px]">
+                <div className="mt-8 relative overflow-hidden rounded-[2rem] bg-white/[0.03] p-10 md:p-12 border border-white/5 shadow-inner backdrop-blur-sm">
+                    <p className="relative font-serif text-[24px] leading-[1.6] tracking-tight text-white md:text-[30px]">
                         {quoteText}
                     </p>
-                    <div className="mt-4 flex flex-col gap-1">
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-cyan-500">
+                    <div className="mt-6 flex flex-col gap-2">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/80">
                             {payload?.reference ?? 'Quote of the day'}
                         </p>
                         {payload?.ref && (

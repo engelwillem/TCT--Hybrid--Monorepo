@@ -24,27 +24,27 @@ export default function ReflectionPrompt({ payload }: { payload?: { question: st
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
         >
-            <Card className="overflow-hidden rounded-[32px] border-0 bg-white/40 dark:bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.03] dark:ring-white/[0.08] backdrop-blur-xl">
+            <Card className="overflow-hidden rounded-[40px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
                 <CardContent className="p-6 md:p-8">
-                    <div className="flex flex-col items-center text-center space-y-5">
-                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+                    <div className="flex flex-col items-center text-center space-y-6">
+                        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
                             <Sparkles className="h-6 w-6" />
                         </div>
 
-                        <div className="space-y-2">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Renungan Hari Ini</span>
-                            <p className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 leading-relaxed md:tracking-tight">
+                        <div className="space-y-3">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500 shadow-sm">Renungan Hari Ini</span>
+                            <p className="text-2xl md:text-3xl font-bold text-white leading-tight tracking-tight">
                                 {question}
                             </p>
                         </div>
 
                         <div className="flex flex-col items-center gap-4">
-                            <div className="flex flex-wrap justify-center gap-2 mb-2">
+                            <div className="flex flex-wrap justify-center gap-3 mb-4">
                                 {['Amin', 'Setuju', 'Terberkati', 'Inspiratif'].map((chip) => (
                                     <button
                                         key={chip}
                                         onClick={() => handleChipClick(chip)}
-                                        className="px-4 py-2 rounded-full bg-indigo-100/50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                                        className="px-5 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[11px] font-bold hover:bg-white/10 hover:text-white transition-all active:scale-95"
                                     >
                                         {chip}
                                     </button>
