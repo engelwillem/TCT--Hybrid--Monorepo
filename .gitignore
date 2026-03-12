@@ -1,48 +1,85 @@
-# 1. Base Ignores
+# Dependencies
 node_modules/
+backend-api/vendor/
+backend-api/.composer-cache/
+
+# Build outputs and local caches
 .next/
+.vite/
+.tmp/
+.npm-cache/
+.playwright-mcp/
+dist/
 out/
 build/
-.DS_Store
-*.log
-*.tmp
 *.tsbuildinfo
-tsconfig.tsbuildinfo
+.phpunit.result.cache
 
-# 2. Environment & Secrets
+# Environment and secrets
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+backend-api/.env
+backend-api/.env.*.local
+backend-api/database/database.sqlite
 auth.json
+*.pem
+*.key
 
-# 3. Local Backend & Documentation (DO NOT COMMIT)
-/backend-api/
-/docs/
-/*.md
-!/README.md
-/componentss.json
-/components.json
-/response.html
-/ERROR FIREBASE STUDIO.md
+# Logs and temporary debug artifacts
+*.log
+*.tmp
+response.html
+migrate_output*.txt
+push_error.txt
+tsc_*.log
+next-dev.err.log
+next-dev.out.log
+.tmp_*
+backend-api/storage/logs/*.log
+backend-api/serve.err.log
+backend-api/serve.out.log
+backend-api/bootstrap/cache/*.php
 
-# 4. Whitelist Essential Next.js Files (FOR COMMIT)
-!/src/
-!/public/
-!/package.json
-!/package-lock.json
-!/tsconfig.json
-!/next.config.ts
-!/next-env.d.ts
-!/apphosting.yaml
-!/postcss.config.mjs
-!/.gitignore
-!/.gitattributes
+# Release bundles and local installers
+build.tar.gz
+build.tar.gz.sha256
+deliverable-*.zip
+deliverable-final-*.zip
+thechoosentalksbeta_origin.zip
+*.vsix
 
-# 5. OS/IDE Specific
-.idx/
+# Visual audit artifacts kept only in docs archives when needed
+*_verify_*.png
+verify_*.png
+rollback_*.png
+today_guest_verify_*.png
+browser_tab_logo_*.png
+favicon_logo_*.png
+community_layouts_showcase_*.png
+landing_page_refinement*.png
+landing_page_refined*.png
+spiritual_journey_overhaul_*.png
+
+# Tooling and editor state
 .vscode/
 .idea/
-.npm-cache
 .modified
+.firebase/
+
+# Firebase Studio workspace metadata must stay in repo root
+!.idx/
+!.idx/**
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation boundaries
+docs/archive/**
+!docs/archive/README.md
+docs/quarantine/**
+!docs/quarantine/README.md
+docs/STRUKTUR DOCS.md

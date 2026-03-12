@@ -1,0 +1,42 @@
+# Laravel to Next.js Migration Parity (Firebase Studio)
+
+- [x] Planning & Setup
+    - [x] Audit Laravel structure and assets
+    - [x] Setup Next.js environment for Firebase Studio compatibility
+    - [x] Resolve git conflicts and force push to repository
+    - [/] Refining "Cut and Replace" strategy for full frontend purge
+- [x] Core Assets Migration
+    - [x] Copy `app.css` and design tokens (Design System Parity)
+    - [x] Port `app.blade.php` meta/SEO logic to Next.js `layout.tsx`
+    - [x] Migration of shared UI components (`Components/ui`)
+    - [x] Migration of layouts and premium app shells (MobileAppLayout, AuthShell)
+- [x] Page-Level Migration (Zero Rewrite Strategy)
+    - [x] Migrate `Auth/Welcome` (Landing)
+    - [x] Migrate `Today/Index`
+    - [x] Migrate `Community/Index`
+    - [x] Migrate `VerseHub` pages
+        - [x] Port auxiliary overlays (Mentor, Share, Reflection)
+        - [x] Implement unified Reader logic (`VersehubReaderPage.tsx`)
+    - [x] Configure unified dynamic routing ([slug] page) to resolve conflicts
+    - [x] Verify Next.js production build (npm run build) passes
+    - [x] Resolve case-sensitive directory import conflicts
+        - [x] Port Activity & Journey pages
+        - [x] Port Study Paths system (Index & Show)
+    - [x] Migrate `Channels` pages
+        - [x] Port Sabbath School (Index, Lesson, Day reader)
+        - [x] Port Weekly Series (Index, Post view)
+        - [x] Implement interactive reader & discussion parity
+    - [x] Migrate `Auxiliary` pages
+        - [x] Port `Inbox` (Index & Thread)
+        - [x] Port `Profile` (Settings, 2FA, Admin Gateway)
+        - [x] Port `Library`, `GateUpdates`, `Visitors`
+        - [x] Port `Legal` (Privacy & Terms)
+- [ ] Integration & Routing
+    - [ ] Setup Axios/Fetch to communicate with Laravel backend-api
+    - [ ] Implement Next.js routing parity with Laravel `web.php`
+    - [ ] Configure `firebase.json` and `apphosting.yaml` for Firebase Studio
+- [ ] Verification & Laravel Purge
+    - [ ] Side-by-side visual comparison
+    - [ ] Functional testing (Auth, Comments, Daily Verse)
+    - [ ] Firebase Studio deployment validation
+    - [ ] **Purge legacy frontend from `backend-api`** (Clean Backend Checkpoint)
