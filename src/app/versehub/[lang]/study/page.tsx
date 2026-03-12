@@ -28,35 +28,29 @@ export default function StudyPathsIndexPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mocking study paths data for parity
-        setTimeout(() => {
-            setPaths([
-                { 
-                    id: 1, 
-                    slug: 'dasar-iman', 
-                    title_id: 'Dasar-Dasar Iman', 
-                    title_en: 'Fundamentals of Faith',
-                    description_id: 'Pelajari dasar-dasar kepercayaan Kristen melalui ayat-ayat kunci.',
-                    description_en: 'Learn the core of Christian beliefs through key verses.',
-                    cover_color: 'amber',
-                    difficulty: 'Beginner',
-                    estimated_minutes: 15
-                },
-                { 
-                    id: 2, 
-                    slug: 'khotbah-di-bukit', 
-                    title_id: 'Khotbah di Bukit', 
-                    title_en: 'Sermon on the Mount',
-                    description_id: 'Eksplorasi pengajaran Yesus yang paling mendalam dalam Matius 5-7.',
-                    description_en: 'Explore Jesus’ most profound teaching in Matthew 5-7.',
-                    cover_color: 'sky',
-                    difficulty: 'Intermediate',
-                    estimated_minutes: 45
-                }
-            ]);
-            setLoading(false);
-        }, 800);
-    }, []);
+        let isActive = true;
+        const load = async () => {
+            try {
+                const response = await fetch(`/api/study-paths/${lang}`, {
+                    method: 'GET',
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+                setPaths(Array.isArray(payload.paths) ? payload.paths : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
+    }, [lang]);
 
     return (
         <div className="min-h-screen bg-slate-950 text-white pb-20">

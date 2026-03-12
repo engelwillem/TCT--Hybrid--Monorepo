@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronRight, CalendarDays, BookOpen, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Day = {
     day_key: string;
@@ -16,26 +17,46 @@ type Day = {
 export default function SabbathSchoolLessonPage() {
     const params = useParams();
     const router = useRouter();
-    const { year, quarter, lessonNumber } = params;
+    const yearParam = params?.year;
+    const quarterParam = params?.quarter;
+    const lessonParam = params?.lessonNumber;
+    const year = Array.isArray(yearParam) ? yearParam[0] : yearParam;
+    const quarter = Array.isArray(quarterParam) ? quarterParam[0] : quarterParam;
+    const lessonNumber = Array.isArray(lessonParam) ? lessonParam[0] : lessonParam;
 
     const [days, setDays] = useState<Day[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mocking parity data for LessonIndex
-        setTimeout(() => {
-            setDays([
-                { day_key: 'sat', date: '2024-03-09', title: 'Pelajaran Sabat Ke-11', status: 'published' },
-                { day_key: 'sun', date: '2024-03-10', title: 'Allah yang Perkasa', status: 'published' },
-                { day_key: 'mon', date: '2024-03-11', title: 'Kedaulatan Allah dalam Mazmur', status: 'published' },
-                { day_key: 'tue', date: '2024-03-12', title: 'Penghayatan Firman', status: 'published' },
-                { day_key: 'wed', date: '2024-03-13', title: 'Doa Bersama', status: 'published' },
-                { day_key: 'thu', date: '2024-03-14', title: 'Aplikasi Praktis', status: 'published' },
-                { day_key: 'fri', date: '2024-03-15', title: 'Ringkasan Mingguan', status: 'published' },
-            ]);
-            setLoading(false);
-        }, 800);
-    }, [lessonNumber]);
+        if (!year || !quarter || !lessonNumber) return;
+
+        let isActive = true;
+        const load = async () => {
+            try {
+                const token = getAppAccessToken();
+                const response = await fetch(`/api/sabbath-school/${year}/${quarter}/lesson/${lessonNumber}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+                setDays(Array.isArray(payload.days) ? payload.days : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
+    }, [year, quarter, lessonNumber]);
 
     const formatShortDate = (iso: string) => {
         try {

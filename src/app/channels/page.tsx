@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight, CalendarDays, CircleCheckBig, LayoutGrid, MoveRight, Clock } from 'lucide-react';
+import { CalendarDays, CircleCheckBig, LayoutGrid, MoveRight, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Channel = {
     id: number;
@@ -65,33 +66,66 @@ export default function ChannelsPage() {
     const [heroLoaded, setHeroLoaded] = useState(false);
 
     useEffect(() => {
-        // Mocking parity data
-        setTimeout(() => {
-            setChannels([
-                { id: 1, slug: 'god-first', title: 'God First', description: 'Renungan pagi harian.', type: 'weekly', members_count: 1200, is_joined: true },
-                { id: 2, slug: 'faith-journey', title: 'Faith Journey', description: 'Perjalanan iman kita.', type: 'weekly', members_count: 850, is_joined: false },
-            ]);
-            
-            const mockQuarters: QuarterWithLessons[] = [
-                {
-                    id: 101, year: 2024, quarter: 1, title: 'Mazmur', start_date: '2024-01-01', end_date: '2024-03-31', is_active: true,
-                    lessons: [
-                        { id: 1, lesson_number: 1, title: 'Cara Membaca Mazmur', start_date: '2024-01-01', end_date: '2024-01-07' },
-                        { id: 2, lesson_number: 2, title: 'Mazmur Ratapan', start_date: '2024-01-08', end_date: '2024-01-14' },
-                    ]
-                }
-            ];
-            
-            setSabbathSchool({
-                channel: { id: 0, slug: 'sabbath-school', title: 'Sabbath School', type: 'ss', cover_image_url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=800' },
-                activeQuarterId: 101,
-                quartersWithLessons: mockQuarters,
-                todayTarget: { year: 2024, quarter: 1, lesson_number: 1, day_key: 'day-1', date: '2024-01-01' }
-            });
-            setSelectedQuarterId(101);
-            setLoading(false);
-        }, 800);
+        let isActive = true;
+        const load = async () => {
+            try {
+                const token = getAppAccessToken();
+                const response = await fetch('/api/channels', {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+
+                const payload = await response.json();
+                if (!isActive) return;
+
+                setChannels(Array.isArray(payload.channels) ? payload.channels : []);
+                setSabbathSchool(payload.sabbathSchool ?? null);
+                setSelectedQuarterId(payload.sabbathSchool?.activeQuarterId ?? 0);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+
+        load();
+        return () => {
+            isActive = false;
+        };
     }, []);
+
+    const handleMembershipToggle = async (channelSlug: string) => {
+        const token = getAppAccessToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/channels/${channelSlug}/membership`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) return;
+
+            const payload = await response.json();
+            setChannels(prev => prev.map(channel => {
+                if (channel.slug !== channelSlug) return channel;
+                return {
+                    ...channel,
+                    is_joined: Boolean(payload.is_joined),
+                    members_count: typeof payload.members_count === 'number' ? payload.members_count : channel.members_count,
+                };
+            }));
+        } catch {
+            // Keep UI responsive on transient network errors.
+        }
+    };
 
     const quarters = sabbathSchool?.quartersWithLessons ?? [];
     const selectedQuarter = quarters.find(q => q.id === selectedQuarterId) ?? quarters[0] ?? null;
@@ -234,7 +268,16 @@ export default function ChannelsPage() {
                                             <div className="h-1 w-1 bg-emerald-500 rounded-full animate-pulse" />
                                             <span className="text-[9px] font-bold text-slate-400">{channel.members_count} anggota</span>
                                         </div>
-                                        <ArrowRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-cyan-400 transition-colors" />
+                                        <button
+                                            type="button"
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleMembershipToggle(channel.slug);
+                                            }}
+                                            className="text-[9px] font-bold text-slate-100 bg-slate-700 px-2.5 py-1 rounded-full"
+                                        >
+                                            {channel.is_joined ? 'Leave' : 'Join'}
+                                        </button>
                                     </div>
                                 </div>
                             </button>

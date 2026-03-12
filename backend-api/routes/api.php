@@ -4,13 +4,19 @@ use App\Http\Controllers\Api\V1\CommunityApiController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\ChannelMembershipController;
 use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\InboxController;
 use App\Http\Controllers\InboxThreadController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SabbathSchoolController;
+use App\Http\Controllers\SsDayCommentController;
+use App\Http\Controllers\StudyPathController;
 use App\Http\Controllers\VerseHubController;
 use App\Http\Controllers\VerseHubReflectionController;
 use App\Http\Controllers\VersehubActionController;
+use App\Http\Controllers\WeeklyController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -20,6 +26,22 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('/community/posts', [CommunityApiController::class, 'index']);
     Route::get('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsIndex']);
+
+    Route::get('/study-paths/{lang}', [StudyPathController::class, 'index'])
+        ->whereIn('lang', ['id', 'en']);
+    Route::get('/study-paths/{lang}/{slug}', [StudyPathController::class, 'show'])
+        ->whereIn('lang', ['id', 'en']);
+
+    Route::get('/channels', [ChannelController::class, 'index']);
+    Route::get('/channels/{slug}', [WeeklyController::class, 'index']);
+    Route::get('/channels/{slug}/{date}', [WeeklyController::class, 'show'])
+        ->where('date', '\d{4}-\d{2}-\d{2}');
+
+    Route::get('/sabbath-school', [SabbathSchoolController::class, 'index']);
+    Route::get('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}', [SabbathSchoolController::class, 'lesson']);
+    Route::get('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}', [SabbathSchoolController::class, 'day']);
+    Route::get('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}/comments', [SsDayCommentController::class, 'index']);
+
     Route::get('/versehub/{lang}/{ref}/mentor', [VerseHubController::class, 'mentorInsights'])
         ->whereIn('lang', ['id', 'en'])
         ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
@@ -44,6 +66,12 @@ Route::prefix('v1')->group(function (): void {
             ->whereIn('lang', ['id', 'en'])
             ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
 
+        Route::post('/study-paths/{lang}/{slug}/join', [StudyPathController::class, 'join'])
+            ->whereIn('lang', ['id', 'en']);
+        Route::post('/study-paths/{lang}/{slug}/complete/{stepId}', [StudyPathController::class, 'completeStep'])
+            ->whereIn('lang', ['id', 'en'])
+            ->whereNumber('stepId');
+
         Route::get('/inbox', [InboxController::class, 'index']);
         Route::post('/inbox/read-all', [InboxController::class, 'markAllRead']);
         Route::post('/inbox/messages', [DirectMessageController::class, 'store']);
@@ -61,5 +89,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/profile/two-factor/confirm', [ProfileController::class, 'twoFactorConfirm']);
         Route::delete('/profile/two-factor', [ProfileController::class, 'twoFactorDisable']);
         Route::post('/profile/two-factor/recovery-codes', [ProfileController::class, 'regenerateTwoFactorRecoveryCodes']);
+
+        Route::post('/channels/{channel}/membership', [ChannelMembershipController::class, 'toggle']);
+        Route::post('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}/comments', [SsDayCommentController::class, 'store']);
+        Route::put('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}/comments/{commentId}', [SsDayCommentController::class, 'update'])
+            ->whereNumber('commentId');
+        Route::delete('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}/comments/{commentId}', [SsDayCommentController::class, 'destroy'])
+            ->whereNumber('commentId');
     });
 });

@@ -1,0 +1,13 @@
+import { NextRequest } from "next/server";
+import { proxyLaravel } from "@/lib/proxy-laravel";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string; date: string }> },
+) {
+  const { slug, date } = await params;
+  return proxyLaravel(
+    request,
+    `/api/v1/channels/${encodeURIComponent(slug)}/${encodeURIComponent(date)}`,
+  );
+}

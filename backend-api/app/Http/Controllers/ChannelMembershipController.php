@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Channel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ChannelMembershipController extends Controller
 {
-    public function toggle(Request $request, Channel $channel): RedirectResponse
+    public function toggle(Request $request, Channel $channel): RedirectResponse|JsonResponse
     {
         $user = $request->user();
         abort_unless($user, 401);
@@ -25,6 +26,15 @@ class ChannelMembershipController extends Controller
                     'role' => 'member',
                     'joined_at' => now(),
                 ],
+            ]);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'status' => $alreadyJoined ? 'left-channel' : 'joined-channel',
+                'is_joined' => !$alreadyJoined,
+                'members_count' => $channel->members()->count(),
             ]);
         }
 
