@@ -1,0 +1,13 @@
+/node_modules
+/vendor
+/.composer-cache
+/.env
+/.env.*.local
+/public/build
+/public/hot
+/bootstrap/cache/*.php
+/storage/logs/*.log
+/database/database.sqlite
+/serve.err.log
+/serve.out.log
+/.phpunit.result.cache
