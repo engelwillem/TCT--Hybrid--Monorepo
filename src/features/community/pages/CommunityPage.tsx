@@ -96,9 +96,9 @@ export function CommunityPage() {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="px-6">
-        <TabsList className="w-full bg-muted/30 p-1 rounded-2xl mb-8">
-          <TabsTrigger value="today" className="flex-1">Hari ini</TabsTrigger>
-          <TabsTrigger value="archive" className="flex-1">Arsip</TabsTrigger>
+        <TabsList className="w-full bg-white/5 border border-white/10 p-1.5 rounded-2xl mb-8 flex shadow-inner">
+          <TabsTrigger value="today" className="flex-1 rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Hari ini</TabsTrigger>
+          <TabsTrigger value="archive" className="flex-1 rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Arsip</TabsTrigger>
         </TabsList>
 
         <TabsContent value="today" className="m-0 space-y-6 pb-10">
@@ -127,8 +127,8 @@ export function CommunityPage() {
         </TabsContent>
 
         <TabsContent value="archive" className="m-0">
-          <Card className="border-dashed border-2 bg-muted/10 py-20 text-center flex flex-col items-center gap-6">
-            <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center text-muted-foreground shadow-inner">
+          <Card className="border-dashed border border-white/10 bg-white/[0.02] backdrop-blur-md py-20 text-center flex flex-col items-center gap-6">
+            <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 shadow-inner">
               <Inbox size={36} />
             </div>
             <div className="space-y-2">

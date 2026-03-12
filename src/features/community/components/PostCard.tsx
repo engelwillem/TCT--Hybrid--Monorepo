@@ -25,9 +25,9 @@ export function PostCard({ post, comments, onAddComment, onLike, onBookmark, cur
 
   return (
     <>
-      <Card className="border-none shadow-sm ring-1 ring-border/50 hover:ring-primary/20 transition-all overflow-hidden mb-4">
+      <Card className="border border-white/10 bg-white/[0.02] backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] ring-1 ring-white/5 hover:ring-white/10 hover:bg-white/[0.04] transition-all duration-300 overflow-hidden mb-4">
         <CardHeader className="p-4 flex-row items-center gap-3 space-y-0">
-          <Avatar className="w-10 h-10 border-2 border-background shadow-sm">
+          <Avatar className="w-10 h-10 border-2 border-white/10 shadow-sm ring-2 ring-background">
             <AvatarImage src={post.author.avatarUrl} />
             <AvatarFallback>{post.author.name[0]}</AvatarFallback>
           </Avatar>
@@ -57,7 +57,7 @@ export function PostCard({ post, comments, onAddComment, onLike, onBookmark, cur
           )}
         </CardContent>
 
-        <CardFooter className="p-2 px-4 flex justify-between border-t border-border/30">
+        <CardFooter className="p-2 px-4 flex justify-between border-t border-white/5 bg-white/[0.01]">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => onLike(post.id)}

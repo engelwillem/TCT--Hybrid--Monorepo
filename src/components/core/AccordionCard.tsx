@@ -26,13 +26,13 @@ export default function AccordionCard({
     return (
         <div
             className={cn(
-                'rounded-3xl bg-slate-900 text-white shadow-xl overflow-hidden',
+                'rounded-[32px] bg-white/[0.02] text-white shadow-[0_8px_32px_rgba(0,0,0,0.2)] ring-1 ring-white/5 backdrop-blur-md overflow-hidden transition-all hover:ring-white/10',
                 className,
             )}
         >
             <button
                 type="button"
-                className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-white/5"
+                className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-white/[0.04]"
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-controls={contentId}
@@ -40,7 +40,7 @@ export default function AccordionCard({
                 <div className="min-w-0">
                     <h3 className="text-sm font-bold uppercase tracking-[0.15em]">{title}</h3>
                     {description ? (
-                        <p className="mt-1 text-sm text-white/60 font-medium">{description}</p>
+                        <p className="mt-1 text-xs text-white/50 font-medium">{description}</p>
                     ) : null}
                 </div>
 
@@ -48,7 +48,7 @@ export default function AccordionCard({
                     {headerRight ?? null}
                     <span
                         className={cn(
-                            'mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 transition-transform duration-300',
+                            'mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/70 transition-all duration-300 hover:bg-white/10 hover:text-white',
                             open ? 'rotate-180' : 'rotate-0',
                         )}
                         aria-hidden="true"
