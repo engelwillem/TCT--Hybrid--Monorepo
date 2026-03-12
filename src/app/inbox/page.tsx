@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Mail, MessageSquare, Search, ArrowLeft, MoreVertical, Circle } from 'lucide-react';
+import { Mail, Search, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type InboxItem = {
     message_id: number;
     preview: string;
     is_unread: boolean;
-    created_at: string;
+    created_at: string | null;
     partner: {
         id: number;
         name: string;
@@ -19,43 +19,77 @@ type InboxItem = {
     };
 };
 
+type InboxPayload = {
+    tabs?: {
+        primary?: InboxItem[];
+        general?: InboxItem[];
+        requests?: InboxItem[];
+    };
+};
+
 export default function InboxPage() {
     const router = useRouter();
-    const [inbox, setInbox] = useState<InboxItem[]>([]);
+    const [inbox, setInbox] = useState<InboxPayload>({});
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'primary' | 'general' | 'requests'>('primary');
 
     useEffect(() => {
-        // Mocking parity data for Inbox Index
-        setTimeout(() => {
-            setInbox([
-                {
-                    message_id: 1,
-                    preview: 'Halo, bagaimana kabarmu hari ini?',
-                    is_unread: true,
-                    created_at: '2024-03-11T10:00:00Z',
-                    partner: { id: 10, name: 'Budi Santoso', online: true }
-                },
-                {
-                    message_id: 2,
-                    preview: 'Terima kasih atas renungannya.',
-                    is_unread: false,
-                    created_at: '2024-03-10T15:30:00Z',
-                    partner: { id: 11, name: 'Sari Wijaya', online: false }
-                }
-            ]);
+        const token = getAppAccessToken();
+        if (!token) {
             setLoading(false);
-        }, 800);
+            return;
+        }
+
+        let isActive = true;
+        const loadInbox = async () => {
+            try {
+                const response = await fetch('/api/inbox', {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+                setInbox(payload.inbox ?? {});
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+
+        loadInbox();
+
+        return () => {
+            isActive = false;
+        };
     }, []);
 
-    const formatTime = (iso: string) => {
+    const visibleItems = useMemo(() => {
+        const tabs = inbox.tabs ?? {};
+        return tabs[activeTab] ?? [];
+    }, [activeTab, inbox.tabs]);
+
+    const totalConversations = useMemo(() => {
+        const tabs = inbox.tabs ?? {};
+        return (tabs.primary?.length ?? 0) + (tabs.general?.length ?? 0) + (tabs.requests?.length ?? 0);
+    }, [inbox.tabs]);
+
+    const formatTime = (iso: string | null) => {
+        if (!iso) return '';
         const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return '';
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
                 <div className="h-10 w-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
             </div>
         );
@@ -63,7 +97,6 @@ export default function InboxPage() {
 
     return (
         <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
-            {/* Header Parity */}
             <header className="sticky top-0 z-50 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60 px-4 py-4">
                 <div className="mx-auto max-w-2xl flex items-center justify-between">
                     <button onClick={() => router.push('/today')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white active:scale-95 transition-all">
@@ -77,14 +110,12 @@ export default function InboxPage() {
             </header>
 
             <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
-                {/* Stats Header Parity */}
                 <div className="p-5 rounded-[28px] bg-white shadow-soft ring-1 ring-black/[0.03]">
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-sm font-bold text-slate-900 tracking-tight">Pesan Masuk</p>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{inbox.length} Percakapan</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{totalConversations} Percakapan</span>
                     </div>
-                    
-                    {/* Tabs Bar Parity */}
+
                     <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
                         {(['primary', 'general', 'requests'] as const).map(tab => (
                             <button
@@ -101,15 +132,14 @@ export default function InboxPage() {
                     </div>
                 </div>
 
-                {/* Conversation List Parity */}
                 <div className="grid gap-2.5">
-                    {inbox.length === 0 ? (
+                    {visibleItems.length === 0 ? (
                         <div className="p-12 text-center rounded-[32px] bg-white/50 border border-dashed border-slate-200">
                             <Mail className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                             <p className="text-sm font-bold text-slate-400">Belum ada percakapan</p>
                         </div>
                     ) : (
-                        inbox.map(item => (
+                        visibleItems.map(item => (
                             <button
                                 key={item.message_id}
                                 onClick={() => router.push(`/inbox/${item.partner.id}`)}
@@ -123,7 +153,7 @@ export default function InboxPage() {
                                         <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white" />
                                     )}
                                 </div>
-                                
+
                                 <div className="flex-1 min-w-0 text-left">
                                     <div className="flex items-center justify-between mb-1">
                                         <p className="font-bold text-[15px] text-slate-900 truncate">{item.partner.name}</p>
@@ -136,7 +166,7 @@ export default function InboxPage() {
                                         {item.preview}
                                     </p>
                                 </div>
-                                
+
                                 {item.is_unread && (
                                     <div className="h-2 w-2 rounded-full bg-blue-500 flex-none" />
                                 )}

@@ -1,37 +1,34 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Send, 
-    ChevronLeft, 
-    MoreVertical, 
-    Circle, 
-    Image as ImageIcon,
-    Smile,
-    ArrowLeft
-} from 'lucide-react';
+import { Send, MoreVertical, Image as ImageIcon, Smile, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Message = {
     id: number;
     body: string;
     is_mine: boolean;
-    created_at: string;
+    created_at: string | null;
 };
 
 type Partner = {
     id: number;
     name: string;
     online: boolean;
-    last_seen_at?: string;
+    last_seen_at?: string | null;
+};
+
+type ThreadPayload = {
+    partner?: Partner;
+    messages?: Message[];
 };
 
 export default function InboxShowPage() {
     const params = useParams();
     const router = useRouter();
-    const partnerId = params?.id;
+    const partnerId = Number(params?.id);
 
     const [partner, setPartner] = useState<Partner | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -40,21 +37,41 @@ export default function InboxShowPage() {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Mocking parity data for Thread
-        setTimeout(() => {
-            setPartner({
-                id: Number(partnerId),
-                name: 'Budi Santoso',
-                online: true
-            });
-            setMessages([
-                { id: 1, body: 'Halo Budi, bagaimana kabarmu harian ini?', is_mine: true, created_at: '10:00' },
-                { id: 2, body: 'Halo! Puji Tuhan baik. Kamu bagaimana?', is_mine: false, created_at: '10:02' },
-                { id: 3, body: 'Saya juga baik. Baru saja menyelesaikan renungan di Sabbath School.', is_mine: true, created_at: '10:05' },
-                { id: 4, body: 'Wah bagus itu! Pelajaran minggu ini memang sangat memberkati ya.', is_mine: false, created_at: '10:07' },
-            ]);
+        const token = getAppAccessToken();
+        if (!token || !Number.isFinite(partnerId)) {
             setLoading(false);
-        }, 800);
+            return;
+        }
+
+        let isActive = true;
+        const loadThread = async () => {
+            try {
+                const response = await fetch(`/api/inbox/${partnerId}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) return;
+                const payload = (await response.json()) as ThreadPayload;
+                if (!isActive) return;
+                setPartner(payload.partner ?? null);
+                setMessages(Array.isArray(payload.messages) ? payload.messages : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+
+        loadThread();
+
+        return () => {
+            isActive = false;
+        };
     }, [partnerId]);
 
     useEffect(() => {
@@ -63,16 +80,53 @@ export default function InboxShowPage() {
         }
     }, [messages]);
 
-    const handleSend = () => {
-        if (!text.trim()) return;
-        const newMessage = {
-            id: Date.now(),
-            body: text,
+    const handleSend = async () => {
+        const token = getAppAccessToken();
+        const body = text.trim();
+        if (!token || !body || !partner) return;
+
+        const optimisticId = Date.now();
+        const optimistic: Message = {
+            id: optimisticId,
+            body,
             is_mine: true,
-            created_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            created_at: new Date().toISOString(),
         };
-        setMessages([...messages, newMessage]);
+
+        setMessages((prev) => [...prev, optimistic]);
         setText('');
+
+        try {
+            const response = await fetch('/api/inbox/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    recipient_id: partner.id,
+                    body,
+                }),
+            });
+
+            if (!response.ok) {
+                setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+                return;
+            }
+
+            const payload = await response.json();
+            const serverId = Number(payload?.message?.id ?? optimisticId);
+            const createdAt = typeof payload?.message?.created_at === 'string' ? payload.message.created_at : optimistic.created_at;
+
+            setMessages((prev) => prev.map((m) => (
+                m.id === optimisticId
+                    ? { ...m, id: serverId, created_at: createdAt }
+                    : m
+            )));
+        } catch {
+            setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        }
     };
 
     if (loading || !partner) {
@@ -85,7 +139,6 @@ export default function InboxShowPage() {
 
     return (
         <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col">
-            {/* Header Parity */}
             <header className="flex-none bg-white border-b border-slate-100 px-4 py-3 z-10 shadow-sm">
                 <div className="mx-auto max-w-3xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -113,22 +166,17 @@ export default function InboxShowPage() {
                 </div>
             </header>
 
-            {/* Message Area Parity */}
-            <main 
+            <main
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
             >
                 <div className="mx-auto max-w-3xl space-y-4 pt-4">
-                    <div className="text-center py-6">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300">TODAY</span>
-                    </div>
-
                     {messages.map((m) => (
                         <div key={m.id} className={cn("flex w-full", m.is_mine ? "justify-end" : "justify-start")}>
                             <div className={cn(
                                 "max-w-[80%] px-5 py-3.5 rounded-[28px] shadow-sm text-[15px] leading-relaxed",
-                                m.is_mine 
-                                    ? "bg-slate-900 text-white rounded-br-none" 
+                                m.is_mine
+                                    ? "bg-slate-900 text-white rounded-br-none"
                                     : "bg-white text-slate-800 ring-1 ring-black/[0.02] rounded-bl-none"
                             )}>
                                 <p className="font-medium">{m.body}</p>
@@ -136,7 +184,7 @@ export default function InboxShowPage() {
                                     "text-[9px] font-bold uppercase tracking-widest mt-1.5 opacity-60 text-right",
                                     m.is_mine ? "text-white" : "text-slate-400"
                                 )}>
-                                    {m.created_at}
+                                    {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                 </p>
                             </div>
                         </div>
@@ -144,7 +192,6 @@ export default function InboxShowPage() {
                 </div>
             </main>
 
-            {/* Input Area Parity */}
             <footer className="flex-none bg-white p-4 pb-8 border-t border-slate-100">
                 <div className="mx-auto max-w-3xl flex items-end gap-3">
                     <div className="flex-1 bg-slate-50 rounded-[28px] ring-1 ring-black/[0.03] px-4 py-2 flex items-end gap-2">
@@ -157,7 +204,7 @@ export default function InboxShowPage() {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
-                                    handleSend();
+                                    void handleSend();
                                 }
                             }}
                             placeholder="Tulis pesan..."
@@ -168,8 +215,8 @@ export default function InboxShowPage() {
                             <ImageIcon className="h-5 w-5" />
                         </button>
                     </div>
-                    <button 
-                        onClick={handleSend}
+                    <button
+                        onClick={() => void handleSend()}
                         disabled={!text.trim()}
                         className={cn(
                             "h-12 w-12 flex items-center justify-center rounded-full transition-all active:scale-90",
@@ -183,3 +230,4 @@ export default function InboxShowPage() {
         </div>
     );
 }
+

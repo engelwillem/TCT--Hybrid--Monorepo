@@ -16,6 +16,7 @@ import {
     ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Day = {
     day_key: string;
@@ -29,7 +30,14 @@ type Day = {
 export default function SabbathSchoolDayPage() {
     const params = useParams();
     const router = useRouter();
-    const { year, quarter, lessonNumber, dayKey } = params;
+    const yearParam = params?.year;
+    const quarterParam = params?.quarter;
+    const lessonParam = params?.lessonNumber;
+    const dayKeyParam = params?.dayKey;
+    const year = Array.isArray(yearParam) ? yearParam[0] : yearParam;
+    const quarter = Array.isArray(quarterParam) ? quarterParam[0] : quarterParam;
+    const lessonNumber = Array.isArray(lessonParam) ? lessonParam[0] : lessonParam;
+    const dayKey = Array.isArray(dayKeyParam) ? dayKeyParam[0] : dayKeyParam;
 
     const [day, setDay] = useState<Day | null>(null);
     const [loading, setLoading] = useState(true);
@@ -38,21 +46,37 @@ export default function SabbathSchoolDayPage() {
     const [commentOpen, setCommentOpen] = useState(false);
 
     useEffect(() => {
-        // Mocking parity data for DayShow
-        setTimeout(() => {
-            setDay({
-                day_key: dayKey as string,
-                date: '2024-03-11',
-                title: 'Kedaulatan Allah dalam Mazmur',
-                content: `
-                    <p>Mazmur adalah kumpulan doa dan puji-pujian yang mengungkapkan seluruh spektrum emosi manusia di hadapan Allah. Dalam pelajaran hari ini, kita akan melihat bagaimana kedaulatan Allah dinyatakan...</p>
-                    <p>Bacalah Mazmur 23:1-6. Bagaimana gambaran Tuhan sebagai Gembala mengubah perspektif kita tentang tantangan hidup?</p>
-                `,
-                cover_image_url: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=1200'
-            });
-            setLoading(false);
-        }, 800);
-    }, [dayKey]);
+        if (!year || !quarter || !lessonNumber || !dayKey) return;
+
+        let isActive = true;
+        const load = async () => {
+            try {
+                const token = getAppAccessToken();
+                const response = await fetch(`/api/sabbath-school/${year}/${quarter}/lesson/${lessonNumber}/${dayKey}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+                if (payload.day) {
+                    setDay(payload.day);
+                }
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
+    }, [year, quarter, lessonNumber, dayKey]);
 
     if (loading || !day) {
         return (

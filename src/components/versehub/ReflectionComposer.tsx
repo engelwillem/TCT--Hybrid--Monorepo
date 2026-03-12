@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Lock, Globe, MessageSquareQuote } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 interface ReflectionComposerProps {
     isOpen: boolean;
@@ -38,10 +39,19 @@ export default function ReflectionComposer({
         e.preventDefault();
         setProcessing(true);
         try {
+            const token = getAppAccessToken();
+            if (!token) {
+                setErrors({ answer_text: 'Sesi login tidak ditemukan. Silakan login ulang.' });
+                setProcessing(false);
+                return;
+            }
+
             const response = await fetch(`/api/versehub/${lang}/reflections`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     verse_ref: verseRef,

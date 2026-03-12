@@ -28,42 +28,36 @@ export default function StudyPathsIndexPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mocking study paths data for parity
-        setTimeout(() => {
-            setPaths([
-                { 
-                    id: 1, 
-                    slug: 'dasar-iman', 
-                    title_id: 'Dasar-Dasar Iman', 
-                    title_en: 'Fundamentals of Faith',
-                    description_id: 'Pelajari dasar-dasar kepercayaan Kristen melalui ayat-ayat kunci.',
-                    description_en: 'Learn the core of Christian beliefs through key verses.',
-                    cover_color: 'amber',
-                    difficulty: 'Beginner',
-                    estimated_minutes: 15
-                },
-                { 
-                    id: 2, 
-                    slug: 'khotbah-di-bukit', 
-                    title_id: 'Khotbah di Bukit', 
-                    title_en: 'Sermon on the Mount',
-                    description_id: 'Eksplorasi pengajaran Yesus yang paling mendalam dalam Matius 5-7.',
-                    description_en: 'Explore Jesus’ most profound teaching in Matthew 5-7.',
-                    cover_color: 'sky',
-                    difficulty: 'Intermediate',
-                    estimated_minutes: 45
-                }
-            ]);
-            setLoading(false);
-        }, 800);
-    }, []);
+        let isActive = true;
+        const load = async () => {
+            try {
+                const response = await fetch(`/api/study-paths/${lang}`, {
+                    method: 'GET',
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+                setPaths(Array.isArray(payload.paths) ? payload.paths : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
+    }, [lang]);
 
     return (
-        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+        <div className="min-h-screen bg-slate-950 text-white pb-20">
             {/* Header parity */}
-            <div className="sticky top-0 z-40 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60 transition-all">
+            <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5 transition-all">
                 <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 active:scale-95">
+                    <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 active:scale-95">
                         <X className="h-4 w-4" />
                     </button>
                     <h1 className="font-bold text-lg">{isId ? 'Jalur Belajar' : 'Study Paths'}</h1>
@@ -97,7 +91,7 @@ export default function StudyPathsIndexPage() {
                             <button
                                 key={path.id}
                                 onClick={() => router.push(`/versehub/${lang}/study/${path.slug}`)}
-                                className="group relative flex flex-col overflow-hidden rounded-[32px] bg-white p-7 text-left shadow-soft ring-1 ring-slate-200/60 transition-all hover:-translate-y-1 hover:shadow-xl hover:ring-amber-300/50"
+                                className="group relative flex flex-col overflow-hidden rounded-[32px] bg-slate-800/60 p-7 text-left ring-1 ring-white/10 transition-all hover:-translate-y-1 hover:shadow-xl hover:ring-amber-400/30"
                             >
                                 {/* Accent Background Parity */}
                                 <div className={cn(
@@ -125,16 +119,16 @@ export default function StudyPathsIndexPage() {
                                         </div>
                                     </div>
 
-                                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
+                                    <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
                                         {isId ? path.title_id : path.title_en}
                                     </h3>
                                     <p className="mt-3 line-clamp-2 text-sm text-slate-500 leading-relaxed">
                                         {isId ? path.description_id : path.description_en}
                                     </p>
 
-                                    <div className="mt-8 flex items-center justify-between pt-5 border-t border-slate-50">
-                                        <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-                                            <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-amber-50">
+                                    <div className="mt-8 flex items-center justify-between pt-5 border-t border-white/5">
+                                        <div className="flex items-center gap-2.5 text-xs font-bold text-slate-400">
+                                            <div className="h-8 w-8 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-amber-500/20">
                                                 <BookOpen className="h-4 w-4 group-hover:text-amber-500" />
                                             </div>
                                             {isId ? 'Mulai Belajar' : 'Start Learning'}
@@ -149,7 +143,7 @@ export default function StudyPathsIndexPage() {
 
                 {!loading && paths.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="mb-4 rounded-full bg-slate-50 p-6 text-slate-300">
+                        <div className="mb-4 rounded-full bg-white/5 p-6 text-slate-500">
                             <BookOpen className="h-10 w-10" />
                         </div>
                         <p className="text-slate-500">

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, Users, Bell, ArrowLeft, MessageSquare, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Post = {
     id: number;
@@ -25,7 +26,8 @@ type MemberPost = {
 export default function WeeklyChannelIndexPage() {
     const params = useParams();
     const router = useRouter();
-    const { slug } = params;
+    const slugParam = params?.slug;
+    const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
 
     const [channel, setChannel] = useState<{
         title: string;
@@ -38,25 +40,63 @@ export default function WeeklyChannelIndexPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mocking parity data for Weekly Index
-        setTimeout(() => {
-            setChannel({
-                title: slug === 'god-first' ? 'God First' : 'Weekly Series',
-                description: 'Seri renungan mingguan untuk pertumbuhan iman.',
-                members_count: 1240,
-                is_joined: true
-            });
-            setPosts([
-                { id: 1, title: 'Menjaga Hati di Tengah Badai', publish_at: '2024-03-10 08:00:00' },
-                { id: 2, title: 'Kekuatan dalam Kelemahan', publish_at: '2024-03-03 08:00:00' },
-                { id: 3, title: 'Berjalan dalam Terang', publish_at: '2024-02-25 08:00:00' },
-            ]);
-            setMemberPosts([
-                { id: 101, type: 'text', author: 'Andi', text: 'Sangat memberkati renungan hari ini!', created_at: '2024-03-11' }
-            ]);
-            setLoading(false);
-        }, 800);
+        if (!slug) return;
+
+        let isActive = true;
+        const load = async () => {
+            try {
+                const token = getAppAccessToken();
+                const response = await fetch(`/api/channels/${slug}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+
+                setChannel(payload.channel ?? null);
+                setPosts(Array.isArray(payload.posts) ? payload.posts : []);
+                setMemberPosts(Array.isArray(payload.memberPosts) ? payload.memberPosts : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
     }, [slug]);
+
+    const handleMembershipToggle = async () => {
+        if (!slug || !channel) return;
+        const token = getAppAccessToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/channels/${slug}/membership`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) return;
+            const payload = await response.json();
+            setChannel(prev => prev ? {
+                ...prev,
+                is_joined: Boolean(payload.is_joined),
+                members_count: typeof payload.members_count === 'number' ? payload.members_count : prev.members_count,
+            } : prev);
+        } catch {
+            // Keep UI responsive on transient failures.
+        }
+    };
 
     if (loading || !channel) {
         return (
@@ -94,7 +134,9 @@ export default function WeeklyChannelIndexPage() {
                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Active Community</p>
                             </div>
                         </div>
-                        <button className={cn(
+                        <button
+                            onClick={handleMembershipToggle}
+                            className={cn(
                             "rounded-full px-5 py-2 text-xs font-bold transition-all active:scale-95",
                             channel.is_joined ? "bg-slate-100 text-slate-900" : "bg-slate-900 text-white shadow-lg"
                         )}>

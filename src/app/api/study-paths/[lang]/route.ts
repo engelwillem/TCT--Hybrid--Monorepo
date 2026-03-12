@@ -1,0 +1,10 @@
+import { NextRequest } from "next/server";
+import { proxyLaravel } from "@/lib/proxy-laravel";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ lang: string }> },
+) {
+  const { lang } = await params;
+  return proxyLaravel(request, `/api/v1/study-paths/${encodeURIComponent(lang)}`);
+}

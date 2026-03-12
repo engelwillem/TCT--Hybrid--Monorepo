@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Share2, Users, MessageSquare, BookOpen, Heart, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Post = {
     title: string;
@@ -23,7 +24,10 @@ type MemberPost = {
 export default function WeeklyChannelPostPage() {
     const params = useParams();
     const router = useRouter();
-    const { slug, date } = params;
+    const slugParam = params?.slug;
+    const dateParam = params?.date;
+    const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+    const date = Array.isArray(dateParam) ? dateParam[0] : dateParam;
 
     const [channel, setChannel] = useState<{
         title: string;
@@ -36,28 +40,69 @@ export default function WeeklyChannelPostPage() {
     const [liked, setLiked] = useState(false);
 
     useEffect(() => {
-        // Mocking parity data for Weekly Post
-        setTimeout(() => {
-            setChannel({
-                title: slug === 'god-first' ? 'God First' : 'Weekly Series',
-                members_count: 1240,
-                is_joined: true
-            });
-            setPost({
-                title: 'Menjaga Hati di Tengah Badai',
-                content: `
-                    <p>Dalam Mazmur 46:2 dikatakan: "Allah itu bagi kita tempat perlindungan dan kekuatan, sebagai penolong dalam kesesakan sangat terbukti."</p>
-                    <p>Seringkali badai kehidupan datang tanpa diduga. Namun, menjaga hati tetap tertuju pada Sang Pencipta adalah kunci kedamaian...</p>
-                    <p>Mari kita renungkan bagaimana kita bereaksi saat badai melanda.</p>
-                `,
-                publish_at: date as string
-            });
-            setMemberPosts([
-                { id: 201, type: 'text', author: 'Siska', text: 'Renungan ini sangat tepat waktu bagi saya!', created_at: '2024-03-10' }
-            ]);
-            setLoading(false);
-        }, 800);
+        if (!slug || !date) return;
+
+        let isActive = true;
+        const load = async () => {
+            try {
+                const token = getAppAccessToken();
+                const response = await fetch(`/api/channels/${slug}/${date}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+
+                setChannel(payload.channel ?? null);
+                if (payload.post) {
+                    setPost({
+                        title: payload.post.title ?? '',
+                        content: payload.post.content ?? '',
+                        publish_at: payload.post.publish_at ?? date,
+                    });
+                }
+                setMemberPosts(Array.isArray(payload.memberPosts) ? payload.memberPosts : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
     }, [slug, date]);
+
+    const handleMembershipToggle = async () => {
+        if (!slug || !channel) return;
+        const token = getAppAccessToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/channels/${slug}/membership`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) return;
+            const payload = await response.json();
+            setChannel(prev => prev ? {
+                ...prev,
+                is_joined: Boolean(payload.is_joined),
+                members_count: typeof payload.members_count === 'number' ? payload.members_count : prev.members_count,
+            } : prev);
+        } catch {
+            // Keep UI responsive on transient failures.
+        }
+    };
 
     if (loading || !post || !channel) {
         return (
@@ -92,7 +137,7 @@ export default function WeeklyChannelPostPage() {
                         <Users className="h-4 w-4 text-slate-300" />
                         <span className="text-xs font-bold text-slate-500">{channel.members_count} Members</span>
                     </div>
-                    <button className="text-[11px] font-bold text-slate-900 bg-slate-100 px-4 py-1.5 rounded-full">
+                    <button onClick={handleMembershipToggle} className="text-[11px] font-bold text-slate-900 bg-slate-100 px-4 py-1.5 rounded-full">
                         {channel.is_joined ? '✓ Joined' : 'Join'}
                     </button>
                 </div>

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, CheckCircle2, Circle, Play, ArrowRight, Info, Share2, X, Clock, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SharePanel from '@/components/versehub/SharePanel';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 interface Step {
     id: number;
@@ -42,36 +43,63 @@ export default function StudyPathShowPage() {
     const [processingStep, setProcessingStep] = useState<number | null>(null);
 
     useEffect(() => {
-        // Mocking study path data for parity
-        setTimeout(() => {
-            const mockData: StudyPath = {
-                id: 1,
-                slug: 'dasar-iman',
-                title_id: 'Dasar-Dasar Iman',
-                title_en: 'Fundamentals of Faith',
-                description_id: 'Pelajari dasar-dasar kepercayaan Kristen melalui ayat-ayat kunci yang membentuk fondasi kerohanian kita.',
-                description_en: 'Learn the core of Christian beliefs through key verses that form our spiritual foundation.',
-                cover_color: 'amber',
-                difficulty: 'Beginner',
-                estimated_minutes: 15,
-                steps: [
-                    { id: 10, step_order: 1, verse_ref: 'yoh-3-16', focus_question: 'Apa bukti kasih Tuhan yang terbesar bagi manusia?', mentor_note: 'Perhatikan kata "begitu besar kasih Allah" dalam ayat ini.' },
-                    { id: 11, step_order: 2, verse_ref: 'rom-3-23', focus_question: 'Bagaimana kondisi semua manusia di hadapan Allah?', mentor_note: null },
-                    { id: 12, step_order: 3, verse_ref: 'ef-2-8', focus_question: 'Bagaimana cara kita diselamatkan?', mentor_note: 'Bukan karena hasil usaha kita.' }
-                ]
-            };
-            setPath(mockData);
-            setUserProgress([10]); // Mock 1st step completed
-            setLoading(false);
-        }, 800);
-    }, [slug]);
+        let isActive = true;
+        const load = async () => {
+            try {
+                const token = getAppAccessToken();
+                const response = await fetch(`/api/study-paths/${lang}/${slug}`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                    cache: 'no-store',
+                });
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!isActive) return;
+                setPath(payload.path ?? null);
+                setUserProgress(Array.isArray(payload.userProgress) ? payload.userProgress : []);
+            } catch {
+                // Keep UI stable when API is unreachable.
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isActive = false;
+        };
+    }, [lang, slug]);
 
     const handleCompleteStep = async (stepId: number) => {
+        const token = getAppAccessToken();
+        if (!token) return;
+
         setProcessingStep(stepId);
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 600));
-        setUserProgress(prev => [...prev, stepId]);
-        setProcessingStep(null);
+        try {
+            const response = await fetch(`/api/study-paths/${lang}/${slug}/complete/${stepId}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) return;
+
+            const payload = await response.json();
+            const completedStepIds = payload?.progress?.completed_step_ids;
+            if (Array.isArray(completedStepIds)) {
+                setUserProgress(completedStepIds);
+                return;
+            }
+
+            setUserProgress(prev => (prev.includes(stepId) ? prev : [...prev, stepId]));
+        } catch {
+            // Keep UI stable on transient failures.
+        } finally {
+            setProcessingStep(null);
+        }
     };
 
     if (loading || !path) {
@@ -85,11 +113,11 @@ export default function StudyPathShowPage() {
     const progressPercent = Math.round((completedCount / totalSteps) * 100);
 
     return (
-        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+        <div className="min-h-screen bg-slate-950 text-white pb-20">
             {/* Header Parity */}
-            <div className="sticky top-0 z-40 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60">
+            <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
                 <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
-                    <button onClick={() => router.push(`/versehub/${lang}/study`)} className="h-10 w-10 flex items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 active:scale-95">
+                    <button onClick={() => router.push(`/versehub/${lang}/study`)} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 active:scale-95">
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <h1 className="font-bold text-lg">{isId ? path.title_id : path.title_en}</h1>

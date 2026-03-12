@@ -25,29 +25,50 @@ class ProfileController extends Controller
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request): Response|JsonResponse
     {
+        $user = $request->user();
         $isAdminViewer = (bool) ($request->user()?->is_admin ?? false);
         $opsGateway = $isAdminViewer ? $this->buildOpsGatewaySummary() : null;
+        $twoFactor = [
+            'enabled' => filled($request->user()?->app_authentication_secret),
+            'recoveryCodesRemaining' => is_array($request->user()?->app_authentication_recovery_codes)
+                ? count($request->user()->app_authentication_recovery_codes)
+                : 0,
+        ];
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => [
+                    'user' => [
+                        'id' => (string) ($user?->id ?? ''),
+                        'name' => (string) ($user?->name ?? ''),
+                        'email' => (string) ($user?->email ?? ''),
+                        'is_admin' => (bool) ($user?->is_admin ?? false),
+                        'email_verified_at' => optional($user?->email_verified_at)?->toIso8601String(),
+                        'avatar_url' => $user?->getFilamentAvatarUrl(),
+                    ],
+                    'mustVerifyEmail' => $user instanceof MustVerifyEmail,
+                    'status' => session('status'),
+                    'opsGateway' => $opsGateway,
+                    'twoFactor' => $twoFactor,
+                ],
+            ]);
+        }
 
         // Settings UI lives in the main app page.
         return Inertia::render('Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'opsGateway' => $opsGateway,
-            'twoFactor' => [
-                'enabled' => filled($request->user()?->app_authentication_secret),
-                'recoveryCodesRemaining' => is_array($request->user()?->app_authentication_recovery_codes)
-                    ? count($request->user()->app_authentication_recovery_codes)
-                    : 0,
-            ],
+            'twoFactor' => $twoFactor,
         ]);
     }
 
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validated();
 
@@ -82,13 +103,25 @@ class ProfileController extends Controller
 
         $user->save();
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'data' => [
+                    'id' => (string) $user->id,
+                    'name' => (string) $user->name,
+                    'email' => (string) $user->email,
+                    'email_verified_at' => optional($user->email_verified_at)?->toIso8601String(),
+                    'avatar_url' => $user->getFilamentAvatarUrl(),
+                ],
+            ]);
+        }
+
         return Redirect::route('settings.index');
     }
 
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'password' => ['required', 'current_password'],
@@ -102,6 +135,12 @@ class ProfileController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+            ]);
+        }
 
         return Redirect::to('/');
     }
@@ -133,7 +172,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function twoFactorConfirm(Request $request, TwoFactorService $twoFactorService): RedirectResponse
+    public function twoFactorConfirm(Request $request, TwoFactorService $twoFactorService): RedirectResponse|JsonResponse
     {
         $request->validate([
             'current_password' => ['required', 'current_password'],
@@ -142,6 +181,11 @@ class ProfileController extends Controller
 
         $setup = $request->session()->get('profile.2fa.setup');
         if (! is_array($setup) || blank($setup['secret'] ?? null)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Two-factor setup has expired.',
+                ], 422);
+            }
             return Redirect::route('settings.index')->with('status', 'two-factor-setup-expired');
         }
 
@@ -151,6 +195,11 @@ class ProfileController extends Controller
             : [];
 
         if (! $twoFactorService->verifyCode($secret, (string) $request->input('code'))) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Invalid two-factor code.',
+                ], 422);
+            }
             return Redirect::route('settings.index')->withErrors([
                 'two_factor_code' => 'Kode 2FA tidak valid.',
             ]);
@@ -164,10 +213,20 @@ class ProfileController extends Controller
         $twoFactorService->enable($user, $secret, $recoveryCodes);
         $request->session()->forget('profile.2fa.setup');
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'twoFactor' => [
+                    'enabled' => true,
+                    'recoveryCodesRemaining' => count($recoveryCodes),
+                ],
+            ]);
+        }
+
         return Redirect::route('settings.index')->with('status', 'two-factor-enabled');
     }
 
-    public function twoFactorDisable(Request $request, TwoFactorService $twoFactorService): RedirectResponse
+    public function twoFactorDisable(Request $request, TwoFactorService $twoFactorService): RedirectResponse|JsonResponse
     {
         $request->validate([
             'current_password' => ['required', 'current_password'],
@@ -188,6 +247,11 @@ class ProfileController extends Controller
         }
 
         if (! $isValid) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Kode OTP / recovery code tidak valid.',
+                ], 422);
+            }
             return Redirect::route('settings.index')->withErrors([
                 'two_factor_code' => 'Kode OTP / recovery code tidak valid.',
             ]);
@@ -195,6 +259,16 @@ class ProfileController extends Controller
 
         $twoFactorService->disable($user);
         $request->session()->forget('profile.2fa.setup');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'twoFactor' => [
+                    'enabled' => false,
+                    'recoveryCodesRemaining' => 0,
+                ],
+            ]);
+        }
 
         return Redirect::route('settings.index')->with('status', 'two-factor-disabled');
     }
