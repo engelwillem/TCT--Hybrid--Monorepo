@@ -17,7 +17,7 @@ export default function DarkCard({
     return (
         <div
             className={cn(
-                'rounded-[32px] bg-slate-900 p-8 text-white shadow-2xl ring-1 ring-white/10',
+                'rounded-[32px] bg-white/[0.02] p-8 text-white shadow-[0_8px_32px_rgba(0,0,0,0.2)] ring-1 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.04]',
                 className,
             )}
         >
