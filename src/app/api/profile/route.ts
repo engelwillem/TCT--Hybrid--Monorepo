@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST Profile Update
- * Required for Multipart Avatar Upload (Laravel patterns)
+ * Required for Multipart Avatar Upload (Laravel patterns usually use POST + _method spoofing)
  */
 export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");

@@ -7,7 +7,7 @@ interface RouteContext {
 
 /**
  * GET Inbox Thread
- * Standardised on [id] to resolve sibling conflicts with other dynamic folders.
+ * Standardised on [id] to resolve sibling conflicts with other dynamic folders at this level.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;

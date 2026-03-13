@@ -7,7 +7,7 @@ interface RouteContext {
 
 /**
  * GET Mentor Insights
- * Consolidated to [slug] parameter to maintain routing consistency.
+ * Consolidated to [slug] parameter to maintain routing consistency and resolve Next.js dynamic path conflicts.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
