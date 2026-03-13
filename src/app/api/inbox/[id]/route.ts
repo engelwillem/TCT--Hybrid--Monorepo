@@ -10,4 +10,3 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const search = request.nextUrl.search;
   return proxyLaravel(request, `/api/v1/inbox/${id}${search}`);
 }
-
