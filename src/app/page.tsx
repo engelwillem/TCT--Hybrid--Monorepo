@@ -259,6 +259,7 @@ function StickyCardStage() {
                                     scale: transforms[i].scale,
                                     y: transforms[i].y,
                                     willChange: 'transform, opacity',
+                                    transform: 'translateZ(0)'
                                 }}
                             >
                                 <FeatureCard {...item} />
