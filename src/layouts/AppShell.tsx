@@ -28,6 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      // Exact parity logic from legacy MobileAppLayout.tsx
       if (currentScrollY < lastScrollY.current || currentScrollY < 50) {
         setIsVisible(true);
       } else if (currentScrollY > 100 && currentScrollY > lastScrollY.current) {
@@ -51,22 +52,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!mounted) return <div className="min-h-screen bg-slate-950" />;
 
   const isLanding = pathname === "/";
-  // Logic to determine page title from pathname (Parity with app.blade.php logic)
-  // Removed unused getPageTitle logic to clean up file.
+  const isReader = pathname.includes('/versehub/'); // Equivalent to density='reader'
 
   return (
-    <div className="relative min-h-screen bg-slate-950 overflow-x-hidden">
-      {/* Ambient Background Layers (Parity with Laravel app.blade.php / MobileAppLayout) */}
+    <div className="relative min-h-screen overflow-x-hidden bg-[#fafafa] dark:bg-[#050505] touch-pan-y">
+      {/* Ambient Background Layers (100% legacy parity from app.blade.php) */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute -left-[10%] -top-[10%] h-[60%] w-[60%] rounded-full bg-indigo-200/20 blur-[120px] dark:bg-indigo-900/10" />
         <div className="absolute -right-[5%] top-[10%] h-[50%] w-[50%] rounded-full bg-sky-200/20 blur-[100px] dark:bg-sky-900/10" />
         <div className="absolute bottom-[10%] left-[20%] h-[40%] w-[40%] rounded-full bg-rose-200/10 blur-[110px] dark:bg-rose-900/5" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8">
+      <div
+        className={cn(
+          "relative z-10 mx-auto w-full max-w-6xl overflow-x-clip px-4",
+          isReader ? "py-4 md:py-6" : "py-8"
+        )}
+      >
         <div className="flex items-start gap-8">
-          {/* Desktop Sidebar (Parity with DesktopSidebarNav.tsx) */}
-          {!isLanding && (
+          {/* Desktop Sidebar (Parity with MobileAppLayout.tsx) */}
+          {!isLanding && activeNavId && (
             <div className="hidden md:flex md:w-72 md:flex-col md:gap-4 sticky top-8 h-fit align-start">
               <DesktopSidebarNav
                 activeId={activeNavId}
@@ -80,8 +85,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Main Content Column */}
-          <div className={cn("w-full md:flex-1 mx-auto", isLanding || pathname.startsWith('/versehub') ? "max-w-none" : "max-w-[420px] md:mx-0 md:max-w-none")}>
-            <main className={cn("relative min-h-[calc(100vh-200px)]")}>
+          <div
+            className={cn(
+              "w-full md:flex-1 mx-auto",
+              isLanding || isReader ? "max-w-none" : "max-w-[420px] md:mx-0 md:max-w-none"
+            )}
+            style={{
+              paddingBottom: 'calc(120px + env(safe-area-inset-bottom))',
+            }}
+          >
+            <main className={cn(isReader ? "mt-4" : "mt-6")}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={pathname}
@@ -99,9 +112,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Floating Mobile Nav (Parity with FloatingBottomNav.tsx) */}
-      {!isLanding && (
-        <div className="fixed inset-x-0 z-50 flex justify-center md:hidden bottom-[calc(24px+env(safe-area-inset-bottom))]">
+      {/* Floating Mobile Nav (Parity with MobileAppLayout.tsx) */}
+      {!isLanding && activeNavId && (
+        <div
+          className="fixed inset-x-0 z-50 flex justify-center md:hidden"
+          style={{ bottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+        >
           <FloatingBottomNav
             items={navItems}
             activeId={activeNavId}

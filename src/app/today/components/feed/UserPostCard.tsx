@@ -11,7 +11,7 @@ export default function UserPostCard({
     payload,
     interactions,
 }: {
-    id?: number;
+    id?: number | string;
     payload: {
         author?: { name: string; avatar_url?: string };
         user?: { name: string; avatar?: string };
@@ -46,7 +46,7 @@ export default function UserPostCard({
     const initialLikes = payload.stats?.likes_count ?? payload.likeCount ?? 0;
     const commentCount = payload.stats?.comments_count ?? payload.commentCount ?? 0;
     const timestamp = payload.created_at ? new Date(payload.created_at).toLocaleDateString() : (payload.timestamp ?? 'Just now');
-    const postId = id;
+    const postId = id != null ? String(id) : null;
 
     const [liked, setLiked] = useState(interactions?.is_liked ?? false);
     const [likes, setLikes] = useState(initialLikes);
@@ -54,12 +54,25 @@ export default function UserPostCard({
     const toggleLike = () => {
         if (!postId) return;
 
+        const prevLiked = liked;
+        const prevLikes = likes;
+
         if (liked) setLikes((prev) => prev - 1);
         else setLikes((prev) => prev + 1);
         setLiked(!liked);
-        
-        // Mocking API call
-        console.log('Toggling like for post:', postId);
+
+        void fetch(`/api/community/posts/${postId}/pray`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        }).then((response) => {
+            if (!response.ok) {
+                setLiked(prevLiked);
+                setLikes(prevLikes);
+            }
+        }).catch(() => {
+            setLiked(prevLiked);
+            setLikes(prevLikes);
+        });
     };
 
     const moveMedia = (dir: -1 | 1) => {

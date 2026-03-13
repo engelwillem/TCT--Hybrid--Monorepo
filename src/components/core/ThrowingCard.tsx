@@ -1,20 +1,32 @@
 "use client";
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
-export function ThrowingCard({ children, index = 0 }: { children: React.ReactNode; index?: number }) {
+export function ThrowingCard({ children, index = 0, className }: { children: React.ReactNode; index?: number; className?: string }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start start", "end start"]
+    });
+
+    const isEven = index % 2 === 0;
+    const direction = isEven ? 1 : -1;
+
+    // x moves from 0 to 400 (or -400) as the card moves from center-top to off-screen
+    const x = useTransform(scrollYProgress, [0, 0.8], [0, direction * 400]);
+    // opacity fades from 1 to 0
+    const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+    // subtle rotation as it gets "thrown"
+    const rotate = useTransform(scrollYProgress, [0, 0.8], [0, direction * 15]);
+    // slight scale down
+    const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.98 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-5%" }}
-            transition={{
-                duration: 0.8,
-                delay: index * 0.1,
-                ease: [0.22, 1, 0.36, 1]
-            }}
-            className="w-full"
+            ref={ref}
+            style={{ x, opacity, rotate, scale }}
+            className={className}
         >
             {children}
         </motion.div>

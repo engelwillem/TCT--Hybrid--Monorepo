@@ -11,7 +11,7 @@ export default function SystemReflectionCard({
     payload,
     interactions,
 }: {
-    id?: number;
+    id?: number | string;
     payload: {
         title?: string;
         text?: string;
@@ -25,7 +25,7 @@ export default function SystemReflectionCard({
 }) {
     const title = payload.title ?? 'Refleksi Terpilih';
     const content = payload.text ?? payload.content ?? 'Satu kutipan yang menguatkan perjalananmu hari ini.';
-    const postId = id;
+    const postId = id != null ? String(id) : null;
 
     const [encouraged, setEncouraged] = useState(interactions?.is_encouraged ?? false);
     const [count, setCount] = useState(payload.stats?.encouraged_count ?? 0);
@@ -33,15 +33,28 @@ export default function SystemReflectionCard({
     const toggleEncourage = () => {
         if (!postId) return;
 
+        const prevEncouraged = encouraged;
+        const prevCount = count;
+
         if (encouraged) {
-            setCount(prev => prev - 1);
+            setCount((prev) => prev - 1);
         } else {
-            setCount(prev => prev + 1);
+            setCount((prev) => prev + 1);
         }
         setEncouraged(!encouraged);
-        
-        // Mocking API call
-        console.log('Toggling encouragement for post:', postId);
+
+        void fetch(`/api/community/posts/${postId}/pray`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        }).then((response) => {
+            if (!response.ok) {
+                setEncouraged(prevEncouraged);
+                setCount(prevCount);
+            }
+        }).catch(() => {
+            setEncouraged(prevEncouraged);
+            setCount(prevCount);
+        });
     };
 
     return (

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Bookmark, Share2, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Bookmark, Share2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const isIos = () => typeof navigator !== 'undefined' && /iP(hone|od|ad)/.test(navigator.userAgent || '');
 
 interface DailyVersePayload {
   ref?: string;
@@ -22,20 +23,25 @@ const FALLBACK_VERSE: DailyVersePayload = {
 };
 
 export function DailyVerseHeroCard() {
+  const [verse, setVerse] = useState<DailyVersePayload>(FALLBACK_VERSE);
   const [saved, setSaved] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [verse, setVerse] = useState<DailyVersePayload>(FALLBACK_VERSE);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const parallaxRef = useRef<HTMLDivElement | null>(null);
 
+  const reactionKey = useMemo(
+    () => `tct:today:welcome-verse:${verse.ref ?? 'none'}`,
+    [verse.ref],
+  );
+
+  // Fetch verse data
   useEffect(() => {
     let cancelled = false;
-
     const fetchVerse = async () => {
       try {
         const response = await fetch("/api/today", { cache: "no-store" });
         if (!response.ok) return;
-
         const payload = await response.json();
         const dailyVerse = payload?.data?.dailyVerse as DailyVersePayload | undefined;
         if (!cancelled && dailyVerse?.quote) {
@@ -48,21 +54,31 @@ export function DailyVerseHeroCard() {
           });
         }
       } catch {
-        // Keep fallback verse silently.
+        // Fallback kept
       }
     };
-
     fetchVerse();
+    return () => { cancelled = true; };
+  }, []);
 
-    return () => {
-      cancelled = true;
+  // Preference and Intersect logic (Parity with legacy)
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      const isReduce = media.matches;
+      setReduceMotion(isReduce);
+      if (isReduce) setIsRevealed(true);
     };
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
   }, []);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const card = cardRef.current;
-    if (!card || typeof IntersectionObserver === "undefined") return;
-
+    if (!card || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
@@ -74,23 +90,27 @@ export function DailyVerseHeroCard() {
       },
       { threshold: [0, 0.35, 0.6] },
     );
-
     observer.observe(card);
     return () => observer.disconnect();
-  }, []);
+  }, [reduceMotion]);
 
+  // Parallax Engine (Standard legacy requestAnimationFrame pattern)
   useEffect(() => {
+    if (reduceMotion) {
+      if (parallaxRef.current) parallaxRef.current.style.transform = 'translate3d(0,0,0)';
+      return;
+    }
+
     const card = cardRef.current;
     const parallax = parallaxRef.current;
     if (!card || !parallax) return;
 
     let rafId = 0;
     let ticking = false;
-    const maxY = 14;
-    const maxX = 6;
+    let maxY = window.innerWidth >= 768 ? 14 : 10;
+    let maxX = window.innerWidth >= 768 ? 6 : 0;
 
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-
     const update = () => {
       ticking = false;
       const rect = card.getBoundingClientRect();
@@ -109,25 +129,38 @@ export function DailyVerseHeroCard() {
       rafId = window.requestAnimationFrame(update);
     };
 
-    window.addEventListener("scroll", requestTick, { passive: true });
-    window.addEventListener("resize", requestTick, { passive: true });
+    window.addEventListener('scroll', requestTick, { passive: true });
+    window.addEventListener('resize', requestTick, { passive: true });
+    requestTick();
 
     return () => {
-      window.removeEventListener("scroll", requestTick);
-      window.removeEventListener("resize", requestTick);
+      window.removeEventListener('scroll', requestTick);
+      window.removeEventListener('resize', requestTick);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [reduceMotion]);
 
-  const heroRefLabel = verse.reference || FALLBACK_VERSE.reference;
-  const heroQuote = verse.quote || FALLBACK_VERSE.quote;
-  const heroCtaLabel = verse.cta_label || FALLBACK_VERSE.cta_label;
-  const heroRefHref = verse.cta_href || FALLBACK_VERSE.cta_href || "/versehub/id";
-  const quoteSubline = "Tetap kuat, tetap berharap, dan terus berjalan bersama Tuhan.";
+  const heroRefLabel = verse.reference ?? 'Ayat Hari Ini';
+  const heroQuote = verse.quote ?? 'Firman hari ini sedang disiapkan.';
+  const heroCtaLabel = verse.cta_label ?? 'Baca Alkitab';
+  const heroRefHref = verse.cta_href ?? (verse.ref ? `/versehub/id/${verse.ref}` : '/versehub/id');
+  const quoteSubline = 'Tetap kuat, tetap berharap, dan terus berjalan bersama Tuhan.';
   const refLine = `${heroRefLabel} • Ayat hari ini`;
 
-  const revealStateClass = isRevealed ? "opacity-100 translate-y-0 blur-0" : "opacity-0 translate-y-[6px] blur-[1px]";
-  const revealClass = (index: number) => `transition-[opacity,transform,filter] duration-500 ease-out delay-[${index * 55}ms] ${revealStateClass}`;
+  const revealMotionClass = reduceMotion
+    ? ''
+    : 'transition-[opacity,transform,filter] duration-300 ease-out will-change-[opacity,transform,filter]';
+  const revealClass = (index: number) => {
+    if (reduceMotion) return '';
+    const stateClass = isRevealed ? 'opacity-100 translate-y-0 blur-0' : 'opacity-0 translate-y-[6px] blur-[1px]';
+    return `${revealMotionClass} ${stateClass}`;
+  };
+  const revealStyle = (index: number) =>
+    reduceMotion
+      ? undefined
+      : ({
+        transitionDelay: `${index * 55}ms`,
+      } as const);
 
   return (
     <Card
@@ -140,6 +173,7 @@ export function DailyVerseHeroCard() {
         shadow-[0_8px_32px_rgba(0,0,0,0.04)]
       "
     >
+      {/* Artistic Decorative Background Blobs (100% Parity) */}
       <div className="absolute inset-0 opacity-20 dark:opacity-10">
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-cyan-300 blur-[80px]" />
         <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-indigo-300 blur-[80px]" />
@@ -149,7 +183,7 @@ export function DailyVerseHeroCard() {
       <div
         ref={parallaxRef}
         className="pointer-events-none absolute inset-0 will-change-transform"
-        style={{ transform: "translate3d(0,0,0)" }}
+        style={{ transform: 'translate3d(0,0,0)' }}
       >
         <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(70%_80%_at_50%_0%,rgba(255,255,255,0.65),rgba(255,255,255,0))]" />
       </div>
@@ -164,11 +198,9 @@ export function DailyVerseHeroCard() {
               ring-1 ring-black/5 backdrop-blur
               ${revealClass(0)}
             `}
+            style={revealStyle(0)}
           >
-            <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <Sparkles size={12} className="text-brand" />
-              Ayat Kekuatanku
-            </span>
+            <CardTitle className="text-xs font-semibold text-slate-700">✨ Ayat Kekuatanku</CardTitle>
           </div>
         </div>
       </CardHeader>
@@ -176,20 +208,27 @@ export function DailyVerseHeroCard() {
       <CardContent className="relative z-10 p-0">
         <p
           className={`mt-5 text-center text-[26px] leading-[1.22] font-serif font-semibold tracking-[0.005em] text-slate-700 line-clamp-3 md:text-[36px] md:leading-[1.15] md:tracking-[0.01em] ${revealClass(1)}`}
+          style={revealStyle(1)}
         >
           {heroQuote}
         </p>
-        <p className={`mt-3 text-center text-sm leading-relaxed text-slate-600/80 line-clamp-2 md:mt-4 md:text-base ${revealClass(2)}`}>
+        <p
+          className={`mt-3 text-center text-sm leading-relaxed text-slate-600/80 line-clamp-2 md:mt-4 md:text-base ${revealClass(2)}`}
+          style={revealStyle(2)}
+        >
           {quoteSubline}
         </p>
 
-        <div className={`mt-4 text-center md:mt-5 ${revealClass(3)}`}>
-          <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-slate-500">{refLine}</p>
+        <div className={`mt-4 text-center md:mt-5 ${revealClass(3)}`} style={revealStyle(3)}>
+          <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-slate-500">
+            {refLine}
+          </p>
         </div>
 
         <div className="mt-5 md:mt-6">
-          <Link
-            href={heroRefHref}
+          <button
+            type="button"
+            onClick={() => window.location.assign(heroRefHref)}
             className={`
               group tct-pressable relative inline-flex h-12 w-full items-center justify-center rounded-2xl overflow-hidden
               bg-gradient-to-b from-slate-800 via-slate-700 to-slate-800
@@ -197,15 +236,17 @@ export function DailyVerseHeroCard() {
               shadow-[0_12px_22px_rgba(15,23,42,0.22)]
               hover:brightness-[1.01] hover:shadow-[0_15px_28px_rgba(15,23,42,0.28)]
               active:translate-y-[1px] active:brightness-[0.98] active:shadow-[0_6px_14px_rgba(15,23,42,0.2)]
-              transition-[transform,box-shadow,filter,background-color] duration-150 ease-out
+              transition-[transform,box-shadow,filter,background-color] duration-150 ease-out motion-reduce:transition-none
               ${revealClass(4)}
             `}
+            style={revealStyle(4)}
           >
+            <span className="pointer-events-none absolute inset-0 opacity-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_55%)] transition-opacity duration-150 ease-out group-active:opacity-100 motion-reduce:transition-none" />
             {heroCtaLabel}
-          </Link>
+          </button>
         </div>
 
-        <div className={`mt-4 flex items-center justify-between md:mt-5 ${revealClass(6)}`}>
+        <div className={`mt-4 flex items-center justify-between md:mt-5 ${revealClass(6)}`} style={revealStyle(6)}>
           <p className="text-xs font-semibold text-slate-500">Bagikan atau simpan</p>
           <div className="flex items-center gap-2">
             <button
@@ -214,20 +255,28 @@ export function DailyVerseHeroCard() {
                 group tct-pressable relative inline-flex items-center gap-2 rounded-full overflow-hidden
                 border border-white/40 bg-white/60 px-4 py-2
                 text-xs font-semibold text-slate-700/90
-                backdrop-blur hover:brightness-[1.01]
-                active:translate-y-[1px]
+                backdrop-blur
+                hover:brightness-[1.01]
+                active:translate-y-[1px] active:bg-white/75
+                transition-[transform,box-shadow,filter,background-color] duration-150 ease-out motion-reduce:transition-none
               "
+              aria-label="Share"
             >
+              <span className="pointer-events-none absolute inset-0 opacity-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_55%)] transition-opacity duration-150 ease-out group-active:opacity-100 motion-reduce:transition-none" />
               <Share2 className="h-3.5 w-3.5" />
               Share
             </button>
 
             <button
               type="button"
-              className={`group tct-pressable relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold border border-white/40 backdrop-blur hover:brightness-[1.01] active:translate-y-[1px] overflow-hidden ${saved ? "bg-slate-800 text-white" : "bg-white/55 text-slate-700/90"}`}
-              onClick={() => setSaved((value) => !value)}
+              className={`group tct-pressable relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold border border-white/40 backdrop-blur hover:brightness-[1.01] active:translate-y-[1px] transition-[transform,box-shadow,filter,background-color] duration-150 ease-out motion-reduce:transition-none overflow-hidden ${saved ? 'bg-slate-800 text-white' : 'bg-white/55 text-slate-700/90'
+                }`}
+              aria-label="Save"
+              aria-pressed={saved}
+              onClick={() => setSaved((v) => !v)}
             >
-              <Bookmark className="h-3.5 w-3.5" fill={saved ? "currentColor" : "none"} />
+              <span className="pointer-events-none absolute inset-0 opacity-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_55%)] transition-opacity duration-150 ease-out group-active:opacity-100 motion-reduce:transition-none" />
+              <Bookmark className="h-3.5 w-3.5" fill={saved ? 'currentColor' : 'none'} />
               Save
             </button>
           </div>

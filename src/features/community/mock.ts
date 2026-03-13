@@ -11,6 +11,7 @@ export const MOCK_USERS = {
 export const MOCK_POSTS: CommunityPost[] = [
   {
     id: "p1",
+    type: "member_post",
     text: "Bagaimana cara kalian menjaga konsistensi doa di pagi hari? Saya merasa 5 menit pertama sangat menentukan seluruh hari saya. 🙏",
     createdAt: "2 jam yang lalu",
     author: MOCK_USERS.sarah,
@@ -20,6 +21,7 @@ export const MOCK_POSTS: CommunityPost[] = [
   },
   {
     id: "p2",
+    type: "member_post",
     text: "Pemandangan pagi ini luar biasa indahnya. Pengingat akan kebesaran Sang Pencipta.",
     imageUrl: "https://picsum.photos/seed/post2/800/450",
     createdAt: "4 jam yang lalu",
@@ -30,6 +32,7 @@ export const MOCK_POSTS: CommunityPost[] = [
   },
   {
     id: "p3",
+    type: "member_post",
     text: "Ayat hari ini: 'Janganlah hendaknya kamu kuatir tentang apapun juga...' (Filipi 4:6). Sangat relevan buat saya minggu ini.",
     createdAt: "6 jam yang lalu",
     author: MOCK_USERS.anna,
@@ -39,6 +42,7 @@ export const MOCK_POSTS: CommunityPost[] = [
   },
   {
     id: "p4",
+    type: "member_post",
     text: "",
     imageUrl: "https://picsum.photos/seed/post4/800/800",
     createdAt: "8 jam yang lalu",
@@ -49,6 +53,7 @@ export const MOCK_POSTS: CommunityPost[] = [
   },
   {
     id: "p5",
+    type: "member_post",
     text: "Sangat bersyukur bisa berkumpul kembali dengan komunitas Bible Study minggu ini. Energi yang sangat positif! 🌟",
     createdAt: "Kemarin",
     author: MOCK_USERS.david,
@@ -58,6 +63,7 @@ export const MOCK_POSTS: CommunityPost[] = [
   },
   {
     id: "p6",
+    type: "member_post",
     text: "Terkadang kita perlu diam untuk mendengar suara hati. Jangan lupa luangkan waktu sejenak hari ini untuk refleksi diri.",
     imageUrl: "https://picsum.photos/seed/post6/800/400",
     createdAt: "Kemarin",

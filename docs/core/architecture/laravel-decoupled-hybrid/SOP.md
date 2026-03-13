@@ -1,6 +1,9 @@
 # SOP Stabilization (Single Branch Main)
 
 Dokumen ini adalah standar release wajib. Semua batch kerja harus mengikuti urutan ini.
+Parity UI/UX wajib mengacu ke:
+
+- [UI_UX_PARITY_GUIDE.md](/e:/thechoosentalksnext/docs/core/architecture/laravel-decoupled-hybrid/UI_UX_PARITY_GUIDE.md)
 
 ## 1. Pre-merge Local Gate (wajib)
 

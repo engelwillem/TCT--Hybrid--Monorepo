@@ -62,6 +62,45 @@ interface CardState {
     pointerEvents: 'auto' | 'none';
 }
 
+type FeatureItem = {
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    href: string;
+    accent: Accent;
+};
+
+const FEATURE_ITEMS: FeatureItem[] = [
+    {
+        icon: BookOpen,
+        title: 'Channels',
+        description: 'Pelajaran terstruktur termasuk Sabbath School untuk pendalaman iman yang sistematis.',
+        href: '/channels',
+        accent: 'violet',
+    },
+    {
+        icon: BookMarked,
+        title: 'Bible',
+        description: 'Alkitab reader modern dengan pelacakan perjalanan rohani dan refleksi pribadi.',
+        href: '/versehub/id',
+        accent: 'blue',
+    },
+    {
+        icon: Sparkles,
+        title: 'Today',
+        description: 'Inspirasi harian, ayat hari ini, dan ringkasan aktivitas rohani Anda.',
+        href: '/today',
+        accent: 'cyan',
+    },
+    {
+        icon: Users,
+        title: 'Community',
+        description: 'Berbagi berkat, berdiskusi, dan bertumbuh bersama saudara seiman.',
+        href: '/community',
+        accent: 'emerald',
+    },
+];
+
 /* ─────────────────────────── Motion helpers (from docs) ─────────────────────────── */
 const CENTERS = [0.15, 0.40, 0.65, 0.90];
 const RADIUS = 0.16;
@@ -279,14 +318,6 @@ function DotIndicator({ count, active }: { count: number; active: number }) {
     );
 }
 
-/* ─────────────────────────── Feature Items Data ─────────────────────────── */
-const featureItems = [
-    { icon: BookOpen,   title: 'Channels',   description: 'Pelajaran terstruktur termasuk Sabbath School untuk pendalaman iman yang sistematis.', href: '/channels',    accent: 'violet'  as Accent },
-    { icon: BookMarked, title: 'Bible',       description: 'Alkitab reader modern dengan pelacakan perjalanan rohani dan refleksi pribadi.',        href: '/versehub/id', accent: 'blue'    as Accent },
-    { icon: Sparkles,   title: 'Today',       description: 'Inspirasi harian, ayat hari ini, dan ringkasan aktivitas rohani Anda.',                 href: '/today',       accent: 'cyan'    as Accent },
-    { icon: Users,      title: 'Community',   description: 'Berbagi berkat, berdiskusi, dan bertumbuh bersama saudara seiman.',                      href: '/community',   accent: 'emerald' as Accent },
-];
-
 /* ─────────────────────────── Sticky Card Stage ─────────────────────────── */
 /**
  * Renders all cards simultaneously with scroll-driven transforms.
@@ -338,12 +369,12 @@ function StickyCardStage() {
                         <p className="text-lg text-white/45 max-w-md leading-relaxed">
                             Didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya melalui ekosistem yang terintegrasi.
                         </p>
-                        <DotIndicator count={featureItems.length} active={activeIndex} />
+                        <DotIndicator count={FEATURE_ITEMS.length} active={activeIndex} />
                     </div>
 
                     {/* Right: Stacked card stage — all cards rendered, transforms driven by scroll */}
                     <div className="relative h-[400px] w-full max-w-xl mx-auto">
-                        {featureItems.map((item, i) => {
+                        {FEATURE_ITEMS.map((item, i) => {
                             const s = cardStates[i];
                             return (
                                 <div
@@ -435,7 +466,7 @@ export default function LandingPage() {
                             <h2 className="tct-serif text-4xl leading-tight">Satu Platform, Banyak Cara Bertumbuh.</h2>
                         </div>
                         <div className="grid sm:grid-cols-2 gap-4">
-                            {featureItems.map(item => <FeatureCard key={item.title} {...item} />)}
+                            {FEATURE_ITEMS.map(item => <FeatureCard key={item.title} {...item} />)}
                         </div>
                     </section>
                 ) : (

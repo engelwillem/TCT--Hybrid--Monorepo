@@ -61,3 +61,25 @@ Agar otomatis penuh di platform:
    - `Backend Monorepo Checks / backend-checks`
 3. Biarkan backend deploy tetap via [backend-cpanel-deploy.yml](/e:/thechoosentalksnext/.github/workflows/backend-cpanel-deploy.yml) (khusus perubahan `backend-api/**`).
 
+Batch parity `Today cards` sudah saya lanjutkan dan implementasikan ke baseline Laravel legacy untuk kartu inti berikut:
+
+- [ReflectionPrompt.tsx](e:/thechoosentalksnext/src/app/today/components/cards/ReflectionPrompt.tsx)
+- [QuoteCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/QuoteCard.tsx)
+- [DailyPrayerCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/DailyPrayerCard.tsx)
+- [CommunityCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/CommunityCard.tsx)
+- [QuestionOfTheDay.tsx](e:/thechoosentalksnext/src/app/today/components/cards/QuestionOfTheDay.tsx)
+- [TalkCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/TalkCard.tsx)
+- [ReflectionCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/ReflectionCard.tsx)
+- [PinnedLessonCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/PinnedLessonCard.tsx)
+
+Paritas yang ditarik: radius/spacing/token warna, hierarchy teks, CTA style/order, serta interaksi utama (terutama `QuoteCard` termasuk komentar sheet + reaction/bookmark/share flow ala legacy).
+
+Dokumentasi matrix juga saya update di [UI_UX_PARITY_GUIDE.md](e:/thechoosentalksnext/docs/core/architecture/laravel-decoupled-hybrid/UI_UX_PARITY_GUIDE.md) dengan log batch kartu Today ini (status `/today` tetap `IN PROGRESS`, tapi sudah naik signifikan menuju `PARITY DONE`).
+
+Verifikasi teknis:
+- `npm run typecheck` ✅ lolos
+- `npm run build` ✅ lolos (perlu run di luar sandbox karena `spawn EPERM` di sandbox)
+- Dev smoke test ✅ server bisa listen (`DEV_OK_9011`)
+- `npm run lint` ⛔ belum bisa dipakai karena project belum punya konfigurasi ESLint (masih prompt interaktif `next lint`)
+
+Jika kamu setuju, saya lanjut batch final `/today` untuk menutup gap sisa di level page composition/state agar status bisa saya naikkan ke `PARITY DONE`.

@@ -10,7 +10,7 @@ export default function PrayerRequestCard({
     payload,
     interactions,
 }: {
-    id?: number;
+    id?: number | string;
     payload: {
         author?: { name: string; avatar_url?: string };
         user?: { name: string; avatar?: string };
@@ -29,7 +29,7 @@ export default function PrayerRequestCard({
     const initialPrays = payload.stats?.pray_count ?? payload.prayCount ?? 0;
     const commentCount = payload.stats?.comments_count ?? payload.commentCount ?? 0;
     const title = payload.title ?? 'Prayer Request';
-    const postId = id;
+    const postId = id != null ? String(id) : null;
 
     const [prayed, setPrayed] = useState(interactions?.is_prayed ?? false);
     const [count, setCount] = useState(initialPrays);
@@ -37,15 +37,28 @@ export default function PrayerRequestCard({
     const togglePray = () => {
         if (!postId) return;
 
+        const prevPrayed = prayed;
+        const prevCount = count;
+
         if (prayed) {
-            setCount(prev => prev - 1);
+            setCount((prev) => prev - 1);
         } else {
-            setCount(prev => prev + 1);
+            setCount((prev) => prev + 1);
         }
         setPrayed(!prayed);
-        
-        // Mocking API call
-        console.log('Toggling pray for post:', postId);
+
+        void fetch(`/api/community/posts/${postId}/pray`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        }).then((response) => {
+            if (!response.ok) {
+                setPrayed(prevPrayed);
+                setCount(prevCount);
+            }
+        }).catch(() => {
+            setPrayed(prevPrayed);
+            setCount(prevCount);
+        });
     };
 
     return (

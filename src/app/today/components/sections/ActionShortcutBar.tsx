@@ -10,28 +10,24 @@ const actions = [
         label: 'Berbagi',
         href: '/community',
         gradient: 'from-rose-400 to-pink-500',
-        shadow: 'shadow-rose-500/25',
     },
     {
         icon: BookOpen,
         label: 'Baca',
         href: '/versehub/id',
         gradient: 'from-blue-400 to-indigo-500',
-        shadow: 'shadow-blue-500/25',
     },
     {
         icon: LayoutGrid,
         label: 'Ikut',
         href: '/channels',
         gradient: 'from-emerald-400 to-teal-500',
-        shadow: 'shadow-emerald-500/25',
     },
     {
         icon: Inbox,
         label: 'Pesan',
         href: '/inbox',
         gradient: 'from-violet-400 to-purple-500',
-        shadow: 'shadow-violet-500/25',
     },
 ];
 
@@ -54,21 +50,23 @@ export default function ActionShortcutBar() {
                         )}
                     >
                         {/* Subtle inner glow */}
-                        <div className={cn(
-                            "absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-gradient-to-br",
-                            action.gradient
-                        )} />
+                        <div
+                            className={cn(
+                                'absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-20 bg-gradient-to-br',
+                                action.gradient,
+                            )}
+                        />
 
-                        <div className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300",
-                            "bg-gradient-to-br shadow-sm group-hover:shadow-md",
-                            action.gradient,
-                            "group-hover:scale-110"
-                        )}>
+                        <div
+                            className={cn(
+                                'flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md',
+                                action.gradient,
+                            )}
+                        >
                             <action.icon className="h-5 w-5 text-white drop-shadow-sm" />
                         </div>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 transition-colors group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300">
                         {action.label}
                     </span>
                 </Link>

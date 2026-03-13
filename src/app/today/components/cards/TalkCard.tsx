@@ -16,7 +16,7 @@ export default function TalkCard({
     const durationStr = payload.duration ? String(payload.duration) : null;
 
     return (
-        <Card className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
+        <Card className="overflow-hidden rounded-3xl border-0 bg-white/60 shadow-sm ring-1 ring-black/5 backdrop-blur-sm dark:bg-slate-900/40 dark:ring-white/8">
             <CardContent className="p-0">
                 <a
                     href={payload.ctaUrl}
@@ -40,26 +40,26 @@ export default function TalkCard({
                                 </div>
                             )}
                             {/* Play overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100 rounded-2xl">
+                            <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                                    <Play className="h-4 w-4 fill-slate-900 text-slate-900 translate-x-0.5" />
+                                    <Play className="h-4 w-4 translate-x-0.5 fill-slate-900 text-slate-900" />
                                 </div>
                             </div>
                         </div>
 
                         <div className="min-w-0 flex-1">
                             {/* Kicker */}
-                            <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-amber-500">
-                                <Radio className="h-3.5 w-3.5" />
-                                Talk
+                            <span className="mb-1.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+                                <Radio className="h-3 w-3" />
+                                    Talk
                             </span>
 
-                            <p className="line-clamp-2 text-base font-bold leading-tight tracking-tight text-white mb-2">
+                            <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-800 dark:text-slate-100">
                                 {payload.title}
                             </p>
 
                             {durationStr && (
-                                <span className="mt-2 inline-flex items-center rounded-lg bg-white/5 border border-white/10 px-3 py-1 text-[10px] font-bold tracking-widest text-sky-400 uppercase">
+                                <span className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/8 dark:text-slate-400">
                                     {durationStr}
                                 </span>
                             )}

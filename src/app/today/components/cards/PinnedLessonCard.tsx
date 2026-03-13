@@ -37,23 +37,23 @@ export default function PinnedLessonCard({ pinned }: Props) {
               : 'Start';
 
     return (
-        <Card className="overflow-hidden rounded-[40px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
+        <Card className="overflow-hidden rounded-3xl bg-surface shadow-soft">
             <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="secondary" className="rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-[0.15em] text-amber-500 shadow-sm">
+                    <Badge variant="secondary" className="chip border-0">
                         Pinned • Today’s Lesson
                     </Badge>
-                    <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest">
+                    <p className="tct-meta">
                         ~{lesson.estimated_minutes} min
                     </p>
                 </div>
 
-                <CardTitle className="mt-2 text-2xl md:text-3xl font-bold text-sky-400 leading-tight tracking-tight">
+                <CardTitle className="mt-2 tct-h2">
                     {lesson.title}
                 </CardTitle>
 
                 {lesson.excerpt ? (
-                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+                    <p className="mt-2 tct-meta">
                         {lesson.excerpt}
                     </p>
                 ) : null}
@@ -61,18 +61,20 @@ export default function PinnedLessonCard({ pinned }: Props) {
 
             <CardContent className="pt-0">
                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <Button
-                        className="rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-50 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-6 font-bold shadow-lg transition-all active:scale-[0.98]"
-                    >
-                        {ctaLabel}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            className="tct-pressable"
+                        >
+                            {ctaLabel}
+                        </Button>
 
-                    <Button asChild variant="outline" className="rounded-2xl border-white/20 bg-white/5 backdrop-blur-sm hover:bg-white/10 text-slate-600 dark:text-slate-300">
-                        <Link href="/channels/sabbath-school">View Quarter</Link>
-                    </Button>
+                        <Button asChild variant="outline" className="tct-pressable">
+                            <Link href="/channels/sabbath-school">View Quarter</Link>
+                        </Button>
+                    </div>
 
                     <div className="ms-auto flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span className="tct-meta">
                             {quarter.title}
                         </span>
                     </div>
