@@ -6,8 +6,8 @@ interface RouteContext {
 }
 
 /**
- * POST Ask Question to Scripture Guide
- * Standardised on [slug] to prevent dynamic path collisions with other sibling folders.
+ * POST Ask Question
+ * Standardized on [slug] to resolve sibling ambiguity conflicts under [lang].
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;

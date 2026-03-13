@@ -6,8 +6,8 @@ interface RouteContext {
 }
 
 /**
- * GET Inbox Messages (Thread)
- * Standardised on [id] to prevent sibling conflicts and match the relational database model.
+ * GET Inbox Messages
+ * Standardized on [id] to resolve Next.js 15 routing conflicts.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
