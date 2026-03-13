@@ -7,7 +7,7 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
-  // Next.js API route parameters are smarter with consistent naming
+  // Menghilangkan ekstensi .png jika ada untuk normalisasi ref Alkitab
   const normalizedRef = slug.toLowerCase().replace(/\.png$/i, "");
   return proxyLaravel(request, `/versehub/id/${normalizedRef}/og.png`);
 }
