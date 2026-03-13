@@ -3,7 +3,7 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Proksi permintaan dari Next.js ke Laravel API.
- * Hardened: Menjamin integritas data biner (upload) dan transparansi response.
+ * Hardened: Menjamin integritas data biner (upload) dan transparansi response (JSON/HTML).
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
@@ -15,7 +15,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       try {
-        // CRITICAL: Use arrayBuffer to prevent corruption of multipart boundaries
+        // CRITICAL: Use arrayBuffer to prevent corruption of binary/multipart boundaries
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
@@ -33,7 +33,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Use arrayBuffer to support binary responses (images/files) and forward them as-is
+    // Handle any response type (JSON success or HTML error pages)
     const responseBuffer = await response.arrayBuffer();
 
     const nextResponse = new NextResponse(responseBuffer, {
