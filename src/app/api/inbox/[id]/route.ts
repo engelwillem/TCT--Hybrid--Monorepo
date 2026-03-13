@@ -6,7 +6,7 @@ interface RouteContext {
 }
 
 /**
- * Standardized to [id] to prevent routing conflicts with [slug].
+ * Menggunakan [id] secara konsisten untuk Inbox API.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;

@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * Mendukung POST untuk upload file yang menggunakan _method PATCH (Laravel pattern).
+ * Tanpa handler POST, upload avatar akan mengembalikan error 405.
  */
 export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");

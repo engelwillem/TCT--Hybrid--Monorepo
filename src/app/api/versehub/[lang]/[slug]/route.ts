@@ -6,7 +6,7 @@ interface RouteContext {
 }
 
 /**
- * Single dynamic entry for VerseHub to prevent [ref] vs [slug] conflicts.
+ * Endpoint tunggal untuk info ayat guna menghindari konflik [id] vs [ref] vs [slug].
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;

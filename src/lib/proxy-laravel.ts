@@ -3,7 +3,7 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Proksi permintaan dari Next.js ke Laravel API.
- * Versi stabil: Mendukung data biner (upload), JSON, dan response non-JSON (HTML error).
+ * Versi diperkeras: Menjamin integritas data biner (upload) dan fleksibilitas response (JSON/HTML).
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
@@ -15,10 +15,11 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       try {
+        // Menggunakan arrayBuffer() menjamin boundary multipart/form-data tidak rusak
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
-        // Body mungkin kosong
+        // Body mungkin kosong atau tidak valid
       }
     }
 
