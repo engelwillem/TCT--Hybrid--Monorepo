@@ -5,8 +5,12 @@ interface RouteContext {
   params: Promise<{ lang: string; slug: string }>;
 }
 
+/**
+ * Handler tunggal untuk VerseHub dynamic segments.
+ * Menangani routing untuk chapter maupun verse share secara dinamis.
+ */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
   const search = request.nextUrl.search;
-  return proxyLaravel(request, `/api/v1/versehub/${lang}/${slug}/mentor${search}`);
+  return proxyLaravel(request, `/api/v1/versehub/${lang}/${slug}${search}`);
 }

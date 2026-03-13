@@ -5,8 +5,8 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
-  const { id } = await context.params;
+export async function GET(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   const search = request.nextUrl.search;
   return proxyLaravel(request, `/api/v1/inbox/${id}/messages${search}`);
 }
