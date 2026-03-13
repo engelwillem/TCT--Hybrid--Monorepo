@@ -28,10 +28,11 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       headers: {
         ...(contentType ? { "Content-Type": contentType } : {}),
         ...(authorization ? { Authorization: authorization } : {}),
+        "X-Requested-With": "XMLHttpRequest",
       },
     });
 
-    // Mengambil response body sebagai text (asumsi Laravel mengembalikan JSON/HTML)
+    // Mengambil response body sebagai text (asumsi Laravel mengembalikan JSON atau HTML error)
     const payload = await response.text();
 
     return new NextResponse(payload, {

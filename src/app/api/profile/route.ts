@@ -11,6 +11,7 @@ export async function PATCH(request: NextRequest) {
 
 /**
  * Mendukung POST untuk upload file yang menggunakan _method PATCH (Laravel pattern)
+ * dan untuk kompatibilitas multipart di lingkungan PHP tertentu.
  */
 export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");
