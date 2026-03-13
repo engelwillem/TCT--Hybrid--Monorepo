@@ -6,8 +6,7 @@ interface RouteContext {
 }
 
 /**
- * Menstandardisasi parameter menjadi [id] agar sinkron dengan database
- * dan menghilangkan konflik rute dengan folder [slug].
+ * Standardized to [id] to prevent routing conflicts with [slug].
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;

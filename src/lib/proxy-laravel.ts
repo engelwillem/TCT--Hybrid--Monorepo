@@ -3,24 +3,22 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Proksi permintaan dari Next.js ke Laravel API.
- * Hardened version: Mendukung multipart/form-data, JSON, dan response non-JSON (HTML/Error).
+ * Versi stabil: Mendukung data biner (upload), JSON, dan response non-JSON (HTML error).
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
     const contentType = request.headers.get("content-type");
     const authorization = request.headers.get("authorization");
     
-    // Tentukan apakah request membutuhkan body berdasarkan metodenya
     const hasBody = !["GET", "HEAD"].includes(request.method);
     
-    // Gunakan Uint8Array untuk menjaga integritas data binary (multipart/upload).
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       try {
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
-        // Body mungkin kosong atau tidak terbaca
+        // Body mungkin kosong
       }
     }
 
@@ -34,8 +32,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Mengambil response body sebagai text agar aman meskipun Laravel mengembalikan HTML error (500/404)
-    // Ini mencegah crash "Unexpected token < in JSON" di sisi Next.js
+    // Ambil sebagai text agar aman meskipun Laravel mengembalikan HTML error (500/404)
     const payload = await response.text();
 
     return new NextResponse(payload, {
@@ -48,8 +45,8 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     console.error("Proxy Error:", error);
     return NextResponse.json(
       {
-        message: "Unable to reach Laravel API.",
-        detail: error instanceof Error ? error.message : "Unknown error",
+        message: "Laravel API is currently unreachable.",
+        detail: error instanceof Error ? error.message : "Unknown connectivity error",
       },
       { status: 503 },
     );

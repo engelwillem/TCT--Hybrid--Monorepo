@@ -6,9 +6,7 @@ interface RouteContext {
 }
 
 /**
- * Handler tunggal untuk VerseHub dynamic segments.
- * Menangani routing untuk chapter maupun verse share secara dinamis
- * tanpa konflik parameter [ref].
+ * Single dynamic entry for VerseHub to prevent [ref] vs [slug] conflicts.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
