@@ -35,8 +35,8 @@ const slugifyRef = (ref: string) =>
 type FeedItem = {
     id: number | string;
     type: string;
-    payload: any;
-    interactions?: any;
+    payload: Record<string, unknown>;
+    interactions?: Record<string, unknown>;
     can_moderate?: boolean;
 };
 
@@ -48,6 +48,7 @@ type PinnedLesson = {
 
 type TodayApiHighlight = {
     id: string;
+    type?: string;
     text: string;
     imageUrl: string | null;
     createdAt: string | null;
@@ -65,10 +66,35 @@ type TodayApiHighlight = {
     isBookmarked: boolean;
 };
 
+type TodayRituals = {
+    today_verse?: Record<string, unknown> | null;
+    quote_of_day?: {
+        text?: string;
+        author?: string | null;
+        reference?: string | null;
+        ref?: string | null;
+        source?: string | null;
+    } | null;
+    reflection_prompt?: {
+        question?: string;
+        response_count?: number;
+    } | null;
+};
+
+type TodayLegacyFeedItem = {
+    type?: string;
+    payload?: Record<string, unknown>;
+};
+
 type TodayApiResponse = {
     data?: {
         dailyVerse?: DailyVerse | null;
         highlights?: TodayApiHighlight[];
+        rituals?: TodayRituals;
+        hybridFeed?: FeedItem[];
+        feed?: TodayLegacyFeedItem[] | { data?: TodayLegacyFeedItem[] };
+        pinnedLesson?: PinnedLesson;
+        welcomeVerse?: DailyVerse | null;
     };
 };
 
@@ -102,7 +128,7 @@ const fallbackFeed: FeedItem[] = [
 function mapHighlightToFeedItem(highlight: TodayApiHighlight): FeedItem {
     return {
         id: highlight.id,
-        type: 'member_post',
+        type: highlight.type || 'member_post',
         payload: {
             author: {
                 name: highlight.author?.name ?? 'Member',
@@ -124,11 +150,15 @@ function mapHighlightToFeedItem(highlight: TodayApiHighlight): FeedItem {
 }
 
 export default function TodayPage() {
-    const pinnedLesson: PinnedLesson = null;
+    const [apiPinnedLesson, setApiPinnedLesson] = useState<PinnedLesson>(null);
     const [apiDailyVerse, setApiDailyVerse] = useState<DailyVerse | null>(null);
     const [apiHighlights, setApiHighlights] = useState<FeedItem[]>([]);
-    const feed: FeedItem[] = [];
-    const rituals = {
+    const [apiHybridFeed, setApiHybridFeed] = useState<FeedItem[]>([]);
+    const [apiLegacyFeed, setApiLegacyFeed] = useState<TodayLegacyFeedItem[]>([]);
+    const [apiRituals, setApiRituals] = useState<TodayRituals | null>(null);
+    const [apiWelcomeVerse, setApiWelcomeVerse] = useState<DailyVerse | null>(null);
+
+    const fallbackRituals: TodayRituals = {
         reflection_prompt: {
             question: "Apa satu hal yang ingin kau serahkan pada Tuhan hari ini?",
             response_count: 54
@@ -138,9 +168,18 @@ export default function TodayPage() {
             reference: "Inspiratif"
         }
     };
+
+    const pinnedLesson = apiPinnedLesson;
     const dailyVerse = apiDailyVerse ?? fallbackDailyVerse;
-    const welcomeVerse = undefined;
-    const hybridFeed = apiHighlights.length > 0 ? apiHighlights : fallbackFeed;
+    const welcomeVerse = apiWelcomeVerse ?? undefined;
+    const rituals = apiRituals ?? fallbackRituals;
+
+    const hybridFeed =
+        apiHybridFeed.length > 0
+            ? apiHybridFeed
+            : apiHighlights.length > 0
+              ? apiHighlights
+              : fallbackFeed;
 
     useEffect(() => {
         let isActive = true;
@@ -164,9 +203,22 @@ export default function TodayPage() {
                 const nextHighlights = Array.isArray(payload?.data?.highlights)
                     ? payload.data.highlights.map(mapHighlightToFeedItem)
                     : [];
+                const nextHybridFeed = Array.isArray(payload?.data?.hybridFeed)
+                    ? payload.data.hybridFeed
+                    : [];
+                const nextLegacyFeed = Array.isArray(payload?.data?.feed)
+                    ? payload.data.feed
+                    : Array.isArray(payload?.data?.feed?.data)
+                      ? payload.data.feed.data
+                      : [];
 
                 setApiDailyVerse(nextDailyVerse);
                 setApiHighlights(nextHighlights);
+                setApiHybridFeed(nextHybridFeed);
+                setApiLegacyFeed(nextLegacyFeed);
+                setApiPinnedLesson(payload?.data?.pinnedLesson ?? null);
+                setApiRituals(payload?.data?.rituals ?? null);
+                setApiWelcomeVerse(payload?.data?.welcomeVerse ?? null);
             } catch {
                 // Keep the visual fallback when the backend is unreachable.
             }
@@ -182,9 +234,9 @@ export default function TodayPage() {
     const items = hybridFeed;
     const firstItems = items.slice(0, 2);
     const restItems = items.slice(2);
-    const ritualVerse = (rituals as any)?.today_verse ?? null;
+    const ritualVerse = rituals?.today_verse ?? null;
     const ritualRef = String(
-        ritualVerse?.ref ??
+        (ritualVerse as { ref?: string } | null)?.ref ??
         dailyVerse?.ref ??
         '',
     ).trim();
@@ -192,36 +244,52 @@ export default function TodayPage() {
     const normalizedRitualVerse = ritualRef
         ? {
             ref: slugifyRef(ritualRef || 'mzm-23-1'),
-            book_code: String(ritualVerse?.book_code ?? dailyVerse?.book_code ?? ''),
-            chapter: Number(ritualVerse?.chapter ?? dailyVerse?.chapter ?? 0),
-            verse: Number(ritualVerse?.verse ?? dailyVerse?.verse ?? 0),
+            book_code: String((ritualVerse as { book_code?: string } | null)?.book_code ?? dailyVerse?.book_code ?? ''),
+            chapter: Number((ritualVerse as { chapter?: number } | null)?.chapter ?? dailyVerse?.chapter ?? 0),
+            verse: Number((ritualVerse as { verse?: number } | null)?.verse ?? dailyVerse?.verse ?? 0),
             quote: String(
-                ritualVerse?.quote ??
-                ritualVerse?.text ??
+                (ritualVerse as { quote?: string; text?: string } | null)?.quote ??
+                (ritualVerse as { quote?: string; text?: string } | null)?.text ??
                 dailyVerse?.quote ??
                 '',
-            ) || null,
+            ) || undefined,
             cta_label: String(
-                ritualVerse?.cta_label ??
+                (ritualVerse as { cta_label?: string } | null)?.cta_label ??
                 dailyVerse?.cta_label ??
                 'Baca Alkitab',
             ),
             cta_href: String(
-                ritualVerse?.cta_href ??
-                (ritualVerse?.ref ? `/versehub/id/${ritualVerse?.ref}` : dailyVerse?.cta_href) ??
+                (ritualVerse as { cta_href?: string; ref?: string } | null)?.cta_href ??
+                ((ritualVerse as { ref?: string } | null)?.ref ? `/versehub/id/${(ritualVerse as { ref?: string }).ref}` : dailyVerse?.cta_href) ??
                 '/versehub/id',
             ),
-            source_post_id: Number(ritualVerse?.source_post_id ?? dailyVerse?.source_post_id ?? 0) || undefined,
-            reference: String(ritualVerse?.reference ?? dailyVerse?.reference ?? '') || undefined,
-            title: String(ritualVerse?.title ?? dailyVerse?.title ?? '') || undefined,
+            source_post_id: Number((ritualVerse as { source_post_id?: number } | null)?.source_post_id ?? dailyVerse?.source_post_id ?? 0) || undefined,
+            reference: String((ritualVerse as { reference?: string } | null)?.reference ?? dailyVerse?.reference ?? '') || undefined,
+            title: String((ritualVerse as { title?: string } | null)?.title ?? dailyVerse?.title ?? '') || undefined,
         }
         : null;
 
+    const reflectionPromptPayload = rituals?.reflection_prompt?.question
+        ? {
+            question: rituals.reflection_prompt.question,
+            response_count: rituals.reflection_prompt.response_count,
+        }
+        : undefined;
+
+    const quoteOfDayPayload = rituals?.quote_of_day?.text
+        ? {
+            text: rituals.quote_of_day.text,
+            author: rituals.quote_of_day.author ?? undefined,
+            reference: rituals.quote_of_day.reference ?? undefined,
+            ref: rituals.quote_of_day.ref ?? undefined,
+            source: rituals.quote_of_day.source ?? undefined,
+        }
+        : undefined;
+
     const normalizedLegacyFeed = useMemo(() => {
-        if (Array.isArray(feed)) return feed;
-        const maybeData = (feed as any)?.data;
-        return Array.isArray(maybeData) ? maybeData : [];
-    }, [feed]);
+        if (Array.isArray(apiLegacyFeed)) return apiLegacyFeed;
+        return [];
+    }, [apiLegacyFeed]);
 
     const legacyByType = useMemo(() => {
         const map = new Map<string, any>();
@@ -243,13 +311,13 @@ export default function TodayPage() {
             title="Today"
             activeNavId="home"
             backHref="/"
-            className="md:max-w-none bg-slate-50/30 dark:bg-slate-950/30"
+            className="md:max-w-none bg-surface-muted/40"
             header={<GreetingHeader />}
         >
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-2 px-4 md:px-0"
+                className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-2"
             >
                 <div className="space-y-5">
                     {/* Entry Points */}
@@ -265,14 +333,14 @@ export default function TodayPage() {
                     {/* Sacred Anchor (Verse) */}
                     <ThrowingCard index={0}>
                         <DailyVerseHeroCard
-                            welcomeVerse={normalizedRitualVerse ?? (welcomeVerse as any)}
-                            fallbackVerse={dailyVerse ?? (normalizedRitualVerse as any)}
+                            welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
+                            fallbackVerse={dailyVerse}
                         />
                     </ThrowingCard>
 
                     {/* Active Ritual (Reflection) */}
                     <ThrowingCard index={1}>
-                        <ReflectionPrompt payload={rituals?.reflection_prompt} />
+                        <ReflectionPrompt payload={reflectionPromptPayload} />
                     </ThrowingCard>
 
                     {/* Legacy feed cards kept alive for backwards compatibility */}
@@ -321,7 +389,7 @@ export default function TodayPage() {
 
                     {/* Wisdom Pearl (Quote) */}
                     <ThrowingCard index={10}>
-                        <QuoteCard payload={rituals?.quote_of_day} />
+                        <QuoteCard payload={quoteOfDayPayload} />
                     </ThrowingCard>
 
                     {/* Feed Part 2 (Wider Community) */}

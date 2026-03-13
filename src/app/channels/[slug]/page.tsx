@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { ChevronRight, Users, Bell, ArrowLeft, MessageSquare, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Post = {
@@ -21,6 +19,12 @@ type MemberPost = {
     text?: string | null;
     author?: string | null;
     created_at?: string | null;
+};
+
+const formatDate = (value: string): string => {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value.slice(0, 10);
+    return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 export default function WeeklyChannelIndexPage() {
@@ -161,13 +165,18 @@ export default function WeeklyChannelIndexPage() {
                                     </div>
                                     <div className="text-left">
                                         <p className="font-bold text-[15px] text-slate-900 line-clamp-1">{post.title}</p>
-                                        <p className="text-[11px] font-bold text-slate-400 mt-0.5">{post.publish_at.slice(0, 10)}</p>
+                                        <p className="text-[11px] font-bold text-slate-400 mt-0.5">{formatDate(post.publish_at)}</p>
                                     </div>
                                 </div>
                                 <ChevronRight className="h-4 w-4 text-slate-200 group-hover:text-slate-900 transition-colors" />
                             </button>
                         ))}
                     </div>
+                    {posts.length === 0 && (
+                        <div className="rounded-[24px] border border-dashed border-slate-200 p-8 text-center bg-white/70">
+                            <p className="text-sm font-semibold text-slate-500">Belum ada konten mingguan dipublikasikan.</p>
+                        </div>
+                    )}
                 </section>
 
                 {/* Community Section Parity */}

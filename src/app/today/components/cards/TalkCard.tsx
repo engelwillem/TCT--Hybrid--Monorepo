@@ -16,7 +16,7 @@ export default function TalkCard({
     const durationStr = payload.duration ? String(payload.duration) : null;
 
     return (
-        <Card className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.02] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl">
+        <Card className="overflow-hidden rounded-3xl border-0 bg-surface/80 shadow-soft ring-1 ring-border/60 backdrop-blur-sm">
             <CardContent className="p-0">
                 <a
                     href={payload.ctaUrl}
@@ -35,31 +35,31 @@ export default function TalkCard({
                                     loading="lazy"
                                 />
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
-                                    <Radio className="h-7 w-7 text-slate-400" />
+                                <div className="flex h-full w-full items-center justify-center bg-surface-muted">
+                                    <Radio className="h-7 w-7 text-muted-foreground" />
                                 </div>
                             )}
                             {/* Play overlay */}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100 rounded-2xl">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                                    <Play className="h-4 w-4 fill-slate-900 text-slate-900 translate-x-0.5" />
+                            <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface shadow-lg">
+                                    <Play className="h-4 w-4 translate-x-0.5 fill-foreground text-foreground" />
                                 </div>
                             </div>
                         </div>
 
                         <div className="min-w-0 flex-1">
                             {/* Kicker */}
-                            <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-amber-500">
-                                <Radio className="h-3.5 w-3.5" />
-                                Talk
+                            <span className="mb-1.5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-brand">
+                                <Radio className="h-3 w-3" />
+                                    Talk
                             </span>
 
-                            <p className="line-clamp-2 text-base font-bold leading-tight tracking-tight text-white mb-2">
+                            <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
                                 {payload.title}
                             </p>
 
                             {durationStr && (
-                                <span className="mt-2 inline-flex items-center rounded-lg bg-white/5 border border-white/10 px-3 py-1 text-[10px] font-bold tracking-widest text-sky-400 uppercase">
+                                <span className="mt-2 inline-flex items-center rounded-full bg-surface-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
                                     {durationStr}
                                 </span>
                             )}

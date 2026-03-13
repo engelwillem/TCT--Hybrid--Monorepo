@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
 import { DM_Serif_Display, Inter } from 'next/font/google';
@@ -80,8 +79,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${inter.variable} ${dmSerifDisplay.variable} dark`} suppressHydrationWarning>
-      <body className="antialiased bg-slate-950 text-white" suppressHydrationWarning>
+    <html lang="id" className={`${inter.variable} ${dmSerifDisplay.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased text-[15px] leading-[1.6] md:text-[16px] bg-slate-950 text-white" suppressHydrationWarning>
         <FirebaseClientProvider>
           <FirebaseAuthSync />
           <AppShell>

@@ -15,10 +15,12 @@ export interface CommunityComment {
 
 export interface CommunityPost {
   id: string;
+  type: string;
   text: string;
   imageUrl?: string;
+  mediaPaths?: string[];
   createdAt: string;
-  author: CommunityUser;
+  author: CommunityUser & { isOfficial?: boolean };
   counts: {
     likes: number;
     comments: number;
@@ -26,4 +28,12 @@ export interface CommunityPost {
   };
   isLiked: boolean;
   isBookmarked: boolean;
+  isFeatured?: boolean;
+  metadata?: {
+    ref?: string;
+    reference?: string;
+    quote?: string;
+    media_aspect_ratio?: "4:5" | "og" | "auto";
+    text_position?: "above" | "below";
+  };
 }

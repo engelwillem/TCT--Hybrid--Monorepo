@@ -1,10 +1,8 @@
-
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { CalendarDays, CircleCheckBig, LayoutGrid, MoveRight, Clock } from 'lucide-react';
+import { CalendarDays, ChevronRight, MoveRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { getAppAccessToken } from '@/services/app-auth-token';
@@ -39,27 +37,32 @@ type QuarterWithLessons = {
     lessons: Lesson[];
 };
 
-type TodayTarget = { 
-    year: number; 
-    quarter: number; 
-    lesson_number: number; 
-    day_key: string; 
-    date: string 
+type TodayTarget = {
+    year: number;
+    quarter: number;
+    lesson_number: number;
+    day_key: string;
+    date: string;
 } | null;
+
+type SabbathPayload = {
+    channel?: Channel | null;
+    activeQuarterId?: number | null;
+    quartersWithLessons?: QuarterWithLessons[];
+    todayTarget?: TodayTarget;
+};
+
+const shortDate = (value?: string | null): string => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 export default function ChannelsPage() {
     const router = useRouter();
-    
     const [channels, setChannels] = useState<Channel[]>([]);
-    const [sabbathSchool, setSabbathSchool] = useState<{
-        channel?: Channel | null;
-        activeQuarterId?: number | null;
-        activeQuarter?: any;
-        quartersWithLessons?: QuarterWithLessons[];
-        todayTarget?: TodayTarget;
-    } | null>(null);
-    
-    const [seriesTab, setSeriesTab] = useState<'current' | 'past' | 'upcoming'>('current');
+    const [sabbathSchool, setSabbathSchool] = useState<SabbathPayload | null>(null);
     const [selectedQuarterId, setSelectedQuarterId] = useState<number>(0);
     const [loading, setLoading] = useState(true);
 
@@ -126,165 +129,177 @@ export default function ChannelsPage() {
     };
 
     const quarters = sabbathSchool?.quartersWithLessons ?? [];
-    const selectedQuarter = quarters.find(q => q.id === selectedQuarterId) ?? quarters[0] ?? null;
-    const lessonStates = selectedQuarter?.lessons.map(l => ({
-        lesson: l,
-        locked: false,
-        completed: false,
-        isCurrent: l.lesson_number === 1
-    })) ?? [];
+    const selectedQuarter = useMemo(
+        () => quarters.find(item => item.id === selectedQuarterId) ?? quarters[0] ?? null,
+        [quarters, selectedQuarterId],
+    );
 
-    const filteredLessons = lessonStates;
+    const lessonCount = selectedQuarter?.lessons?.length ?? 0;
+    const currentLessonNumber = sabbathSchool?.todayTarget?.lesson_number ?? 0;
+    const completedLessons = selectedQuarter?.lessons
+        ?.filter(item => item.lesson_number < currentLessonNumber)
+        ?.length ?? 0;
+    const progressWidth = lessonCount > 0 ? `${Math.round((completedLessons / lessonCount) * 100)}%` : '0%';
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-                <div className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-[#f7f8fa] px-4 py-10">
+                <div className="mx-auto max-w-2xl space-y-4">
+                    <div className="h-12 rounded-2xl bg-slate-200/70 animate-pulse" />
+                    <div className="h-60 rounded-3xl bg-slate-200/70 animate-pulse" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="h-40 rounded-3xl bg-slate-200/70 animate-pulse" />
+                        <div className="h-40 rounded-3xl bg-slate-200/70 animate-pulse" />
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pb-20">
-            <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5 transition-all">
-                <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
-                    <h1 className="font-bold text-lg">Channels</h1>
-                    <div className="w-10" />
+        <div className="min-h-screen bg-[#f7f8fa] text-slate-900 pb-24">
+            <header className="sticky top-0 z-40 bg-[#f7f8fa]/90 backdrop-blur-md border-b border-slate-200/70">
+                <div className="mx-auto max-w-2xl px-4 py-4">
+                    <h1 className="text-lg font-bold tracking-tight">Channels</h1>
                 </div>
-            </div>
+            </header>
 
-            <main className="mx-auto max-w-2xl px-4 py-8 space-y-8">
-                <motion.section 
-                    initial={{ opacity: 0, y: 16 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    className="overflow-hidden rounded-[32px] bg-white/[0.02] border border-white/5 ring-1 ring-white/5 backdrop-blur-sm"
-                >
-                    <div className="relative h-48 md:h-56">
+            <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+                <section className="overflow-hidden rounded-[30px] bg-white ring-1 ring-black/[0.05] shadow-sm">
+                    <div className="relative h-48">
                         <img
-                            src={sabbathSchool?.channel?.cover_image_url ?? "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=800"}
+                            src={sabbathSchool?.channel?.cover_image_url ?? 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=800'}
                             alt="Sabbath School"
                             className="h-full w-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 p-6">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white ring-1 ring-white/20 backdrop-blur-sm">
-                                SabbathSchool
-                            </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-5">
+                            <p className="inline-flex rounded-full bg-white/20 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
+                                Sabbath School
+                            </p>
                             <h2 className="mt-2 text-2xl font-bold text-white">{selectedQuarter?.title ?? 'Quarter Study'}</h2>
-                            <p className="mt-1 text-xs text-white/80 font-medium">Q1 2026</p>
+                            <p className="mt-1 text-xs font-semibold text-white/80">
+                                {shortDate(selectedQuarter?.start_date)} - {shortDate(selectedQuarter?.end_date)}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="p-6 space-y-4">
-                        <Button 
-                            className="h-14 w-full rounded-[20px] bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white shadow-lg active:scale-95 transition-all text-sm"
+                    <div className="p-5 space-y-4">
+                        <Button
+                            className="h-12 w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
                             onClick={() => {
-                                if (sabbathSchool?.todayTarget) {
-                                    const t = sabbathSchool.todayTarget;
-                                    router.push(`/channels/sabbath-school/${t.year}/q${t.quarter}/lesson/${t.lesson_number}/${t.day_key}`);
-                                }
+                                if (!sabbathSchool?.todayTarget) return;
+                                const target = sabbathSchool.todayTarget;
+                                router.push(`/channels/sabbath-school/${target.year}/q${target.quarter}/lesson/${target.lesson_number}/${target.day_key}`);
                             }}
                         >
-                            Lanjutkan Pelajaran <MoveRight className="ml-2 h-4 w-4" />
+                            Lanjutkan Pelajaran
+                            <MoveRight className="ml-2 h-4 w-4" />
                         </Button>
 
-                        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-black/40 p-1.5 ring-1 ring-white/10 shadow-inner">
-                             {(['current', 'past', 'upcoming'] as const).map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setSeriesTab(tab)}
-                                    className={cn(
-                                        "rounded-xl py-2 text-[11px] font-bold transition-all",
-                                        seriesTab === tab ? "bg-white/10 text-white shadow-sm" : "text-slate-500"
-                                    )}
-                                >
-                                    {tab === 'current' ? 'Aktif' : tab === 'past' ? 'Lalu' : 'Mendatang'}
-                                </button>
-                             ))}
-                        </div>
-
-                        <div className="space-y-3 rounded-[24px] bg-black/20 p-5 ring-1 ring-white/5 shadow-inner">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold text-white tracking-tight">Lessons</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">0/{lessonStates.length} Completed</p>
-                            </div>
-                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-cyan-500 w-0 shadow-[0_0_8px_rgba(6,182,212,0.5)]" />
-                            </div>
-
-                            <div className="grid gap-2.5 mt-4">
-                                {filteredLessons.map(({ lesson, isCurrent }) => (
+                        {quarters.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                {quarters.map(quarter => (
                                     <button
-                                        key={lesson.id}
-                                        onClick={() => {
-                                             router.push(`/channels/sabbath-school/${selectedQuarter?.year}/q${selectedQuarter?.quarter}/lesson/${lesson.lesson_number}`);
-                                        }}
+                                        key={quarter.id}
+                                        type="button"
+                                        onClick={() => setSelectedQuarterId(quarter.id)}
                                         className={cn(
-                                            "flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] ring-1 ring-white/5 transition-all text-left group hover:bg-white/[0.04]",
-                                            isCurrent ? "ring-cyan-500/40 bg-cyan-900/10" : ""
+                                            'shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ring-1 transition-colors',
+                                            selectedQuarterId === quarter.id
+                                                ? 'bg-slate-900 text-white ring-slate-900'
+                                                : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50',
                                         )}
                                     >
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-cyan-400 transition-colors">Lesson {lesson.lesson_number}</p>
-                                            <p className="font-bold text-sm text-white mt-1">{lesson.title}</p>
-                                        </div>
-                                        {isCurrent && <span className="bg-cyan-500 rounded-full px-2 py-0.5 text-[9px] font-bold text-slate-950 uppercase tracking-widest">Sekarang</span>}
+                                        Q{quarter.quarter} {quarter.year}
                                     </button>
                                 ))}
                             </div>
+                        )}
+
+                        <div className="rounded-2xl border border-slate-200 p-4 space-y-2">
+                            <div className="flex items-center justify-between text-xs font-bold">
+                                <span className="text-slate-700">Progress lesson quarter ini</span>
+                                <span className="text-slate-500">{completedLessons}/{lessonCount}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div className="h-full bg-slate-900 transition-all" style={{ width: progressWidth }} />
+                            </div>
+                        </div>
+
+                        <div className="grid gap-2">
+                            {(selectedQuarter?.lessons ?? []).slice(0, 5).map(lesson => (
+                                <button
+                                    key={lesson.id}
+                                    type="button"
+                                    onClick={() => router.push(`/channels/sabbath-school/${selectedQuarter?.year}/q${selectedQuarter?.quarter}/lesson/${lesson.lesson_number}`)}
+                                    className="flex items-start justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left hover:bg-slate-100 transition-colors"
+                                >
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Lesson {lesson.lesson_number}</p>
+                                        <p className="mt-1 text-sm font-semibold text-slate-800">{lesson.title ?? 'Untitled lesson'}</p>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 text-slate-400 mt-1" />
+                                </button>
+                            ))}
                         </div>
                     </div>
-                </motion.section>
+                </section>
 
-                <section className="space-y-4">
+                <section className="space-y-3">
                     <div className="flex items-center justify-between">
-                         <h3 className="text-lg font-bold tracking-tight">Channel Lainnya</h3>
-                         <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 bg-cyan-900/30 px-3 py-1 rounded-full ring-1 ring-cyan-500/30">
-                            {channels.length} Kanal
-                         </span>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Channel Lainnya</h3>
+                        <span className="text-[11px] font-bold text-slate-500">{channels.length} channels</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {channels.map(channel => (
-                            <button
-                                key={channel.slug}
-                                onClick={() => router.push(`/channels/${channel.slug}`)}
-                                className="group flex flex-col overflow-hidden rounded-[32px] bg-white/[0.02] border border-white/5 ring-1 ring-white/5 transition-all hover:-translate-y-1 hover:shadow-xl hover:bg-white/[0.04]"
-                            >
-                                <div className="relative h-32 w-full overflow-hidden">
-                                    <img
-                                        src={channel.cover_image_url ?? "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=800"}
-                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        alt={channel.title}
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
-                                </div>
-                                <div className="p-4 pt-3 flex-1 flex flex-col justify-between">
-                                    <div>
-                                        <p className="font-bold text-sm tracking-tight text-white line-clamp-1">{channel.title}</p>
-                                        <p className="text-[10px] text-slate-500 mt-1 line-clamp-1 font-medium">{channel.description}</p>
+                            <article key={channel.slug} className="rounded-[26px] bg-white ring-1 ring-black/[0.05] overflow-hidden shadow-sm">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(`/channels/${channel.slug}`)}
+                                    className="w-full text-left"
+                                >
+                                    <div className="h-28 w-full overflow-hidden">
+                                        <img
+                                            src={channel.cover_image_url ?? 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=800'}
+                                            alt={channel.title}
+                                            className="h-full w-full object-cover"
+                                        />
                                     </div>
-                                    <div className="mt-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-1">
-                                            <div className="h-1 w-1 bg-emerald-500 rounded-full animate-pulse" />
-                                            <span className="text-[9px] font-bold text-slate-500">{channel.members_count} anggota</span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                handleMembershipToggle(channel.slug);
-                                            }}
-                                            className="text-[9px] font-bold text-slate-100 bg-white/10 px-2.5 py-1 rounded-full border border-white/5 hover:bg-white/20 transition-colors"
-                                        >
-                                            {channel.is_joined ? 'Leave' : 'Join'}
-                                        </button>
+                                    <div className="p-4 space-y-2">
+                                        <p className="text-sm font-bold tracking-tight">{channel.title}</p>
+                                        <p className="text-xs text-slate-500 line-clamp-2 min-h-8">{channel.description ?? 'Weekly devotion channel.'}</p>
                                     </div>
+                                </button>
+                                <div className="px-4 pb-4 flex items-center justify-between">
+                                    <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                                        <Users className="h-3.5 w-3.5" />
+                                        <span>{channel.members_count ?? 0}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleMembershipToggle(channel.slug)}
+                                        className={cn(
+                                            'text-[11px] font-bold rounded-full px-3 py-1.5 transition-colors',
+                                            channel.is_joined ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-slate-900 text-white hover:bg-slate-800',
+                                        )}
+                                    >
+                                        {channel.is_joined ? 'Joined' : 'Join'}
+                                    </button>
                                 </div>
-                            </button>
+                            </article>
                         ))}
                     </div>
                 </section>
+
+                {channels.length === 0 && (
+                    <section className="rounded-3xl bg-white ring-1 ring-slate-200 p-8 text-center">
+                        <CalendarDays className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-slate-600">Belum ada channel aktif.</p>
+                        <p className="text-xs text-slate-400 mt-1">Silakan refresh beberapa saat lagi.</p>
+                    </section>
+                )}
             </main>
         </div>
     );

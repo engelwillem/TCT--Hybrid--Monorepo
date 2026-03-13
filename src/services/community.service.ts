@@ -30,6 +30,7 @@ interface ApiEnvelope<T> {
 
 interface ApiPost {
   id: string;
+  type?: string;
   text: string;
   imageUrl?: string;
   createdAt: string;
@@ -61,6 +62,7 @@ interface ApiComment {
 
 const mapApiPost = (post: ApiPost): CommunityPost => ({
   id: String(post.id),
+  type: post.type || "member_post",
   text: post.text || "",
   imageUrl: post.imageUrl,
   createdAt: post.createdAt || "Baru saja",

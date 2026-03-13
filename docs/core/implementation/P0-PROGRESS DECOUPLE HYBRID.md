@@ -61,3 +61,45 @@ Agar otomatis penuh di platform:
    - `Backend Monorepo Checks / backend-checks`
 3. Biarkan backend deploy tetap via [backend-cpanel-deploy.yml](/e:/thechoosentalksnext/.github/workflows/backend-cpanel-deploy.yml) (khusus perubahan `backend-api/**`).
 
+Batch parity `Today cards` sudah saya lanjutkan dan implementasikan ke baseline Laravel legacy untuk kartu inti berikut:
+
+- [ReflectionPrompt.tsx](e:/thechoosentalksnext/src/app/today/components/cards/ReflectionPrompt.tsx)
+- [QuoteCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/QuoteCard.tsx)
+- [DailyPrayerCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/DailyPrayerCard.tsx)
+- [CommunityCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/CommunityCard.tsx)
+- [QuestionOfTheDay.tsx](e:/thechoosentalksnext/src/app/today/components/cards/QuestionOfTheDay.tsx)
+- [TalkCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/TalkCard.tsx)
+- [ReflectionCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/ReflectionCard.tsx)
+- [PinnedLessonCard.tsx](e:/thechoosentalksnext/src/app/today/components/cards/PinnedLessonCard.tsx)
+
+Paritas yang ditarik: radius/spacing/token warna, hierarchy teks, CTA style/order, serta interaksi utama (terutama `QuoteCard` termasuk komentar sheet + reaction/bookmark/share flow ala legacy).
+
+Dokumentasi matrix juga saya update di [UI_UX_PARITY_GUIDE.md](e:/thechoosentalksnext/docs/core/architecture/laravel-decoupled-hybrid/UI_UX_PARITY_GUIDE.md) dengan log batch kartu Today ini (status `/today` tetap `IN PROGRESS`, tapi sudah naik signifikan menuju `PARITY DONE`).
+
+Verifikasi teknis:
+- `npm run typecheck` ✅ lolos
+- `npm run build` ✅ lolos (perlu run di luar sandbox karena `spawn EPERM` di sandbox)
+- Dev smoke test ✅ server bisa listen (`DEV_OK_9011`)
+- `npm run lint` ⛔ belum bisa dipakai karena project belum punya konfigurasi ESLint (masih prompt interaktif `next lint`)
+
+Jika kamu setuju, saya lanjut batch final `/today` untuk menutup gap sisa di level page composition/state agar status bisa saya naikkan ke `PARITY DONE`.
+
+Berikut adalah laporan audit dan perbaikan untuk memastikan server berjalan stabil dan cepat.
+
+    Routing Conflict: Next.js mengalami error fatal [id] !== [ref] karena struktur rute dinamis yang tumpang tindih di src/app/versehub/[lang]/.
+    Runtime Errors: ReferenceError: cn is not defined pada AppShell.tsx dan src/app/channels/page.tsx.
+    Dependency Gap: Modul @radix-ui/react-slot belum terinstal, menyebabkan komponen Button gagal dimuat.
+    Performance: Animasi scroll pada LandingPage membebani CPU karena listener yang terlalu padat tanpa akselerasi GPU.
+
+    Unified Routing: Gunakan src/app/versehub/[lang]/[slug]/page.tsx sebagai satu-satunya pengatur rute untuk Chapter Reader dan Verse Share.
+    Import Standardization: Tambahkan impor cn dari @/lib/utils di semua file yang terdampak.
+    Dependency Injection: Perbarui package.json dengan semua paket Radix UI yang diperlukan.
+    GPU Acceleration: Tambahkan will-change-transform dan translateZ(0) pada sticky cards untuk performa scroll 60 FPS.
+
+b85863f
++2 more files
+
+    Server Startup: Jalankan npm run dev. Error id !== ref harusnya sudah hilang karena hanya ada satu folder [slug] yang menangani semua rute dinamis di bawah versehub.
+    Runtime: Buka halaman /profile atau /channels. Tidak boleh ada error cn is not defined.
+    Scroll Performance: Buka halaman / (Landing). Scroll harus terasa lebih ringan karena elemen kartu sekarang menggunakan akselerasi GPU.
+    UI Elements: Tombol Shadcn sekarang harusnya berfungsi karena @radix-ui/react-slot sudah ditambahkan ke package.json.
