@@ -3,19 +3,23 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Proksi permintaan dari Next.js ke Laravel API.
- * Menggunakan arrayBuffer untuk mendukung data binary (seperti upload gambar)
- * tanpa merusak multipart boundaries.
+ * Menggunakan Uint8Array untuk mendukung data binary (seperti upload gambar)
+ * tanpa merusak multipart boundaries atau encoding JSON.
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
     const contentType = request.headers.get("content-type");
     const authorization = request.headers.get("authorization");
     
-    // Gunakan arrayBuffer untuk menjaga integritas data binary/multipart
-    let body: Buffer | undefined = undefined;
-    if (request.method !== "GET" && request.method !== "HEAD") {
+    // Tentukan apakah request membutuhkan body berdasarkan metodenya
+    const hasBody = !["GET", "HEAD"].includes(request.method);
+    
+    // Gunakan arrayBuffer untuk menjaga integritas data binary/multipart.
+    // .text() dapat merusak binary boundaries karena mencoba menginterpretasi byte sebagai string.
+    let body: Uint8Array | undefined = undefined;
+    if (hasBody) {
       const buffer = await request.arrayBuffer();
-      body = Buffer.from(buffer);
+      body = new Uint8Array(buffer);
     }
 
     const response = await callLaravelApi(targetPath, {
@@ -27,6 +31,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
+    // Mengambil response body sebagai text (asumsi Laravel mengembalikan JSON/HTML)
     const payload = await response.text();
 
     return new NextResponse(payload, {
