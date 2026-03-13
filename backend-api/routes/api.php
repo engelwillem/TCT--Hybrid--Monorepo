@@ -16,6 +16,8 @@ use App\Http\Controllers\StudyPathController;
 use App\Http\Controllers\VerseHubController;
 use App\Http\Controllers\VerseHubReflectionController;
 use App\Http\Controllers\VersehubActionController;
+use App\Http\Controllers\VerseHubReaderController;
+use App\Http\Controllers\VerseHubLibraryController;
 use App\Http\Controllers\WeeklyController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +43,16 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}', [SabbathSchoolController::class, 'lesson']);
     Route::get('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}', [SabbathSchoolController::class, 'day']);
     Route::get('/sabbath-school/{year}/q{quarter}/lesson/{lessonNumber}/{dayKey}/comments', [SsDayCommentController::class, 'index']);
+
+    // VerseHub Reader Core Data
+    Route::get('/versehub/{lang}/books', [VerseHubReaderController::class, 'getBooksApi'])
+        ->whereIn('lang', ['id', 'en']);
+    Route::get('/versehub/{lang}/chapters', [VerseHubReaderController::class, 'chapters'])
+        ->whereIn('lang', ['id', 'en']);
+    Route::get('/versehub/{lang}/chapter/{ref}', [VerseHubReaderController::class, 'getChapterContentApi'])
+        ->whereIn('lang', ['id', 'en']);
+    Route::get('/versehub/{lang}/suggest', [VerseHubLibraryController::class, 'suggest'])
+        ->whereIn('lang', ['id', 'en']);
 
     Route::get('/versehub/{lang}/{ref}/mentor', [VerseHubController::class, 'mentorInsights'])
         ->whereIn('lang', ['id', 'en'])
