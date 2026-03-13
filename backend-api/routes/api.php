@@ -94,7 +94,7 @@ Route::prefix('v1')->group(function (): void {
             ->whereNumber('user');
 
         Route::get('/profile', [ProfileController::class, 'edit']);
-        Route::patch('/profile', [ProfileController::class, 'update']);
+        Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update']);
         Route::delete('/profile', [ProfileController::class, 'destroy']);
         Route::put('/profile/password', [PasswordController::class, 'update']);
         Route::post('/profile/two-factor/setup', [ProfileController::class, 'twoFactorSetup']);
