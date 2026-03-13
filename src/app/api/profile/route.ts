@@ -24,13 +24,6 @@ export async function PATCH(request: NextRequest) {
 }
 
 /**
- * PUT Profile Data (Password Update)
- */
-export async function PUT(request: NextRequest) {
-  return proxyLaravel(request, "/api/v1/profile");
-}
-
-/**
  * DELETE Account
  */
 export async function DELETE(request: NextRequest) {

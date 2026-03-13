@@ -7,7 +7,7 @@ interface RouteContext {
 
 /**
  * Consolidated Verse/Chapter Fetch
- * Standardised on [slug] to prevent sibling ambiguity.
+ * Standardised on [slug] to prevent sibling ambiguity with [ref].
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;

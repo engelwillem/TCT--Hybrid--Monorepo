@@ -3,7 +3,7 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Proksi permintaan dari Next.js ke Laravel API.
- * Versi P0 (Hardened): Menjamin integritas data biner (upload) dan fleksibilitas response (JSON/HTML).
+ * Hardened: Menjamin integritas data biner (upload) dan transparansi response.
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
@@ -15,11 +15,10 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       try {
-        // Menggunakan arrayBuffer() menjamin boundary multipart/form-data tidak rusak
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
-        // Body mungkin kosong atau tidak valid
+        // Body kosong atau tidak valid untuk dibaca sebagai buffer
       }
     }
 
@@ -33,17 +32,19 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Ambil sebagai text agar aman meskipun Laravel mengembalikan HTML error (500/404)
-    const payload = await response.text();
+    // Gunakan arrayBuffer untuk mendukung response binary (image/pdf) maupun text/json
+    const responseBuffer = await response.arrayBuffer();
 
-    return new NextResponse(payload, {
+    return new NextResponse(responseBuffer, {
       status: response.status,
       headers: {
         "Content-Type": response.headers.get("content-type") || "application/json",
+        // Teruskan header autentikasi jika ada perubahan state di backend
+        ...(response.headers.has("X-Auth") ? { "X-Auth": response.headers.get("X-Auth")! } : {}),
       },
     });
   } catch (error) {
-    console.error("Proxy Error:", error);
+    console.error("Proxy Connectivity Error:", error);
     return NextResponse.json(
       {
         message: "Laravel API is currently unreachable.",
