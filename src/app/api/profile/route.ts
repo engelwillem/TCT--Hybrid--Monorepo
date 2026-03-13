@@ -17,6 +17,10 @@ export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");
 }
 
+export async function PUT(request: NextRequest) {
+  return proxyLaravel(request, "/api/v1/profile");
+}
+
 export async function DELETE(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");
 }
