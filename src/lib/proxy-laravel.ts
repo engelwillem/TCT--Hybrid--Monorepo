@@ -15,7 +15,6 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     const hasBody = !["GET", "HEAD"].includes(request.method);
     
     // Gunakan arrayBuffer untuk menjaga integritas data binary/multipart.
-    // .text() dapat merusak binary boundaries karena mencoba menginterpretasi byte sebagai string.
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       const buffer = await request.arrayBuffer();
@@ -32,7 +31,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Mengambil response body sebagai text (asumsi Laravel mengembalikan JSON atau HTML error)
+    // Mengambil response body sebagai text agar aman meskipun Laravel mengembalikan HTML error
     const payload = await response.text();
 
     return new NextResponse(payload, {
