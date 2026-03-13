@@ -7,6 +7,7 @@ interface RouteContext {
 
 /**
  * POST Ask Question to Scripture Guide
+ * Consolidated to [slug] to prevent sibling ambiguity.
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;

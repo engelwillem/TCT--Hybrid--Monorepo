@@ -7,6 +7,7 @@ interface RouteContext {
 
 /**
  * GET Mentor Insights
+ * Consolidated to [slug] to prevent sibling ambiguity.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;

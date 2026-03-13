@@ -7,7 +7,7 @@ interface RouteContext {
 
 /**
  * GET Inbox Thread
- * Standardised on [id] to match database schema and avoid conflict.
+ * Standardised on [id] to match database schema and avoid folder sibling conflict.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;

@@ -5,6 +5,10 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * GET Inbox Messages (Thread)
+ * Standardised on [id] to avoid sibling conflicts with [slug].
+ */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
   const search = request.nextUrl.search;
