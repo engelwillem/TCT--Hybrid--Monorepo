@@ -3,8 +3,7 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Proksi permintaan dari Next.js ke Laravel API.
- * Menggunakan Uint8Array untuk mendukung data binary (seperti upload gambar)
- * tanpa merusak multipart boundaries atau encoding JSON.
+ * Hardened version: Mendukung multipart/form-data, JSON, dan response non-JSON (HTML/Error).
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
@@ -14,11 +13,15 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     // Tentukan apakah request membutuhkan body berdasarkan metodenya
     const hasBody = !["GET", "HEAD"].includes(request.method);
     
-    // Gunakan arrayBuffer dan Uint8Array untuk menjaga integritas data binary/multipart.
+    // Gunakan Uint8Array untuk menjaga integritas data binary (multipart/upload).
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
-      const buffer = await request.arrayBuffer();
-      body = new Uint8Array(buffer);
+      try {
+        const buffer = await request.arrayBuffer();
+        body = new Uint8Array(buffer);
+      } catch (e) {
+        // Body mungkin kosong atau tidak terbaca
+      }
     }
 
     const response = await callLaravelApi(targetPath, {
@@ -32,6 +35,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     });
 
     // Mengambil response body sebagai text agar aman meskipun Laravel mengembalikan HTML error (500/404)
+    // Ini mencegah crash "Unexpected token < in JSON" di sisi Next.js
     const payload = await response.text();
 
     return new NextResponse(payload, {
