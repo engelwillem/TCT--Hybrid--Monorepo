@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST Profile Update (Supports Multipart Avatar Upload)
- * Laravel uses POST + _method: PATCH for file uploads.
+ * Laravel often needs POST + _method spoofing for stable binary data handling.
  */
 export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");

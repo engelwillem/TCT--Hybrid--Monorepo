@@ -18,7 +18,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
-        // Body kosong atau tidak valid untuk dibaca sebagai buffer
+        // Body is empty or unreadable
       }
     }
 
@@ -32,17 +32,18 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Gunakan arrayBuffer untuk mendukung response binary (image/pdf) maupun text/json
+    // Use arrayBuffer to support binary responses (images) and forward them as-is
     const responseBuffer = await response.arrayBuffer();
 
-    return new NextResponse(responseBuffer, {
+    const nextResponse = new NextResponse(responseBuffer, {
       status: response.status,
       headers: {
         "Content-Type": response.headers.get("content-type") || "application/json",
-        // Teruskan header autentikasi jika ada perubahan state di backend
         ...(response.headers.has("X-Auth") ? { "X-Auth": response.headers.get("X-Auth")! } : {}),
       },
     });
+
+    return nextResponse;
   } catch (error) {
     console.error("Proxy Connectivity Error:", error);
     return NextResponse.json(
