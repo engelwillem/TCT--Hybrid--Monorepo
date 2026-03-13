@@ -15,6 +15,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       try {
+        // CRITICAL: Use arrayBuffer to prevent corruption of multipart boundaries
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
@@ -32,7 +33,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Use arrayBuffer to support binary responses (images) and forward them as-is
+    // Use arrayBuffer to support binary responses (images/files) and forward them as-is
     const responseBuffer = await response.arrayBuffer();
 
     const nextResponse = new NextResponse(responseBuffer, {

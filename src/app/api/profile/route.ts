@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST Profile Update (Supports Multipart Avatar Upload)
- * Laravel needs POST + _method spoofing for stable binary data handling.
+ * POST Profile Update
+ * Essential for Multipart Avatar Upload (Laravel _method: PATCH pattern)
  */
 export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");

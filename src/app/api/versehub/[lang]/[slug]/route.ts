@@ -6,18 +6,24 @@ interface RouteContext {
 }
 
 /**
- * Consolidated Verse/Chapter/Mentor Fetch
- * Standardised on [slug] to prevent sibling ambiguity with [ref].
+ * Consolidated Verse/Chapter/OG Fetch
+ * Standardised on [slug] to prevent sibling ambiguity conflicts in Next.js 15.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
   const search = request.nextUrl.search;
   
-  // If the slug ends with .png, it's an OG request
+  // Handle legacy OG image requests if they hit the API
   if (slug.toLowerCase().endsWith('.png')) {
     const ref = slug.toLowerCase().replace(/\.png$/i, "");
     return proxyLaravel(request, `/versehub/id/${ref}/og.png`);
   }
 
+  // Chapter content check
+  if (slug.split(/[-_.]/).length < 3) {
+    return proxyLaravel(request, `/api/v1/versehub/${lang}/chapter/${slug}${search}`);
+  }
+
+  // Default verse content
   return proxyLaravel(request, `/api/v1/versehub/${lang}/${slug}${search}`);
 }
