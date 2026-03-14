@@ -3,7 +3,8 @@ import { proxyLaravel } from "@/lib/proxy-laravel";
 
 /**
  * Profile API Proxy
- * Supporting standard profile management and binary avatar uploads.
+ * Supporting GET (read), POST (upload/create), PATCH/PUT (update), and DELETE.
+ * POST is essential for binary avatar uploads in PHP/Laravel environments.
  */
 export async function GET(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");

@@ -6,8 +6,9 @@ interface RouteContext {
 }
 
 /**
- * Consolidated Verse/Chapter/OG Fetch
- * Standardised on [slug] to prevent dynamic naming conflicts ('id' !== 'slug').
+ * Consolidated Verse/Chapter/OG Proxy
+ * Standardized on [slug] to prevent dynamic parameter conflicts ('id' !== 'slug').
+ * Detects .png extension for OG image proxying.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
@@ -19,6 +20,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 
   const segments = slug.split(/[-_.]/);
+  // If it has 3+ segments, it's a verse share (e.g., yoh-3-16)
+  // If fewer, it's a chapter reader (e.g., yoh-3)
   if (segments.length < 3) {
     return proxyLaravel(request, `/api/v1/versehub/${lang}/chapter/${slug}${search}`);
   }

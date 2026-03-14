@@ -5,6 +5,10 @@ interface RouteContext {
   params: Promise<{ lang: string; slug: string }>;
 }
 
+/**
+ * Standardized Mentor Ask Proxy
+ * Consolidated [ref] and [slug] to resolve Next.js dynamic routing conflicts.
+ */
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
   return proxyLaravel(request, `/api/v1/versehub/${lang}/${slug}/mentor/ask`);

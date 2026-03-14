@@ -5,6 +5,10 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Standardized Inbox Thread Proxy
+ * Consolidated [slug] and [id] to resolve Next.js dynamic routing conflicts.
+ */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
   const search = request.nextUrl.search;
