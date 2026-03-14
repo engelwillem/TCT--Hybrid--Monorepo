@@ -5,6 +5,7 @@ import { callLaravelApi } from "@/lib/laravel-api";
  * Hardened Binary-Safe Proxy: Forwards requests from Next.js to Laravel API.
  * Uses arrayBuffer() and Uint8Array to ensure bit-perfect data integrity
  * for multipart/form-data (essential for stable avatar/image uploads).
+ * Also handles non-JSON responses (like 500 HTML errors) gracefully.
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {

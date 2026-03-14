@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { proxyLaravel } from "@/lib/proxy-laravel";
 
 interface RouteContext {
@@ -14,6 +14,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
   const search = request.nextUrl.search;
   
+  // Handle OG Image requests (e.g. /api/versehub/id/yoh-3-16.png)
   if (slug.toLowerCase().endsWith('.png')) {
     const ref = slug.toLowerCase().replace(/\.png$/i, "");
     return proxyLaravel(request, `/versehub/id/${ref}/og.png`);
