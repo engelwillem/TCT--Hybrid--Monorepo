@@ -8,7 +8,7 @@ interface RouteContext {
 /**
  * Consolidated Verse/Chapter/OG Proxy
  * Standardized on [slug] to prevent dynamic parameter conflicts ('id' !== 'slug').
- * Detects .png extension for OG image proxying.
+ * Automatically detects .png extension for OG image proxying.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
