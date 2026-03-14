@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY
+     * This ruleset implements a Public Content / Administrative Control model. 
+     * Content (Verses) is organized by language and is globally readable to support SEO and 
+     * unauthenticated sharing. Administrative actions are governed by a dedicated 'roles_admin' 
+     * collection, adhering to the principle of Authorization Independence.
+     *
+     * DATA STRUCTURE
+     * - /roles_admin/{userId}: A flat collection where the presence of a document grants admin status.
+     * - /verses_by_lang/{languageCode}/verses/{verseSlug}: Hierarchical storage for published content.
+     *
+     * KEY SECURITY DECISIONS
+     * 1. DBAC (Database Access Control): Admin status is determined by a lookup to a top-level 
+     *    collection rather than custom claims, allowing for immediate revocation and easy management.
+     * 2. Path-Data Integrity: For the 'Verse' entity, the 'lang' and 'slug' fields are strictly 
+     *    validated against the document path during creation and updates to prevent data corruption.
+     * 3. Public Readability: All 'Verse' documents allow public 'get' and 'list' operations to 
+     *    facilitate a seamless 'VerseHub' experience.
+     */
+
+    // --- Global Helper Functions ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user has an entry in the roles_admin collection. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /** @description Combines admin check with existence check for state-changing operations. */
+    function isExistingAdmin() {
+      return isAdmin() && resource != null;
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Authorization store for administrative users.
+     * @path /roles_admin/{userId}
+     * @allow (get) Any signed-in user checking their own status or any admin.
+     * @deny (list) Any non-admin user.
+     * @principle Restricts access to sensitive role data while allowing self-lookup for UI state.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Storage for published, language-specific verse content.
+     * @path /verses_by_lang/{languageCode}/verses/{verseSlug}
+     * @allow (get, list) Anyone, including anonymous users (Public access).
+     * @allow (create) Authenticated Admins, provided data 'lang' and 'slug' match the path.
+     * @deny (update) Non-admin users or attempts to change relational fields (lang/slug).
+     * @principle Ensures public accessibility for content consumption while strictly limiting 
+     *            modifications to verified administrators.
+     */
+    match /verses_by_lang/{languageCode}/verses/{verseSlug} {
+      
+      // Publicly readable for VerseHub/Share pages.
+      allow get, list: if true;
+
+      allow create: if isAdmin() 
+        && request.resource.data.lang == languageCode 
+        && request.resource.data.slug == verseSlug;
+
+      allow update: if isExistingAdmin() 
+        && request.resource.data.lang == resource.data.lang 
+        && request.resource.data.slug == resource.data.slug;
+
+      allow delete: if isExistingAdmin();
+    }
+
+    // --- Default Deny ---
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
