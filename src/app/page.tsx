@@ -52,7 +52,7 @@ const featureItems = [
 
 function Background() {
     return (
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-teal-950" />
             <div className={cn(
                 'absolute inset-0',
@@ -191,49 +191,49 @@ function HeroIconRow() {
 }
 
 /**
- * Sub-komponen untuk mengisolasi logika animasi per kartu.
- * Ini memastikan transisi masuk/keluar tidak saling tumpang tindih secara berlebihan.
+ * StickyCardItem mengelola isolasi animasi per kartu.
+ * Menggunakan dvh (dynamic viewport height) untuk stabilitas mobile browser.
  */
 function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, scrollYProgress: any }) {
-    // Membagi range 0-1 menjadi 4 bagian (0.25 tiap kartu)
+    // Membagi range 0-1 menjadi 4 segment tegas (0.25 per kartu)
     const start = i * 0.25;
     const end = (i + 1) * 0.25;
 
-    // Buffer handoff sebesar 5% untuk transisi yang halus namun tegas
-    const handoff = 0.05;
+    // Buffer transisi sangat sempit (2%) untuk mencegah tumpukan backdrop-blur yang berat
+    const handoff = 0.02;
 
-    // Opacity: Masuk di awal segment, keluar di akhir segment
+    // Opacity: Muncul tajam di awal segment, hilang tajam di akhir segment
     const opacity = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
     );
 
-    // Scale: Efek 'push' saat keluar
+    // Scale: Efek 'push' minimalis untuk kesan premium tanpa distorsi berlebih
     const scale = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
-        [0.92, 1, 1, 0.95]
+        [0.96, 1, 1, 0.98]
     );
 
-    // Y: Muncul dari bawah, terbuang ke atas
+    // Y: Muncul dari sedikit bawah, meluncur ke atas saat dibuang
     const y = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
-        [40, 0, 0, -40]
+        [30, 0, 0, -30]
     );
 
-    // Z-Index: Dinamis agar active card selalu di depan layer sebelumnya
+    // Z-Index Dinamis: Mengunci tumpukan agar kartu aktif selalu di paling depan
     const zIndex = useTransform(
         scrollYProgress,
-        [start - handoff, start, end],
-        [10, 20, 15]
+        [start - handoff, start, end - handoff, end],
+        [10, 30, 30, 20]
     );
 
-    // Pointer Events: Memastikan hanya kartu yang terlihat yang bisa diklik
+    // Pointer Events: Memutus interaksi untuk kartu yang sedang tersembunyi
     const pointerEvents = useTransform(
         scrollYProgress,
-        (v) => (v >= start && v < end - 0.02) ? 'auto' : 'none'
+        (v) => (v >= start && v < end - handoff) ? 'auto' : 'none'
     );
 
     return (
@@ -246,7 +246,7 @@ function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, sc
                 y,
                 zIndex,
                 pointerEvents,
-                willChange: 'transform, opacity',
+                willChange: 'transform, opacity', // Akselerasi GPU Android/iOS
                 transform: 'translateZ(0)'
             }}
         >
@@ -264,7 +264,7 @@ function StickyCardStage() {
 
     const [activeIndex, setActiveIndex] = useState(0);
     
-    // Sinkronisasi Active Index dengan timeline 0.25 per kartu
+    // Sinkronisasi Pagination Dots dengan timeline segmen 0.25
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
         const idx = Math.min(3, Math.floor(latest / 0.25));
         if (idx !== activeIndex) setActiveIndex(idx);
@@ -274,7 +274,7 @@ function StickyCardStage() {
         <section ref={containerRef} className="relative h-[400vh]">
             <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
                 <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
-                    {/* Bagian Teks (Kiri) */}
+                    {/* Panel Narasi (Kiri) */}
                     <div className="space-y-8">
                         <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
                         <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
@@ -292,7 +292,7 @@ function StickyCardStage() {
                         </div>
                     </div>
 
-                    {/* Bagian Kartu Stacking (Kanan) */}
+                    {/* Stage Kartu (Kanan) */}
                     <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
                         {featureItems.map((item, i) => (
                             <StickyCardItem 
