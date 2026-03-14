@@ -79,6 +79,10 @@ function Badge({ children, className }: { children: React.ReactNode; className?:
     );
 }
 
+/**
+ * FeatureCard: Optimized for Stacking Performance
+ * Increases opacity and refines border to prevent "ghosting" on mobile.
+ */
 function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', accent = 'cyan' }: {
     icon: React.ElementType;
     title: string;
@@ -95,7 +99,11 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
     }[accent];
 
     return (
-        <article className="group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl hover:border-white/20 transition-all duration-500 shadow-2xl will-change-transform" style={{ transform: 'translateZ(0)' }}>
+        <article 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.07] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
+            style={{ transform: 'translateZ(0)' }}
+        >
+            {/* Hover radial glow */}
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                 style={{ background: `radial-gradient(400px circle at 0% 0%, ${accentMap.glow}, transparent 60%)` }}
@@ -105,9 +113,9 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
                     <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="mb-3 text-xl font-bold text-white tracking-tight">{title}</h3>
-                <p className="flex-1 text-sm leading-relaxed text-white/50 font-medium">{description}</p>
+                <p className="flex-1 text-sm leading-relaxed text-white/60 font-medium">{description}</p>
                 <div className="mt-8">
-                    <Button asChild variant="outline" className="h-11 w-full rounded-2xl border-white/12 bg-white/[0.03] px-4 text-xs font-bold uppercase tracking-widest text-white/60 backdrop-blur-sm transition-all duration-300 hover:border-white/25 hover:bg-white/8 hover:text-white active:scale-[0.98] relative overflow-hidden group/btn">
+                    <Button asChild variant="outline" className="h-11 w-full rounded-2xl border-white/12 bg-white/[0.03] px-4 text-xs font-bold uppercase tracking-widest text-white/70 backdrop-blur-sm transition-all duration-300 hover:border-white/25 hover:bg-white/8 hover:text-white active:scale-[0.98] relative overflow-hidden group/btn">
                         <Link href={href} className="group/cta inline-flex items-center justify-center gap-2">
                             <span className="relative z-10">{ctaLabel}</span>
                             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1.5 relative z-10" />
@@ -191,46 +199,46 @@ function HeroIconRow() {
 }
 
 /**
- * StickyCardItem mengelola isolasi animasi per kartu.
- * Menggunakan dvh (dynamic viewport height) untuk stabilitas mobile browser.
+ * StickyCardItem: Internal helper to isolate card transform logic.
+ * Uses DvH (Dynamic Viewport Height) for mobile browser address bar stability.
  */
 function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, scrollYProgress: any }) {
-    // Membagi range 0-1 menjadi 4 segment tegas (0.25 per kartu)
+    // Divided into 4 strict segments (0.25 each)
     const start = i * 0.25;
     const end = (i + 1) * 0.25;
 
-    // Buffer transisi sangat sempit (2%) untuk mencegah tumpukan backdrop-blur yang berat
+    // Handoff window is 2% to minimize blur overlap
     const handoff = 0.02;
 
-    // Opacity: Muncul tajam di awal segment, hilang tajam di akhir segment
+    // Visibility: Hard cut opacity at segment boundaries
     const opacity = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
     );
 
-    // Scale: Efek 'push' minimalis untuk kesan premium tanpa distorsi berlebih
+    // Scaling: Depth effect during transition
     const scale = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [0.96, 1, 1, 0.98]
     );
 
-    // Y: Muncul dari sedikit bawah, meluncur ke atas saat dibuang
+    // Y Axis: Lift-up transition
     const y = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [30, 0, 0, -30]
     );
 
-    // Z-Index Dinamis: Mengunci tumpukan agar kartu aktif selalu di paling depan
+    // Z-Index: Current card always on top (30), past cards beneath (20), future below (10)
     const zIndex = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [10, 30, 30, 20]
     );
 
-    // Pointer Events: Memutus interaksi untuk kartu yang sedang tersembunyi
+    // Interactivity: Disable pointer events when card is not active
     const pointerEvents = useTransform(
         scrollYProgress,
         (v) => (v >= start && v < end - handoff) ? 'auto' : 'none'
@@ -245,8 +253,8 @@ function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, sc
                 scale,
                 y,
                 zIndex,
-                pointerEvents,
-                willChange: 'transform, opacity', // Akselerasi GPU Android/iOS
+                pointerEvents: pointerEvents as any,
+                willChange: 'transform, opacity',
                 transform: 'translateZ(0)'
             }}
         >
@@ -264,7 +272,7 @@ function StickyCardStage() {
 
     const [activeIndex, setActiveIndex] = useState(0);
     
-    // Sinkronisasi Pagination Dots dengan timeline segmen 0.25
+    // Sync dots with 0.25 segment boundaries
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
         const idx = Math.min(3, Math.floor(latest / 0.25));
         if (idx !== activeIndex) setActiveIndex(idx);
@@ -274,7 +282,6 @@ function StickyCardStage() {
         <section ref={containerRef} className="relative h-[400vh]">
             <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
                 <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
-                    {/* Panel Narasi (Kiri) */}
                     <div className="space-y-8">
                         <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
                         <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
@@ -292,7 +299,6 @@ function StickyCardStage() {
                         </div>
                     </div>
 
-                    {/* Stage Kartu (Kanan) */}
                     <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
                         {featureItems.map((item, i) => (
                             <StickyCardItem 
