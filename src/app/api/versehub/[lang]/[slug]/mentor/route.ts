@@ -6,8 +6,8 @@ interface RouteContext {
 }
 
 /**
- * Standardized Mentor Insight Proxy
- * Consolidated [ref] and [slug] into [slug] to resolve dynamic routing conflicts.
+ * Consolidated Mentor Insight Proxy
+ * Standardized on [slug] to resolve Next.js dynamic routing conflicts.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;

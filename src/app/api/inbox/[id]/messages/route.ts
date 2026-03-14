@@ -6,8 +6,8 @@ interface RouteContext {
 }
 
 /**
- * Standardized Inbox Messages Proxy
- * Resolved Next.js dynamic routing conflict by standardizing on [id].
+ * Consolidated Inbox Messages Proxy
+ * Standardized on [id] to resolve Next.js dynamic routing conflicts.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;

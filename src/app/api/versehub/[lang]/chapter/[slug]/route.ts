@@ -6,8 +6,8 @@ interface RouteContext {
 }
 
 /**
- * Standardized Chapter Content Proxy
- * Consolidated [ref] and [slug] into [slug] to resolve dynamic routing conflicts.
+ * Consolidated Chapter Content Proxy
+ * Standardized on [slug] to resolve Next.js dynamic routing conflicts.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
