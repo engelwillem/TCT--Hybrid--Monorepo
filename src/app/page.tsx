@@ -52,7 +52,7 @@ const featureItems = [
 
 function Background() {
     return (
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-teal-950" />
             <div className={cn(
                 'absolute inset-0',
@@ -61,8 +61,9 @@ function Background() {
                 'animate-[twinkle_10s_ease-in-out_infinite]',
             )} />
             <div className="bg-grain absolute inset-0 mix-blend-overlay" />
-            <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-3xl" style={{ transform: 'translateZ(0)' }} />
-            <div className="absolute bottom-[-200px] right-[-200px] h-[560px] w-[560px] rounded-full bg-blue-600/8 blur-3xl" style={{ transform: 'translateZ(0)' }} />
+            {/* GPU Accelerated Orbs */}
+            <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-3xl" style={{ transform: 'translate3d(0,0,0)' }} />
+            <div className="absolute bottom-[-200px] right-[-200px] h-[560px] w-[560px] rounded-full bg-blue-600/8 blur-3xl" style={{ transform: 'translate3d(0,0,0)' }} />
             <style>{`
                 @keyframes twinkle { 0%,100%{opacity:.18} 50%{opacity:.32} }
                 @keyframes shine { from{transform:translateX(-100%) skewX(-15deg)} to{transform:translateX(250%)  skewX(-15deg)} }
@@ -79,10 +80,6 @@ function Badge({ children, className }: { children: React.ReactNode; className?:
     );
 }
 
-/**
- * FeatureCard: Optimized for Stacking Performance
- * Increases opacity and refines border to prevent "ghosting" on mobile.
- */
 function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', accent = 'cyan' }: {
     icon: React.ElementType;
     title: string;
@@ -101,9 +98,8 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
     return (
         <article 
             className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.07] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
-            style={{ transform: 'translateZ(0)' }}
+            style={{ transform: 'translate3d(0,0,0)' }}
         >
-            {/* Hover radial glow */}
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                 style={{ background: `radial-gradient(400px circle at 0% 0%, ${accentMap.glow}, transparent 60%)` }}
@@ -199,49 +195,41 @@ function HeroIconRow() {
 }
 
 /**
- * StickyCardItem: Internal helper to isolate card transform logic.
- * Uses DvH (Dynamic Viewport Height) for mobile browser address bar stability.
+ * StickyCardItem: Handles isolated card transformations.
+ * Uses 2% handoff window to prevent double backdrop-blur heavy lifting on mobile.
  */
 function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, scrollYProgress: any }) {
-    // Divided into 4 strict segments (0.25 each)
     const start = i * 0.25;
     const end = (i + 1) * 0.25;
+    const handoff = 0.02; // Strict 2% window for 60FPS mobile transitions
 
-    // Handoff window is 2% to minimize blur overlap
-    const handoff = 0.02;
-
-    // Visibility: Hard cut opacity at segment boundaries
     const opacity = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
     );
 
-    // Scaling: Depth effect during transition
     const scale = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [0.96, 1, 1, 0.98]
     );
 
-    // Y Axis: Lift-up transition
     const y = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [30, 0, 0, -30]
     );
 
-    // Z-Index: Current card always on top (30), past cards beneath (20), future below (10)
     const zIndex = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [10, 30, 30, 20]
     );
 
-    // Interactivity: Disable pointer events when card is not active
     const pointerEvents = useTransform(
         scrollYProgress,
-        (v) => (v >= start && v < end - handoff) ? 'auto' : 'none'
+        (v) => (v >= start && v < end - (handoff / 2)) ? 'auto' : 'none'
     );
 
     return (
@@ -255,7 +243,7 @@ function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, sc
                 zIndex,
                 pointerEvents: pointerEvents as any,
                 willChange: 'transform, opacity',
-                transform: 'translateZ(0)'
+                transform: 'translate3d(0,0,0)'
             }}
         >
             <FeatureCard {...item} />
@@ -272,7 +260,6 @@ function StickyCardStage() {
 
     const [activeIndex, setActiveIndex] = useState(0);
     
-    // Sync dots with 0.25 segment boundaries
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
         const idx = Math.min(3, Math.floor(latest / 0.25));
         if (idx !== activeIndex) setActiveIndex(idx);
