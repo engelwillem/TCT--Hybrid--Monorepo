@@ -1,8 +1,9 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageCircle, Send, HelpCircle } from 'lucide-react';
+import { MessageCircle, Send, HelpCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { CommunityService } from '@/services/community.service';
 
 export default function QuestionOfTheDay({
     payload,
@@ -14,14 +15,24 @@ export default function QuestionOfTheDay({
     const question = payload?.question ?? "Apa satu renungan hari ini?";
     const count = payload?.participationCount ?? payload?.response_count ?? 12;
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!answer.trim() || isSubmitting) return;
 
         setIsSubmitting(true);
-        setTimeout(() => {
+        try {
+            // REAL PERSISTENCE: Sharing the answer as a community post
+            await CommunityService.createPost(
+                `Jawaban saya untuk pertanyaan: "${question}"\n\n${answer}`, 
+                'discussion_prompt'
+            );
             setAnswer('');
+            alert('Terima kasih! Jawaban Anda telah dibagikan ke komunitas.');
+        } catch (error) {
+            console.error('Failed to submit answer:', error);
+            alert('Gagal mengirim jawaban. Silakan coba lagi.');
+        } finally {
             setIsSubmitting(false);
-        }, 1000);
+        }
     };
 
     return (
@@ -47,14 +58,14 @@ export default function QuestionOfTheDay({
                             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                             placeholder="Tulis jawaban singkat Anda..."
                             disabled={isSubmitting}
-                            className="h-12 w-full rounded-2xl bg-surface px-4 pr-12 text-sm ring-1 ring-border transition-all outline-none focus:ring-brand/40"
+                            className="h-12 w-full rounded-2xl bg-surface px-4 pr-12 text-sm ring-1 ring-border transition-all outline-none focus:ring-brand/40 disabled:opacity-50"
                         />
                         <button
                             onClick={handleSubmit}
                             className="absolute right-2 top-1.5 flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-md transition-all active:scale-95 hover:opacity-90 disabled:opacity-50"
                             disabled={!answer.trim() || isSubmitting}
                         >
-                            <Send className="h-4 w-4" />
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         </button>
                     </div>
 

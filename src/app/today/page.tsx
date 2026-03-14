@@ -25,6 +25,7 @@ import ThrowingCard from './components/ThrowingCard';
 
 // Types
 import type { DailyVerse } from '@/types/versehub-daily';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 const slugifyRef = (ref: string) =>
     ref.toLowerCase().trim()
@@ -35,8 +36,8 @@ const slugifyRef = (ref: string) =>
 type FeedItem = {
     id: number | string;
     type: string;
-    payload: Record<string, unknown>;
-    interactions?: Record<string, unknown>;
+    payload: Record<string, any>;
+    interactions?: Record<string, any>;
     can_moderate?: boolean;
 };
 
@@ -46,53 +47,11 @@ type PinnedLesson = {
     progress: { state: 'start' | 'continue' | 'completed' };
 } | null;
 
-type TodayApiHighlight = {
-    id: string;
-    type?: string;
-    text: string;
-    imageUrl: string | null;
-    createdAt: string | null;
-    author: {
-        id: string;
-        name: string;
-        avatarUrl: string | null;
-    };
-    counts: {
-        likes: number;
-        comments: number;
-        bookmarks: number;
-    };
-    isLiked: boolean;
-    isBookmarked: boolean;
-};
-
-type TodayRituals = {
-    today_verse?: Record<string, unknown> | null;
-    quote_of_day?: {
-        text?: string;
-        author?: string | null;
-        reference?: string | null;
-        ref?: string | null;
-        source?: string | null;
-    } | null;
-    reflection_prompt?: {
-        question?: string;
-        response_count?: number;
-    } | null;
-};
-
-type TodayLegacyFeedItem = {
-    type?: string;
-    payload?: Record<string, unknown>;
-};
-
 type TodayApiResponse = {
     data?: {
         dailyVerse?: DailyVerse | null;
-        highlights?: TodayApiHighlight[];
-        rituals?: TodayRituals;
-        hybridFeed?: FeedItem[];
-        feed?: TodayLegacyFeedItem[] | { data?: TodayLegacyFeedItem[] };
+        highlights?: any[];
+        rituals?: any;
         pinnedLesson?: PinnedLesson;
         welcomeVerse?: DailyVerse | null;
     };
@@ -104,92 +63,28 @@ const fallbackDailyVerse: DailyVerse = {
     quote: 'TUHAN adalah gembalaku, takkan kekurangan aku.'
 };
 
-const fallbackFeed: FeedItem[] = [
-    {
-        id: 1,
-        type: 'system_reflection',
-        payload: {
-            title: 'Kekuatan dalam Kelemahan',
-            text: 'Tuhan menunjukkan kuasa-Nya paling nyata saat kita mengakui kelemahan kita.',
-            verseRef: '2 Korintus 12:9'
-        }
-    },
-    {
-        id: 2,
-        type: 'prayer_request',
-        payload: {
-            author: { name: 'Sarah' },
-            text: 'Mohon doa untuk kesehatan ibu saya yang sedang dalam masa pemulihan.',
-            title: 'Doa untuk Kesembuhan'
-        }
-    }
-];
-
-function mapHighlightToFeedItem(highlight: TodayApiHighlight): FeedItem {
-    return {
-        id: highlight.id,
-        type: highlight.type || 'member_post',
-        payload: {
-            author: {
-                name: highlight.author?.name ?? 'Member',
-                avatar_url: highlight.author?.avatarUrl ?? undefined,
-            },
-            text: highlight.text,
-            image_path: highlight.imageUrl ?? undefined,
-            created_at: highlight.createdAt ?? undefined,
-            stats: {
-                likes_count: highlight.counts?.likes ?? 0,
-                comments_count: highlight.counts?.comments ?? 0,
-            },
-        },
-        interactions: {
-            is_liked: Boolean(highlight.isLiked),
-            is_bookmarked: Boolean(highlight.isBookmarked),
-        },
-    };
-}
-
 export default function TodayPage() {
     const [apiPinnedLesson, setApiPinnedLesson] = useState<PinnedLesson>(null);
     const [apiDailyVerse, setApiDailyVerse] = useState<DailyVerse | null>(null);
     const [apiHighlights, setApiHighlights] = useState<FeedItem[]>([]);
-    const [apiHybridFeed, setApiHybridFeed] = useState<FeedItem[]>([]);
-    const [apiLegacyFeed, setApiLegacyFeed] = useState<TodayLegacyFeedItem[]>([]);
-    const [apiRituals, setApiRituals] = useState<TodayRituals | null>(null);
+    const [apiRituals, setApiRituals] = useState<any>(null);
     const [apiWelcomeVerse, setApiWelcomeVerse] = useState<DailyVerse | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const fallbackRituals: TodayRituals = {
-        reflection_prompt: {
-            question: "Apa satu hal yang ingin kau serahkan pada Tuhan hari ini?",
-            response_count: 54
-        },
-        quote_of_day: {
-            text: "Berhenti mencoba menjadi sempurna, mulailah mencoba menjadi murni hati.",
-            reference: "Inspiratif"
-        }
-    };
-
-    const pinnedLesson = apiPinnedLesson;
     const dailyVerse = apiDailyVerse ?? fallbackDailyVerse;
     const welcomeVerse = apiWelcomeVerse ?? undefined;
-    const rituals = apiRituals ?? fallbackRituals;
-
-    const hybridFeed =
-        apiHybridFeed.length > 0
-            ? apiHybridFeed
-            : apiHighlights.length > 0
-              ? apiHighlights
-              : fallbackFeed;
+    const rituals = apiRituals ?? {};
 
     useEffect(() => {
         let isActive = true;
-
         const loadTodayData = async () => {
             try {
+                const token = getAppAccessToken();
                 const response = await fetch('/api/today', {
                     method: 'GET',
                     headers: {
                         Accept: 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     },
                     cache: 'no-store',
                 });
@@ -199,112 +94,43 @@ export default function TodayPage() {
                 const payload = (await response.json()) as TodayApiResponse;
                 if (!isActive) return;
 
-                const nextDailyVerse = payload?.data?.dailyVerse ?? null;
-                const nextHighlights = Array.isArray(payload?.data?.highlights)
-                    ? payload.data.highlights.map(mapHighlightToFeedItem)
-                    : [];
-                const nextHybridFeed = Array.isArray(payload?.data?.hybridFeed)
-                    ? payload.data.hybridFeed
-                    : [];
-                const nextLegacyFeed = Array.isArray(payload?.data?.feed)
-                    ? payload.data.feed
-                    : Array.isArray(payload?.data?.feed?.data)
-                      ? payload.data.feed.data
-                      : [];
-
-                setApiDailyVerse(nextDailyVerse);
-                setApiHighlights(nextHighlights);
-                setApiHybridFeed(nextHybridFeed);
-                setApiLegacyFeed(nextLegacyFeed);
+                setApiDailyVerse(payload?.data?.dailyVerse ?? null);
+                setApiHighlights(Array.isArray(payload?.data?.highlights) ? payload.data.highlights : []);
                 setApiPinnedLesson(payload?.data?.pinnedLesson ?? null);
                 setApiRituals(payload?.data?.rituals ?? null);
                 setApiWelcomeVerse(payload?.data?.welcomeVerse ?? null);
             } catch {
-                // Keep the visual fallback when the backend is unreachable.
+                // Keep visual fallbacks
+            } finally {
+                if (isActive) setLoading(false);
             }
         };
 
         loadTodayData();
-
-        return () => {
-            isActive = false;
-        };
+        return () => { isActive = false; };
     }, []);
 
-    const items = hybridFeed;
-    const firstItems = items.slice(0, 2);
-    const restItems = items.slice(2);
-    const ritualVerse = rituals?.today_verse ?? null;
-    const ritualRef = String(
-        (ritualVerse as { ref?: string } | null)?.ref ??
-        dailyVerse?.ref ??
-        '',
-    ).trim();
+    const firstItems = apiHighlights.slice(0, 2);
+    const restItems = apiHighlights.slice(2);
     
-    const normalizedRitualVerse = ritualRef
-        ? {
+    const ritualVerse = rituals?.today_verse ?? null;
+    const ritualRef = String(ritualVerse?.ref ?? dailyVerse?.ref ?? '').trim();
+    
+    const normalizedRitualVerse = useMemo(() => {
+        if (!ritualRef) return null;
+        return {
             ref: slugifyRef(ritualRef || 'mzm-23-1'),
-            book_code: String((ritualVerse as { book_code?: string } | null)?.book_code ?? dailyVerse?.book_code ?? ''),
-            chapter: Number((ritualVerse as { chapter?: number } | null)?.chapter ?? dailyVerse?.chapter ?? 0),
-            verse: Number((ritualVerse as { verse?: number } | null)?.verse ?? dailyVerse?.verse ?? 0),
-            quote: String(
-                (ritualVerse as { quote?: string; text?: string } | null)?.quote ??
-                (ritualVerse as { quote?: string; text?: string } | null)?.text ??
-                dailyVerse?.quote ??
-                '',
-            ) || undefined,
-            cta_label: String(
-                (ritualVerse as { cta_label?: string } | null)?.cta_label ??
-                dailyVerse?.cta_label ??
-                'Baca Alkitab',
-            ),
-            cta_href: String(
-                (ritualVerse as { cta_href?: string; ref?: string } | null)?.cta_href ??
-                ((ritualVerse as { ref?: string } | null)?.ref ? `/versehub/id/${(ritualVerse as { ref?: string }).ref}` : dailyVerse?.cta_href) ??
-                '/versehub/id',
-            ),
-            source_post_id: Number((ritualVerse as { source_post_id?: number } | null)?.source_post_id ?? dailyVerse?.source_post_id ?? 0) || undefined,
-            reference: String((ritualVerse as { reference?: string } | null)?.reference ?? dailyVerse?.reference ?? '') || undefined,
-            title: String((ritualVerse as { title?: string } | null)?.title ?? dailyVerse?.title ?? '') || undefined,
-        }
-        : null;
-
-    const reflectionPromptPayload = rituals?.reflection_prompt?.question
-        ? {
-            question: rituals.reflection_prompt.question,
-            response_count: rituals.reflection_prompt.response_count,
-        }
-        : undefined;
-
-    const quoteOfDayPayload = rituals?.quote_of_day?.text
-        ? {
-            text: rituals.quote_of_day.text,
-            author: rituals.quote_of_day.author ?? undefined,
-            reference: rituals.quote_of_day.reference ?? undefined,
-            ref: rituals.quote_of_day.ref ?? undefined,
-            source: rituals.quote_of_day.source ?? undefined,
-        }
-        : undefined;
-
-    const normalizedLegacyFeed = useMemo(() => {
-        if (Array.isArray(apiLegacyFeed)) return apiLegacyFeed;
-        return [];
-    }, [apiLegacyFeed]);
-
-    const legacyByType = useMemo(() => {
-        const map = new Map<string, any>();
-        for (const item of normalizedLegacyFeed) {
-            if (!item?.type || map.has(item.type)) continue;
-            map.set(item.type, item.payload ?? {});
-        }
-        return map;
-    }, [normalizedLegacyFeed]);
-
-    const legacyReflection = legacyByType.get('reflection');
-    const legacyPrayer = legacyByType.get('prayer');
-    const legacyCommunity = legacyByType.get('community');
-    const legacyTalk = legacyByType.get('talk');
-    const legacyQuestion = legacyByType.get('question');
+            book_code: String(ritualVerse?.book_code ?? dailyVerse?.book_code ?? ''),
+            chapter: Number(ritualVerse?.chapter ?? dailyVerse?.chapter ?? 0),
+            verse: Number(ritualVerse?.verse ?? dailyVerse?.verse ?? 0),
+            quote: String(ritualVerse?.quote ?? ritualVerse?.text ?? dailyVerse?.quote ?? ''),
+            cta_label: String(ritualVerse?.cta_label ?? dailyVerse?.cta_label ?? 'Baca Alkitab'),
+            cta_href: String(ritualVerse?.cta_href ?? (ritualVerse?.ref ? `/versehub/id/${ritualVerse?.ref}` : dailyVerse?.cta_href) ?? '/versehub/id'),
+            source_post_id: Number(ritualVerse?.source_post_id ?? dailyVerse?.source_post_id ?? 0) || undefined,
+            reference: String(ritualVerse?.reference ?? dailyVerse?.reference ?? ''),
+            title: String(ritualVerse?.title ?? dailyVerse?.title ?? ''),
+        };
+    }, [ritualRef, ritualVerse, dailyVerse]);
 
     return (
         <MobileAppLayout
@@ -321,14 +147,9 @@ export default function TodayPage() {
             >
                 <div className="space-y-5">
                     {/* Entry Points */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false, margin: "-10%" }}
-                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    >
+                    <ThrowingCard index={-1}>
                         <ActionShortcutBar />
-                    </motion.div>
+                    </ThrowingCard>
 
                     {/* Sacred Anchor (Verse) */}
                     <ThrowingCard index={0}>
@@ -339,68 +160,31 @@ export default function TodayPage() {
                     </ThrowingCard>
 
                     {/* Active Ritual (Reflection) */}
-                    <ThrowingCard index={1}>
-                        <ReflectionPrompt payload={reflectionPromptPayload} />
-                    </ThrowingCard>
-
-                    {/* Legacy feed cards kept alive for backwards compatibility */}
-                    {legacyReflection ? (
-                        <ThrowingCard index={2}>
-                            <ReflectionCard payload={legacyReflection} />
+                    {rituals?.reflection_prompt && (
+                        <ThrowingCard index={1}>
+                            <ReflectionPrompt payload={rituals.reflection_prompt} />
                         </ThrowingCard>
-                    ) : null}
-                    {legacyPrayer ? (
-                        <ThrowingCard index={3}>
-                            <DailyPrayerCard payload={legacyPrayer} />
-                        </ThrowingCard>
-                    ) : null}
-                    {legacyCommunity ? (
-                        <ThrowingCard index={4}>
-                            <CommunityCard payload={legacyCommunity} />
-                        </ThrowingCard>
-                    ) : null}
-                    {legacyQuestion ? (
-                        <ThrowingCard index={5}>
-                            <QuestionOfTheDay payload={legacyQuestion} />
-                        </ThrowingCard>
-                    ) : null}
-                    {legacyTalk ? (
-                        <ThrowingCard index={6}>
-                            <TalkCard payload={legacyTalk} />
-                        </ThrowingCard>
-                    ) : null}
+                    )}
 
                     {/* Feed Part 1 (Direct Engagement) */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.98 }}
-                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                        viewport={{ once: false, margin: "-5%" }}
-                        transition={{ duration: 0.8 }}
-                    >
-                        <FeedList items={firstItems} />
-                    </motion.div>
+                    <FeedList items={firstItems} />
 
-                    {/* Learning Path (If available) */}
-                    {pinnedLesson && (
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-                            <PinnedLessonCard pinned={pinnedLesson} />
-                        </motion.div>
+                    {/* Learning Path */}
+                    {apiPinnedLesson && (
+                        <ThrowingCard index={5}>
+                            <PinnedLessonCard pinned={apiPinnedLesson} />
+                        </ThrowingCard>
                     )}
 
                     {/* Wisdom Pearl (Quote) */}
-                    <ThrowingCard index={10}>
-                        <QuoteCard payload={quoteOfDayPayload} />
-                    </ThrowingCard>
+                    {rituals?.quote_of_day && (
+                        <ThrowingCard index={10}>
+                            <QuoteCard payload={rituals.quote_of_day} />
+                        </ThrowingCard>
+                    )}
 
                     {/* Feed Part 2 (Wider Community) */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.98 }}
-                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                        viewport={{ once: false, margin: "-5%" }}
-                        transition={{ duration: 0.8 }}
-                    >
-                        <FeedList items={restItems} startIndex={2} />
-                    </motion.div>
+                    <FeedList items={restItems} startIndex={2} />
                 </div>
             </motion.div>
         </MobileAppLayout>
