@@ -190,6 +190,12 @@ function HeroIconRow() {
     );
 }
 
+/**
+ * StickyCardStage
+ * Mengelola animasi stacking kartu fitur menggunakan Framer Motion.
+ * Logika utama: Melakukan interpolasi antara posisi scroll (0-1) 
+ * dengan Opacity, Scale, dan Y-Translate setiap kartu.
+ */
 function StickyCardStage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -203,18 +209,22 @@ function StickyCardStage() {
         setActiveIndex(idx);
     });
 
+    // Mapping Transformasi untuk Kartu 1 (Segmen Awal)
     const card1_op = useTransform(scrollYProgress, [0, 0.1, 0.25], [1, 1, 0]);
     const card1_sc = useTransform(scrollYProgress, [0, 0.25], [1, 0.95]);
     const card1_y  = useTransform(scrollYProgress, [0, 0.25], [0, -40]);
 
+    // Mapping Transformasi untuk Kartu 2 (Segmen Tengah Awal)
     const card2_op = useTransform(scrollYProgress, [0.15, 0.35, 0.50], [0, 1, 0]);
     const card2_sc = useTransform(scrollYProgress, [0.15, 0.35, 0.50], [0.95, 1, 0.95]);
     const card2_y  = useTransform(scrollYProgress, [0.15, 0.35, 0.50], [40, 0, -40]);
 
+    // Mapping Transformasi untuk Kartu 3 (Segmen Tengah Akhir)
     const card3_op = useTransform(scrollYProgress, [0.40, 0.60, 0.75], [0, 1, 0]);
     const card3_sc = useTransform(scrollYProgress, [0.40, 0.60, 0.75], [0.95, 1, 0.95]);
     const card3_y  = useTransform(scrollYProgress, [0.40, 0.60, 0.75], [40, 0, -40]);
 
+    // Mapping Transformasi untuk Kartu 4 (Segmen Akhir)
     const card4_op = useTransform(scrollYProgress, [0.65, 0.85], [0, 1]);
     const card4_sc = useTransform(scrollYProgress, [0.65, 0.85], [0.95, 1]);
     const card4_y  = useTransform(scrollYProgress, [0.65, 0.85], [40, 0]);
@@ -230,6 +240,7 @@ function StickyCardStage() {
         <section ref={containerRef} className="relative h-[400vh]">
             <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
                 <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
+                    {/* Bagian Teks (Kiri) */}
                     <div className="space-y-8">
                         <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
                         <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
@@ -247,6 +258,7 @@ function StickyCardStage() {
                         </div>
                     </div>
 
+                    {/* Bagian Kartu Stacking (Kanan) */}
                     <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
                         {featureItems.map((item, i) => (
                             <motion.div
