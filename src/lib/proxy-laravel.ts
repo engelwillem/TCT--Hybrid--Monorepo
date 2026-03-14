@@ -16,11 +16,10 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     let body: Uint8Array | undefined = undefined;
     if (hasBody) {
       try {
-        // Read as arrayBuffer to preserve binary integrity of multipart boundaries
         const buffer = await request.arrayBuffer();
         body = new Uint8Array(buffer);
       } catch (e) {
-        // Body is empty
+        // Body is empty or unreadable
       }
     }
 
