@@ -97,7 +97,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
     return (
         <article 
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.07] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.08] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
             style={{ transform: 'translate3d(0,0,0)' }}
         >
             <div
@@ -126,13 +126,13 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
 /**
  * StickyCardItem: Manages per-card animation logic.
- * Implements strict handoff windows based on screen size to prevent ghosting.
+ * Implements strict handoff windows to prevent ghosting.
  */
 function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i: number, scrollYProgress: any, isDesktop: boolean }) {
     const start = i * 0.25;
     const end = (i + 1) * 0.25;
     
-    // Strict handoff window: 2% on desktop for cinematic feel, 0.5% on mobile for zero-overlap stability.
+    // Extreme tight handoff window for mobile to prevent double blur overhead
     const handoff = isDesktop ? 0.02 : 0.005; 
 
     const opacity = useTransform(
@@ -147,7 +147,6 @@ function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i:
         [0.96, 1, 1, 0.98]
     );
 
-    // Reduce vertical movement on mobile to keep focus on content.
     const yValue = isDesktop ? 30 : 10;
     const y = useTransform(
         scrollYProgress,
@@ -155,16 +154,17 @@ function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i:
         [yValue, 0, 0, -yValue]
     );
 
+    // Dynamic Z-Index: Active(30) > Past(20) > Future(10)
     const zIndex = useTransform(
         scrollYProgress,
         [start - handoff, start, end - handoff, end],
         [10, 30, 30, 20]
     );
 
-    // Strict pointer-events: Card is only interactive when dominant (>50% opacity).
+    // Interactivity isolation: disable clicks on transparent layers
     const pointerEvents = useTransform(
         scrollYProgress,
-        (v) => (v >= start && v < end - (handoff / 2)) ? 'auto' : 'none'
+        (v) => (v >= start && v < end - handoff) ? 'auto' : 'none'
     );
 
     return (
@@ -196,7 +196,6 @@ function StickyCardStage() {
 
     const [activeIndex, setActiveIndex] = useState(0);
     
-    // Desktop detection for adaptive animation profile
     useEffect(() => {
         if (typeof window === 'undefined') return;
         const mq = window.matchMedia('(min-width: 1024px)');
@@ -207,7 +206,6 @@ function StickyCardStage() {
     }, []);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-        // Precise segment-based active index tracking
         const idx = Math.min(3, Math.floor(latest / 0.25));
         if (idx !== activeIndex) setActiveIndex(idx);
     });
