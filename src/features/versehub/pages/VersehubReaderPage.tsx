@@ -7,7 +7,7 @@ import {
     Search, Library, History, Zap, Compass, Heart, 
     MessageSquareQuote, SendHorizontal, Bookmark, Wand2, 
     StickyNote, Highlighter, Network, ArrowRight, X, Scroll,
-    ChevronLeft, ChevronRight, Loader2
+    ChevronLeft, ChevronRight, Loader2, ArrowRightCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 // Layout & UI Components
 import DesktopSidebarNav from '@/components/core/DesktopSidebarNav';
 import FloatingBottomNav from '@/components/core/FloatingBottomNav';
+
+// UI Primitives
+import { Badge } from '@/components/ui/badge';
 
 // VerseHub Specific Components
 import MentorPanel from '@/components/versehub/MentorPanel';
@@ -169,7 +172,6 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                 const dist = Math.abs((rect.top + rect.bottom) / 2 - centerY);
                 if (dist < bestDist) {
                     bestDist = dist;
-                    activeVerse === v.verse;
                     best = v.verse;
                 }
             });
@@ -236,16 +238,23 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const otStarter = books.find(b => b.testament === 'ot');
     const ntStarter = books.find(b => b.testament === 'nt');
 
+    const activeReflectionQuestion = ''; // Placeholder for dynamic logic
+    const reflection_question = 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
+
     if (loading) {
         return <div className="min-h-screen bg-slate-950 flex items-center justify-center">
             <Loader2 className="h-10 w-10 text-amber-500 animate-spin" />
         </div>;
     }
 
+    const handlePathSelect = (path: { slug: string }) => {
+        router.push(`/versehub/${lang}/study/${path.slug}`);
+    };
+
     return (
         <div className={cn(
             "min-h-screen transition-colors duration-500",
-            readingMode === 'dark' ? "bg-slate-950 text-slate-100" : "bg-[#FAFAF8] text-slate-900"
+            readingMode === 'dark' ? "bg-slate-900 text-slate-100" : "bg-[#FAFAF8] text-slate-900"
         )}>
             <div className="mx-auto w-full max-w-6xl px-4 py-4 md:py-6">
                 <div className="flex w-full">
@@ -258,7 +267,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                     <div className="w-full md:flex-1 md:ml-8">
                         <div className={cn(
                             "sticky top-0 z-30 border-b backdrop-blur-xl transition-all",
-                            readingMode === 'dark' ? "border-white/5 bg-slate-950/80" : "border-slate-200 bg-white/80"
+                            readingMode === 'dark' ? "border-white/5 bg-slate-900/80" : "border-slate-200 bg-white/80"
                         )}>
                             <div className="flex items-center justify-between px-4 py-3.5">
                                 <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 active:scale-90 transition-all">
@@ -363,11 +372,12 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                         );
                                     })}
                                     
-                                    {!has_reflected && (
+                                    {isChapter && !has_reflected && (
                                         <EndOfChapterPrompt 
                                             lang={lang}
                                             questionText={activeReflectionQuestion || reflection_question}
                                             onReflect={() => setReflectionComposerOpen(true)}
+                                            onPathSelect={handlePathSelect}
                                         />
                                     )}
                                 </div>
@@ -391,17 +401,17 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                             initial={{ y: "100%" }} 
                             animate={{ y: 0 }} 
                             exit={{ y: "100%" }}
-                            className="relative w-full max-w-2xl bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden border border-white/10"
+                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden border border-white/10"
                         >
                             <div className="p-8">
                                 <div className="flex justify-between items-center mb-8">
-                                    <h3 className="text-2xl font-black text-white tracking-tight">Pilih Kitab</h3>
-                                    <button onClick={() => setPickerOpen(false)} className="h-12 w-12 flex items-center justify-center rounded-full bg-white/5 text-white/50 hover:text-white"><X size={24} /></button>
+                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Pilih Kitab</h3>
+                                    <button onClick={() => setPickerOpen(false)} className="h-12 w-12 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white"><X size={24} /></button>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl">
-                                    <button onClick={() => setTab('ot')} className={cn("py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all", tab === 'ot' ? "bg-white text-slate-950 shadow-xl" : "text-white/30")}>Old Testament</button>
-                                    <button onClick={() => setTab('nt')} className={cn("py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all", tab === 'nt' ? "bg-white text-slate-950 shadow-xl" : "text-white/30")}>New Testament</button>
+                                <div className="grid grid-cols-2 gap-2 mb-8 bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl">
+                                    <button onClick={() => setTab('ot')} className={cn("py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all", tab === 'ot' ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-xl" : "text-slate-400")}>Old Testament</button>
+                                    <button onClick={() => setTab('nt')} className={cn("py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all", tab === 'nt' ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-xl" : "text-slate-400")}>New Testament</button>
                                 </div>
 
                                 <div className="flex gap-8 h-[420px]">
@@ -412,7 +422,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                 onClick={() => setActiveBook(b.code)} 
                                                 className={cn(
                                                     "w-full text-left px-5 py-4 rounded-2xl text-sm font-bold transition-all", 
-                                                    activeBook === b.code ? "bg-brand text-brand-foreground shadow-lg" : "text-white/40 hover:bg-white/5"
+                                                    activeBook === b.code ? "bg-brand text-brand-foreground shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
                                                 )}
                                             >
                                                 {b.label}
@@ -424,12 +434,12 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                             <button 
                                                 key={ch} 
                                                 onClick={() => handlePickChapter(activeBook!, ch)} 
-                                                className="aspect-square bg-white/5 rounded-2xl flex items-center justify-center text-lg font-black text-white hover:bg-white/10 hover:scale-105 active:scale-90 transition-all border border-white/5"
+                                                className="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-lg font-black text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 hover:scale-105 active:scale-90 transition-all border border-black/5 dark:border-white/5"
                                             >
                                                 {ch}
                                             </button>
                                         )) : (
-                                            <div className="col-span-full flex flex-col items-center justify-center h-full text-white/20">
+                                            <div className="col-span-full flex flex-col items-center justify-center h-full text-slate-300">
                                                 <Compass size={48} strokeWidth={1} className="mb-4" />
                                                 <p className="text-sm font-bold uppercase tracking-widest">Pilih Kitab Dulu</p>
                                             </div>
@@ -474,7 +484,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     Favorites
                                 </button>
                                 <button 
-                                    onClick={() => openMentorForVerse(selectedVerse)}
+                                    onClick={() => { setToolsOpen(false); setMentorOpen(true); }}
                                     className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500 text-slate-950 font-bold text-sm active:scale-95 transition-all shadow-lg shadow-amber-500/20"
                                 >
                                     <Wand2 size={18} />
@@ -538,7 +548,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                     >
                         <span>{toast.message}</span>
                         {toast.ctaHref && (
-                            <Link href={toast.ctaHref} className="text-brand hover:underline">{toast.ctaLabel}</Link>
+                            <button onClick={() => router.push(toast.ctaHref!)} className="text-brand hover:underline">{toast.ctaLabel}</button>
                         )}
                     </motion.div>
                 )}
