@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { getApps } from "firebase/app";
-import { getAuth, onIdTokenChanged } from "firebase/auth";
-import { clearAppAccessToken, setAppAccessToken } from "@/services/app-auth-token";
+import { getAuth, onIdTokenChanged, signOut } from "firebase/auth";
+import { clearAppAccessToken, getAppAccessToken, setAppAccessToken } from "@/services/app-auth-token";
 
 export function FirebaseAuthSync() {
   useEffect(() => {
@@ -11,11 +11,27 @@ export function FirebaseAuthSync() {
 
     const auth = getAuth(getApps()[0]);
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      // 1. If Firebase says user is logged out
       if (!user) {
+        const currentToken = getAppAccessToken();
+        if (currentToken) {
+          // Tell Laravel to revoke token before clearing local state
+          try {
+            await fetch("/api/auth/logout", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${currentToken}`,
+              },
+            });
+          } catch {
+            // Silently fail if backend unreachable during logout
+          }
+        }
         clearAppAccessToken();
         return;
       }
 
+      // 2. If Firebase user exists, ensure sync
       try {
         const idToken = await user.getIdToken();
         const response = await fetch("/api/auth/firebase/sync", {
@@ -26,9 +42,12 @@ export function FirebaseAuthSync() {
           body: JSON.stringify({ idToken }),
         });
 
+        // 3. Handle auth rejection from backend
         if (!response.ok) {
           if (response.status === 401 || response.status === 403 || response.status === 422) {
+            // If backend rejects identity, force client logout
             clearAppAccessToken();
+            await signOut(auth);
           }
           return;
         }

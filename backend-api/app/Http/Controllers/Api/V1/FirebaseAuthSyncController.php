@@ -134,4 +134,19 @@ class FirebaseAuthSyncController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Logout & Revoke Token
+     * Ensures the Sanctum token is destroyed in MySQL when user logs out of the frontend.
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        if ($request->user()) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
+        return response()->json([
+            'message' => 'Sesi berhasil diakhiri.',
+        ]);
+    }
 }

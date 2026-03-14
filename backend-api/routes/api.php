@@ -59,6 +59,8 @@ Route::prefix('v1')->group(function (): void {
         ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
 
     Route::middleware('auth:sanctum')->group(function (): void {
+        Route::post('/auth/logout', [FirebaseAuthSyncController::class, 'logout']);
+        
         Route::post('/community/posts', [CommunityApiController::class, 'store']);
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
