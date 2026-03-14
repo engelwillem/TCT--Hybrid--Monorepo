@@ -1,8 +1,8 @@
-
 export interface CommunityUser {
   id: string;
   name: string;
   avatarUrl?: string;
+  isOfficial?: boolean;
 }
 
 export interface CommunityComment {
@@ -16,11 +16,14 @@ export interface CommunityComment {
 export interface CommunityPost {
   id: string;
   type: string;
+  type_label: string;
   text: string;
-  imageUrl?: string;
-  mediaPaths?: string[];
+  title?: string | null;
+  imageUrl?: string | null;
+  thumbPath?: string | null;
+  mediaPaths?: string[] | null;
   createdAt: string;
-  author: CommunityUser & { isOfficial?: boolean };
+  author: CommunityUser;
   counts: {
     likes: number;
     comments: number;
@@ -29,6 +32,7 @@ export interface CommunityPost {
   isLiked: boolean;
   isBookmarked: boolean;
   isFeatured?: boolean;
+  can_moderate?: boolean;
   metadata?: {
     ref?: string;
     reference?: string;

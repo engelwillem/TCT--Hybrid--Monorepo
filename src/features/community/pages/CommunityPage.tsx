@@ -5,29 +5,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostComposer } from "../components/PostComposer";
 import { MemberPostCard } from "../components/MemberPostCard";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
-import { CommunityPost, CommunityUser } from "../types";
+import { CommunityPost } from "../types";
 import { Loader2, ChevronDown, Inbox } from "lucide-react";
 import { CommunityService } from "@/services/community.service";
-import { MOCK_USERS } from "../mock";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 
 type ArchiveCategory = "all" | "quotes" | "reflections" | "prayer_requests" | "testimonies";
+
+const slugifyRef = (ref: string) =>
+    ref.toLowerCase().trim()
+        .replace(/[:\.\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
 export function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
   const [isLoading, setIsLoading] = useState(true);
-  const currentUser: CommunityUser = MOCK_USERS.me;
+  const [rituals, setRituals] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        // Load feed
         const fetchedPosts = await CommunityService.listPosts();
         setPosts(fetchedPosts);
+        
+        // Load rituals for featured verse
+        const ritualRes = await fetch('/api/today');
+        if (ritualRes.ok) {
+            const ritualData = await ritualRes.json();
+            setRituals(ritualData?.data?.rituals || null);
+        }
       } catch (error) {
         console.error("Failed to fetch community data", error);
       } finally {
@@ -38,19 +51,16 @@ export function CommunityPage() {
     fetchData();
   }, []);
 
-  const handlePost = async (text: string, type: string) => {
+  const handlePost = async (text: string, type: string, images: File[] = []) => {
     try {
-      const newPost = await CommunityService.createPost(text);
-      // Ensure the newly created post has the correct type from the UI
-      const postWithType = { ...newPost, type };
-      setPosts((prev) => [postWithType, ...prev]);
+      const newPost = await CommunityService.createPost(text, type, images);
+      setPosts((prev) => [newPost, ...prev]);
     } catch (error) {
       console.error("Failed to create post", error);
     }
   };
 
   const toggleLike = async (postId: string) => {
-    // REAL PERSISTENCE: Now calls Laravel via proxy
     try {
       const updatedPost = await CommunityService.toggleLike(postId);
       setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
@@ -60,7 +70,6 @@ export function CommunityPage() {
   };
 
   const toggleBookmark = async (postId: string) => {
-    // REAL PERSISTENCE: Now calls Laravel via proxy
     try {
       const updatedPost = await CommunityService.toggleBookmark(postId);
       setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
@@ -72,21 +81,33 @@ export function CommunityPage() {
   const featuredPost = useMemo(() => posts.find((p) => p.isFeatured), [posts]);
   
   const effectiveFeaturedVerse = useMemo((): FeaturedVerse => {
-    if (featuredPost?.metadata?.ref) {
+    const ritualVerse = rituals?.today_verse ?? null;
+    if (ritualVerse?.quote) {
+        return {
+            ref: slugifyRef(ritualVerse.reference || 'mzm-23-1'),
+            href: ritualVerse.cta_href || `/versehub/id/${slugifyRef(ritualVerse.reference)}`,
+            text: ritualVerse.text || ritualVerse.quote,
+            reference: ritualVerse.reference || "Ayat Hari Ini",
+        };
+    }
+
+    const meta = featuredPost?.metadata || {};
+    if (meta.ref || meta.reference) {
       return {
-        ref: featuredPost.metadata.ref,
-        href: `/versehub/id/${featuredPost.metadata.ref}`,
-        text: featuredPost.metadata.quote || featuredPost.text,
-        reference: featuredPost.metadata.reference || "Daily Verse",
+        ref: meta.ref || slugifyRef(meta.reference),
+        href: `/versehub/id/${meta.ref || slugifyRef(meta.reference)}`,
+        text: meta.quote || featuredPost?.text || "",
+        reference: meta.reference || "Featured Reflection",
       };
     }
+
     return {
-      ref: "mazmur-23-1",
-      href: "/versehub/id/mazmur-23-1",
+      ref: "mzm-23-1",
+      href: "/versehub/id/mzm-23-1",
       text: "TUHAN adalah gembalaku, takkan kekurangan aku.",
       reference: "Mazmur 23:1",
     };
-  }, [featuredPost]);
+  }, [rituals, featuredPost]);
 
   const archiveGroups = useMemo(() => {
     const filtered = posts.filter((post) => {
@@ -104,7 +125,7 @@ export function CommunityPage() {
     const todayKey = new Date().toISOString().slice(0, 10);
 
     filtered.forEach((p) => {
-      const dateKey = p.createdAt.slice(0, 10);
+      const dateKey = p.createdAt ? p.createdAt.slice(0, 10) : todayKey;
       const key = dateKey === todayKey ? "today" : `month-${dateKey.slice(0, 7)}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
@@ -158,7 +179,7 @@ export function CommunityPage() {
           </div>
 
           <TabsContent value="discussions" className="space-y-6 mt-0">
-            <PostComposer onPost={handlePost} currentUser={currentUser} />
+            <PostComposer onPost={handlePost} />
 
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
@@ -275,14 +296,38 @@ export function CommunityPage() {
           </TabsContent>
 
           <TabsContent value="bookmarks">
-            <Card className="rounded-[32px] bg-surface/80 border border-dashed border-border/70 py-20 text-center flex flex-col items-center gap-6">
-                <div className="w-20 h-20 rounded-3xl bg-surface-muted border border-border/70 flex items-center justify-center text-muted-foreground shadow-inner">
-                  <Inbox size={36} />
-                </div>
-                <div className="space-y-2">
-                  <CardTitle className="text-xl font-black text-muted-foreground">Belum ada post tersimpan.</CardTitle>
-                </div>
-              </Card>
+            <div className="space-y-4">
+                {posts.filter(p => p.isBookmarked).length > 0 ? (
+                    posts.filter(p => p.isBookmarked).map(p => (
+                        <MemberPostCard
+                            key={p.id}
+                            authorName={p.author.name}
+                            authorAvatar={p.author.avatarUrl}
+                            type={p.type}
+                            text={p.text}
+                            imgSrc={p.imageUrl}
+                            prayLabel={String(p.counts.likes)}
+                            prayed={p.isLiked}
+                            commentsCount={p.counts.comments}
+                            bookmarked={p.isBookmarked}
+                            bookmarkLabel={String(p.counts.bookmarks)}
+                            onPray={() => toggleLike(p.id)}
+                            onBookmark={() => toggleBookmark(p.id)}
+                            onOpenComments={() => {}}
+                            onShare={() => {}}
+                        />
+                    ))
+                ) : (
+                    <Card className="rounded-[32px] bg-surface/80 border border-dashed border-border/70 py-20 text-center flex flex-col items-center gap-6">
+                        <div className="w-20 h-20 rounded-3xl bg-surface-muted border border-border/70 flex items-center justify-center text-muted-foreground shadow-inner">
+                        <Inbox size={36} />
+                        </div>
+                        <div className="space-y-2">
+                        <CardTitle className="text-xl font-black text-muted-foreground">Belum ada post tersimpan.</CardTitle>
+                        </div>
+                    </Card>
+                )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
