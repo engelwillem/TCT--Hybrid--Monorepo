@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ImagePlus, MessageSquare, Hand, Sparkles, Send, X } from 'lucide-react';
+import { ImagePlus, MessageSquare, Hand, Sparkles, Send, X, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { CommunityService } from '@/services/community.service';
 
 type PostType = 'user_post' | 'prayer_request' | 'reflection' | 'testimony';
 
@@ -60,18 +61,19 @@ export default function PostComposer({
 
         setIsSubmitting(true);
         try {
-            // Placeholder for Firebase/API post logic
-            console.log('Submitting post:', { type, text, channelSlug, images, layoutVariant, aspectRatio });
+            // REAL PERSISTENCE: Call Laravel API via proxy
+            await CommunityService.createPost(text, type, images);
 
-            // Simulating success
+            // Clear state on success
             setText('');
             setImages([]);
             setIsExpanded(false);
-
-            // In a real app, we would invalidate tags or push to feed
+            
+            // Refresh feed
             router.refresh();
         } catch (error) {
             console.error('Failed to submit post:', error);
+            alert('Gagal membagikan berkat. Silakan coba lagi.');
         } finally {
             setIsSubmitting(false);
         }
@@ -91,6 +93,7 @@ export default function PostComposer({
         )}>
             <CardContent className="p-0">
                 <div className="flex flex-col">
+                    {/* Header with richer gradient avatar */}
                     <div className="flex items-center gap-5 px-6 pt-8 pb-3">
                         <div className="relative group">
                             <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-brand via-cyan-400 to-emerald-400 opacity-30 blur-md transition duration-500 group-hover:opacity-60" />
@@ -163,7 +166,7 @@ export default function PostComposer({
                     )}
 
                     {isExpanded && (
-                        <div className="flex flex-col border-t border-black/5 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-xl transition-all duration-500">
+                        <div className="flex flex-col border-t border-black/5 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
                             {!hasImages && (
                                 <div className="flex items-center gap-2 px-6 py-3 border-b border-black/5 dark:border-white/5">
                                     <button
@@ -191,7 +194,7 @@ export default function PostComposer({
                             )}
 
                             <div className="relative group flex items-center px-4 py-4 border-b border-black/5 dark:border-white/5 overflow-hidden">
-                                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-2 text-slate-900">
+                                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-2">
                                     {types.map((t) => (
                                         <button
                                             key={t.value}
@@ -259,7 +262,7 @@ export default function PostComposer({
                                         onClick={handleSubmit}
                                         disabled={(!text.trim() && images.length === 0) || isSubmitting}
                                     >
-                                        {isSubmitting ? '...' : (
+                                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                                             <div className="flex items-center gap-2">
                                                 <span>Bagikan</span>
                                                 <Send size={15} />

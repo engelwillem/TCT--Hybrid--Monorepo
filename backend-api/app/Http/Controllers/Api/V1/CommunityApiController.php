@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class CommunityApiController extends Controller
 {
@@ -61,40 +62,40 @@ class CommunityApiController extends Controller
         abort_unless($user, 401);
 
         $validated = $request->validate([
-            'text' => ['required', 'string', 'max:5000'],
-            'imageUrl' => ['nullable', 'url', 'max:2048'],
+            'text' => ['required_without:images', 'nullable', 'string', 'max:5000'],
+            'type' => ['nullable', 'string', 'in:user_post,prayer_request,reflection,testimony'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'imageUrl' => ['nullable', 'url', 'max:2048'], // For backward compatibility
         ]);
 
-        $imageUrl = trim((string) ($validated['imageUrl'] ?? '')) ?: null;
+        $mediaPaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('community/posts', 'public');
+                $mediaPaths[] = Storage::disk('public')->url($path);
+            }
+        }
+
+        // If no files but imageUrl provided
+        if (empty($mediaPaths) && $request->filled('imageUrl')) {
+            $mediaPaths[] = $request->input('imageUrl');
+        }
 
         $post = MemberPost::query()->create([
             'user_id' => $user->id,
-            'type' => 'member_post',
-            'text' => trim((string) $validated['text']),
-            'image_path' => $imageUrl,
-            'media_paths' => $imageUrl ? [$imageUrl] : null,
+            'type' => $validated['type'] ?? 'user_post',
+            'text' => trim((string) ($validated['text'] ?? '')),
+            'image_path' => $mediaPaths[0] ?? null,
+            'media_paths' => !empty($mediaPaths) ? $mediaPaths : null,
             'expires_at' => Carbon::now()->addHours(24),
         ]);
 
-        $post = MemberPost::query()
-            ->with(['user:id,name,avatar_path'])
-            ->withCount([
-                'comments',
-                'bookmarks',
-                'reactions as pray_count' => fn($q) => $q->where('type', 'pray'),
-            ])
-            ->withExists([
-                'reactions as is_prayed_by_me' => fn($q) => $q
-                    ->where('type', 'pray')
-                    ->where('user_id', $user->id),
-                'bookmarks as is_bookmarked_by_me' => fn($q) => $q
-                    ->where('user_id', $user->id),
-            ])
-            ->findOrFail($post->id);
+        $fresh = $this->reloadPost($post->id, $user->id);
 
         return response()->json([
             'data' => [
-                'post' => $this->serializePost($post),
+                'post' => $this->serializePost($fresh),
             ],
         ], 201);
     }
@@ -215,13 +216,16 @@ class CommunityApiController extends Controller
     {
         return [
             'id' => (string) $post->id,
+            'type' => (string) ($post->type->value ?? 'user_post'),
             'text' => (string) ($post->text ?? ''),
             'imageUrl' => $post->image_path,
+            'mediaPaths' => $post->media_paths,
             'createdAt' => $post->created_at?->diffForHumans(),
             'author' => [
                 'id' => (string) ($post->user?->id ?? ''),
                 'name' => (string) ($post->user?->name ?? 'Member'),
                 'avatarUrl' => $post->user?->getFilamentAvatarUrl(),
+                'isOfficial' => (bool) ($post->user?->is_admin ?? false),
             ],
             'counts' => [
                 'likes' => (int) ($post->pray_count ?? 0),

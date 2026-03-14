@@ -19,6 +19,7 @@ use App\Http\Controllers\VersehubActionController;
 use App\Http\Controllers\VerseHubReaderController;
 use App\Http\Controllers\VerseHubLibraryController;
 use App\Http\Controllers\WeeklyController;
+use App\Http\Controllers\UserFollowController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -94,6 +95,8 @@ Route::prefix('v1')->group(function (): void {
             ->whereNumber('user');
         Route::get('/inbox/{user}', [InboxThreadController::class, 'show'])
             ->whereNumber('user');
+
+        Route::post('/users/{user}/follow-toggle', [UserFollowController::class, 'toggle']);
 
         Route::get('/profile', [ProfileController::class, 'edit']);
         Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update']);

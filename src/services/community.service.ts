@@ -16,7 +16,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class ApiError extends Error {
   constructor(
-    message: string,
+    public readonly message: string,
     public readonly status: number,
   ) {
     super(message);
@@ -102,7 +102,7 @@ const mapApiComment = (comment: ApiComment): CommunityComment => ({
 
 const buildHeaders = (needsAuth = false): HeadersInit => {
   let headers: HeadersInit = {
-    "Content-Type": "application/json",
+    Accept: "application/json",
   };
 
   if (needsAuth) {
@@ -164,11 +164,22 @@ export const CommunityService = {
     }
   },
 
-  async createPost(text: string, imageUrl?: string): Promise<CommunityPost> {
+  /**
+   * Create a new post with optional images.
+   * Uses FormData for binary upload support.
+   */
+  async createPost(text: string, type: string = 'user_post', images: File[] = []): Promise<CommunityPost> {
+    const formData = new FormData();
+    formData.append('text', text);
+    formData.append('type', type);
+    images.forEach((file) => {
+      formData.append('images[]', file);
+    });
+
     const response = await fetch("/api/community/posts", {
       method: "POST",
       headers: buildHeaders(true),
-      body: JSON.stringify({ text, imageUrl }),
+      body: formData,
     });
 
     await assertOk(response, "Failed to create post");
