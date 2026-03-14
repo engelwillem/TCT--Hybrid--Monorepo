@@ -83,3 +83,23 @@ Verifikasi teknis:
 - `npm run lint` ⛔ belum bisa dipakai karena project belum punya konfigurasi ESLint (masih prompt interaktif `next lint`)
 
 Jika kamu setuju, saya lanjut batch final `/today` untuk menutup gap sisa di level page composition/state agar status bisa saya naikkan ke `PARITY DONE`.
+
+Berikut adalah laporan audit dan perbaikan untuk memastikan server berjalan stabil dan cepat.
+
+    Routing Conflict: Next.js mengalami error fatal [id] !== [ref] karena struktur rute dinamis yang tumpang tindih di src/app/versehub/[lang]/.
+    Runtime Errors: ReferenceError: cn is not defined pada AppShell.tsx dan src/app/channels/page.tsx.
+    Dependency Gap: Modul @radix-ui/react-slot belum terinstal, menyebabkan komponen Button gagal dimuat.
+    Performance: Animasi scroll pada LandingPage membebani CPU karena listener yang terlalu padat tanpa akselerasi GPU.
+
+    Unified Routing: Gunakan src/app/versehub/[lang]/[slug]/page.tsx sebagai satu-satunya pengatur rute untuk Chapter Reader dan Verse Share.
+    Import Standardization: Tambahkan impor cn dari @/lib/utils di semua file yang terdampak.
+    Dependency Injection: Perbarui package.json dengan semua paket Radix UI yang diperlukan.
+    GPU Acceleration: Tambahkan will-change-transform dan translateZ(0) pada sticky cards untuk performa scroll 60 FPS.
+
+b85863f
++2 more files
+
+    Server Startup: Jalankan npm run dev. Error id !== ref harusnya sudah hilang karena hanya ada satu folder [slug] yang menangani semua rute dinamis di bawah versehub.
+    Runtime: Buka halaman /profile atau /channels. Tidak boleh ada error cn is not defined.
+    Scroll Performance: Buka halaman / (Landing). Scroll harus terasa lebih ringan karena elemen kartu sekarang menggunakan akselerasi GPU.
+    UI Elements: Tombol Shadcn sekarang harusnya berfungsi karena @radix-ui/react-slot sudah ditambahkan ke package.json.

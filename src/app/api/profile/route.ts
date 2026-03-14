@@ -9,7 +9,13 @@ export async function PATCH(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");
 }
 
-export async function DELETE(request: NextRequest) {
+/**
+ * Mendukung POST untuk upload file yang menggunakan _method PATCH (Laravel pattern)
+ */
+export async function POST(request: NextRequest) {
   return proxyLaravel(request, "/api/v1/profile");
 }
 
+export async function DELETE(request: NextRequest) {
+  return proxyLaravel(request, "/api/v1/profile");
+}

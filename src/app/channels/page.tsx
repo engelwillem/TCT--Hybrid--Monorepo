@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, ChevronRight, Clock3, MoveRight, Users } from 'lucide-react';
+import { CalendarDays, ChevronRight, MoveRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { getAppAccessToken } from '@/services/app-auth-token';
@@ -124,7 +124,7 @@ export default function ChannelsPage() {
                 };
             }));
         } catch {
-            // Keep UI responsive on transient network errors.
+            // Keep UI responsive
         }
     };
 

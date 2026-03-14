@@ -24,7 +24,7 @@ const APP_NAME = 'TheChosenTalks';
 const TAGLINE = 'The Chosen People';
 const DEFAULT_TITLE = `${APP_NAME} - ${TAGLINE}`;
 const DEFAULT_DESCRIPTION = 'Komunitas web app untuk Chosen People: ayat harian, komunitas iman, dan perjalanan rohani bertumbuh bersama.';
-const DEFAULT_OG_IMAGE = 'https://thechoosentalks.com/og/versehub-bg.png'; // Updated to full URL for parity
+const DEFAULT_OG_IMAGE = 'https://thechoosentalks.com/og/versehub-bg.png';
 
 export const viewport: Viewport = {
   themeColor: '#0f172a',
@@ -55,12 +55,6 @@ export const metadata: Metadata = {
         height: 630,
         alt: DEFAULT_TITLE,
       },
-      {
-        url: DEFAULT_OG_IMAGE,
-        width: 300,
-        height: 300,
-        alt: DEFAULT_TITLE,
-      },
     ],
   },
   twitter: {
@@ -86,7 +80,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${inter.variable} ${dmSerifDisplay.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased text-[15px] leading-[1.6] md:text-[16px]" suppressHydrationWarning>
+      <body className="font-sans antialiased text-[15px] leading-[1.6] md:text-[16px] bg-slate-950 text-white" suppressHydrationWarning>
         <FirebaseClientProvider>
           <FirebaseAuthSync />
           <AppShell>
