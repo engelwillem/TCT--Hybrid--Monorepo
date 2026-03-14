@@ -240,7 +240,7 @@ class VerseHubController extends Controller
 
         $canonical = $this->publicUrl("/versehub/{$lang}/{$normalized['ref']}");
 
-        return view('versehub.show', [
+        $data = [
             'lang' => $lang,
             'ref' => $normalized['ref'],
             'query' => $query,
@@ -250,7 +250,13 @@ class VerseHubController extends Controller
             'provider' => $verse['provider'] ?? null,
             'og_image_url' => $ogPath,
             'canonical_url' => $canonical,
-        ]);
+        ];
+
+        if ($request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return view('versehub.show', $data);
     }
 
     private function handleOg(Request $request, string $lang, string $ref, bool $isLegacy)
@@ -956,7 +962,7 @@ class VerseHubController extends Controller
 
             // Bottom watermark
             $wmColor = imagecolorallocatealpha($img, 255, 255, 255, 90);
-            imagettftext($img, (int) $typography['watermark_font_size'], 0, 96, $h - 36, $wmColor, $font, 'thechoosentalks.org');
+            imagettftext($img, (int) $typography['watermark_font_size'], 0, $h - 36, 96, $wmColor, $font, 'thechoosentalks.org');
         } else {
             $this->renderBitmapFallback(
                 $img,

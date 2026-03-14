@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageSquare, Send, Bookmark, X, ChevronLeft, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VersehubReaderPage } from "@/features/versehub/pages/VersehubReaderPage";
+import { getAppAccessToken } from '@/services/app-auth-token';
 
 type VerseData = {
     ref: string;
@@ -37,33 +38,140 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
     const [bookmarked, setBookmarked] = useState(false);
     const [bookmarkCount, setBookmarkCount] = useState(37);
     const [ogOpen, setOgOpen] = useState(false);
+    
+    const isAuthenticated = typeof window !== 'undefined' && Boolean(getAppAccessToken());
 
+    // 1. Fetch Verse Content (Real API)
     useEffect(() => {
         if (!slug || isChapter) return;
 
-        const timer = setTimeout(() => {
-            setVerse({
-                ref: slug,
-                reference: slug.toUpperCase().replace(/-/g, ' '),
-                text: "Sebab demikianlah besar kasih Allah akan dunia ini, sehingga Ia telah mengaruniakan Anak-Nya yang tunggal, supaya setiap orang yang percaya kepada-Nya tidak binasa, melainkan beroleh hidup yang kekal.",
-                translation_name: "TB",
-                provider: "alkitab.mobi",
-                og_image_url: `/api/versehub/og/${slug}.png`,
-                canonical_url: `https://thechoosentalks.com/versehub/id/${slug}`
-            });
-            setLoading(false);
-        }, 600);
-        return () => clearTimeout(timer);
-    }, [slug, isChapter]);
+        let isActive = true;
+        const fetchVerse = async () => {
+            try {
+                const response = await fetch(`/api/versehub/${lang}/${slug}`, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store'
+                });
+                if (!response.ok) throw new Error('Failed to fetch verse');
+                const data = await response.json();
+                if (isActive) {
+                    setVerse(data);
+                    setLoading(false);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchVerse();
+        return () => { isActive = false; };
+    }, [slug, isChapter, lang]);
 
-    const handleLike = () => {
-        setLiked(!liked);
-        setLikeCount(prev => liked ? prev - 1 : prev + 1);
+    // 2. Fetch User Interaction State (Real Persistence)
+    useEffect(() => {
+        if (!isAuthenticated || !slug || isChapter) return;
+        
+        const segments = slug.split('-');
+        if (segments.length < 3) return;
+
+        fetch(`/api/versehub/${lang}/actions?book=${segments[0]}&chapter=${segments[1]}`, {
+            headers: { 
+                Accept: 'application/json',
+                Authorization: `Bearer ${getAppAccessToken()}`
+            },
+        })
+        .then(r => r.ok ? r.json() : null)
+        .then(json => {
+            const verseActions = json?.actions?.[slug];
+            if (verseActions) {
+                setLiked(Boolean(verseActions.favorite));
+                setBookmarked(Boolean(verseActions.bookmarked));
+            }
+        })
+        .catch(() => undefined);
+    }, [isAuthenticated, slug, isChapter, lang]);
+
+    const handleLike = async () => {
+        if (!isAuthenticated) {
+            router.push('/');
+            return;
+        }
+        const token = getAppAccessToken();
+        const nextLiked = !liked;
+        const prevLiked = liked;
+        
+        setLiked(nextLiked);
+        setLikeCount(prev => nextLiked ? prev + 1 : prev - 1);
+
+        const segments = slug.split('-');
+        try {
+            await fetch(`/api/versehub/${lang}/reader-actions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    book: segments[0],
+                    chapter: segments[1],
+                    verse: segments[2],
+                    favorite: nextLiked
+                })
+            });
+        } catch (e) {
+            setLiked(prevLiked);
+            setLikeCount(prev => prevLiked ? prev + 1 : prev - 1);
+        }
     };
 
-    const handleBookmark = () => {
-        setBookmarked(!bookmarked);
-        setBookmarkCount(prev => bookmarked ? prev - 1 : prev + 1);
+    const handleBookmark = async () => {
+        if (!isAuthenticated) {
+            router.push('/');
+            return;
+        }
+        const token = getAppAccessToken();
+        const nextBookmarked = !bookmarked;
+        const prevBookmarked = bookmarked;
+
+        setBookmarked(nextBookmarked);
+        setBookmarkCount(prev => nextBookmarked ? prev + 1 : prev - 1);
+
+        const segments = slug.split('-');
+        try {
+            await fetch(`/api/versehub/${lang}/reader-actions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    book: segments[0],
+                    chapter: segments[1],
+                    verse: segments[2],
+                    bookmarked: nextBookmarked
+                })
+            });
+        } catch (e) {
+            setBookmarked(prevBookmarked);
+            setBookmarkCount(prev => prevBookmarked ? prev + 1 : prev - 1);
+        }
+    };
+
+    const handleShare = async () => {
+        if (!verse) return;
+        const shareData = {
+            title: verse.reference,
+            text: `${verse.reference}\n\n"${verse.text}"\n\nBuka di VerseHub:`,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+                alert('Teks ayat disalin!');
+            }
+        } catch (e) { /* ignore */ }
     };
 
     if (isChapter) {
@@ -178,6 +286,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                                     </button>
 
                                     <button
+                                        onClick={handleShare}
                                         className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-white/5 active:scale-95 transition-all"
                                     >
                                         <Send className="h-5 w-5" />
