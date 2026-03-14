@@ -97,7 +97,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
     return (
         <article 
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.07] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.08] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
             style={{ transform: 'translate3d(0,0,0)' }}
         >
             <div
@@ -125,29 +125,31 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 }
 
 /**
- * StickyCardItem: Manages the "Ghosting" effect through wide interpolation ranges.
- * Cards overlap by design to create smooth cinematic blends.
+ * StickyCardItem: Mengelola animasi individu tiap card.
+ * Menggunakan "Soft Overlap" agar transisi terasa seperti ghosting yang halus.
  */
-function StickyCardItem({ item, index, scrollYProgress }: { item: any, index: number, scrollYProgress: any }) {
-    // We define a 300vh scroll container. 
-    // Card 0: 0.0 - 0.35
-    // Card 1: 0.2 - 0.6
-    // Card 2: 0.45 - 0.85
-    // Card 3: 0.7 - 1.0
-    
+function StickyCardItem({ 
+    item, 
+    index, 
+    scrollYProgress 
+}: { 
+    item: any; 
+    index: number; 
+    scrollYProgress: any;
+}) {
+    // Definisi timeline dengan overlap signifikan (30-40%) untuk efek ghosting
+    // h-[280vh] total scroll track.
     const ranges = [
-        [0, 0, 0.25, 0.45],    // Card 0
-        [0.15, 0.35, 0.5, 0.7], // Card 1
-        [0.4, 0.6, 0.75, 0.95], // Card 2
-        [0.65, 0.85, 1, 1]      // Card 3
+        [0.00, 0.00, 0.20, 0.40], // Card 1: Muncul di awal, memudar saat card 2 masuk
+        [0.15, 0.35, 0.50, 0.70], // Card 2: Mulai muncul saat card 1 masih 50% opacity
+        [0.45, 0.65, 0.75, 0.95], // Card 3
+        [0.70, 0.85, 1.00, 1.00]  // Card 4: Bertahan sampai akhir
     ];
 
+    // Animasi opacity, scale, dan pergerakan vertikal (Y)
     const opacity = useTransform(scrollYProgress, ranges[index], [0, 1, 1, 0]);
-    const scale = useTransform(scrollYProgress, ranges[index], [0.92, 1, 1, 0.96]);
-    const y = useTransform(scrollYProgress, ranges[index], [40, 0, 0, -40]);
-    
-    // Higher index cards stack on top of earlier cards for clean overlaps
-    const zIndex = 10 + index; 
+    const scale = useTransform(scrollYProgress, ranges[index], [0.95, 1, 1, 0.97]);
+    const y = useTransform(scrollYProgress, ranges[index], [30, 0, 0, -30]); // Gerakan lebih halus
 
     return (
         <motion.div
@@ -157,7 +159,7 @@ function StickyCardItem({ item, index, scrollYProgress }: { item: any, index: nu
                 opacity,
                 scale,
                 y,
-                zIndex,
+                zIndex: 10 + index, // Stacking statis agar card baru menumpuk di atas card lama
                 willChange: 'transform, opacity',
                 transform: 'translate3d(0,0,0)'
             }}
@@ -167,8 +169,14 @@ function StickyCardItem({ item, index, scrollYProgress }: { item: any, index: nu
     );
 }
 
+/**
+ * StickyCardStage: Mengelola panggung utama animasi scroll.
+ * Didesain lebih pendek dan berpusat (center) untuk kenyamanan UX mobile & desktop.
+ */
 function StickyCardStage() {
     const containerRef = useRef<HTMLDivElement>(null);
+    
+    // Track scroll dengan offset yang disesuaikan untuk section yang lebih pendek
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"],
@@ -176,17 +184,22 @@ function StickyCardStage() {
 
     const [activeIndex, setActiveIndex] = useState(0);
     
-    // Smooth index switching for the pagination dots
+    // Sinkronisasi indikator dots dengan progres visual (4 segmen)
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-        const idx = Math.min(3, Math.floor(latest / 0.25));
+        const idx = Math.min(3, Math.floor(latest * 4));
         if (idx !== activeIndex) setActiveIndex(idx);
     });
 
     return (
-        <section ref={containerRef} className="relative h-[300vh] mb-20">
-            {/* Centered Sticky Wrapper: Prevents cards from being "pinned" to the top edge */}
+        <section ref={containerRef} className="relative h-[280vh] mb-12">
+            {/* 
+                Sticky Container: Menggunakan dvh untuk stabilitas mobile.
+                flex items-center memastikan card berada di area center/lower-center viewport.
+            */}
             <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
                 <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-12 items-center">
+                    
+                    {/* Sisi Kiri: Informasi Judul & Pagination */}
                     <div className="space-y-6 md:space-y-8">
                         <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
                         <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
@@ -197,14 +210,24 @@ function StickyCardStage() {
                         <p className="text-lg md:text-xl text-white/40 max-w-md leading-relaxed font-medium">
                             Ekosistem terintegrasi yang didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.
                         </p>
-                        <div className="flex items-center gap-3">
+                        
+                        {/* Indikator Progres (Dots) */}
+                        <div className="flex items-center gap-3 pt-2">
                             {featureItems.map((_, i) => (
-                                <div key={i} className={cn("rounded-full transition-all duration-500", i === activeIndex ? "w-8 h-1.5 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" : "w-1.5 h-1.5 bg-white/10")} />
+                                <div 
+                                    key={i} 
+                                    className={cn(
+                                        "rounded-full transition-all duration-500", 
+                                        i === activeIndex 
+                                            ? "w-8 h-1.5 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" 
+                                            : "w-1.5 h-1.5 bg-white/10"
+                                    )} 
+                                />
                             ))}
                         </div>
                     </div>
 
-                    {/* Card Presentation Stage */}
+                    {/* Sisi Kanan: Card Presentation Stage */}
                     <div className="relative h-[380px] md:h-[420px] w-full max-w-xl mx-auto lg:mx-0">
                         {featureItems.map((item, i) => (
                             <StickyCardItem 
