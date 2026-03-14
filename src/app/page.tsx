@@ -97,7 +97,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
     return (
         <article 
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.08] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/[0.07] p-8 backdrop-blur-lg hover:border-white/30 transition-all duration-500 shadow-premium ring-1 ring-white/5 will-change-transform" 
             style={{ transform: 'translate3d(0,0,0)' }}
         >
             <div
@@ -125,47 +125,29 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 }
 
 /**
- * StickyCardItem: Manages per-card animation logic.
- * Implements strict handoff windows to prevent ghosting.
+ * StickyCardItem: Manages the "Ghosting" effect through wide interpolation ranges.
+ * Cards overlap by design to create smooth cinematic blends.
  */
-function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i: number, scrollYProgress: any, isDesktop: boolean }) {
-    const start = i * 0.25;
-    const end = (i + 1) * 0.25;
+function StickyCardItem({ item, index, scrollYProgress }: { item: any, index: number, scrollYProgress: any }) {
+    // We define a 300vh scroll container. 
+    // Card 0: 0.0 - 0.35
+    // Card 1: 0.2 - 0.6
+    // Card 2: 0.45 - 0.85
+    // Card 3: 0.7 - 1.0
     
-    // Extreme tight handoff window for mobile to prevent double blur overhead
-    const handoff = isDesktop ? 0.02 : 0.005; 
+    const ranges = [
+        [0, 0, 0.25, 0.45],    // Card 0
+        [0.15, 0.35, 0.5, 0.7], // Card 1
+        [0.4, 0.6, 0.75, 0.95], // Card 2
+        [0.65, 0.85, 1, 1]      // Card 3
+    ];
 
-    const opacity = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
-    );
-
-    const scale = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        [0.96, 1, 1, 0.98]
-    );
-
-    const yValue = isDesktop ? 30 : 10;
-    const y = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        [yValue, 0, 0, -yValue]
-    );
-
-    // Dynamic Z-Index: Active(30) > Past(20) > Future(10)
-    const zIndex = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        [10, 30, 30, 20]
-    );
-
-    // Interactivity isolation: disable clicks on transparent layers
-    const pointerEvents = useTransform(
-        scrollYProgress,
-        (v) => (v >= start && v < end - handoff) ? 'auto' : 'none'
-    );
+    const opacity = useTransform(scrollYProgress, ranges[index], [0, 1, 1, 0]);
+    const scale = useTransform(scrollYProgress, ranges[index], [0.92, 1, 1, 0.96]);
+    const y = useTransform(scrollYProgress, ranges[index], [40, 0, 0, -40]);
+    
+    // Higher index cards stack on top of earlier cards for clean overlaps
+    const zIndex = 10 + index; 
 
     return (
         <motion.div
@@ -176,7 +158,6 @@ function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i:
                 scale,
                 y,
                 zIndex,
-                pointerEvents: pointerEvents as any,
                 willChange: 'transform, opacity',
                 transform: 'translate3d(0,0,0)'
             }}
@@ -188,7 +169,6 @@ function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i:
 
 function StickyCardStage() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isDesktop, setIsDesktop] = useState(false);
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"],
@@ -196,32 +176,25 @@ function StickyCardStage() {
 
     const [activeIndex, setActiveIndex] = useState(0);
     
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const mq = window.matchMedia('(min-width: 1024px)');
-        const check = () => setIsDesktop(mq.matches);
-        check();
-        mq.addEventListener('change', check);
-        return () => mq.removeEventListener('change', check);
-    }, []);
-
+    // Smooth index switching for the pagination dots
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
         const idx = Math.min(3, Math.floor(latest / 0.25));
         if (idx !== activeIndex) setActiveIndex(idx);
     });
 
     return (
-        <section ref={containerRef} className="relative h-[400vh]">
+        <section ref={containerRef} className="relative h-[300vh] mb-20">
+            {/* Centered Sticky Wrapper: Prevents cards from being "pinned" to the top edge */}
             <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
-                <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
-                    <div className="space-y-8">
+                <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-6 md:space-y-8">
                         <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
                         <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
                             Satu Platform,<br />
                             <span className="text-white/20">Banyak Cara</span><br />
                             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Bertumbuh.</span>
                         </h2>
-                        <p className="text-xl text-white/40 max-w-md leading-relaxed font-medium">
+                        <p className="text-lg md:text-xl text-white/40 max-w-md leading-relaxed font-medium">
                             Ekosistem terintegrasi yang didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.
                         </p>
                         <div className="flex items-center gap-3">
@@ -231,14 +204,14 @@ function StickyCardStage() {
                         </div>
                     </div>
 
-                    <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
+                    {/* Card Presentation Stage */}
+                    <div className="relative h-[380px] md:h-[420px] w-full max-w-xl mx-auto lg:mx-0">
                         {featureItems.map((item, i) => (
                             <StickyCardItem 
                                 key={item.title} 
                                 item={item} 
-                                i={i} 
+                                index={i} 
                                 scrollYProgress={scrollYProgress} 
-                                isDesktop={isDesktop}
                             />
                         ))}
                     </div>
