@@ -77,32 +77,34 @@ class TodayFeedService
     protected function formatFeedItem(MemberPost $p, ?User $user): array
     {
         return [
-            'id' => $p->id,
-            'type' => $p->type->value,
-            'type_label' => $p->type->label(),
-            'title' => $p->title,
-            'text' => $p->text,
-            'image_path' => $p->image_path,
-            'thumb_path' => $p->thumb_path,
-            'media_paths' => is_array($p->media_paths) ? $p->media_paths : ((is_array($p->metadata) && isset($p->metadata['media_paths']) && is_array($p->metadata['media_paths'])) ? $p->metadata['media_paths'] : []),
-            'metadata' => $p->metadata,
-            'created_at' => $p->created_at?->toISOString(),
+            'id'          => (string) $p->id,
+            'type'        => $p->type->value,
+            'type_label'  => $p->type->label(),
+            'title'       => $p->title,
+            'text'        => $p->text ?? '',
+            'imageUrl'    => $p->image_path,
+            'thumbPath'   => $p->thumb_path,
+            'mediaPaths'  => is_array($p->media_paths)
+                ? $p->media_paths
+                : ((is_array($p->metadata) && isset($p->metadata['media_paths']) && is_array($p->metadata['media_paths']))
+                    ? $p->metadata['media_paths']
+                    : []),
+            'metadata'    => $p->metadata,
+            'createdAt'   => $p->created_at?->diffForHumans(),
             'author' => [
-                'id' => $p->user?->id,
-                'name' => $p->user?->name,
-                'avatar_url' => $p->user?->getFilamentAvatarUrl(),
-                'is_official' => (bool) ($p->user?->isSystemAccount() ?? false),
+                'id'        => (string) ($p->user?->id ?? ''),
+                'name'      => (string) ($p->user?->name ?? 'Member'),
+                'avatarUrl' => $p->user?->getFilamentAvatarUrl(),
+                'isOfficial'=> (bool) ($p->user?->isSystemAccount() ?? false),
             ],
-            'stats' => [
-                'pray_count' => (int) ($p->pray_count ?? 0),
-                'comments_count' => (int) ($p->comments_count ?? 0),
-                'bookmarks_count' => (int) ($p->bookmarks_count ?? 0),
+            'counts' => [
+                'likes'     => (int) ($p->pray_count ?? 0),
+                'comments'  => (int) ($p->comments_count ?? 0),
+                'bookmarks' => (int) ($p->bookmarks_count ?? 0),
             ],
-            'interactions' => [
-                'is_prayed' => (bool) ($p->is_prayed_by_me ?? false),
-                'is_bookmarked' => (bool) ($p->is_bookmarked_by_me ?? false),
-            ],
-            'is_featured' => $p->isFeatured(),
+            'isLiked'      => (bool) ($p->is_prayed_by_me ?? false),
+            'isBookmarked' => (bool) ($p->is_bookmarked_by_me ?? false),
+            'isFeatured'   => $p->isFeatured(),
             'can_moderate' => (bool) ($user?->is_admin ?? false),
         ];
     }

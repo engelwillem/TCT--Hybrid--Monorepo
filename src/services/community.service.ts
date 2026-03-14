@@ -25,59 +25,63 @@ interface ApiEnvelope<T> {
 interface ApiPost {
   id: string;
   type: string;
-  type_label: string;
+  type_label?: string;
   text: string;
   title?: string | null;
+  imageUrl?: string | null;
   image_path?: string | null;
   thumb_path?: string | null;
+  mediaPaths?: string[] | null;
   media_paths?: string[] | null;
-  is_featured: boolean;
-  can_moderate: boolean;
+  is_featured?: boolean;
+  can_moderate?: boolean;
   metadata?: any;
+  createdAt?: string;
   created_at: string;
   author: {
     id: string | number;
     name: string | null;
+    avatarUrl?: string | null;
     avatar_url?: string | null;
-    is_official: boolean;
+    isOfficial?: boolean;
+    is_official?: boolean;
+    is_admin?: boolean;
   };
-  stats: {
-    pray_count: number;
-    comments_count: number;
-    bookmarks_count: number;
+  counts: {
+    likes: number;
+    comments: number;
+    bookmarks: number;
   };
-  interactions: {
-    is_prayed: boolean;
-    is_bookmarked: boolean;
-  };
+  isLiked: boolean;
+  isBookmarked: boolean;
 }
 
 const mapApiPost = (post: ApiPost): CommunityPost => ({
   id: String(post.id),
   type: post.type,
-  type_label: post.type_label,
+  type_label: post.type_label || post.type,
   text: post.text || "",
-  title: post.title,
-  imageUrl: post.image_path,
-  thumbPath: post.thumb_path,
-  mediaPaths: post.media_paths,
+  title: post.title ?? undefined,
+  imageUrl: (post.imageUrl || post.image_path) ?? undefined,
+  thumbPath: post.thumb_path ?? undefined,
+  mediaPaths: (post.mediaPaths || post.media_paths) ?? undefined,
   isFeatured: Boolean(post.is_featured),
   can_moderate: Boolean(post.can_moderate),
   metadata: post.metadata,
-  createdAt: post.created_at,
+  createdAt: post.createdAt || post.created_at,
   author: {
     id: String(post.author?.id || ""),
     name: post.author?.name || "Member",
-    avatarUrl: post.author?.avatar_url,
-    isOfficial: Boolean(post.author?.is_official),
+    avatarUrl: (post.author?.avatarUrl || post.author?.avatar_url) ?? undefined,
+    isOfficial: Boolean(post.author?.isOfficial || post.author?.is_official || post.author?.is_admin),
   },
   counts: {
-    likes: Number(post.stats?.pray_count || 0),
-    comments: Number(post.stats?.comments_count || 0),
-    bookmarks: Number(post.stats?.bookmarks_count || 0),
+    likes: Number(post.counts?.likes || 0),
+    comments: Number(post.counts?.comments || 0),
+    bookmarks: Number(post.counts?.bookmarks || 0),
   },
-  isLiked: Boolean(post.interactions?.is_prayed),
-  isBookmarked: Boolean(post.interactions?.is_bookmarked),
+  isLiked: Boolean(post.isLiked),
+  isBookmarked: Boolean(post.isBookmarked),
 });
 
 const buildHeaders = (needsAuth = false): HeadersInit => {

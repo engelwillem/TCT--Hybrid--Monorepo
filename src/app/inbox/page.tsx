@@ -3,7 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Search, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Mail, Search, ArrowLeft, ChevronRight, Loader2, PlusCircle, UserCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAppAccessToken } from '@/services/app-auth-token';
@@ -99,8 +99,44 @@ export default function InboxPage() {
         );
     }
 
+    if (!loading && !getAppAccessToken()) {
+        return (
+            <MobileAppLayout title="Inbox" activeNavId="home" backHref="/today">
+                <div className="flex flex-col items-center justify-center p-12 text-center mt-20 space-y-6">
+                    <div className="h-24 w-24 bg-brand/10 rounded-[40px] flex items-center justify-center text-brand shadow-inner">
+                        <UserCircle2 size={48} />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-black tct-brand-gradient">Belum Teridentifikasi</h2>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] leading-relaxed max-w-[240px] mx-auto">
+                            Silakan masuk untuk melihat pesan dan memulai percakapan baru.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={() => router.push('/profile')}
+                        className="px-8 py-3 bg-brand text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-brand/20 active:scale-95 transition-all"
+                    >
+                        Masuk Sekarang
+                    </button>
+                </div>
+            </MobileAppLayout>
+        );
+    }
+
     return (
-        <MobileAppLayout title="Inbox" activeNavId="home" backHref="/today">
+        <MobileAppLayout 
+            title="Inbox" 
+            activeNavId="home" 
+            backHref="/today"
+            rightAction={
+                <button 
+                    onClick={() => {}} // Placeholder for now
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-xl active:scale-90 transition-all border border-white/10"
+                >
+                    <PlusCircle size={24} />
+                </button>
+            }
+        >
             <div className="mx-auto w-full max-w-[640px] space-y-6 px-2">
                 {/* Header Stats Parity */}
                 <motion.div 

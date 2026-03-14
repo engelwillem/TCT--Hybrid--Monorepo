@@ -64,8 +64,12 @@ Route::get('/lessons/{lesson}', [LessonController::class, 'show'])->name('lesson
 // Main app pages requiring authentication
 // NOTE: `verified` middleware is safe even if User doesn't implement MustVerifyEmail
 Route::middleware(['auth', 'verified_or_admin'])->group(function () {
-    Route::get('/today', [TodayController::class, 'index'])->name('today.index');
-    Route::get('/community', [CommunityController::class, 'index'])->name('community.index');
+    Route::get('/today', function () {
+        return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/today');
+    })->name('today.index');
+    Route::get('/community', function () {
+        return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/community');
+    })->name('community.index');
     Route::get('/community/posts/{memberPost}/share', [CommunityController::class, 'share'])
         ->whereNumber('memberPost')
         ->name('community.posts.share');
@@ -159,13 +163,12 @@ Route::get('/channels/{slug}/{date}', [WeeklyController::class, 'show'])
 // - /versehub/id/flm-1-15
 // - /versehub/en/phil-1-15
 Route::get('/versehub', function () {
-    return redirect('/versehub/id');
+    return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/versehub/id');
 })->name('versehub.root');
 
-// Reader home (ESV-like)
-Route::get('/versehub/{lang}', [VerseHubReaderController::class, 'index'])
-    ->whereIn('lang', ['id', 'en'])
-    ->name('versehub.reader');
+Route::get('/versehub/{lang}', function ($lang) {
+    return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . "/versehub/{$lang}");
+})->whereIn('lang', ['id', 'en'])->name('versehub.reader');
 
 // Reader helper endpoints (ID only for now)
 Route::get('/versehub/id/chapters', [VerseHubReaderController::class, 'chapters'])

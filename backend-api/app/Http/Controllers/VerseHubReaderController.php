@@ -160,9 +160,15 @@ class VerseHubReaderController extends Controller
 
     private function getChapterReflection(string $book, int $chapter): string
     {
-        $mentor = app(VerseHubMentorService::class);
-        $insights = $mentor->getInsights($book, $chapter, 1);
-        return $insights['reflection_questions'][0] ?? 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
+        return \Illuminate\Support\Facades\Cache::remember(
+            "vh:chapter_reflect:{$book}:{$chapter}",
+            now()->addDay(),
+            function() use ($book, $chapter) {
+                $mentor = app(VerseHubMentorService::class);
+                $insights = $mentor->getGuidedInsights($book, $chapter, 1);
+                return $insights['reflection_questions'][0] ?? 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
+            }
+        );
     }
 
     private function resolveIdBookCode(string $book): ?string

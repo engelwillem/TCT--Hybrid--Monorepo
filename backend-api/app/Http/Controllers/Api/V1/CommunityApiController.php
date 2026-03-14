@@ -88,7 +88,7 @@ class CommunityApiController extends Controller
             'text' => trim((string) ($validated['text'] ?? '')),
             'image_path' => $mediaPaths[0] ?? null,
             'media_paths' => !empty($mediaPaths) ? $mediaPaths : null,
-            'expires_at' => Carbon::now()->addHours(24),
+            'expires_at' => Carbon::now()->addDays(7),
         ]);
 
         $fresh = $this->reloadPost($post->id, $user->id);

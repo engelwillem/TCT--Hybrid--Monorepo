@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostComposer } from "../components/PostComposer";
 import { MemberPostCard } from "../components/MemberPostCard";
@@ -24,32 +24,35 @@ export function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
-  const [isLoading, setIsLoading] = useState(true);
+   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [rituals, setRituals] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        // Load feed
-        const fetchedPosts = await CommunityService.listPosts();
-        setPosts(fetchedPosts);
-        
-        // Load rituals for featured verse
-        const ritualRes = await fetch('/api/today');
-        if (ritualRes.ok) {
-            const ritualData = await ritualRes.json();
-            setRituals(ritualData?.data?.rituals || null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch community data", error);
-      } finally {
-        setIsLoading(false);
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setFetchError(null);
+      // Load feed
+      const fetchedPosts = await CommunityService.listPosts();
+      setPosts(fetchedPosts);
+      
+      // Load rituals for featured verse
+      const ritualRes = await fetch('/api/today');
+      if (ritualRes.ok) {
+          const ritualData = await ritualRes.json();
+          setRituals(ritualData?.data?.rituals || null);
       }
-    };
-
-    fetchData();
+    } catch (error: any) {
+      console.error("Failed to fetch community data", error);
+      setFetchError(error?.status === 401 ? "Unauthorized" : (error?.status === 503 ? "Server Unavailable" : "Failed to load feed"));
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handlePost = async (text: string, type: string, images: File[] = []) => {
     try {
@@ -61,20 +64,52 @@ export function CommunityPage() {
   };
 
   const toggleLike = async (postId: string) => {
+    // Optimistic Update
+    const originalPosts = [...posts];
+    setPosts((prev) => prev.map((p) => {
+        if (p.id !== postId) return p;
+        const isLiked = !p.isLiked;
+        return {
+            ...p,
+            isLiked,
+            counts: {
+                ...p.counts,
+                likes: p.counts.likes + (isLiked ? 1 : -1)
+            }
+        };
+    }));
+
     try {
       const updatedPost = await CommunityService.toggleLike(postId);
       setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
     } catch (error) {
       console.error("Failed to toggle like", error);
+      setPosts(originalPosts); // Rollback
     }
   };
 
   const toggleBookmark = async (postId: string) => {
+    // Optimistic Update
+    const originalPosts = [...posts];
+    setPosts((prev) => prev.map((p) => {
+        if (p.id !== postId) return p;
+        const isBookmarked = !p.isBookmarked;
+        return {
+            ...p,
+            isBookmarked,
+            counts: {
+                ...p.counts,
+                bookmarks: p.counts.bookmarks + (isBookmarked ? 1 : -1)
+            }
+        };
+    }));
+
     try {
       const updatedPost = await CommunityService.toggleBookmark(postId);
       setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
     } catch (error) {
       console.error("Failed to toggle bookmark", error);
+      setPosts(originalPosts); // Rollback
     }
   };
 
@@ -85,7 +120,7 @@ export function CommunityPage() {
     if (ritualVerse?.quote) {
         return {
             ref: slugifyRef(ritualVerse.reference || 'mzm-23-1'),
-            href: ritualVerse.cta_href || `/versehub/id/${slugifyRef(ritualVerse.reference)}`,
+            href: ritualVerse.cta_href || `/versehub/id/${slugifyRef(ritualVerse.reference || '')}`,
             text: ritualVerse.text || ritualVerse.quote,
             reference: ritualVerse.reference || "Ayat Hari Ini",
         };
@@ -94,8 +129,8 @@ export function CommunityPage() {
     const meta = featuredPost?.metadata || {};
     if (meta.ref || meta.reference) {
       return {
-        ref: meta.ref || slugifyRef(meta.reference),
-        href: `/versehub/id/${meta.ref || slugifyRef(meta.reference)}`,
+        ref: meta.ref || slugifyRef(meta.reference || ''),
+        href: `/versehub/id/${meta.ref || slugifyRef(meta.reference || '')}`,
         text: meta.quote || featuredPost?.text || "",
         reference: meta.reference || "Featured Reflection",
       };
@@ -186,6 +221,19 @@ export function CommunityPage() {
                 <Loader2 className="animate-spin mb-4 text-brand" size={32} />
                 <p className="text-xs font-bold uppercase tracking-widest opacity-50">Memperbarui Feed...</p>
               </div>
+            ) : fetchError ? (
+              <Card className="rounded-[32px] bg-red-50/50 border-red-100 shadow-sm">
+                <CardContent className="p-12 text-center space-y-4">
+                  <p className="text-lg font-bold text-red-600">{fetchError === "Unauthorized" ? "Silakan Masuk Kembali" : "Gagal Memperbarui Feed"}</p>
+                  <p className="text-xs text-red-400 font-medium uppercase tracking-widest">{fetchError}</p>
+                  <button 
+                    onClick={() => fetchData()}
+                    className="px-6 py-2 bg-red-600 text-white rounded-full text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-colors"
+                  >
+                    Coba Lagi
+                  </button>
+                </CardContent>
+              </Card>
             ) : posts.length ? (
               posts.map((p) => (
                 <MemberPostCard
@@ -195,8 +243,8 @@ export function CommunityPage() {
                   isOfficial={p.author.isOfficial}
                   type={p.type}
                   text={p.text}
-                  imgSrc={p.imageUrl}
-                  mediaSrcList={p.mediaPaths}
+                  imgSrc={p.imageUrl || undefined}
+                  mediaSrcList={p.mediaPaths || undefined}
                   prayLabel={String(p.counts.likes)}
                   prayed={p.isLiked}
                   commentsCount={p.counts.comments}

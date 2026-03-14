@@ -71,6 +71,8 @@ Route::prefix('v1')->group(function (): void {
             ->whereIn('lang', ['id', 'en']);
         Route::post('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'upsert'])
             ->whereIn('lang', ['id', 'en']);
+        Route::get('/versehub/{lang}/actions/summary', [VersehubActionController::class, 'summary'])
+            ->whereIn('lang', ['id', 'en']);
 
         Route::get('/versehub/{lang}/reflections', [VerseHubReflectionController::class, 'index'])
             ->whereIn('lang', ['id', 'en']);

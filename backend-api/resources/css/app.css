@@ -102,16 +102,17 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-[hsl(var(--border))];
   }
 
   /* UX 3: Accessibility Focus Rings on interactive elements */
   :where(a, button, input, textarea, select):focus-visible {
-    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-background transition-shadow;
+    @apply outline-none ring-2 ring-[hsl(var(--brand))] ring-offset-2 ring-offset-[hsl(var(--background))] transition-shadow;
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   /* Better mobile feel */
@@ -195,44 +196,26 @@
     background: hsl(var(--nav-glass));
     backdrop-filter: blur(18px);
     /* UX 4: Android Layout Shift Prevention (Subtle Top Border) */
-    @apply border-t border-black/5 dark:border-white/5;
+    border-top-width: 1px;
+    border-top-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .glass-nav {
+    border-top-color: rgba(255, 255, 255, 0.05);
   }
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Reader typography: iOS-friendly reading rhythm */
-  .reader-prose {
-    /* We don't use tailwindcss/typography plugin yet, so avoid `prose` classes. */
-    @apply text-[15px] leading-7 text-foreground;
-  }
 
-  .reader-prose :where(p):not(:where([class~="not-prose"] *)) {
-    @apply my-3;
-  }
-
-  .reader-prose :where(ul, ol):not(:where([class~="not-prose"] *)) {
-    @apply my-3 pl-6;
-  }
-
-  .reader-prose :where(li):not(:where([class~="not-prose"] *)) {
-    @apply my-1;
-  }
-
-  .reader-prose :where(a):not(:where([class~="not-prose"] *)) {
-    @apply underline underline-offset-4;
-  }
-
-  /* VerseHub links inside reader */
-  .reader-prose a[data-versehub="1"] {
-    color: hsl(var(--brand));
-    font-weight: 600;
-  }
 
   /* Pressable buttons (native-ish) with UX 2 Haptic Shadow Feedback */
   .tct-pressable {
-    @apply transition-all duration-150 active:scale-[0.97] active:shadow-none;
+    transition-property: all; transition-duration: 150ms;
+  }
+  .tct-pressable:active {
+    transform: scale(0.97); box-shadow: none;
   }
 
   /* App typography scale (mobile-first, upscale on md+) */
@@ -242,72 +225,60 @@
 
   .tct-serif {
     font-family: var(--font-serif);
-    @apply tracking-tight;
+    letter-spacing: -0.025em;
   }
 
   .tct-h1 {
-    @apply text-[22px] leading-[1.15] font-semibold tracking-tight md:text-[28px];
+    font-size: 22px; line-height: 1.15; font-weight: 600; letter-spacing: -0.025em;
   }
+  @media (min-width: 768px) { .tct-h1 { font-size: 28px; } }
 
   .tct-h2 {
-    @apply text-[18px] leading-[1.2] font-semibold tracking-tight md:text-[20px];
+    font-size: 18px; line-height: 1.2; font-weight: 600; letter-spacing: -0.025em;
   }
+  @media (min-width: 768px) { .tct-h2 { font-size: 20px; } }
 
   .tct-h3 {
-    @apply text-[16px] leading-[1.25] font-semibold tracking-tight md:text-[18px];
+    font-size: 16px; line-height: 1.25; font-weight: 600; letter-spacing: -0.025em;
   }
+  @media (min-width: 768px) { .tct-h3 { font-size: 18px; } }
 
   .tct-body {
-    @apply text-[15px] leading-[1.6] text-foreground md:text-[16px];
+    font-size: 15px; line-height: 1.6; color: hsl(var(--foreground));
   }
+  @media (min-width: 768px) { .tct-body { font-size: 16px; } }
 
   .tct-body-lg {
-    @apply text-[16px] leading-[1.65] text-foreground md:text-[18px] md:leading-[1.7];
+    font-size: 16px; line-height: 1.65; color: hsl(var(--foreground));
   }
+  @media (min-width: 768px) { .tct-body-lg { font-size: 18px; line-height: 1.7; } }
 
   .tct-meta {
-    @apply text-[12px] leading-[1.4] text-muted-foreground md:text-[13px];
+    font-size: 12px; line-height: 1.4; color: hsl(var(--muted-foreground));
   }
+  @media (min-width: 768px) { .tct-meta { font-size: 13px; } }
 
   .tct-kicker {
-    @apply text-[11px] font-medium uppercase tracking-wider text-muted-foreground md:text-[12px];
+    font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--muted-foreground));
   }
+  @media (min-width: 768px) { .tct-kicker { font-size: 12px; } }
 
   /* Brand gradient text (aligned with auth welcome style) */
   .tct-brand-gradient {
-    @apply bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, #22d3ee, #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
-  /* Card padding: comfortable on mobile, roomier on desktop */
   .tct-card-pad {
-    @apply p-5 md:p-7;
+    padding: 1.25rem;
   }
+  @media (min-width: 768px) { .tct-card-pad { padding: 1.75rem; } }
 
   .tct-card-pad-sm {
-    @apply p-4 md:p-6;
+    padding: 1rem;
   }
-
-  .reader-prose :where(h1, h2, h3):not(:where([class~="not-prose"] *)) {
-    @apply tracking-tight mt-6 mb-2 leading-snug;
-  }
-
-  .reader-prose :where(h1):not(:where([class~="not-prose"] *)) {
-    @apply text-xl font-semibold;
-  }
-
-  .reader-prose :where(h2):not(:where([class~="not-prose"] *)) {
-    @apply text-lg font-semibold;
-  }
-
-  .reader-prose :where(h3):not(:where([class~="not-prose"] *)) {
-    @apply text-base font-semibold;
-  }
-
-  .reader-prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-    @apply my-4 border-l-4 border-border pl-4 text-muted-foreground;
-  }
-
-  .reader-prose :where(hr):not(:where([class~="not-prose"] *)) {
-    @apply my-6 border-border;
-  }
+  @media (min-width: 768px) { .tct-card-pad-sm { padding: 1.5rem; } }
 }
+

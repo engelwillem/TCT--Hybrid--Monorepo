@@ -27,7 +27,7 @@ class MemberPost extends Model
     ];
 
     protected $casts = [
-        'expires_at' => 'datetime',
+        'expires_at' => 'datetime', // This cast type is correct for a datetime column
         'hidden_at' => 'datetime',
         'metadata' => 'array',
         'media_paths' => 'array',
@@ -40,8 +40,9 @@ class MemberPost extends Model
 
     public function scopeActive($query)
     {
+        // Relaxed from 24h to 7 days to ensure feed continuity in slower communities
         return $query->whereNull('hidden_at')
-            ->where(fn($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+            ->where(fn($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()->subDays(7)));
     }
 
     public function scopeUrgentPrayer($query)

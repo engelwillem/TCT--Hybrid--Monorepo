@@ -24,5 +24,5 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 
   // Otherwise, it's a specific verse share/detail request
-  return proxyLaravel(request, `/api/v1/versehub/${lang}/${slug}${search}`);
+  return proxyLaravel(request, `/versehub/${lang}/${slug}${search}`);
 }

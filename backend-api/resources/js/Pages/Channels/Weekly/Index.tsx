@@ -1,7 +1,7 @@
 import MobileAppLayout from '@/Layouts/MobileAppLayout';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import PostComposer from '@/Components/community/PostComposer';
+
 
 type Channel = {
     id: number;
@@ -82,15 +82,7 @@ export default function WeeklyIndex({
                 </button>
             </div>
 
-            {channel.slug === 'public-post' && (
-                <div className="mb-8">
-                    <PostComposer
-                        channels={[channel]}
-                        defaultChannelSlug={channel.slug}
-                        className="shadow-premium"
-                    />
-                </div>
-            )}
+
 
             <div className="space-y-3">
                 {posts.length ? (

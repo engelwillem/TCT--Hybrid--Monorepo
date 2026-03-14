@@ -17,10 +17,36 @@ import {
   Sparkles
 } from "lucide-react";
 import { MOCK_POSTS } from "@/features/community/mock";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { CommunityPost } from "@/features/community/types";
 
 export function TodayPage() {
-  const highlights = MOCK_POSTS.slice(0, 4);
+  const [highlights, setHighlights] = useState<any[]>([]);
+  const [dailyVerse, setDailyVerse] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/today');
+        if (res.ok) {
+           const payload = await res.json();
+           const data = payload?.data || {};
+           setHighlights(data.highlights || []);
+           setDailyVerse(data.dailyVerse || null);
+        }
+      } catch (e) {
+        console.error("Failed to fetch today data", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const displayHighlights = highlights.length > 0 ? highlights.slice(0, 4) : MOCK_POSTS.slice(0, 4);
 
   const quickActions = [
     { label: "Post", icon: PlusCircle, href: "/community", color: "bg-blue-500/10 text-blue-600", desc: "Bagikan inspirasi" },
@@ -66,10 +92,10 @@ export function TodayPage() {
               <Quote size={120} className="absolute -right-4 -bottom-4 text-brand/5 rotate-12" />
               <CardContent className="p-8 md:p-12 text-center space-y-6 relative z-10">
                 <p className="italic text-xl md:text-2xl font-semibold text-foreground/90 leading-relaxed max-w-2xl mx-auto">
-                  &quot;Sebab Aku ini mengetahui rancangan-rancangan apa yang ada pada-Ku mengenai kamu, demikianlah firman TUHAN, yaitu rancangan damai sejahtera dan bukan rancangan kecelakaan, untuk memberikan kepadamu hari depan yang penuh harapan.&quot;
+                  &quot;{dailyVerse?.quote || dailyVerse?.text || "Sebab Aku ini mengetahui rancangan-rancangan apa yang ada pada-Ku mengenai kamu, demikianlah firman TUHAN, yaitu rancangan damai sejahtera dan bukan rancangan kecelakaan, untuk memberikan kepadamu hari depan yang penuh harapan."}&quot;
                 </p>
                 <div className="space-y-4">
-                  <p className="text-brand font-black text-base tracking-widest uppercase">— Yeremia 29:11</p>
+                  <p className="text-brand font-black text-base tracking-widest uppercase">— {dailyVerse?.reference || "Yeremia 29:11"}</p>
                   <Button asChild size="lg" className="rounded-full shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all">
                     <Link href="/versehub/id">Buka VerseHub</Link>
                   </Button>
@@ -87,7 +113,7 @@ export function TodayPage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {highlights.map((post, i) => (
+              {displayHighlights.map((post, i) => (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -98,23 +124,23 @@ export function TodayPage() {
                     <Card className="border-none ring-1 ring-border/50 hover:ring-brand/30 transition-all active:scale-[0.98] h-full bg-card/60 backdrop-blur-sm">
                       <CardContent className="p-5 flex gap-4">
                         <Avatar className="w-12 h-12 border-2 border-background shadow-md shrink-0">
-                          <AvatarImage src={post.author.avatarUrl} />
-                          <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                          <AvatarImage src={post.author?.avatarUrl || post.author?.avatar_url} />
+                          <AvatarFallback>{post.author?.name?.[0] || 'U'}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex justify-between items-start">
-                            <p className="text-sm font-extrabold truncate">{post.author.name}</p>
-                            <span className="text-[9px] text-muted-foreground font-bold uppercase">{post.createdAt}</span>
+                            <p className="text-sm font-extrabold truncate">{post.author?.name || 'Member'}</p>
+                            <span className="text-[9px] text-muted-foreground font-bold uppercase">{post.createdAt || post.created_at || 'Baru saja'}</span>
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-medium">
                             {post.text || (post.imageUrl ? "Membagikan foto baru..." : "")}
                           </p>
                           <div className="flex items-center gap-4 pt-1">
                             <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-black">
-                              <Heart size={12} className="text-red-500 fill-current" /> {post.counts.likes}
+                              <Heart size={12} className="text-red-500 fill-current" /> {post.counts?.likes ?? post.stats?.pray_count ?? 0}
                             </span>
                             <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-black">
-                              <MessageCircle size={12} /> {post.counts.comments}
+                              <MessageCircle size={12} /> {post.counts?.comments ?? post.stats?.comments_count ?? 0}
                             </span>
                           </div>
                         </div>

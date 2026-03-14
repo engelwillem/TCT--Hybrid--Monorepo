@@ -33,6 +33,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
 
     const [verse, setVerse] = useState<VerseData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(124);
     const [bookmarked, setBookmarked] = useState(false);
@@ -52,14 +53,23 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                     headers: { Accept: 'application/json' },
                     cache: 'no-store'
                 });
-                if (!response.ok) throw new Error('Failed to fetch verse');
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('verse_not_found');
+                    }
+                    throw new Error('fetch_error');
+                }
                 const data = await response.json();
                 if (isActive) {
                     setVerse(data);
                     setLoading(false);
                 }
-            } catch (e) {
-                console.error(e);
+            } catch (e: any) {
+                console.error('VerseHub fetch error:', e);
+                if (isActive) {
+                    setError(e.message);
+                    setLoading(false);
+                }
             }
         };
         fetchVerse();
@@ -104,7 +114,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
 
         const segments = slug.split('-');
         try {
-            await fetch(`/api/versehub/${lang}/reader-actions`, {
+            const res = await fetch(`/api/versehub/${lang}/actions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -117,6 +127,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                     favorite: nextLiked
                 })
             });
+            if (!res.ok) throw new Error('Action failed');
         } catch (e) {
             setLiked(prevLiked);
             setLikeCount(prev => prevLiked ? prev + 1 : prev - 1);
@@ -137,7 +148,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
 
         const segments = slug.split('-');
         try {
-            await fetch(`/api/versehub/${lang}/reader-actions`, {
+            const res = await fetch(`/api/versehub/${lang}/actions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -150,6 +161,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                     bookmarked: nextBookmarked
                 })
             });
+            if (!res.ok) throw new Error('Action failed');
         } catch (e) {
             setBookmarked(prevBookmarked);
             setBookmarkCount(prev => prevBookmarked ? prev + 1 : prev - 1);
@@ -178,7 +190,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
         return <VersehubReaderPage lang={lang} mode="chapter" initialChapterRef={slug} />;
     }
 
-    if (loading || !verse) {
+    if (loading) {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center">
                 <div className="h-10 w-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
@@ -187,6 +199,55 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
     }
 
     const isId = lang === 'id';
+
+    if (error === 'verse_not_found' || !verse) {
+        return (
+            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
+                <div className="mb-6 h-20 w-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                    <X className="h-10 w-10 text-slate-500" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">
+                    {isId ? 'Ayat tidak ditemukan' : 'Verse not found'}
+                </h1>
+                <p className="text-slate-400 max-w-xs mb-8">
+                    {isId 
+                        ? 'Maaf, ayat yang Anda cari tidak tersedia atau slug tidak valid.' 
+                        : 'Sorry, the verse you are looking for is not available or the slug is invalid.'}
+                </p>
+                <button
+                    onClick={() => router.push(`/versehub/${lang}`)}
+                    className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-400 active:scale-95"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                    {isId ? 'Kembali ke Alkitab' : 'Back to Bible'}
+                </button>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
+                <div className="mb-6 h-20 w-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                    <Send className="h-10 w-10 text-rose-500" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">
+                    {isId ? 'Terjadi kesalahan' : 'Something went wrong'}
+                </h1>
+                <p className="text-slate-400 max-w-xs mb-8">
+                    {isId 
+                        ? 'Gagal memuat data ayat. Silakan coba lagi nanti.' 
+                        : 'Failed to load verse data. Please try again later.'}
+                </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 font-bold text-white transition hover:bg-white/20 active:scale-95"
+                >
+                    {isId ? 'Coba Lagi' : 'Try Again'}
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-white pb-20">
