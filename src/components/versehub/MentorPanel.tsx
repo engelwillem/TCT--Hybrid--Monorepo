@@ -30,6 +30,14 @@ interface StudyPath {
     difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
+interface DenominationalContext {
+    summary: string;
+    traditions: Array<{
+        name: string;
+        view: string;
+    }>;
+}
+
 interface AskResult {
     answer?: string;
     interpretation?: string;
@@ -79,6 +87,7 @@ export default function MentorPanel({
     const [relationships, setRelationships] = useState<VerseRelationship[]>([]);
     const [themes, setThemes] = useState<VerseTheme[]>([]);
     const [activeStudyPaths, setActiveStudyPaths] = useState<StudyPath[]>([]);
+    const [denominationalContext, setDenominationalContext] = useState<DenominationalContext | null>(null);
     const [insightsLoading, setInsightsLoading] = useState(false);
     const [insightsFetched, setInsightsFetched] = useState(false);
 
@@ -89,7 +98,7 @@ export default function MentorPanel({
 
     const questionInputRef = useRef<HTMLTextAreaElement>(null);
 
-    // Fetch insights lazily on first open or tab switch to reflect/context.
+    // Fetch insights lazily on first open or tab switch.
     function ensureInsights() {
         if (insightsFetched || insightsLoading) return;
         setInsightsLoading(true);
@@ -108,6 +117,7 @@ export default function MentorPanel({
                 if (json?.relationships) setRelationships(json.relationships);
                 if (json?.themes) setThemes(json.themes);
                 if (json?.active_study_paths) setActiveStudyPaths(json.active_study_paths);
+                if (json?.denominational_context) setDenominationalContext(json.denominational_context);
                 setInsightsFetched(true);
                 setInsightsLoading(false);
             })
@@ -337,7 +347,7 @@ export default function MentorPanel({
                     {tab === 'context' && (
                         <>
                             {insightsLoading ? <LoadingSpinner /> : (
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     {insights?.historical_context ? (
                                         <div>
                                             <SectionLabel color="slate">Konteks Historis</SectionLabel>
@@ -345,9 +355,26 @@ export default function MentorPanel({
                                                 {insights.historical_context}
                                             </p>
                                         </div>
-                                    ) : (
+                                    ) : null}
+
+                                    {denominationalContext && (
+                                        <div>
+                                            <SectionLabel color="amber">Perspektif Tradisi</SectionLabel>
+                                            <p className="mt-2 text-xs text-slate-500 italic mb-3">"{denominationalContext.summary}"</p>
+                                            <div className="space-y-3">
+                                                {denominationalContext.traditions.map((trad, i) => (
+                                                    <div key={i} className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
+                                                        <p className="text-[10px] font-black uppercase text-slate-400">{trad.name}</p>
+                                                        <p className="mt-1 text-sm text-slate-700 leading-relaxed">{trad.view}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!insights?.historical_context && !denominationalContext && (
                                         <p className="py-4 text-center text-sm text-slate-400">
-                                            Konteks historis tidak tersedia untuk ayat ini.
+                                            Konteks teologis tidak tersedia untuk ayat ini.
                                         </p>
                                     )}
                                 </div>

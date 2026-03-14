@@ -109,6 +109,9 @@ class VerseHubController extends Controller
         $relationships = $mentor->getRelationships($normalized['ref']);
         $themes = $mentor->getThemes($normalized['ref']);
         $studyPaths = $mentor->getActiveStudyPaths($request->user(), $normalized['ref']);
+        
+        // HARDENING: Add denominational context for deeper theological parity
+        $denominationalContext = $mentor->getDenominationalContext($bookCode, $chapter, $verse);
 
         return response()->json([
             'ref' => $normalized['ref'],
@@ -118,6 +121,7 @@ class VerseHubController extends Controller
             'relationships' => $relationships,
             'themes' => $themes,
             'active_study_paths' => $studyPaths,
+            'denominational_context' => $denominationalContext,
         ]);
     }
 
