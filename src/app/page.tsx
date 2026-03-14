@@ -10,7 +10,8 @@ import {
   LogIn,
   Plus,
   Sparkles,
-  Users
+  Users,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,6 @@ function Background() {
                 'animate-[twinkle_10s_ease-in-out_infinite]',
             )} />
             <div className="bg-grain absolute inset-0 mix-blend-overlay" />
-            {/* GPU Accelerated Orbs */}
             <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-3xl" style={{ transform: 'translate3d(0,0,0)' }} />
             <div className="absolute bottom-[-200px] right-[-200px] h-[560px] w-[560px] rounded-full bg-blue-600/8 blur-3xl" style={{ transform: 'translate3d(0,0,0)' }} />
             <style>{`
@@ -121,6 +121,132 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
                 </div>
             </div>
         </article>
+    );
+}
+
+/**
+ * StickyCardItem: Manages per-card animation logic.
+ * Implements strict handoff windows based on screen size to prevent ghosting.
+ */
+function StickyCardItem({ item, i, scrollYProgress, isDesktop }: { item: any, i: number, scrollYProgress: any, isDesktop: boolean }) {
+    const start = i * 0.25;
+    const end = (i + 1) * 0.25;
+    
+    // Strict handoff window: 2% on desktop for cinematic feel, 0.5% on mobile for zero-overlap stability.
+    const handoff = isDesktop ? 0.02 : 0.005; 
+
+    const opacity = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
+    );
+
+    const scale = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        [0.96, 1, 1, 0.98]
+    );
+
+    // Reduce vertical movement on mobile to keep focus on content.
+    const yValue = isDesktop ? 30 : 10;
+    const y = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        [yValue, 0, 0, -yValue]
+    );
+
+    const zIndex = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        [10, 30, 30, 20]
+    );
+
+    // Strict pointer-events: Card is only interactive when dominant (>50% opacity).
+    const pointerEvents = useTransform(
+        scrollYProgress,
+        (v) => (v >= start && v < end - (handoff / 2)) ? 'auto' : 'none'
+    );
+
+    return (
+        <motion.div
+            style={{
+                position: 'absolute',
+                inset: 0,
+                opacity,
+                scale,
+                y,
+                zIndex,
+                pointerEvents: pointerEvents as any,
+                willChange: 'transform, opacity',
+                transform: 'translate3d(0,0,0)'
+            }}
+        >
+            <FeatureCard {...item} />
+        </motion.div>
+    );
+}
+
+function StickyCardStage() {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isDesktop, setIsDesktop] = useState(false);
+    const { scrollYProgress } = useScroll({
+        target: containerRef,
+        offset: ["start start", "end end"],
+    });
+
+    const [activeIndex, setActiveIndex] = useState(0);
+    
+    // Desktop detection for adaptive animation profile
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const mq = window.matchMedia('(min-width: 1024px)');
+        const check = () => setIsDesktop(mq.matches);
+        check();
+        mq.addEventListener('change', check);
+        return () => mq.removeEventListener('change', check);
+    }, []);
+
+    useMotionValueEvent(scrollYProgress, "change", (latest) => {
+        // Precise segment-based active index tracking
+        const idx = Math.min(3, Math.floor(latest / 0.25));
+        if (idx !== activeIndex) setActiveIndex(idx);
+    });
+
+    return (
+        <section ref={containerRef} className="relative h-[400vh]">
+            <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
+                <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
+                    <div className="space-y-8">
+                        <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
+                        <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
+                            Satu Platform,<br />
+                            <span className="text-white/20">Banyak Cara</span><br />
+                            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Bertumbuh.</span>
+                        </h2>
+                        <p className="text-xl text-white/40 max-w-md leading-relaxed font-medium">
+                            Ekosistem terintegrasi yang didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.
+                        </p>
+                        <div className="flex items-center gap-3">
+                            {featureItems.map((_, i) => (
+                                <div key={i} className={cn("rounded-full transition-all duration-500", i === activeIndex ? "w-8 h-1.5 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" : "w-1.5 h-1.5 bg-white/10")} />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
+                        {featureItems.map((item, i) => (
+                            <StickyCardItem 
+                                key={item.title} 
+                                item={item} 
+                                i={i} 
+                                scrollYProgress={scrollYProgress} 
+                                isDesktop={isDesktop}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
     );
 }
 
@@ -191,114 +317,6 @@ function HeroIconRow() {
                 </div>
             ))}
         </div>
-    );
-}
-
-/**
- * StickyCardItem: Handles isolated card transformations.
- * Uses 2% handoff window to prevent double backdrop-blur heavy lifting on mobile.
- */
-function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, scrollYProgress: any }) {
-    const start = i * 0.25;
-    const end = (i + 1) * 0.25;
-    const handoff = 0.02; // Strict 2% window for 60FPS mobile transitions
-
-    const opacity = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
-    );
-
-    const scale = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        [0.96, 1, 1, 0.98]
-    );
-
-    const y = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        [30, 0, 0, -30]
-    );
-
-    const zIndex = useTransform(
-        scrollYProgress,
-        [start - handoff, start, end - handoff, end],
-        [10, 30, 30, 20]
-    );
-
-    const pointerEvents = useTransform(
-        scrollYProgress,
-        (v) => (v >= start && v < end - (handoff / 2)) ? 'auto' : 'none'
-    );
-
-    return (
-        <motion.div
-            style={{
-                position: 'absolute',
-                inset: 0,
-                opacity,
-                scale,
-                y,
-                zIndex,
-                pointerEvents: pointerEvents as any,
-                willChange: 'transform, opacity',
-                transform: 'translate3d(0,0,0)'
-            }}
-        >
-            <FeatureCard {...item} />
-        </motion.div>
-    );
-}
-
-function StickyCardStage() {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: containerRef,
-        offset: ["start start", "end end"],
-    });
-
-    const [activeIndex, setActiveIndex] = useState(0);
-    
-    useMotionValueEvent(scrollYProgress, "change", (latest) => {
-        const idx = Math.min(3, Math.floor(latest / 0.25));
-        if (idx !== activeIndex) setActiveIndex(idx);
-    });
-
-    return (
-        <section ref={containerRef} className="relative h-[400vh]">
-            <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
-                <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
-                    <div className="space-y-8">
-                        <Badge><Sparkles size={12} className="text-brand" /> Platform Fitur</Badge>
-                        <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
-                            Satu Platform,<br />
-                            <span className="text-white/20">Banyak Cara</span><br />
-                            <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Bertumbuh.</span>
-                        </h2>
-                        <p className="text-xl text-white/40 max-w-md leading-relaxed font-medium">
-                            Ekosistem terintegrasi yang didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.
-                        </p>
-                        <div className="flex items-center gap-3">
-                            {featureItems.map((_, i) => (
-                                <div key={i} className={cn("rounded-full transition-all duration-500", i === activeIndex ? "w-8 h-1.5 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" : "w-1.5 h-1.5 bg-white/10")} />
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
-                        {featureItems.map((item, i) => (
-                            <StickyCardItem 
-                                key={item.title} 
-                                item={item} 
-                                i={i} 
-                                scrollYProgress={scrollYProgress} 
-                            />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </section>
     );
 }
 
