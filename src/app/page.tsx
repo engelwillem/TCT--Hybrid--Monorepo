@@ -191,11 +191,70 @@ function HeroIconRow() {
 }
 
 /**
- * StickyCardStage
- * Mengelola animasi stacking kartu fitur menggunakan Framer Motion.
- * Logika utama: Melakukan interpolasi antara posisi scroll (0-1) 
- * dengan Opacity, Scale, dan Y-Translate setiap kartu.
+ * Sub-komponen untuk mengisolasi logika animasi per kartu.
+ * Ini memastikan transisi masuk/keluar tidak saling tumpang tindih secara berlebihan.
  */
+function StickyCardItem({ item, i, scrollYProgress }: { item: any, i: number, scrollYProgress: any }) {
+    // Membagi range 0-1 menjadi 4 bagian (0.25 tiap kartu)
+    const start = i * 0.25;
+    const end = (i + 1) * 0.25;
+
+    // Buffer handoff sebesar 5% untuk transisi yang halus namun tegas
+    const handoff = 0.05;
+
+    // Opacity: Masuk di awal segment, keluar di akhir segment
+    const opacity = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        i === 0 ? [1, 1, 1, 0] : i === 3 ? [0, 1, 1, 1] : [0, 1, 1, 0]
+    );
+
+    // Scale: Efek 'push' saat keluar
+    const scale = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        [0.92, 1, 1, 0.95]
+    );
+
+    // Y: Muncul dari bawah, terbuang ke atas
+    const y = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end - handoff, end],
+        [40, 0, 0, -40]
+    );
+
+    // Z-Index: Dinamis agar active card selalu di depan layer sebelumnya
+    const zIndex = useTransform(
+        scrollYProgress,
+        [start - handoff, start, end],
+        [10, 20, 15]
+    );
+
+    // Pointer Events: Memastikan hanya kartu yang terlihat yang bisa diklik
+    const pointerEvents = useTransform(
+        scrollYProgress,
+        (v) => (v >= start && v < end - 0.02) ? 'auto' : 'none'
+    );
+
+    return (
+        <motion.div
+            style={{
+                position: 'absolute',
+                inset: 0,
+                opacity,
+                scale,
+                y,
+                zIndex,
+                pointerEvents,
+                willChange: 'transform, opacity',
+                transform: 'translateZ(0)'
+            }}
+        >
+            <FeatureCard {...item} />
+        </motion.div>
+    );
+}
+
 function StickyCardStage() {
     const containerRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -204,41 +263,16 @@ function StickyCardStage() {
     });
 
     const [activeIndex, setActiveIndex] = useState(0);
+    
+    // Sinkronisasi Active Index dengan timeline 0.25 per kartu
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-        const idx = Math.min(3, Math.floor(latest * 4.4));
-        setActiveIndex(idx);
+        const idx = Math.min(3, Math.floor(latest / 0.25));
+        if (idx !== activeIndex) setActiveIndex(idx);
     });
-
-    // Mapping Transformasi untuk Kartu 1 (Segmen Awal)
-    const card1_op = useTransform(scrollYProgress, [0, 0.1, 0.25], [1, 1, 0]);
-    const card1_sc = useTransform(scrollYProgress, [0, 0.25], [1, 0.95]);
-    const card1_y  = useTransform(scrollYProgress, [0, 0.25], [0, -40]);
-
-    // Mapping Transformasi untuk Kartu 2 (Segmen Tengah Awal)
-    const card2_op = useTransform(scrollYProgress, [0.15, 0.35, 0.50], [0, 1, 0]);
-    const card2_sc = useTransform(scrollYProgress, [0.15, 0.35, 0.50], [0.95, 1, 0.95]);
-    const card2_y  = useTransform(scrollYProgress, [0.15, 0.35, 0.50], [40, 0, -40]);
-
-    // Mapping Transformasi untuk Kartu 3 (Segmen Tengah Akhir)
-    const card3_op = useTransform(scrollYProgress, [0.40, 0.60, 0.75], [0, 1, 0]);
-    const card3_sc = useTransform(scrollYProgress, [0.40, 0.60, 0.75], [0.95, 1, 0.95]);
-    const card3_y  = useTransform(scrollYProgress, [0.40, 0.60, 0.75], [40, 0, -40]);
-
-    // Mapping Transformasi untuk Kartu 4 (Segmen Akhir)
-    const card4_op = useTransform(scrollYProgress, [0.65, 0.85], [0, 1]);
-    const card4_sc = useTransform(scrollYProgress, [0.65, 0.85], [0.95, 1]);
-    const card4_y  = useTransform(scrollYProgress, [0.65, 0.85], [40, 0]);
-
-    const transforms = [
-        { opacity: card1_op, scale: card1_sc, y: card1_y, z: 10 },
-        { opacity: card2_op, scale: card2_sc, y: card2_y, z: 11 },
-        { opacity: card3_op, scale: card3_sc, y: card3_y, z: 12 },
-        { opacity: card4_op, scale: card4_sc, y: card4_y, z: 13 },
-    ];
 
     return (
         <section ref={containerRef} className="relative h-[400vh]">
-            <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+            <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
                 <div className="mx-auto w-full max-w-6xl px-5 grid lg:grid-cols-2 gap-16 items-center">
                     {/* Bagian Teks (Kiri) */}
                     <div className="space-y-8">
@@ -253,7 +287,7 @@ function StickyCardStage() {
                         </p>
                         <div className="flex items-center gap-3">
                             {featureItems.map((_, i) => (
-                                <div key={i} className={cn("rounded-full transition-all duration-500", i === activeIndex ? "w-8 h-1.5 bg-cyan-400" : "w-1.5 h-1.5 bg-white/10")} />
+                                <div key={i} className={cn("rounded-full transition-all duration-500", i === activeIndex ? "w-8 h-1.5 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" : "w-1.5 h-1.5 bg-white/10")} />
                             ))}
                         </div>
                     </div>
@@ -261,21 +295,12 @@ function StickyCardStage() {
                     {/* Bagian Kartu Stacking (Kanan) */}
                     <div className="relative h-[420px] w-full max-w-xl mx-auto lg:mx-0">
                         {featureItems.map((item, i) => (
-                            <motion.div
-                                key={item.title}
-                                style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    zIndex: transforms[i].z,
-                                    opacity: transforms[i].opacity,
-                                    scale: transforms[i].scale,
-                                    y: transforms[i].y,
-                                    willChange: 'transform, opacity',
-                                    transform: 'translateZ(0)'
-                                }}
-                            >
-                                <FeatureCard {...item} />
-                            </motion.div>
+                            <StickyCardItem 
+                                key={item.title} 
+                                item={item} 
+                                i={i} 
+                                scrollYProgress={scrollYProgress} 
+                            />
                         ))}
                     </div>
                 </div>
