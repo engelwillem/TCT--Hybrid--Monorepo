@@ -147,9 +147,9 @@ function StickyCardItem({
     ];
 
     // Animasi opacity, scale, dan pergerakan vertikal (Y)
-    const opacity = useTransform(scrollYProgress, ranges[index], [0, 1, 1, 0]);
+    const opacity = useTransform(scrollYProgress, ranges[index], [0, 1, 1, index === 3 ? 1 : 0]);
     const scale = useTransform(scrollYProgress, ranges[index], [0.95, 1, 1, 0.97]);
-    const y = useTransform(scrollYProgress, ranges[index], [30, 0, 0, -30]); // Gerakan lebih halus
+    const y = useTransform(scrollYProgress, ranges[index], [30, 0, 0, -30]);
 
     return (
         <motion.div
