@@ -3,8 +3,8 @@ import { callLaravelApi } from "@/lib/laravel-api";
 
 /**
  * Hardened Proxy: Forwards requests from Next.js to Laravel API.
- * Ensures bit-perfect binary data integrity for multipart uploads (avatars)
- * and supports transparent response forwarding (JSON/HTML/Binary).
+ * Uses arrayBuffer() and Uint8Array to ensure bit-perfect binary data integrity
+ * for multipart/form-data (required for stable avatar uploads).
  */
 export async function proxyLaravel(request: NextRequest, targetPath: string): Promise<NextResponse> {
   try {
@@ -34,7 +34,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
-    // Forward the response exactly as received (supports binary data and HTML error pages)
+    // Forward the response exactly as received (binary safe for both directions)
     const responseBuffer = await response.arrayBuffer();
 
     return new NextResponse(responseBuffer, {

@@ -7,7 +7,7 @@ interface RouteContext {
 
 /**
  * Standardized Mentor Ask Proxy
- * Consolidated [ref] and [slug] to resolve Next.js dynamic routing conflicts.
+ * Consolidated [ref] and [slug] into [slug] to resolve dynamic routing conflicts.
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
