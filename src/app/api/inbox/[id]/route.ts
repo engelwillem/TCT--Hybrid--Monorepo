@@ -8,6 +8,7 @@ interface RouteContext {
 /**
  * Consolidated Inbox Thread Proxy
  * Standardized on [id] to resolve Next.js dynamic routing conflicts.
+ * This route fetches the message thread for a specific user ID.
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
