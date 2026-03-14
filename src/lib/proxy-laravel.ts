@@ -34,7 +34,6 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     });
 
     // Handle any response type (JSON success, HTML error pages, or Binary data like images)
-    // Using arrayBuffer ensures we don't corrupt binary responses from the backend
     const responseBuffer = await response.arrayBuffer();
 
     const nextResponse = new NextResponse(responseBuffer, {
