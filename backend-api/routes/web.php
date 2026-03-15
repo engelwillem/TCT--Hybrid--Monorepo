@@ -61,15 +61,19 @@ Route::post('/landing/events', [LandingClickEventController::class, 'store'])
 
 Route::get('/lessons/{lesson}', [LessonController::class, 'show'])->name('lessons.show');
 
+// Legacy Redirects (Moved outside auth middleware to allow safe Guest/SEO traversal)
+Route::get('/today', function () {
+    return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/today');
+})->name('today.index');
+
+Route::get('/community', function () {
+    return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/community');
+})->name('community.index');
+
 // Main app pages requiring authentication
 // NOTE: `verified` middleware is safe even if User doesn't implement MustVerifyEmail
 Route::middleware(['auth', 'verified_or_admin'])->group(function () {
-    Route::get('/today', function () {
-        return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/today');
-    })->name('today.index');
-    Route::get('/community', function () {
-        return redirect(env('NEXT_PUBLIC_APP_URL', 'http://localhost:3000') . '/community');
-    })->name('community.index');
+
     Route::get('/community/posts/{memberPost}/share', [CommunityController::class, 'share'])
         ->whereNumber('memberPost')
         ->name('community.posts.share');
