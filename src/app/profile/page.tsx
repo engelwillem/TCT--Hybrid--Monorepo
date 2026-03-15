@@ -81,6 +81,8 @@ export default function ProfilePage() {
         name: user.name,
         email: user.email,
     });
+    const [profileErrors, setProfileErrors] = useState<Record<string, string[]>>({});
+    const [profileBusy, setProfileBusy] = useState(false);
 
     // Password States
     const [passwordData, setPasswordData] = useState({
@@ -88,7 +90,8 @@ export default function ProfilePage() {
         new: '',
         confirm: ''
     });
-    const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+    const [passwordErrors, setPasswordErrors] = useState<Record<string, string[]>>({});
+    const [passwordBusy, setPasswordBusy] = useState(false);
 
     // 2FA States
     const [twoFactor, setTwoFactor] = useState({
@@ -106,6 +109,8 @@ export default function ProfilePage() {
     const [newRecoveryCodes, setNewRecoveryCodes] = useState<string[] | null>(null);
     const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
     const [twoFactorBusy, setTwoFactorBusy] = useState(false);
+
+    const [deleteBusy, setDeleteBusy] = useState(false);
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToast({ message, type });
@@ -211,17 +216,28 @@ export default function ProfilePage() {
                 },
                 body: formData,
             });
+
+            const payload = await response.json().catch(() => null);
+
             if (response.ok) {
-                const payload = await response.json();
                 if (payload?.data?.avatar_url) {
                     setUser(prev => ({ ...prev, avatarUrl: payload.data.avatar_url }));
                     showToast('Foto profil diperbarui');
                 }
+            } else {
+                if (payload?.errors?.avatar?.[0]) {
+                    showToast(payload.errors.avatar[0], 'error');
+                } else {
+                    showToast(payload?.message || 'Gagal mengupload foto profil', 'error');
+                }
             }
         } catch {
-            showToast('Gagal mengupload foto', 'error');
+            showToast('Terjadi gangguan sistem saat mengupload', 'error');
         } finally {
             setSubmittingAvatar(false);
+            if (avatarInputRef.current) {
+                avatarInputRef.current.value = '';
+            }
         }
     };
 
@@ -230,6 +246,8 @@ export default function ProfilePage() {
         const token = getAppAccessToken();
         if (!token) return;
 
+        setProfileBusy(true);
+        setProfileErrors({});
         try {
             const response = await fetch('/api/profile', {
                 method: 'PATCH',
@@ -240,13 +258,24 @@ export default function ProfilePage() {
                 },
                 body: JSON.stringify(profileData),
             });
-            if (!response.ok) throw new Error();
+
+            if (!response.ok) {
+                const payload = await response.json();
+                if (payload.errors) {
+                    setProfileErrors(payload.errors);
+                } else {
+                    showToast('Gagal menyimpan profil', 'error');
+                }
+                return;
+            }
 
             const payload = await response.json();
             showToast('Profil berhasil disimpan');
             setUser(prev => ({ ...prev, ...payload.data }));
         } catch {
-            showToast('Gagal menyimpan profil', 'error');
+            showToast('Terjadi gangguan sistem', 'error');
+        } finally {
+            setProfileBusy(false);
         }
     };
 
@@ -255,6 +284,7 @@ export default function ProfilePage() {
         const token = getAppAccessToken();
         if (!token) return;
 
+        setPasswordBusy(true);
         setPasswordErrors({});
         try {
             const response = await fetch('/api/profile/password', {
@@ -275,11 +305,17 @@ export default function ProfilePage() {
                 setPasswordData({ current: '', new: '', confirm: '' });
                 showToast('Kata sandi berhasil diubah');
             } else {
-                const payload = await response.json();
-                setPasswordErrors(payload.errors || { general: 'Gagal mengubah kata sandi' });
+                const payload = await response.json().catch(() => ({}));
+                if (payload.errors) {
+                    setPasswordErrors(payload.errors);
+                } else {
+                    showToast(payload.message || 'Gagal mengubah kata sandi', 'error');
+                }
             }
         } catch {
-            showToast('Gagal menghubungi server', 'error');
+            showToast('Terjadi gangguan sistem', 'error');
+        } finally {
+            setPasswordBusy(false);
         }
     };
 
@@ -305,8 +341,8 @@ export default function ProfilePage() {
                 setTwoFactorSetupData(payload);
                 setTwoFactorStep('setup');
             } else {
-                const error = await response.json();
-                setTwoFactorError(error.message || 'Password tidak valid');
+                const error = await response.json().catch(() => ({}));
+                setTwoFactorError(error?.errors?.current_password?.[0] || error.message || 'Password tidak valid');
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
@@ -343,7 +379,8 @@ export default function ProfilePage() {
                 setTwoFactorCode('');
                 showToast('2FA Berhasil diaktifkan');
             } else {
-                setTwoFactorError('Kode OTP tidak valid');
+                const error = await response.json().catch(() => ({}));
+                setTwoFactorError(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode OTP tidak valid');
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
@@ -378,7 +415,8 @@ export default function ProfilePage() {
                 setTwoFactorCode('');
                 showToast('2FA Dinonaktifkan');
             } else {
-                setTwoFactorError('Kode tidak valid');
+                const error = await response.json().catch(() => ({}));
+                setTwoFactorError(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode tidak valid');
             }
         } catch {
             setTwoFactorError('Gagal menonaktifkan 2FA');
@@ -411,6 +449,9 @@ export default function ProfilePage() {
                 setNewRecoveryCodes(payload.recoveryCodes);
                 setTwoFactorCode('');
                 showToast('Recovery codes baru dibuat');
+            } else {
+                const error = await response.json().catch(() => ({}));
+                showToast(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes', 'error');
             }
         } catch { /* ignore */ } finally {
             setTwoFactorBusy(false);
@@ -419,20 +460,31 @@ export default function ProfilePage() {
 
     const handleDeleteAccount = async () => {
         const token = getAppAccessToken();
-        const password = window.prompt('Konfirmasi hapus akun permanen. Masukkan password:');
+        const password = window.prompt('HAPUS AKUN PERMANEN\n\nTindakan ini tidak bisa dibatalkan!\nMasukkan password Anda untuk meneruskan penghapusan:');
         if (!password || !token) return;
 
+        setDeleteBusy(true);
         try {
             const response = await fetch('/api/profile', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
+                    Accept: 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ password }),
+                body: JSON.stringify({ password }), // Using method spooling proxy logic for current_password mapping if required by backend.
             });
-            if (response.ok) logout();
-        } catch { /* ignore */ }
+            if (response.ok) {
+                logout(); // Initiates redirect
+            } else {
+                const error = await response.json().catch(() => ({}));
+                showToast(error?.errors?.password?.[0] || error?.message || 'Password salah atau proses gagal.', 'error');
+            }
+        } catch { 
+            showToast('Terjadi gangguan sistem. Gagal menghubungi server.', 'error');
+        } finally {
+            setDeleteBusy(false);
+        }
     };
 
     const firstName = user.name.split(' ')[0];
@@ -557,14 +609,21 @@ export default function ProfilePage() {
                         <form className="space-y-6 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Nama Lengkap</label>
-                                <Input value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl text-[16px] font-bold px-5" />
+                                <Input value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl text-[16px] font-bold px-5" disabled={profileBusy} />
+                                {profileErrors.name && profileErrors.name.map((err, i) => <p key={`name-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Alamat Email</label>
-                                <Input value={profileData.email} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl text-[16px] font-bold px-5" />
+                                <Input type="email" value={profileData.email} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl text-[16px] font-bold px-5" disabled={profileBusy} />
+                                {profileErrors.email && profileErrors.email.map((err, i) => <p key={`email-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="pt-2">
-                                <PrimaryCTA label="Simpan Perubahan" size="md" />
+                                <PrimaryCTA 
+                                    label={profileBusy ? 'Menyimpan...' : 'Simpan Perubahan'} 
+                                    icon={profileBusy ? <Loader2 className="animate-spin h-4 w-4" /> : undefined}
+                                    size="md" 
+                                    disabled={profileBusy} 
+                                />
                             </div>
                         </form>
                     </AccordionCard>
@@ -573,22 +632,22 @@ export default function ProfilePage() {
                         <form className="space-y-6 pt-2" onSubmit={handlePasswordUpdate}>
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Password Saat Ini</label>
-                                <Input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" />
-                                {passwordErrors.current_password && <p className="text-rose-400 text-[10px] font-bold uppercase ml-2">{passwordErrors.current_password}</p>}
+                                <Input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" disabled={passwordBusy} />
+                                {passwordErrors.current_password && passwordErrors.current_password.map((err, i) => <p key={`curr-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Password Baru</label>
-                                    <Input type="password" value={passwordData.new} onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" />
-                                    {passwordErrors.password && <p className="text-rose-400 text-[10px] font-bold uppercase ml-2">{passwordErrors.password}</p>}
+                                    <Input type="password" value={passwordData.new} onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" disabled={passwordBusy} />
+                                    {passwordErrors.password && passwordErrors.password.map((err, i) => <p key={`new-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Konfirmasi</label>
-                                    <Input type="password" value={passwordData.confirm} onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" />
+                                    <Input type="password" value={passwordData.confirm} onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" disabled={passwordBusy} />
                                 </div>
                             </div>
-                            <Button type="submit" className="w-full bg-white/10 hover:bg-white/15 h-13 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg transition-all active:scale-[0.98]">
-                                Perbarui Kata Sandi
+                            <Button type="submit" disabled={passwordBusy} className="w-full bg-white/10 hover:bg-white/15 h-13 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg transition-all active:scale-[0.98]">
+                                {passwordBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Perbarui Kata Sandi'}
                             </Button>
                         </form>
                     </AccordionCard>
@@ -633,8 +692,8 @@ export default function ProfilePage() {
                                     {twoFactorStep === 'password' && (
                                         <div className="space-y-4">
                                             <p className="text-xs text-white/60 leading-relaxed font-medium">Langkah 1: Verifikasi identitas Anda untuk membuat kunci rahasia baru.</p>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Masukkan password Anda" className="bg-white/5 border-white/10 rounded-xl" />
-                                            <Button onClick={handleTwoFactorSetup} disabled={twoFactorBusy} className="w-full h-11 bg-white text-slate-950 font-bold text-xs rounded-xl">
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Masukkan password Anda" className="bg-white/5 border-white/10 rounded-xl" disabled={twoFactorBusy} />
+                                            <Button onClick={handleTwoFactorSetup} disabled={twoFactorBusy || !twoFactorPassword} className="w-full h-11 bg-white text-slate-950 font-bold text-xs rounded-xl">
                                                 {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4" /> : 'Generate QR Code'}
                                             </Button>
                                         </div>
@@ -662,8 +721,10 @@ export default function ProfilePage() {
                                             </div>
 
                                             <div className="space-y-3 pt-2">
-                                                <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Masukkan 6 Digit OTP" className="bg-white/5 border-white/10 rounded-xl text-center tracking-[0.5em] font-black h-12" maxLength={6} />
-                                                <Button onClick={handleTwoFactorConfirm} disabled={twoFactorBusy || twoFactorCode.length < 6} className="w-full h-12 bg-brand text-brand-foreground font-black text-[11px] uppercase tracking-widest rounded-xl">Aktifkan Sekarang</Button>
+                                                <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Masukkan 6 Digit OTP" className="bg-white/5 border-white/10 rounded-xl text-center tracking-[0.5em] font-black h-12" maxLength={6} disabled={twoFactorBusy} />
+                                                <Button onClick={handleTwoFactorConfirm} disabled={twoFactorBusy || twoFactorCode.length < 6} className="w-full h-12 bg-brand text-brand-foreground font-black text-[11px] uppercase tracking-widest rounded-xl">
+                                                    {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Aktifkan Sekarang'}
+                                                </Button>
                                             </div>
                                         </div>
                                     )}
@@ -674,9 +735,11 @@ export default function ProfilePage() {
                                                 <AlertTriangle size={16} className="shrink-0" />
                                                 <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Menonaktifkan 2FA akan mengurangi keamanan akun Anda secara signifikan.</p>
                                             </div>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-white/5 border-white/10 rounded-xl" />
-                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code" className="bg-white/5 border-white/10 rounded-xl" />
-                                            <Button onClick={handleTwoFactorDisable} disabled={twoFactorBusy} className="w-full h-11 bg-rose-500 text-white font-bold text-xs rounded-xl">Konfirmasi Nonaktif</Button>
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-white/5 border-white/10 rounded-xl" disabled={twoFactorBusy} />
+                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code" className="bg-white/5 border-white/10 rounded-xl" disabled={twoFactorBusy} />
+                                            <Button onClick={handleTwoFactorDisable} disabled={twoFactorBusy || !twoFactorPassword || !twoFactorCode} className="w-full h-11 bg-rose-500 text-white font-bold text-xs rounded-xl">
+                                                {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Konfirmasi Nonaktif'}
+                                            </Button>
                                         </div>
                                     )}
 
@@ -712,10 +775,11 @@ export default function ProfilePage() {
                     <div className="pt-12 text-center space-y-10">
                         <button 
                             onClick={handleDeleteAccount} 
-                            className="group mx-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border border-rose-500/10 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 transition-all duration-500"
+                            disabled={deleteBusy}
+                            className="group mx-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border border-rose-500/10 text-rose-500/40 hover:text-rose-500 transition-all duration-500 disabled:opacity-50 disabled:grayscale hover:bg-rose-500/5"
                         >
-                            <Trash2 className="h-4 w-4 transition-transform group-hover:scale-110" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Hapus Akun Permanen</span>
+                            {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 transition-transform group-hover:scale-110" />}
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">{deleteBusy ? 'Menghapus...' : 'Hapus Akun Permanen'}</span>
                         </button>
                         
                         <div className="flex flex-col items-center gap-4 opacity-20">
