@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -12,7 +12,6 @@ import {
   Sparkles,
   Users,
   ShieldCheck,
-  LayoutGrid
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -127,7 +126,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
 /**
  * ──────────────────────────────────────────────────────────────────────────────
- * STICKY STACKING ENGINE
+ * STICKY STACKING ENGINE (Layout Parity Re-aligned)
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
@@ -135,47 +134,45 @@ function StickyStackScene({
     item, 
     index, 
     scrollYProgress,
-    isDesktop,
     totalCards = 4
 }: { 
     item: any; 
     index: number; 
     scrollYProgress: any;
-    isDesktop: boolean;
     totalCards?: number;
 }) {
-    // 1. Menggunakan Progress Linear (Natural Scroll) tanpa Inersia/Spring
+    // 1. Progress Linear (Mekanika Parity): Tanpa useSpring untuk tracking scroll 1:1
     const cardProgress = useTransform(scrollYProgress, [0, 1], [0, totalCards - 1]);
 
-    // 2. Definisi 5 state layout tumpukan (Stack Parity) tanpa re-interpretasi Depth Blur
+    // 2. Definisi Milestone Layout (Clean Stacks): Menumpuk dengan gap statis
     const inputRanges = [
-        index - 1,   // Entering (Masuk dari bawah layar)
-        index,       // Active (Posisi diam/Mentok atas)
-        index + 1,   // Layer 1 (Tertimpa 1 lapis)
+        index - 1,   // Entering (Dari bawah)
+        index,       // Active (Puncak)
+        index + 1,   // Layer 1 (Tertutup 1 lapis)
         index + 2,   // Layer 2
         index + 3    // Layer 3
     ];
 
     const opacityRanges = [
-        0,      // Memudar masuk perlahan
-        1,      // Solid di depan
-        1,      // Lapis belakang tetap solid (hanya tertutup)
+        0,      // Memudar masuk
+        1,      // Aktif
+        1,      // Tetap solid di belakang
         1,      
-        0       // Hilang saat terlalu jauh tenggelam
+        0       // Hilang jika tertimbun terlalu dalam
     ];
 
     const scaleRanges = [
-        1,      // Kartu utuh saat masuk menggeser ke atas
-        1,      // Puncak aktif
-        0.95,   // Menyusut flat ke belakang
+        1,      // Skala penuh saat masuk
+        1,      // Puncak
+        0.95,   // Menyusut flat ke belakang (Legacy feel)
         0.90,   
         0.85    
     ];
 
     const yRanges = [
-        80,     // Offset masuk konstan dari bawah
-        0,      // Natural sticky origin
-        -15,    // Menggeser naik saat ditimpa (Stack Offset)
+        80,     // Masuk dari bawah
+        0,      // Posisi aktif
+        -15,    // Geser naik sedikit saat ditindih (Stack Spacing)
         -30,    
         -45     
     ];
@@ -237,20 +234,12 @@ function Background() {
 
 export default function LandingPage() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isDesktop, setIsDesktop] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"],
     });
-
-    useEffect(() => {
-        const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
-        checkDesktop();
-        window.addEventListener('resize', checkDesktop);
-        return () => window.removeEventListener('resize', checkDesktop);
-    }, []);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
         const totalCards = featureItems.length;
@@ -333,7 +322,6 @@ export default function LandingPage() {
                                         item={item} 
                                         index={i} 
                                         scrollYProgress={scrollYProgress}
-                                        isDesktop={isDesktop}
                                         totalCards={featureItems.length}
                                     />
                                 ))}
