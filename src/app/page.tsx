@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useSpring, useMotionTemplate } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -135,24 +135,82 @@ function StickyStackScene({
     item, 
     index, 
     scrollYProgress,
-    isDesktop
+    isDesktop,
+    totalCards = 4
 }: { 
     item: any; 
     index: number; 
     scrollYProgress: any;
     isDesktop: boolean;
+    totalCards?: number;
 }) {
-    // 4 stages of scroll logic for 4 cards
-    const ranges = [
-        [0.00, 0.05, 0.20, 0.35],
-        [0.25, 0.35, 0.50, 0.65],
-        [0.55, 0.65, 0.80, 0.90],
-        [0.85, 0.95, 1.00, 1.00]
+    // 1. Tambahkan useSpring untuk mengatasi jittery dan memberi efek inersia dinamis
+    const smoothProgress = useSpring(scrollYProgress, {
+        stiffness: 400,
+        damping: 40,
+        mass: 1,
+        restDelta: 0.001
+    });
+
+    // 2. Kalkulasi posisi relatif kartu secara dinamis (Dynamic Range Base)
+    const cardProgress = useTransform(smoothProgress, [0, 1], [0, totalCards - 1]);
+
+    // Kita definisikan 5 poin milestone untuk setiap kartu berdasarkan posisinya terhadap scroll:
+    const inputRanges = [
+        index - 1,   // Entering from bottom
+        index,       // Active front
+        index + 1,   // Pushed back 1 layer
+        index + 2,   // Pushed back 2 layers
+        index + 3    // Pushed back 3 layers
     ];
 
-    const opacity = useTransform(scrollYProgress, ranges[index], [0, 1, 1, index === 3 ? 1 : 0]);
-    const scale = useTransform(scrollYProgress, ranges[index], [0.96, 1, 1, 0.98]);
-    const y = useTransform(scrollYProgress, ranges[index], [40, 0, 0, -20]);
+    const opacityRanges = [
+        0,      // Entering
+        1,      // Active front
+        1,      // 1 layer back (tetap terlihat tapi gelap/blur)
+        1,      // 2 layers back
+        0       // 3 layers back
+    ];
+
+    const scaleRanges = [
+        0.96,   // Entering
+        1,      // Active
+        0.95,   // 1 layer back
+        0.90,   // 2 layers back
+        0.85    // 3 layers back
+    ];
+
+    const yRanges = [
+        40,     // Entering (offset bottom)
+        0,      // Active
+        -20,    // 1 layer back (geser atas)
+        -40,    // 2 layers back
+        -60     // 3 layers back
+    ];
+
+    const blurRanges = [
+        0,      // Entering
+        0,      // Active
+        4,      // 1 layer back
+        8,      // 2 layers back
+        12      // 3 layers back
+    ];
+
+    const brightnessRanges = [
+        1,      // Entering
+        1,      // Active
+        0.8,    // 1 layer back
+        0.6,    // 2 layers back
+        0.4     // 3 layers back
+    ];
+
+    const opacity = useTransform(cardProgress, inputRanges, opacityRanges);
+    const scale = useTransform(cardProgress, inputRanges, scaleRanges);
+    const y = useTransform(cardProgress, inputRanges, yRanges);
+    const blurObj = useTransform(cardProgress, inputRanges, blurRanges);
+    const brightObj = useTransform(cardProgress, inputRanges, brightnessRanges);
+
+    const filter = useMotionTemplate`blur(${blurObj}px) brightness(${brightObj})`;
 
     return (
         <motion.div
@@ -162,8 +220,10 @@ function StickyStackScene({
                 opacity,
                 scale,
                 y,
+                filter,
                 zIndex: 10 + index,
-                willChange: 'transform, opacity',
+                willChange: 'transform, opacity, filter',
+                transformOrigin: 'top center'
             }}
         >
             <FeatureCard {...item} />
@@ -222,7 +282,8 @@ export default function LandingPage() {
     }, []);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-        const idx = Math.min(3, Math.floor(latest * 4.5));
+        const totalCards = featureItems.length;
+        const idx = Math.min(totalCards - 1, Math.max(0, Math.round(latest * (totalCards - 1))));
         if (idx !== activeIndex) setActiveIndex(idx);
     });
 
@@ -302,6 +363,7 @@ export default function LandingPage() {
                                         index={i} 
                                         scrollYProgress={scrollYProgress}
                                         isDesktop={isDesktop}
+                                        totalCards={featureItems.length}
                                     />
                                 ))}
                             </div>
