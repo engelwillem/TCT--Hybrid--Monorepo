@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useSpring, useMotionTemplate } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -144,73 +144,45 @@ function StickyStackScene({
     isDesktop: boolean;
     totalCards?: number;
 }) {
-    // 1. Tambahkan useSpring untuk mengatasi jittery dan memberi efek inersia dinamis
-    const smoothProgress = useSpring(scrollYProgress, {
-        stiffness: 400,
-        damping: 40,
-        mass: 1,
-        restDelta: 0.001
-    });
+    // 1. Menggunakan Progress Linear (Natural Scroll) tanpa Inersia/Spring
+    const cardProgress = useTransform(scrollYProgress, [0, 1], [0, totalCards - 1]);
 
-    // 2. Kalkulasi posisi relatif kartu secara dinamis (Dynamic Range Base)
-    const cardProgress = useTransform(smoothProgress, [0, 1], [0, totalCards - 1]);
-
-    // Kita definisikan 5 poin milestone untuk setiap kartu berdasarkan posisinya terhadap scroll:
+    // 2. Definisi 5 state layout tumpukan (Stack Parity) tanpa re-interpretasi Depth Blur
     const inputRanges = [
-        index - 1,   // Entering from bottom
-        index,       // Active front
-        index + 1,   // Pushed back 1 layer
-        index + 2,   // Pushed back 2 layers
-        index + 3    // Pushed back 3 layers
+        index - 1,   // Entering (Masuk dari bawah layar)
+        index,       // Active (Posisi diam/Mentok atas)
+        index + 1,   // Layer 1 (Tertimpa 1 lapis)
+        index + 2,   // Layer 2
+        index + 3    // Layer 3
     ];
 
     const opacityRanges = [
-        0,      // Entering
-        1,      // Active front
-        1,      // 1 layer back (tetap terlihat tapi gelap/blur)
-        1,      // 2 layers back
-        0       // 3 layers back
+        0,      // Memudar masuk perlahan
+        1,      // Solid di depan
+        1,      // Lapis belakang tetap solid (hanya tertutup)
+        1,      
+        0       // Hilang saat terlalu jauh tenggelam
     ];
 
     const scaleRanges = [
-        0.96,   // Entering
-        1,      // Active
-        0.95,   // 1 layer back
-        0.90,   // 2 layers back
-        0.85    // 3 layers back
+        1,      // Kartu utuh saat masuk menggeser ke atas
+        1,      // Puncak aktif
+        0.95,   // Menyusut flat ke belakang
+        0.90,   
+        0.85    
     ];
 
     const yRanges = [
-        40,     // Entering (offset bottom)
-        0,      // Active
-        -20,    // 1 layer back (geser atas)
-        -40,    // 2 layers back
-        -60     // 3 layers back
-    ];
-
-    const blurRanges = [
-        0,      // Entering
-        0,      // Active
-        4,      // 1 layer back
-        8,      // 2 layers back
-        12      // 3 layers back
-    ];
-
-    const brightnessRanges = [
-        1,      // Entering
-        1,      // Active
-        0.8,    // 1 layer back
-        0.6,    // 2 layers back
-        0.4     // 3 layers back
+        80,     // Offset masuk konstan dari bawah
+        0,      // Natural sticky origin
+        -15,    // Menggeser naik saat ditimpa (Stack Offset)
+        -30,    
+        -45     
     ];
 
     const opacity = useTransform(cardProgress, inputRanges, opacityRanges);
     const scale = useTransform(cardProgress, inputRanges, scaleRanges);
     const y = useTransform(cardProgress, inputRanges, yRanges);
-    const blurObj = useTransform(cardProgress, inputRanges, blurRanges);
-    const brightObj = useTransform(cardProgress, inputRanges, brightnessRanges);
-
-    const filter = useMotionTemplate`blur(${blurObj}px) brightness(${brightObj})`;
 
     return (
         <motion.div
@@ -220,9 +192,8 @@ function StickyStackScene({
                 opacity,
                 scale,
                 y,
-                filter,
                 zIndex: 10 + index,
-                willChange: 'transform, opacity, filter',
+                willChange: 'transform, opacity',
                 transformOrigin: 'top center'
             }}
         >
