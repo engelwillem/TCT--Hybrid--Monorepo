@@ -158,7 +158,7 @@ function StickyStackScene({
         1,      // Aktif
         1,      // Tetap solid di belakang
         1,      
-        0       // Hilang jika tertimbun terlalu dalam
+        1       
     ];
 
     const scaleRanges = [
@@ -170,11 +170,11 @@ function StickyStackScene({
     ];
 
     const yRanges = [
-        80,     // Masuk dari bawah
+        120,    // Masuk dari bawah (Enhanced entry parity)
         0,      // Posisi aktif
-        -15,    // Geser naik sedikit saat ditindih (Stack Spacing)
-        -30,    
-        -45     
+        -20,    // Geser naik saat ditindih (Enhanced Stack Spacing)
+        -40,    
+        -60     
     ];
 
     const opacity = useTransform(cardProgress, inputRanges, opacityRanges);
@@ -302,7 +302,7 @@ export default function LandingPage() {
                                 
                                 <div className="flex items-center gap-3 pt-4">
                                     {featureItems.map((_, i) => (
-                                        <div 
+                                         <div 
                                             key={i} 
                                             className={cn(
                                                 "rounded-full transition-all duration-500", 
@@ -344,7 +344,7 @@ export default function LandingPage() {
                         </p>
                         <div className="pt-4">
                             <Button asChild className="h-16 px-12 rounded-[2rem] bg-white text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95">
-                                <Link href="/register">Buat Akun Gratis</Link>
+                                <Link href="/register"> Buat Akun Gratis</Link>
                             </Button>
                         </div>
                     </div>
@@ -358,7 +358,7 @@ export default function LandingPage() {
                     </div>
                     <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">© 2026 — Built for the Chosen People by WillBerth.</p>
                     <div className="flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/30">
-                        <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
+                        <Link href="/privacy" className="hover:text-cyan-400 transition-colors ">Privacy</Link>
                         <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <a href="https://instagram.com/willberth.channel/" target="_blank" className="hover:text-cyan-400 transition-colors">Instagram</a>
                     </div>
