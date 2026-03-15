@@ -257,7 +257,7 @@ export default function LandingPage() {
                     TheChosen<span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Talks</span>
                 </span>
                 <Button asChild variant="ghost" className="h-11 rounded-full bg-white/5 px-6 text-xs font-bold uppercase tracking-widest text-white/70 ring-1 ring-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95">
-                    <Link href="/today" className="flex items-center gap-2"><LogIn size={14} /> Login</Link>
+                    <Link href="/login" className="flex items-center gap-2"><LogIn size={14} /> Login</Link>
                 </Button>
             </header>
 
@@ -277,7 +277,7 @@ export default function LandingPage() {
                                     <p className="text-lg text-white/50 max-w-xs mx-auto leading-relaxed font-medium">Platform digital harian untuk inspirasi, doa, dan komunitas yang menguatkan.</p>
                                 </div>
                                 <Button asChild className="h-16 w-full rounded-[2rem] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-500/20 active:scale-[0.97] transition-all hover:brightness-110">
-                                    <Link href="/today" className="flex items-center justify-center gap-3">Mulai Journey <ArrowRight size={20} strokeWidth={3} /></Link>
+                                    <Link href="/login" className="flex items-center justify-center gap-3">Mulai Journey <ArrowRight size={20} strokeWidth={3} /></Link>
                                 </Button>
                             </div>
                         </div>
