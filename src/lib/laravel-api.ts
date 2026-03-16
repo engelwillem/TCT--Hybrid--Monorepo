@@ -43,17 +43,20 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  try {
-    const response = await fetch(target, {
+  const fetchOptions = {
       ...init,
       signal: controller.signal,
       cache: "no-store",
       headers: {
         Accept: "application/json",
-        "X-Requested-With": "XMLHttpRequest",
         ...(init?.headers ?? {}),
       },
-    });
+  };
+  console.log("FETCH_DEBUG_URL:", target);
+  console.log("FETCH_DEBUG_OPTIONS:", JSON.stringify(fetchOptions.headers));
+
+  try {
+    const response = await fetch(target, fetchOptions as any);
     return response;
   } finally {
     clearTimeout(timeoutId);

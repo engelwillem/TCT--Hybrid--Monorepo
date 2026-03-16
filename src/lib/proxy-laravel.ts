@@ -27,6 +27,10 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
     const referer = request.headers.get("referer");
     const accept = request.headers.get("accept");
     
+    console.log("PROXY_DEBUG_TOKEN:", JSON.stringify(authorization));
+    
+    console.log("PROXY_DEBUG - Method:", request.method, "TargetPath:", targetPath, "Authorization:", authorization ? "PRESENT" : "MISSING");
+    
     // We only read the body for methods that typically have one
     const hasBody = !["GET", "HEAD", "OPTIONS"].includes(request.method);
     
@@ -58,7 +62,6 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
         ...(authorization ? { Authorization: authorization } : {}),
         ...(cookie ? { Cookie: cookie } : {}),
         ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
-        ...(referer ? { Referer: referer } : { Referer: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000" }),
         ...(accept ? { Accept: accept } : { Accept: "application/json" }),
       },
     });

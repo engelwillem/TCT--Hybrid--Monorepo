@@ -23,14 +23,18 @@ class CommunityApiController extends Controller
     ) {
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, \App\Services\TodayFeedService $feedService): JsonResponse
     {
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
-        $limit = max(1, min(50, (int) $request->integer('limit', 20)));
-
-        $posts = MemberPost::query()
-            ->active()
+        
+        $feedData = $feedService->getTodayData($user);
+        
+        $now = \Illuminate\Support\Carbon::now();
+        $archivePosts = MemberPost::query()
+            ->whereNull('hidden_at')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', $now)
             ->with(['user:id,name,avatar_path'])
             ->withCount([
                 'comments',
@@ -44,18 +48,21 @@ class CommunityApiController extends Controller
                 'bookmarks as is_bookmarked_by_me' => fn($q) => $q
                     ->where('user_id', $user?->id ?? 0),
             ])
+            ->orderByDesc('expires_at')
             ->orderByDesc('created_at')
-            ->limit($limit)
+            ->limit(120)
             ->get()
             ->map(fn(MemberPost $post) => $this->serializePost($post))
             ->values();
 
         return response()->json([
             'data' => [
-                'posts' => $posts,
+                'posts' => $feedData['feed'],
+                'archivePosts' => $archivePosts,
             ],
         ]);
     }
+
 
     public function store(Request $request): JsonResponse
     {

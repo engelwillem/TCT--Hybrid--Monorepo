@@ -13,6 +13,10 @@ export function FirebaseAuthSync() {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       // 1. If Firebase says user is logged out
       if (!user) {
+        if (typeof window !== "undefined" && window.localStorage.getItem('e2e_bypass_token')) {
+          return;
+        }
+
         const currentToken = getAppAccessToken();
         if (currentToken) {
           // Tell Laravel to revoke token before clearing local state

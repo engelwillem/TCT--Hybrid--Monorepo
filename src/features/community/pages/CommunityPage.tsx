@@ -12,6 +12,7 @@ import { CommunityService } from "@/services/community.service";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 
 type ArchiveCategory = "all" | "quotes" | "reflections" | "prayer_requests" | "testimonies";
 
@@ -25,10 +26,17 @@ export function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
-   const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [archivePosts, setArchivePosts] = useState<CommunityPost[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [rituals, setRituals] = useState<any>(null);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const handleCommentsUpdated = useCallback((postId: string, count: number) => {
     setPosts(prev => prev.map(p => 
@@ -43,8 +51,9 @@ export function CommunityPage() {
       setIsLoading(true);
       setFetchError(null);
       // Load feed
-      const fetchedPosts = await CommunityService.listPosts();
-      setPosts(fetchedPosts);
+      const fetched = await CommunityService.listPosts();
+      setPosts(fetched.posts);
+      setArchivePosts(fetched.archivePosts);
       
       // Load rituals for featured verse
       const ritualRes = await fetch('/api/today');
@@ -123,6 +132,33 @@ export function CommunityPage() {
     }
   };
 
+  const handleShare = async (postId: string, text?: string | null) => {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://thechoosentalks.com";
+    const url = `${baseUrl}/community/posts/${postId}/share`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "TheChosenTalks Community",
+          text: text ? text.substring(0, 100) + "..." : "Bagikan pos inspirasi ini.",
+          url: url,
+        });
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error("Error sharing:", err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("Tautan disalin ke papan klip!", "success");
+      } catch (err) {
+        console.error("Error copying link:", err);
+        showToast("Gagal menyalin tautan.", "error");
+      }
+    }
+  };
+
   const featuredPost = useMemo(() => posts.find((p) => p.isFeatured), [posts]);
   
   const effectiveFeaturedVerse = useMemo((): FeaturedVerse => {
@@ -155,7 +191,7 @@ export function CommunityPage() {
   }, [rituals, featuredPost]);
 
   const archiveGroups = useMemo(() => {
-    const filtered = posts.filter((post) => {
+    const filtered = archivePosts.filter((post) => {
       if (archiveCategory === "all") return true;
       const typeMapping: Record<string, string> = {
         quotes: "quote",
@@ -181,9 +217,9 @@ export function CommunityPage() {
       .map(([key, items]) => ({
         key,
         label: key === "today" ? "Hari Ini" : key.replace("month-", ""),
-        items: items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+        items: items, // Ordering is naturally handed by Backend already
       }));
-  }, [posts, archiveCategory]);
+  }, [archivePosts, archiveCategory]);
 
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-1000">
@@ -263,7 +299,7 @@ export function CommunityPage() {
                   onPray={() => toggleLike(p.id)}
                   onBookmark={() => toggleBookmark(p.id)}
                   onOpenComments={() => setActiveCommentPostId(p.id)}
-                  onShare={() => {}}
+                  onShare={() => handleShare(p.id, p.text)}
                 />
               ))
             ) : (
@@ -334,7 +370,7 @@ export function CommunityPage() {
                         onPray={() => toggleLike(p.id)}
                         onBookmark={() => toggleBookmark(p.id)}
                         onOpenComments={() => setActiveCommentPostId(p.id)}
-                        onShare={() => {}}
+                        onShare={() => handleShare(p.id, p.text)}
                       />
                     ))}
                   </div>
@@ -372,7 +408,7 @@ export function CommunityPage() {
                             onPray={() => toggleLike(p.id)}
                             onBookmark={() => toggleBookmark(p.id)}
                             onOpenComments={() => setActiveCommentPostId(p.id)}
-                            onShare={() => {}}
+                            onShare={() => handleShare(p.id, p.text)}
                         />
                     ))
                 ) : (
@@ -396,6 +432,13 @@ export function CommunityPage() {
         postId={activeCommentPostId}
         onCommentsUpdated={handleCommentsUpdated}
       />
+
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-surface-elevated/95 border border-border/50 px-5 py-3 text-[12px] font-black uppercase tracking-widest text-foreground shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4 fade-in">
+          {toast.type === 'error' && <AlertTriangle size={16} className="text-red-500" />}
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }
