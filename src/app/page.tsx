@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValueEvent, useSpring, useMotionTemplate } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -126,7 +126,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
 /**
  * ──────────────────────────────────────────────────────────────────────────────
- * STICKY STACKING ENGINE (Layout Parity Re-aligned)
+ * STICKY STACKING ENGINE (iOS Native Refactor)
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
@@ -141,45 +141,70 @@ function StickyStackScene({
     scrollYProgress: any;
     totalCards?: number;
 }) {
-    // 1. Progress Linear (Mekanika Parity): Tanpa useSpring untuk tracking scroll 1:1
-    const cardProgress = useTransform(scrollYProgress, [0, 1], [0, totalCards - 1]);
+    // 1. Fluid Scroll Interaction: Apply Spring for that smooth iOS bounce/intertia
+    const smoothProgress = useSpring(scrollYProgress, {
+        stiffness: 400,
+        damping: 40,
+        mass: 1
+    });
 
-    // 2. Definisi Milestone Layout (Clean Stacks): Menumpuk dengan gap statis
+    const cardProgress = useTransform(smoothProgress, [0, 1], [0, totalCards - 1]);
+
+    // 2. Define 5 Milestones: Entrance, Active, and 3 layers of stacking depth
     const inputRanges = [
-        index - 1,   // Entering (Dari bawah)
-        index,       // Active (Puncak)
-        index + 1,   // Layer 1 (Tertutup 1 lapis)
-        index + 2,   // Layer 2
-        index + 3    // Layer 3
+        index - 1,   // Entering from below
+        index,       // Active at top
+        index + 1,   // Pushed back 1 layer
+        index + 2,   // Pushed back 2 layers
+        index + 3    // Pushed back 3 layers
     ];
 
-    const opacityRanges = [
-        0,      // Memudar masuk
-        1,      // Aktif
-        1,      // Tetap solid di belakang
-        1,      
-        1       
-    ];
+    // Y Axis: Clean vertical stacks
+    const y = useTransform(cardProgress, inputRanges, [
+        120,    // Hidden below
+        0,      // Active center
+        -20,    // Recede 1
+        -40,    // Recede 2
+        -60     // Recede 3
+    ]);
 
-    const scaleRanges = [
-        1,      // Skala penuh saat masuk
-        1,      // Puncak
-        0.95,   // Menyusut flat ke belakang (Legacy feel)
-        0.90,   
-        0.85    
-    ];
+    // Scale: Soft shrinkage into the background
+    const scale = useTransform(cardProgress, inputRanges, [
+        1,      // Entrance size
+        1,      // Active size
+        0.95,   // Layer 1
+        0.90,   // Layer 2
+        0.85    // Layer 3
+    ]);
 
-    const yRanges = [
-        120,    // Masuk dari bawah (Enhanced entry parity)
-        0,      // Posisi aktif
-        -20,    // Geser naik saat ditindih (Enhanced Stack Spacing)
-        -40,    
-        -60     
-    ];
+    // Opacity: Dim as it gets buried
+    const opacity = useTransform(cardProgress, inputRanges, [
+        0,      // Invisible
+        1,      // Full focus
+        0.8,    // Layer 1
+        0.6,    // Layer 2
+        0.4     // Layer 3
+    ]);
 
-    const opacity = useTransform(cardProgress, inputRanges, opacityRanges);
-    const scale = useTransform(cardProgress, inputRanges, scaleRanges);
-    const y = useTransform(cardProgress, inputRanges, yRanges);
+    // Blur: Dynamic Depth of Field (Native Feel)
+    const blurValue = useTransform(cardProgress, inputRanges, [
+        0,      // Sharp
+        0,      // Sharp
+        4,      // Layer 1 Blur
+        8,      // Layer 2 Blur
+        12      // Layer 3 Blur
+    ]);
+
+    // Brightness: Simulating shadow depth
+    const brightnessValue = useTransform(cardProgress, inputRanges, [
+        1,      // Normal
+        1,      // Normal
+        0.8,    // Layer 1
+        0.6,    
+        0.4     
+    ]);
+
+    const filter = useMotionTemplate`blur(${blurValue}px) brightness(${brightnessValue})`;
 
     return (
         <motion.div
@@ -189,8 +214,9 @@ function StickyStackScene({
                 opacity,
                 scale,
                 y,
+                filter,
                 zIndex: 10 + index,
-                willChange: 'transform, opacity',
+                willChange: 'transform, opacity, filter',
                 transformOrigin: 'top center'
             }}
         >
@@ -216,8 +242,11 @@ function Background() {
                 'animate-[twinkle_10s_ease-in-out_infinite]',
             )} />
             <div className="bg-grain absolute inset-0 mix-blend-overlay opacity-20" />
-            <div className="absolute -top-32 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/5 blur-3xl" />
-            <div className="absolute bottom-[-200px] right-[-200px] h-[560px] w-[560px] rounded-full bg-blue-600/5 blur-3xl" />
+            
+            {/* Ambient Diffused Orbs */}
+            <div className="absolute -top-32 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-cyan-500/5 blur-[120px]" />
+            <div className="absolute bottom-[-200px] right-[-200px] h-[760px] w-[760px] rounded-full bg-blue-600/5 blur-[140px]" />
+            
             <style>{`
                 @keyframes twinkle { 0%,100%{opacity:.18} 50%{opacity:.32} }
                 @keyframes shine { from{transform:translateX(-100%) skewX(-15deg)} to{transform:translateX(250%)  skewX(-15deg)} }
