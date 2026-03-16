@@ -35,13 +35,19 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - [x] `NEXT_PUBLIC_APP_URL` local dan production terdokumentasi
 - [x] `NEXT_PUBLIC_API_URL` atau padanannya terdokumentasi
 - [ ] Frontend origin Tencent Edge sesuai dengan origin yang diizinkan backend
-- [ ] Redirect backend selalu mengarah ke frontend origin yang benar
-- [ ] Share URL / OG URL memakai host production yang benar
+- [x] Canonical root redirect `/` -> `/today` ditangani lokal oleh `next.config.ts`.
+- [ ] Canonical WWW redirect `non-www` -> `www` ditangani oleh Panel Tencent Edge / DNS.
+- [ ] HTTP -> HTTPS dicentang di setelan Edge SSL/Load Balancer.
 
 ### Notes
-- Local: Host sudah disetel ke `localhost:9002` dan `127.0.0.1:8000`.
-- Production: Origin Tencent Edge belum di-whitelist di `CORS_ALLOWED_ORIGINS` cPanel.
-- Risks: Preflight OPTIONS request bisa dicekal oleh CORS cPanel jika tak dikonfigurasi.
+- Local: Root `/` di-redirect 308 (permanent) ke `/today` oleh `next.config.ts`. Modul WWW/HTTPS diabaikan dalam lokal.
+- Production: Origin Tencent Edge disiapkan sebagai Domain Parity utama, menunggu server delegation (Edge Rule / CDN Config).
+- Target Redirect Matrix Akhir:
+  1. `http://*` -> `https://www.*` (Server Edge Panel)
+  2. `https://thechoosentalks.org/*` -> `https://www.thechoosentalks.org/*` (Server Edge Panel)
+  3. `https://www.thechoosentalks.org/` -> `https://www.thechoosentalks.org/today` (Next.JS `next.config.ts`)
+  4. Path `/xyz` tetap dilestarikan (Next.JS routing).
+- Risks: Preflight OPTIONS request bisa dicekal oleh CORS cPanel jika tak dikonfigurasi. Redirect Loop jika `APP_URL` laravel membantah protokol `www`.
 - Status: NEEDS SERVER VALIDATION
 
 ---
@@ -60,7 +66,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 ### Notes
 - Local: Token JWT Firebase diselaraskan mulus ke API Proxy Next.js dan diterima Sanctum lokal.
 - Production: Risiko Apache menghapus header `Authorization: Bearer`.
-- Risks: Membutuhkan `CGIPassAuth On` di `.htaccess`.
+- Risks: Patch `CGIPassAuth On` di `.htaccess` sudah siap, menunggu server verification aktual.
 - Status: NEEDS SERVER VALIDATION
 
 ---
@@ -188,7 +194,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - Origin Production dan env `SANCTUM_STATEFUL_DOMAINS` di Edge & cPanel sama sekali tak terpetakan/terkonfigurasi.
 
 ### Residual Risks
-- Apache cPanel Mod_Security berisiko mencekal header `Authorization: Bearer` untuk seluruh endpoint hibrida.
+- Apache cPanel Mod_Security berisiko mencekal header `Authorization`. Patch `CGIPassAuth On` diaplikasikan, menunggu validasi server nyata.
 
 ### Final Status
 - BLOCKED

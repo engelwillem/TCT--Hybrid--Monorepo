@@ -155,7 +155,7 @@ Contoh:
 3. Cek apakah HTTP Header Auth sampai.
 
 ### Resolution
-- pending server validation
+- code patched (`CGIPassAuth On` ditambahkan ke `.htaccess`), pending server validation
 
 ### Status
 - NEEDS SERVER VALIDATION

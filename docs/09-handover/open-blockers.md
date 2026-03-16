@@ -10,10 +10,10 @@
 - status: **BLOCKED**
 
 ### 2. Authorization Header cPanel Restriction Risk
-- root cause: cPanel shared hosting (Apache) acap memangkas HTTP Header `Authorization: Bearer` jika `CGIPassAuth On` tidak disematkan di folder *root* server.
-- file terkait: `backend-api/public/.htaccess` dan `src/lib/proxy-laravel.ts`.
-- dampak: Autentikasi lintas server *hybrid* ini (*Token sync Next.js -> Laravel*) bisa berstatus 401 Unauthenticated ketika `deploy` tanpa konfirmasi.
-- langkah verifikasi: Hit staging server cPanel menggunakan Postman via rute otentikasi.
+- root cause: Apache di cPanel sering memangkas HTTP Header `Authorization: Bearer`.
+- file terkait: `backend-api/public/.htaccess`
+- dampak: Autentikasi lintas server (*hybrid*) patah (`401 Unauthenticated`) karena header JWT lenyap.
+- langkah verifikasi: Patch `CGIPassAuth On` sudah ditambahkan. Lakukan deployment staging dan hit proxy dari UI terotentikasi.
 - status: **NEEDS SERVER VALIDATION**
 
 ### 3. Stateful Sanctum / CORS Missing Server Origins
@@ -21,6 +21,13 @@
 - file terkait: `backend-api/.env`
 - dampak: Form submit atau *Fetch API* dari sisi browser publik dipastikan terkena pemblokiran CORS policy *Failed to Fetch*.
 - langkah verifikasi: Rilis Next.js UI ke sub-domain Tencent, coba masuk dengan akun lokal valid. Pastikan *Console logs* hijau.
+- status: **NEEDS SERVER VALIDATION**
+
+### 4. Canonical Host & SSL Force Routing
+- root cause: Pengalihan apex *non-www* `thechoosentalks.org` ke `www.thechoosentalks.org` beserta validasi paksaan *HTTPS* sebaiknya ditangani oleh peladen *CDN DNS Panel* agar tidak membenahi perulangan *request/redirect loop* di Node.js Edge. Konfigurasi panel belum disegerakan.
+- file terkait: Panel Administrasi Tencent Edge / CDN / DNS registrar. (Lokal telah menambal root `next.config.ts` untuk membelokkan rute masuk `/` ke halaman `/today`).
+- dampak: Jika lalai, pengguna mungkin login pada varian *http* (rentan bahaya) atau buntu di *state* cookies yang saling silang.
+- langkah verifikasi: Hit dari luar URL berantai `http://thechoosentalks.org` dan saksikan ia membelok menuju `https://www.thechoosentalks.org/today`.
 - status: **NEEDS SERVER VALIDATION**
 
 ## Notes

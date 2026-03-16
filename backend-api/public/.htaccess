@@ -3,6 +3,9 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Ensure Authorization headers are passed to PHP/FastCGI in cPanel
+    CGIPassAuth On
+
     RewriteEngine On
 
     RewriteCond %{HTTP:Authorization} .
