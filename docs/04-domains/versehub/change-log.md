@@ -20,3 +20,11 @@
 ### Diubah
 - Mengarahkan fungsional _button_ "Tulis Refleksimu" pada `<EndOfChapterPrompt>` menuju `/community?intent=reflection` menggunakan parameter `ref` dan `text`.
 - Menghapus `<ReflectionComposer>` yang sebelumnya membuat formulir eksklusif tertutup secara lokal (_isolated loop_).
+
+## [Cleanup Phase] - 2026-03-17
+
+### Dihapus
+- Mengamputasi dan membebaskan rute `src/components/versehub/ReflectionComposer.tsx` dari memori pindaian _build_, membersihkan sisa import statik yang tidak dijangkau di `VersehubReaderPage.tsx`.
+
+### Status Akhir
+- VerseHub resmi ditutup (**CLOSED**) tanpa satu pun _blocker_ keparahan tinggi tersisa. Matriks paritas diyakini pas 100%.
