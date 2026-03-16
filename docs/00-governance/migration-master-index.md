@@ -1,19 +1,30 @@
-# Rekam Master Migrasi & Arsitektur
+# Migration Master Index
 
-Berikut adalah rekaman sentral dari inisiasi migrasi sistem hibrida (Laravel 11 Backend + Next.js App Router).
+## Goal
+Migrasi dari Laravel legacy monolith ke Laravel + Next.js decouple hybrid monorepo dengan parity setinggi mungkin dan experience layer baru yang lebih relevan.
 
-## Domain Parity Tracker (Legacy vs Hybrid)
-Batas lingkup setiap domain yang telah diperoses:
-1. **Profile Lifecycle** -> (`Otentikasi, Update Data, Avatar`)
-2. **Community** -> (`Composer, Feed Rendering, Interaction Reactions/Comment`)
-3. **Inbox** -> (`Read/Unread Parity, Broadcast Notification`)
+## Active Tracks
+1. Legacy-to-hybrid parity migration
+2. Experience architecture re-architecture
+3. E2E and release-readiness hardening
+4. Local-to-production parity discipline
 
-## Experience Layer Tracker (Spiritual Relevance Engine)
-Sistem pengalaman yang membungkus antarmuka monorepo:
-1. **The Anchor / Today Homepage Context** (`Contextual Rendering, StateChips`)
-2. **Relevance Injectors** (`HookCard UI`)
-3. **Response Terminal** (`Reflection Detail Template`)
-4. **Learning & Retention Path** (`Spiritual Journeys`)
+## Domain Status
+- Profile lifecycle: CLOSED
+- Inbox / DM: CLOSED
+- Community: ACTIVE
+- Today: ACTIVE
+- VerseHub: PENDING
 
-## Database & Models (Status Migrasi Backend)
-Semua entitas data bertumpu pada arsitektur bawaan (`MemberPost`, `Comment`, `Reaction`). Perluasan metadata ditangani melalui ekstraksi *JSON array payload* (`metadata: { 'source_ref': 'xyz' }`) alih-alih merilis *migrations* relasional SQL yang mahal dan berisiko merusak struktur *Production*.
+## Feature Status
+- Relevance homepage: ACTIVE
+- Hook card system: ACTIVE
+- Reflection template: ACTIVE
+- Spiritual journeys: ACTIVE
+
+## Core Rules
+- Patch sempit
+- Verifikasi keras
+- Docs wajib update
+- Root harus clean
+- Git harus bersih

@@ -1,11 +1,16 @@
-# Tindakan Eksekusi Selanjutnya
+# Next Actions
 
-## The Smart Community Composer (Backend & Handoff Integration)
-Ini adalah **Prioritas 1** (High Leverage).
-- **Tugas Puncak:** Memodifikasi `CommunityComposer.tsx` agar ia menangkap `url search parameter` yang dilempar dari komponen `HookCard` di berbagai domain (`?intent=verse_reflection&ref=mzm-23-4`).
-- **Skema Aksi:** Composer langsung otomatis *expand*, *tag* berubah sesuai parameter (mis. "Minta Doa" / "Renungkan Ayat"), serta kartu bayangan (`<DailyVerseHeroCard>` mini) dirender di dalam *textarea* composer.
-- **Backend (API) Verifikasi:** Mengaliri `metadata` JSON ini via `app-laravel.ts` ke controller `/api/v1/community/posts` (Payload test pada DB lokal laravel `MemberPosts`).
+## Immediate
+1. selesaikan blocker Community yang masih aktif
+2. audit dan kunci experience architecture baru
+3. siapkan local-to-production parity checklist
+4. siapkan E2E inventory untuk main apps
 
-## Egress Points Persebaran di Domain Verse (Integrasi Penuh)
-- **VerseHub Reader Page:** Menaruh komponen `<JourneyActionButtons>` (Atau wujud murni `<HookCard>`) di ekor artikel/pembacaan bab ayat.
-- **Today API Sync:** Menyambungkan `StateChips` di Homepage ke Controller `TodayApiController` (saat me-*fetch* data), atau tetap mempertahankan filter komputasional Klien saja hingga *analytics* membludak.
+## After Immediate
+1. lock technical architecture untuk relevance engine
+2. hubungkan journeys ke backend nyata
+3. verifikasi Today dan VerseHub sebagai bagian dari experience layer baru
+4. siapkan release-readiness report
+
+## Execution Rule
+Jangan buka step berikutnya sebelum step sekarang berstatus PASS atau BLOCKED.

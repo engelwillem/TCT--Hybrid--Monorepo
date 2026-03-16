@@ -1,15 +1,40 @@
-# Repository Rules
+# Repo Rules
+## Purpose
+Repository ini dikelola untuk migrasi parity dan re-architecture experience pada hybrid monorepo Laravel + Next.js.
 
-## Monorepo Architecture
-This repository implements a Hybrid Monorepo architecture joining a Laravel 11 Backend (API & Admin) and a Next.js 14 Frontend (App Router, Client Components).
+## Non-Negotiable Rules
+1. Root repository harus tetap bersih.
+2. Dilarang membuat report, log, dump, atau notes di root.
+3. Semua dokumentasi wajib disimpan di `docs/`.
+4. Semua perubahan harus mengikuti scope aktif. Jangan patch lintas domain tanpa keputusan eksplisit.
+5. Jangan melakukan rewrite total jika targetnya bisa dicapai dengan patch sempit.
+6. Source of truth untuk parity adalah kode legacy yang berjalan, bukan asumsi atau docs yang sudah usang.
+7. Jangan menyatakan PASS jika masih ada mismatch nyata.
+8. Gunakan status:
+   - PASS
+   - BLOCKED
+   - CLOSED
+9. Semua perubahan harus bisa ditelusuri melalui:
+   - domain docs
+   - changelog
+   - handover
+   - git history
 
-## Core Principles
-1. **Decoupled Data, Coupled Experience**: Laravel remains stateless API, Next.js handles complex client state and UI routing.
-2. **Spiritual Relevance Engine**: The design philosophy prohibits "content silos." Every long-form content must offer a handoff to the response layer (Community).
-3. **API Contracts**: Existing domains and backend endpoints MUST NOT be aggressively rewritten unless necessary for parity. Progressive enhancement is prioritized.
-4. **No Feature Bleed**: Keep components strictly typed and domain-specific unless explicitly promoted to `src/components/shared` or `src/components/system`.
+## Root Cleanliness Policy
+Tidak boleh ada file seperti:
+- `*.txt` report
+- `output.*`
+- `dump.*`
+- `notes.*`
+- `debug.*`
+- file eksperimen sementara
 
-## Technology Stack
-- **Backend:** Laravel 11, Sanctum (Token Auth, No Stateful SPA for E2E speed), MySQL.
-- **Frontend:** Next.js (React), Tailwind CSS, Framer Motion, Zustand (if needed).
-- **Testing:** Playwright for E2E, acting through full stack bypass modes where necessary.
+## Allowed Permanent Top-Level Directories
+Hanya direktori yang memang bagian produk/tooling/proyek yang boleh ada di root. Dokumentasi wajib di `docs/`.
+
+## Completion Rule
+Sebuah step dianggap selesai hanya jika:
+1. kode terpatch
+2. verifikasi dilakukan
+3. docs terkait diperbarui
+4. git scope bersih
