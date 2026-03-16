@@ -1,17 +1,105 @@
 # API Contract Diff Log
 
 ## Purpose
-Dokumen ini melacak perbedaan kontrak dan limitasi (CORS, Payload Rules, Header Stripping) antara Local Laravel 11 dan cPanel Backend (atau Next.js Server Actions di Tencent Edge).
+Mencatat drift kontrak API antara local dan production, atau antara expected contract dan observed contract.
 
-## Log Entri
+Jangan isi dengan dugaan umum. Setiap entry harus merujuk ke flow nyata.
 
-### 1. Parity Token Proxy Layer
-- **Local Expected**: Firebase JWT dan Custom Token Bearer lulus verifikasi.
-- **Production (cPanel) Risk**: Seringkali mod_security Apache menghapus header `Authorization` dari request secara *default* jika tidak ditangani via `.htaccess`.
-- **Status Verifikasi**: **NEEDS SERVER VALIDATION**
-- **Action Required**: Pastikan HTTP header rewrite `CGIPassAuth On` termuat di `.htaccess` cPanel sebelum mengesahkan parity.
+## Status Legend
+- OPEN
+- VERIFIED
+- BLOCKED
+- NEEDS SERVER VALIDATION
+- CLOSED
 
-### 2. URL Parameter "Smart Composer" (Community Endpoint)
-- **Local Expected**: Payload `/api/v1/community/posts` diserap sukses beserta state UI di `localhost`.
-- **Production Risk**: Parameter request mungkin terpotong di edge cacing cache (meski kecil kemungkinannya untuk POST).
-- **Status Verifikasi**: BLOCKED (Masih di level *Frontend* perombakan *intent* lokal).
+## Entry Template
+
+### Entry ID
+`api-diff-000`
+
+### Date
+YYYY-MM-DD
+
+### Domain
+- auth
+- profile-lifecycle
+- inbox-dm
+- community
+- today
+- versehub
+- relevance-layer
+- journeys
+
+### Flow
+Contoh:
+- login
+- profile update
+- inbox send message
+- community create comment
+
+### Endpoint
+- Method:
+- Local URL:
+- Production URL:
+- Proxy route (jika ada):
+
+### Expected Contract
+#### Request
+- headers:
+- query:
+- params:
+- body:
+
+#### Response
+- success status:
+- success payload shape:
+- validation error shape:
+- auth error shape:
+- not-found/forbidden shape:
+
+### Observed Local Behavior
+- status:
+- payload:
+- notes:
+
+### Observed Production Behavior
+- status:
+- payload:
+- notes:
+
+### Diff Summary
+- Jelaskan mismatch paling nyata
+
+### Root Cause Hypothesis
+- Env mismatch
+- Proxy mismatch
+- Backend code drift
+- cPanel header/rewrite issue
+- Tencent Edge runtime issue
+- Unknown
+
+### Files Potentially Involved
+- backend:
+- frontend:
+- proxy:
+- env/config:
+
+### Verification Steps
+1.
+2.
+3.
+
+### Resolution
+- Fixed / not fixed / pending
+
+### Status
+- OPEN
+- VERIFIED
+- BLOCKED
+- NEEDS SERVER VALIDATION
+- CLOSED
+
+---
+
+## Active Diff Entries
+Tambahkan entry baru di bawah bagian ini dengan urutan terbaru di atas.
