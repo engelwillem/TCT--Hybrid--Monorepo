@@ -9,6 +9,13 @@
 - langkah verifikasi: Patch membaca nilai parameter `intent` dan `text` lewat `useSearchParams` pada `CommunityPage.tsx` dan memasukkannya ke initial props Composer. Referensi URL teraba abaikan pada rute POST demi kompatibilitas format awal. Fitur terbukti aman dan formulir mematuhi instruksi otomatis dari luar.
 - status: **PASS**
 
+### 1b. VerseHub End of Chapter Reflection Mismatch
+- root cause: `VersehubReaderPage.tsx` merender prompt statik `Bagaimana ayat-ayat ini...` dan mengabaikan suplai prop dinamis `reflection_question` (dari *AI Mentor Insight* pada backend), serta tidak mencegat kondisi `has_reflected`.
+- file terkait: `src/features/versehub/pages/VersehubReaderPage.tsx`
+- dampak: Pengguna kehilangan konteks pertanyaan bimbingan personal dari *Backend Mentor Engine*, menjadikannya pengalaman yang monoton (*static placeholder*).
+- langkah verifikasi: Bongkar objek respons pada `loadChapter`, pancing masuk ke parameter `EndOfChapterPrompt`. Pastikan tulisan di UI menyamai cetakan *Database*.
+- status: **READY FOR PATCH**
+
 ### 2. Authorization Header cPanel Restriction Risk
 - root cause: Apache di cPanel sering memangkas HTTP Header `Authorization: Bearer`.
 - file terkait: `backend-api/public/.htaccess`
