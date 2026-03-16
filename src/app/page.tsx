@@ -92,7 +92,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
     return (
         <article 
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-8 md:p-12 backdrop-blur-3xl transition-all duration-500 shadow-premium ring-1 ring-white/5 min-h-[400px] md:min-h-[500px] justify-between" 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/90 md:bg-white/[0.06] p-8 md:p-12 backdrop-blur-3xl transition-all duration-500 shadow-premium ring-1 ring-white/5 min-h-[380px] md:min-h-[500px] justify-between" 
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -100,7 +100,6 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
             />
             
             <div className="relative z-10 flex flex-col space-y-5 md:space-y-8">
-                {/* Icon Block */}
                 <div className={cn('flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
                     <Icon className="h-6 w-6 md:h-7 md:w-7" />
                 </div>
@@ -126,7 +125,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
 /**
  * ──────────────────────────────────────────────────────────────────────────────
- * STICKY STACKING ENGINE (iOS Native Refactor - Unified 1-Column)
+ * STICKY STACKING ENGINE
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
@@ -147,45 +146,41 @@ function StickyStackScene({
         mass: 1
     });
 
-    // We map the global progress (0-1) to card-specific relative indices
     const cardProgress = useTransform(smoothProgress, [0, 1], [0, totalCards - 1]);
 
     const inputRanges = [
-        index - 1,   // Entering from below
-        index,       // Active at top (Focus)
-        index + 1,   // Pushed back 1 layer
-        index + 2,   // Pushed back 2 layers
-        index + 3    // Pushed back 3 layers
+        index - 1,   // Entering
+        index,       // Active
+        index + 1,   // Pushed back 1
+        index + 2,   // Pushed back 2
+        index + 3    // Pushed back 3
     ];
 
-    // Y Axis: Cumulative stacking offset
+    // Mobile specific Y offset logic to prevent collision seen in screenshot
     const y = useTransform(cardProgress, inputRanges, [
-        120,    // Entering
+        600,    // Enter from deep below on mobile
         0,      // Active
-        -15,    // Stacking Layer 1 (Mobile optimized offset)
+        -15,    // Stacking Layer 1
         -30,    // Stacking Layer 2
         -45     // Stacking Layer 3
     ]);
 
-    // Scale: Shrink into background
     const scale = useTransform(cardProgress, inputRanges, [
-        1,      // Entrance size
-        1,      // Active size
+        0.9,    // Slightly smaller entering
+        1,      // Active
         0.96,   // Layer 1
         0.92,   // Layer 2
         0.88    // Layer 3
     ]);
 
-    // Opacity: Fade slightly as buried
     const opacity = useTransform(cardProgress, inputRanges, [
-        0,      // Start
-        1,      // Full
-        0.85,   // Buried 1
-        0.7,    // Buried 2
-        0.5     // Buried 3
+        0,      
+        1,      
+        0.9,   
+        0.7,    
+        0.5     
     ]);
 
-    // Blur: Depth of field simulation
     const blurValue = useTransform(cardProgress, inputRanges, [
         0,      
         0,      
@@ -194,7 +189,6 @@ function StickyStackScene({
         10      
     ]);
 
-    // Brightness: Lighting depth
     const brightnessValue = useTransform(cardProgress, inputRanges, [
         1,      
         1,      
@@ -218,7 +212,7 @@ function StickyStackScene({
                 willChange: 'transform, opacity, filter',
                 transformOrigin: 'top center'
             }}
-            className="flex items-center justify-center w-full"
+            className="flex items-center justify-center w-full px-2"
         >
             <div className="w-full max-w-xl">
                 <FeatureCard {...item} />
@@ -236,7 +230,7 @@ function StickyStackScene({
 function Background() {
     return (
         <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-teal-950" />
+            <div className="absolute inset-0 bg-[#020617]" />
             <div className={cn(
                 'absolute inset-0',
                 'bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)]',
@@ -278,11 +272,11 @@ function QuickAccessLauncher() {
                             const Icon = item.icon;
                             return (
                                 <motion.div key={item.href} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                                    <Link href={item.href} className="group flex w-[92px] flex-col items-center gap-2 rounded-2xl bg-slate-900/90 px-2 py-3.5 ring-1 ring-white/12 shadow-2xl backdrop-blur-md active:scale-95 transition-all">
-                                        <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm', item.tone)}>
-                                            <Icon className="h-5 w-5 text-slate-950" />
+                                    <Link href={item.href} className="group flex w-[84px] flex-col items-center gap-2 rounded-2xl bg-slate-900/95 px-2 py-3 ring-1 ring-white/12 shadow-2xl backdrop-blur-md active:scale-95 transition-all">
+                                        <span className={cn('flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm', item.tone)}>
+                                            <Icon className="h-4.5 w-4.5 text-slate-950" />
                                         </span>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">
                                             {item.label}
                                         </span>
                                     </Link>
@@ -297,14 +291,14 @@ function QuickAccessLauncher() {
                 type="button"
                 onClick={() => setOpen(v => !v)}
                 className={cn(
-                    'relative inline-flex h-14 w-14 items-center justify-center rounded-full ring-1 ring-white/20 transition-all duration-300',
+                    'relative inline-flex h-12 w-12 items-center justify-center rounded-full ring-1 ring-white/20 transition-all duration-300',
                     open
                         ? 'bg-slate-800 text-white shadow-xl'
                         : 'bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-[0_12px_32px_rgba(34,211,238,0.3)]',
                 )}
             >
                 <motion.span animate={{ rotate: open ? 45 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-                    <Plus className="h-6 w-6" />
+                    <Plus className="h-5 w-5" />
                 </motion.span>
             </button>
         </div>
@@ -333,7 +327,7 @@ export default function LandingPage() {
     });
 
     return (
-        <div className="relative min-h-screen text-white selection:bg-cyan-400/30 overflow-x-hidden bg-slate-950">
+        <div className="relative min-h-screen text-white selection:bg-cyan-400/30 overflow-x-hidden bg-[#020617]">
             <Background />
 
             {/* Navbar */}
@@ -369,11 +363,11 @@ export default function LandingPage() {
                     </motion.div>
                 </section>
 
-                {/* Sticky Experience Stage (Redesigned for 1-Column Cumulative Stack) */}
+                {/* Sticky Experience Stage */}
                 <section ref={containerRef} className="relative h-[320vh] mb-24">
-                    <div className="sticky top-0 h-[100dvh] flex flex-col items-center justify-center overflow-hidden px-6">
-                        {/* Sticky Heading Anchor */}
-                        <div className="w-full max-w-xl text-center mb-12 space-y-4 pt-10 md:pt-0">
+                    <div className="sticky top-0 h-[100dvh] flex flex-col items-center justify-center overflow-hidden px-6 pt-12 md:pt-0">
+                        {/* Sticky Heading Anchor - Safe spacing for mobile status bar */}
+                        <div className="w-full max-w-xl text-center mb-8 md:mb-12 space-y-4">
                             <Badge><Sparkles size={12} className="text-brand" /> Ecosystem Modules</Badge>
                             <h2 className="tct-serif text-3xl sm:text-5xl leading-tight tracking-tight text-white font-bold">
                                 Satu Platform,<br />
@@ -396,7 +390,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* Card Stacking Stage */}
-                        <div className="relative h-[440px] md:h-[540px] w-full max-w-xl">
+                        <div className="relative h-[420px] md:h-[540px] w-full max-w-xl">
                             {featureItems.map((item, i) => (
                                 <StickyStackScene 
                                     key={item.id} 
