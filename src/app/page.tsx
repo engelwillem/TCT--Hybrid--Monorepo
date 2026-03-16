@@ -8,7 +8,8 @@ import {
   useMotionValueEvent, 
   useSpring, 
   useMotionTemplate, 
-  AnimatePresence 
+  AnimatePresence,
+  MotionValue
 } from "framer-motion";
 import Link from "next/link";
 import {
@@ -16,10 +17,11 @@ import {
   BookMarked,
   BookOpen,
   LogIn,
-  Plus,
   Sparkles,
   Users,
   ShieldCheck,
+  Compass,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +33,15 @@ import { cn } from "@/lib/utils";
  */
 
 const featureItems = [
+    {
+        id: 'today',
+        icon: Compass,
+        title: 'Today Feed',
+        description: 'Mulai harimu dengan renungan harian, doa, dan pengingat resolusi yang disesuaikan untukmu.',
+        href: '/today',
+        ctaLabel: 'Buka Today',
+        accent: 'amber' as const,
+    },
     {
         id: 'channels',
         icon: BookOpen,
@@ -89,13 +100,14 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
     description: string;
     href: string;
     ctaLabel?: string;
-    accent?: 'cyan' | 'violet' | 'emerald' | 'blue';
+    accent?: 'cyan' | 'violet' | 'emerald' | 'blue' | 'amber';
 }) {
     const accentMap = {
         cyan:    { icon: 'bg-cyan-400/10 text-cyan-400',     glow: 'rgba(34,211,238,0.15)' },
         violet:  { icon: 'bg-violet-400/10 text-violet-400', glow: 'rgba(167,139,250,0.15)' },
         emerald: { icon: 'bg-emerald-400/10 text-emerald-400',glow: 'rgba(52,211,153,0.15)' },
         blue:    { icon: 'bg-blue-400/10 text-blue-400',     glow: 'rgba(96,165,250,0.15)' },
+        amber:   { icon: 'bg-amber-400/10 text-amber-400',   glow: 'rgba(251,191,36,0.15)' },
     }[accent];
 
     return (
@@ -141,11 +153,11 @@ function StickyStackScene({
     item, 
     index, 
     scrollYProgress,
-    totalCards = 4
+    totalCards = 5
 }: { 
     item: any; 
     index: number; 
-    scrollYProgress: any;
+    scrollYProgress: MotionValue<number>;
     totalCards?: number;
 }) {
     const smoothProgress = useSpring(scrollYProgress, {
@@ -161,16 +173,18 @@ function StickyStackScene({
         index,       // Active
         index + 1,   // Pushed back 1
         index + 2,   // Pushed back 2
-        index + 3    // Pushed back 3
+        index + 3,   // Pushed back 3
+        index + 4    // Pushed back 4
     ];
 
     // Refined mobile specific stacking logic - using 600px entry to avoid overlap
     const y = useTransform(cardProgress, inputRanges, [
         600,    // Start deep below
         0,      // Focused
-        -25,    // Layer 1 (Adjusted from -20 for better mobile separation)
+        -25,    // Layer 1
         -50,    // Layer 2
-        -75     // Layer 3
+        -75,    // Layer 3
+        -100    // Layer 4
     ]);
 
     const scale = useTransform(cardProgress, inputRanges, [
@@ -178,7 +192,8 @@ function StickyStackScene({
         1,      
         0.95,   
         0.90,   
-        0.85    
+        0.85,
+        0.80    
     ]);
 
     const opacity = useTransform(cardProgress, inputRanges, [
@@ -186,15 +201,17 @@ function StickyStackScene({
         1,      
         0.95,   
         0.85,    
-        0.7     
+        0.75,
+        0.65     
     ]);
 
     const blurValue = useTransform(cardProgress, inputRanges, [
         0,      
         0,      
         2,      
-        6,      
-        10      
+        4,      
+        6,
+        8      
     ]);
 
     const brightnessValue = useTransform(cardProgress, inputRanges, [
@@ -202,7 +219,8 @@ function StickyStackScene({
         1,      
         0.9,   
         0.8,    
-        0.7     
+        0.7,
+        0.6     
     ]);
 
     const filter = useMotionTemplate`blur(${blurValue}px) brightness(${brightnessValue})`;
