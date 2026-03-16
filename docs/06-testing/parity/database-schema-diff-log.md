@@ -1,16 +1,97 @@
 # Database Schema Diff Log
 
 ## Purpose
-Melacak pergeseran schema database `Local (MySQL/SQLite)` dengan `Production cPanel (MySQL/MariaDB)` sebelum deklarasi penyelesaian parity (*Schema Drift*).
+Mencatat drift schema database antara local dan production yang dapat memengaruhi parity aplikasi.
 
-## Log Entri
+Dokumen ini bukan dump SQL. Fokus pada perbedaan yang relevan terhadap runtime aplikasi.
 
-### 1. Parity Migration (TCT Legacy Monolithic)
-- **Local Expected**: Skema sudah setara dengan `tct-db` eksisting. Migration files laravel terkunci.
-- **Production Risk**: Eksekusi artisan migration `php artisan migrate` di sistem legacy cPanel mungkin memecahkan tabel aktif jika struktur `User` berubah agresif.
-- **Status Verifikasi**: **PASS / PROTECTED** (Rencana *Experience Engine* sejauh ini berjalan independen dan tidak mengobrak-abrik database lawas).
+## Status Legend
+- OPEN
+- VERIFIED
+- BLOCKED
+- NEEDS SERVER VALIDATION
+- CLOSED
 
-### 2. Parity Spiritual Journeys
-- **Local Expected**: Progres journey ditampung menggunakan *Browser Local Storage* sementara (*MVP*).
-- **Production Risk**: Jika *Sync API* dibangun esok hari ke cPanel, harus dieksekusi tabel baru *(User_Journey/Path)*.
-- **Status Verifikasi**: **PENDING** (Menunggu integrasi ke backend nyata).
+## Entry Template
+
+### Entry ID
+`db-diff-000`
+
+### Date
+YYYY-MM-DD
+
+### Domain
+- auth
+- profile-lifecycle
+- inbox-dm
+- community
+- today
+- versehub
+- relevance-layer
+- journeys
+- shared
+
+### Table
+Nama tabel
+
+### Column / Index / Constraint
+- Column:
+- Type:
+- Nullable:
+- Default:
+- Index/Constraint:
+
+### Expected Local Schema
+- describe:
+
+### Observed Production Schema
+- describe:
+
+### Runtime Impact
+Contoh:
+- 500 pada write flow
+- validation lolos tapi insert gagal
+- avatar URL tidak tersimpan
+- inbox unread state drift
+- comment reply gagal
+
+### Evidence
+- migration file:
+- model/controller dependency:
+- query/runtime surface:
+- observed error:
+
+### Resolution Path
+- add migration
+- adjust code
+- align seed
+- server migration pending
+- manual remediation needed
+
+### Verification Steps
+1.
+2.
+3.
+
+### Status
+- OPEN
+- VERIFIED
+- BLOCKED
+- NEEDS SERVER VALIDATION
+- CLOSED
+
+---
+
+## Critical Tables Checklist
+- [ ] users
+- [ ] profiles / user meta related tables
+- [ ] personal_access_tokens
+- [ ] inbox / messages / approvals related tables
+- [ ] community / comments / bookmarks / reactions related tables
+- [ ] content / journey related tables bila aktif
+- [ ] any upload/media table that affects UI
+
+---
+
+## Active Schema Drift Entries
+Tambahkan entry baru di bawah bagian ini dengan urutan terbaru di atas.
