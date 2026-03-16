@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent, useSpring, useMotionTemplate } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValueEvent, useSpring, useMotionTemplate, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -101,7 +101,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
             
             <div className="relative z-10 flex flex-col space-y-5 md:space-y-8">
                 {/* Icon Block */}
-                <div className={cn('flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
+                <div className={cn('flex h-12 h-12 md:h-14 md:w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
                     <Icon className="h-6 w-6 md:h-7 md:w-7" />
                 </div>
 
