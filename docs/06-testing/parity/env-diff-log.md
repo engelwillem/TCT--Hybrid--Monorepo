@@ -121,6 +121,7 @@ Contoh:
 - [ ] queue/mail toggles that affect UX documented
 - [ ] build-time vars for Tencent Edge documented
 - [ ] cPanel runtime assumptions documented
+- [ ] **Mesin runner CI/CD diizinkan oleh CSF Firewall cPanel via whitelist/VPN tunnel**
 
 ---
 

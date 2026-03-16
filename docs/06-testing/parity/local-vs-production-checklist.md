@@ -151,12 +151,13 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - [ ] cPanel rewrite/redirect rules tidak bertabrakan dengan hybrid routes
 - [x] SSR/CSR behavior tidak bergantung pada local-only assumptions
 - [x] Proxy path dan rewrite path sama
+- [ ] **CI/CD Pipeline cPanel SSH Access tidak diblokir**
 
 ### Notes
 - Local: CSR & Next.js proxying API tervalidasi `npm run dev`.
-- Production: N/A
-- Risks: Next.js API Routes (Server Actions) yang dijadikan proxy auth token performanya di Tencent Edge Function belum dipastikan.
-- Status: NEEDS SERVER VALIDATION
+- Production: Deployment #21 via GitHub Actions `backend-cpanel-deploy.yml` gagal (`connection timed out`).
+- Risks: Alamat IP mesin GitHub (runners) diblikir oleh *Firewall* (CSF/mod_security) cPanel milik provider hosting, memutus jembatan *scp* dan *ssh*. Next.js API Routes (Server Actions) yang dijadikan proxy auth token performanya di Tencent Edge Function belum dipastikan.
+- Status: BLOCKED
 
 ---
 

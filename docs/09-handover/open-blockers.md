@@ -39,5 +39,15 @@
   - [ ] `https://www.thechoosentalks.org/` -> harus membelok ke `https://www.thechoosentalks.org/today`
 - status: **READY FOR SERVER CONFIG**
 
+### 5. Deployment cPanel #21 GitHub Actions Timeout
+- root cause: Alamat IP dari peladen *GitHub Actions runners* ditolak oleh *Firewall* (CSF/mod_security) cPanel milik penyedia *hosting*. Titik gagal (*Failure Point*) berada secara nyata pada baris `Upload artifact and deploy scripts`: `ssh: connect to host *** port ***: Connection timed out`.
+- file terkait: `.github/workflows/backend-cpanel-deploy.yml` dan konfigurasi *Security Panel* di server cPanel.
+- dampak: Pipeline CI/CD `main` menjadi rongsokan dan gagal mengeksekusi otomatisasi skrip `deploy.sh`. Seluruh rilis akan tertahan.
+- langkah verifikasi: Setujui rancangan mitigasi jaringan:
+  1. (Opsional A) Buka pelacakan IP dinamis GitHub Actions di *Whitelist* CSF Server secara makro.
+  2. (Opsional B) Manfaatkan skrip `Action` perantara (*Tailscale/VPN*) jika panel mengizinkan koneksi simetris.
+  3. Uji *run ulang* `backend-cpanel-deploy.yml` hingga stempel `scp` sukses merobek masuk.
+- status: **BLOCKED**
+
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
