@@ -21,7 +21,7 @@ Hybrid monorepo sedang berjalan dalam dua track:
 - Spiritual journeys
 
 ## Current Priority
-1. Eksekusi penguncian layer `Today` (Paritas Homepage). (Persistensi rute `Journey` telah sukses ditambal ke backend).
+1. Siapkan penguncian status *cleanup* untuk lajur `Journey`, atau mulailah mengeksekusi paritas layer `Today` (Homepage).
 4. selesaikan mitigasi local vs production parity yang masih berselimut status `NEEDS SERVER VALIDATION` (khususnya isu Env CORS dan CGIPassAuth cPanel).
 
 ## Non-Negotiable Constraints

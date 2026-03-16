@@ -11,13 +11,18 @@ import { getStudyPaths } from '@/services/journeys.service';
 export default function PathsLibraryPage() {
     const [paths, setPaths] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         getStudyPaths()
             .then((data) => {
                 if (data.paths) setPaths(data.paths);
+                else setError(true);
             })
-            .catch((e) => console.error(e))
+            .catch((e) => {
+                console.error(e);
+                setError(true);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -41,6 +46,11 @@ export default function PathsLibraryPage() {
             <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-2">
                 {loading ? (
                     <div className="flex h-32 items-center justify-center text-white/50">Memuat perjalanan...</div>
+                ) : error || paths.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center pt-20 text-center text-white/50 px-4">
+                        <Compass className="h-10 w-10 mb-4 opacity-50" />
+                        <p>Belum ada perjalanan spiritual yang tersedia saat ini.<br/>Silakan kembali lagi nanti.</p>
+                    </div>
                 ) : (
                     <div className="grid gap-5 md:grid-cols-2">
                         {paths.map((item, idx) => {

@@ -14,7 +14,7 @@
 - file terkait: `src/app/paths/page.tsx`, `src/app/paths/[slug]/page.tsx`, `src/services/journeys.service.ts`
 - dampak: Rutinitas bacaan pengguna (_retention loop_) musnah apabila beralih piranti (cross-device) atau membersihkan tembolok _Browser_. Fitur MVP ini mati secara fungsional.
 - langkah verifikasi: Dibuat `journeys.service.ts` untuk melayani panggilan GET katalog kurikulum, GET detail langkah, serta POST pelunasan rute. Menggusur `JOURNEYS` statik. Coba lengkapi tugas 1 hari; nilai kemajuan kini tersimpan kekal melalui respon API backend. (TERBUKTI)
-- status: **PASS**
+- status: **CLOSED**
 
 ### 1b. VerseHub End of Chapter Reflection Mismatch
 - root cause: `VersehubReaderPage.tsx` merender prompt statik `Bagaimana ayat-ayat ini...` dan mengabaikan suplai prop dinamis `reflection_question` (dari *AI Mentor Insight* pada backend), serta tidak mencegat kondisi `has_reflected`.

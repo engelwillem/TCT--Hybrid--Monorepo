@@ -18,14 +18,19 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
     const [expandedDay, setExpandedDay] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         getStudyPathDetail(slug)
             .then((data) => {
                 if (data.path) setPathData(data.path);
+                else setError(true);
                 if (data.userProgress) setCompletedSteps(data.userProgress);
             })
-            .catch((e) => console.error(e))
+            .catch((e) => {
+                console.error(e);
+                setError(true);
+            })
             .finally(() => setLoading(false));
     }, [slug]);
 
@@ -44,7 +49,7 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
         }
     };
 
-    if (loading || !pathData) {
+    if (loading) {
         return (
             <MobileAppLayout
                 title="Memuat..."
@@ -53,6 +58,27 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                 className="md:max-w-none bg-slate-950 text-white min-h-screen"
             >
                 <div className="flex h-screen items-center justify-center text-white/50">Memuat perjalanan...</div>
+            </MobileAppLayout>
+        );
+    }
+
+    if (error || !pathData) {
+        return (
+            <MobileAppLayout
+                title="Perjalanan Tidak Ditemukan"
+                activeNavId="paths"
+                backHref="/paths"
+                className="md:max-w-none bg-slate-950 text-white min-h-screen"
+            >
+                <div className="flex h-screen flex-col items-center pt-32 text-center px-4">
+                    <p className="text-white/50 mb-4">Perjalanan ini tidak dapat ditemukan atau gagal dimuat dari server.</p>
+                    <button 
+                        onClick={() => router.push('/paths')}
+                        className="bg-white/10 hover:bg-white/20 transition-all text-white font-medium px-6 py-3 rounded-full text-sm"
+                    >
+                        Kembali ke Perpustakaan
+                    </button>
+                </div>
             </MobileAppLayout>
         );
     }
