@@ -92,7 +92,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
     return (
         <article 
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-8 md:p-12 backdrop-blur-3xl transition-all duration-500 shadow-premium ring-1 ring-white/5 min-h-[440px] md:min-h-[540px] justify-between" 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-8 md:p-12 backdrop-blur-3xl transition-all duration-500 shadow-premium ring-1 ring-white/5 min-h-[400px] md:min-h-[500px] justify-between" 
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -101,7 +101,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
             
             <div className="relative z-10 flex flex-col space-y-5 md:space-y-8">
                 {/* Icon Block */}
-                <div className={cn('flex h-12 h-12 md:h-14 md:w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
+                <div className={cn('flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
                     <Icon className="h-6 w-6 md:h-7 md:w-7" />
                 </div>
 
@@ -126,7 +126,7 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
 /**
  * ──────────────────────────────────────────────────────────────────────────────
- * STICKY STACKING ENGINE (iOS Native Refactor)
+ * STICKY STACKING ENGINE (iOS Native Refactor - Unified 1-Column)
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
@@ -141,67 +141,66 @@ function StickyStackScene({
     scrollYProgress: any;
     totalCards?: number;
 }) {
-    // 1. Fluid Scroll Interaction: Apply Spring for that smooth iOS bounce/intertia
     const smoothProgress = useSpring(scrollYProgress, {
         stiffness: 400,
         damping: 40,
         mass: 1
     });
 
+    // We map the global progress (0-1) to card-specific relative indices
     const cardProgress = useTransform(smoothProgress, [0, 1], [0, totalCards - 1]);
 
-    // 2. Define 5 Milestones: Entrance, Active, and 3 layers of stacking depth
     const inputRanges = [
         index - 1,   // Entering from below
-        index,       // Active at top
+        index,       // Active at top (Focus)
         index + 1,   // Pushed back 1 layer
         index + 2,   // Pushed back 2 layers
         index + 3    // Pushed back 3 layers
     ];
 
-    // Y Axis: Clean vertical stacks
+    // Y Axis: Cumulative stacking offset
     const y = useTransform(cardProgress, inputRanges, [
-        120,    // Hidden below
-        0,      // Active center
-        -20,    // Recede 1
-        -40,    // Recede 2
-        -60     // Recede 3
+        120,    // Entering
+        0,      // Active
+        -15,    // Stacking Layer 1 (Mobile optimized offset)
+        -30,    // Stacking Layer 2
+        -45     // Stacking Layer 3
     ]);
 
-    // Scale: Soft shrinkage into the background
+    // Scale: Shrink into background
     const scale = useTransform(cardProgress, inputRanges, [
         1,      // Entrance size
         1,      // Active size
-        0.95,   // Layer 1
-        0.90,   // Layer 2
-        0.85    // Layer 3
+        0.96,   // Layer 1
+        0.92,   // Layer 2
+        0.88    // Layer 3
     ]);
 
-    // Opacity: Dim as it gets buried
+    // Opacity: Fade slightly as buried
     const opacity = useTransform(cardProgress, inputRanges, [
-        0,      // Invisible
-        1,      // Full focus
-        0.8,    // Layer 1
-        0.6,    // Layer 2
-        0.4     // Layer 3
+        0,      // Start
+        1,      // Full
+        0.85,   // Buried 1
+        0.7,    // Buried 2
+        0.5     // Buried 3
     ]);
 
-    // Blur: Dynamic Depth of Field (Native Feel)
+    // Blur: Depth of field simulation
     const blurValue = useTransform(cardProgress, inputRanges, [
-        0,      // Sharp
-        0,      // Sharp
-        4,      // Layer 1 Blur
-        8,      // Layer 2 Blur
-        12      // Layer 3 Blur
+        0,      
+        0,      
+        2,      
+        6,      
+        10      
     ]);
 
-    // Brightness: Simulating shadow depth
+    // Brightness: Lighting depth
     const brightnessValue = useTransform(cardProgress, inputRanges, [
-        1,      // Normal
-        1,      // Normal
-        0.8,    // Layer 1
-        0.6,    
-        0.4     
+        1,      
+        1,      
+        0.85,   
+        0.7,    
+        0.5     
     ]);
 
     const filter = useMotionTemplate`blur(${blurValue}px) brightness(${brightnessValue})`;
@@ -219,8 +218,11 @@ function StickyStackScene({
                 willChange: 'transform, opacity, filter',
                 transformOrigin: 'top center'
             }}
+            className="flex items-center justify-center w-full"
         >
-            <FeatureCard {...item} />
+            <div className="w-full max-w-xl">
+                <FeatureCard {...item} />
+            </div>
         </motion.div>
     );
 }
@@ -243,7 +245,6 @@ function Background() {
             )} />
             <div className="bg-grain absolute inset-0 mix-blend-overlay opacity-20" />
             
-            {/* Ambient Diffused Orbs */}
             <div className="absolute -top-32 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-cyan-500/5 blur-[120px]" />
             <div className="absolute bottom-[-200px] right-[-200px] h-[760px] w-[760px] rounded-full bg-blue-600/5 blur-[140px]" />
             
@@ -255,7 +256,6 @@ function Background() {
     );
 }
 
-/* ─────────────────── Quick Access Launcher (floating, 2×2 grid) ─────────────────── */
 function QuickAccessLauncher() {
     const [open, setOpen] = useState(false);
 
@@ -358,7 +358,7 @@ export default function LandingPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-3 sm:space-y-4">
-                                    <h1 className="tct-serif text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">Bertumbuh<br />Bersama</h1>
+                                    <h1 className="tct-serif text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">Faith Talk,<br />for Faith Grow</h1>
                                     <p className="text-base sm:text-lg text-white/50 max-w-xs mx-auto leading-relaxed font-medium">Platform digital harian untuk inspirasi, doa, dan komunitas yang menguatkan.</p>
                                 </div>
                                 <Button asChild className="h-14 sm:h-16 w-full rounded-[1.75rem] sm:rounded-[2rem] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-500/20 active:scale-[0.97] transition-all hover:brightness-110">
@@ -369,48 +369,43 @@ export default function LandingPage() {
                     </motion.div>
                 </section>
 
-                {/* Sticky Experience Stage */}
-                <section ref={containerRef} className="relative h-[280vh] mb-24">
-                    <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
-                        <div className="mx-auto w-full max-w-6xl px-6 grid lg:grid-cols-2 gap-12 items-center">
+                {/* Sticky Experience Stage (Redesigned for 1-Column Cumulative Stack) */}
+                <section ref={containerRef} className="relative h-[320vh] mb-24">
+                    <div className="sticky top-0 h-[100dvh] flex flex-col items-center justify-center overflow-hidden px-6">
+                        {/* Sticky Heading Anchor */}
+                        <div className="w-full max-w-xl text-center mb-12 space-y-4 pt-10 md:pt-0">
+                            <Badge><Sparkles size={12} className="text-brand" /> Ecosystem Modules</Badge>
+                            <h2 className="tct-serif text-3xl sm:text-5xl leading-tight tracking-tight text-white font-bold">
+                                Satu Platform,<br />
+                                <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Banyak Cara Bertumbuh.</span>
+                            </h2>
                             
-                            <div className="space-y-5 md:space-y-10">
-                                <Badge><Sparkles size={12} className="text-brand" /> Ecosystem Modules</Badge>
-                                <h2 className="tct-serif text-4xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
-                                    Satu Platform,<br />
-                                    <span className="text-white/20">Banyak Cara</span><br />
-                                    <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Bertumbuh.</span>
-                                </h2>
-                                <p className="text-base md:text-xl text-white/40 max-w-md leading-relaxed font-medium">
-                                    Modul terintegrasi yang didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.
-                                </p>
-                                
-                                <div className="flex items-center gap-2 pt-2 md:pt-4">
-                                    {featureItems.map((_, i) => (
-                                         <div 
-                                            key={i} 
-                                            className={cn(
-                                                "h-1.5 rounded-full transition-all duration-500", 
-                                                i === activeIndex 
-                                                    ? "w-8 sm:w-10 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)]" 
-                                                    : "w-1.5 bg-white/10"
-                                            )} 
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="relative h-[440px] md:h-[540px] w-full max-w-xl mx-auto lg:mx-0">
-                                {featureItems.map((item, i) => (
-                                    <StickyStackScene 
-                                        key={item.id} 
-                                        item={item} 
-                                        index={i} 
-                                        scrollYProgress={scrollYProgress}
-                                        totalCards={featureItems.length}
+                            <div className="flex items-center justify-center gap-2 pt-2">
+                                {featureItems.map((_, i) => (
+                                     <div 
+                                        key={i} 
+                                        className={cn(
+                                            "h-1.5 rounded-full transition-all duration-500", 
+                                            i === activeIndex 
+                                                ? "w-8 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)]" 
+                                                : "w-1.5 bg-white/10"
+                                        )} 
                                     />
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Card Stacking Stage */}
+                        <div className="relative h-[440px] md:h-[540px] w-full max-w-xl">
+                            {featureItems.map((item, i) => (
+                                <StickyStackScene 
+                                    key={item.id} 
+                                    item={item} 
+                                    index={i} 
+                                    scrollYProgress={scrollYProgress}
+                                    totalCards={featureItems.length}
+                                />
+                            ))}
                         </div>
                     </div>
                 </section>
