@@ -59,30 +59,36 @@
   - **HASIL TERBARU:** Pekerjaan mati di pijakan awal `Preflight TCP Reachability Check` yang berteriak `Network unreachable`. Artinya server masih menutup akses.
 - status: **BLOCKED**
 
-### 6. Canonical Host (www) TLS/DNS Invalid
-- root cause: Akses publik ke `https://www.thechoosentalks.org` mengembalikan `ERR_CERT_COMMON_NAME_INVALID`. Ini berarti peladen yang merespons DNS `www` menyajikan sertifikat SSL yang cacat konfigurasi. Sertifikat tersebut tidak me-listing domain `www.` di dalam cakupan *Subject Alternative Name* (SAN) miliknya.
-- file terkait: DNS Registrar, Panel Tencent Edge / CDN / Hosting.
-- dampak: Pengunjung tidak bisa mengakses situs dari URL kampanye manapun, karena browser menantang dan memblokir koneksi akibat peringatan merah `Not Secure`.
-- server action runbook (Untuk Admin):
-  - [ ] **1. DNS Checks (Di Panel Registrar/Cloudflare):**
-    - Verifikasi apakah record `www` berjenis `CNAME` atau `A/AAAA`.
-    - Record `www` **wajib** mengarah (Resolve) secara persis ke alamat penyedia *Edge* yang sama dengan apex (`thechoosentalks.org`), yakni node *Tencent Edge* (mis. target CNAME `.tencentcdndomain.com` atau IP spesifik Edge).
-    - Record `www` **dilarang** mengarah ke A Record peladen *cPanel/Backend* murni jika *Next.js Frontend* diletakkan di Tencent Edge, agar tidak terjadi perebutan wewenang *serving*.
-  - [ ] **2. Tencent Edge Checks (Di Panel CDN/Edge):**
-    - Akses modul *Domain Management* atau setaranya.
-    - Pastikan host `www.thechoosentalks.org` explicitly telah ditambahkan (Attached/Bound) sebagai domain frontend yang valid berdampingan dengan apex.
-    - Konfirmasi pengaturan *Canonical Rules* (Page Rules) aktif untuk menggeser trafik HTTP ke HTTPS dan tanpa mencetuskan *Redirect Loop* (aturan apex ke WWW tidak boleh melabrak aturan WWW ke WWW).
-  - [ ] **3. TLS Certificate Checks (Di Panel SSL/TLS Edge):**
-    - Periksa detail sertifikat enkripsi yang terpasang pada port 443.
-    - Sertifikat tersebut harus melindungi **kedua belah kubu**: `thechoosentalks.org` DAN `www.thechoosentalks.org` dalam payung *SAN (Subject Alternative Name)*-nya.
-    - Jika sertifikat lawas hanya melindungi `thechoosentalks.org`, lakukan aksi penerbitan ulang (*Fresh Issuance / Renew Let's Encrypt*) lalu *Bind/Deploy* sertifikat kembar itu khusus untuk lintasan `www`.
-- validation checklist (Sesudah Action Plan):
-  - [ ] Akses `http://thechoosentalks.org` -> Melambung ke `https://www.thechoosentalks.org/today` (Gembok hijau).
-  - [ ] Akses `https://thechoosentalks.org` -> Melambung ke `https://www.thechoosentalks.org/today` (Gembok hijau).
-  - [ ] Akses `https://thechoosentalks.org/community` -> Melambung ke `https://www.thechoosentalks.org/community` (Path diamankan).
-  - [ ] Akses `https://www.thechoosentalks.org` -> Masuk mulus ke `https://www.thechoosentalks.org/today` tanpa tegoran *NXDOMAIN* atau SSL Mismatch.
-  - [ ] Akses `https://www.thechoosentalks.org/today` -> Konten merender murni (200 OK).
-- status: **READY FOR SERVER ACTION**
+- context: Akses publik `www.thechoosentalks.org` mengalami `ERR_CERT_COMMON_NAME_INVALID`. Error ini murni konfigurasi rilis eksternal. Repo code tidak membutuhkan *patch* atau perbaikan. Titik masalah terisolasi pada sisi DNS, CDN Binding, atau SAN TLS.
+- exact checks by layer:
+  - **1. DNS Layer**
+    - [ ] Tentukan tipe record `www` di registrar (layaknya CNAME jika pakai host CDN, atau A/AAAA jika diberi IP langsung).
+    - [ ] Pastikan record `www` secara konseptual menunjuk ke *Tencent Edge* tempat aset frontend disadur.
+    - [ ] Pastikan record `www` DILARANG KERAS menunjuk ke server hosting *cPanel* tempat backend ditaruh.
+    - [ ] Bukti kebenaran DNS: Eksekusi `ping www.thechoosentalks.org` menghasilkan IP yang merepresentasikan server node Tencent Edge, propogasi tuntas.
+  - **2. Tencent Edge / CDN Layer**
+    - [ ] Verifikasi `www.thechoosentalks.org` telah ditambahkan selaiknya entitas domain (attached/bound) di control panel CDN.
+    - [ ] Konfirmasi *Apex* maupun rute awalan `www` sama-sama terdaftar pada layanan aktif.
+    - [ ] Cek agar taktik pemaksaan Canonical (HTTP ke HTTPS / Apex ke WWW) tidak direplika tabrakan hingga menyulut *redirect loop*.
+    - [ ] Bukti kebenaran Binding: Baris domain di dasbor CDN berstatus operasional/siap layan (*Active*).
+  - **3. TLS Layer**
+    - [ ] Periksa rincian properti sertifikat yang menyertai lalu lintas masuk.
+    - [ ] Inspeksi bahwa SAN (Subject Alternative Name) pada sertifikat meng-_cover_ kembaran ganda: `thechoosentalks.org` dan `www.thechoosentalks.org`.
+    - [ ] Lakukan penerbitan ulang sertifikat (*re-issue*) dan penyematan bundel (*re-bind*) jika nama `www.` tidak tercakup di sertifikat yang aktif.
+    - [ ] Bukti kebenaran TLS: *Handshake* SSL pada `curl -vI https://www.thechoosentalks.org` mengkonfirmasi CN/SAN *match*.
+- browser validation layer:
+  - [ ] `http://thechoosentalks.org` memindahkan (*redirect*) mulus ke pendaratan utama `https://www.thechoosentalks.org/today`
+  - [ ] `https://thechoosentalks.org` memindahkan mulus ke pendaratan utama `https://www.thechoosentalks.org/today`
+  - [ ] `https://thechoosentalks.org/community` memindahkan merawat sisa lajur spesifik ke `https://www.thechoosentalks.org/community`
+  - [ ] `https://www.thechoosentalks.org` memindahkan mulus ke pendaratan utama `https://www.thechoosentalks.org/today`
+  - [ ] `https://www.thechoosentalks.org/today` menggapai HTTP 200 OK beserta UI termuat penuh.
+- success criteria:
+  - Lenyapnya ancaman *NXDOMAIN*.
+  - Lenyapnya *certificate mismatch* / gembok merah/keamanan tercoreng.
+  - Lenyapnya kutukan *redirect loop*.
+  - Pendaratan *root* persis berpatok di garis *canonical landing*.
+  - Pengetikan panjang (*Non-root paths*) mengekalkan *path* ekornya.
+- status: **READY FOR SERVER EXECUTION**
 
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
