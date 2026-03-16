@@ -128,6 +128,57 @@ Contoh:
 ## Active Environment Drift Entries
 
 ### Entry ID
+`env-diff-004`
+
+### Date
+2026-03-17
+
+### Layer
+- frontend
+
+### Variable Name
+- `Frontend Target Domain / TLS Binding`
+
+### Secret?
+- no
+
+### Expected Role
+Menyajikan konten Next.js di origin publik yang aman melalui gembok HTTPS. Domain `www.thechoosentalks.org` diekspetasi sebagai Canonical Host utama.
+
+### Expected Local Value Pattern
+`http://localhost:9002` (Tanpa setelan SSL/TLS yang rumit).
+
+### Expected Production Value Pattern
+Tencent Edge melayani `https://www.thechoosentalks.org` dengan sertifikat SSL (*Valid Certificate*) yang mencantumkan nama domain *www.* pada *Subject Alternative Name* (SAN).
+
+### Observed Local State
+- n/a
+
+### Observed Production State
+- `ERR_CERT_COMMON_NAME_INVALID`
+- notes: Domain `www` menunjuk ke peladen, namun peladen gagal memvalidasi sertifikat miliknya terhadap prefix `www.`.
+
+### Risk if Drift Exists
+- Situs utama tidak bisa diakses sama sekali (Browser memblokir sebagai *Not Secure*).
+
+### Related Flows
+- all
+
+### Verification Steps
+1. Validasi DNS A/CNAME `www` mengarah ke Edge.
+2. Validasi *Domain Management* (Bind `www`) di portal Edge/CDN Tencent.
+3. Terbitkan/Renew SSL Certificate untuk `www`.
+4. Paksa HTTPS routing khusus port 443 pada host *www*.
+
+### Resolution
+- pending server action
+
+### Status
+- READY FOR SERVER ACTION
+
+---
+
+### Entry ID
 `env-diff-003`
 
 ### Date

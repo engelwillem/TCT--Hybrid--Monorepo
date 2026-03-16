@@ -59,5 +59,18 @@
   - **HASIL TERBARU:** Pekerjaan mati di pijakan awal `Preflight TCP Reachability Check` yang berteriak `Network unreachable`. Artinya server masih menutup akses.
 - status: **BLOCKED**
 
+### 6. Canonical Host (www) TLS/DNS Invalid
+- root cause: Akses publik ke `https://www.thechoosentalks.org` mengembalikan `ERR_CERT_COMMON_NAME_INVALID`. Ini berarti peladen yang merespons DNS `www` menyajikan sertifikat SSL yang tidak melingkupi domain `www.` (hanya apex/domain lain).
+- file terkait: DNS Provider & Panel TLS (Tencent Edge / cPanel).
+- dampak: Pengunjung tidak bisa mengakses situs utama (Browser menolak koneksi karena tidak aman). Ini adalah *release blocker* mutlak.
+- server/DNS action plan (Untuk Admin):
+  - [ ] **DNS Validation:** Pastikan record `CNAME www` atau `A www` mengarah ke IP/Edge yang benar (sama dengan apex jika keduanya dirender oleh Next.js di Edge).
+  - [ ] **Domain Binding:** Pastikan `www.thechoosentalks.org` sudah ditambahkan secara eksplisit ke dalam *Domain List* di panel Tencent CDN/Edge.
+  - [ ] **Certificate Issuance:** Generate/Apply sertifikat SSL (Let's Encrypt/Edge Cert) yang memiliki *Subject Alternative Name* (SAN) untuk `www.thechoosentalks.org`.
+  - [ ] **Force HTTPS Binding:** Pastikan cert baru aktif dan di-bind ke port 443 untuk host `www`.
+- re-test checklist:
+  - [ ] Buka `https://www.thechoosentalks.org` di incognito. Gembok hijau (*Secure*) harus muncul tanpa peringatan privasi.
+- status: **READY FOR SERVER ACTION**
+
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.

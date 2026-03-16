@@ -48,12 +48,13 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
   3. `https://www.thechoosentalks.org/` -> `https://www.thechoosentalks.org/today` (Next.JS `next.config.ts`)
   4. Path `/xyz` tetap dilestarikan (Next.JS routing).
 - Verifikasi Manual (Incognito):
+  - [ ] **TLS Certificate Valid:** Buka `https://www.thechoosentalks.org` tidak boleh mengembalikan `ERR_CERT_COMMON_NAME_INVALID`.
   - [ ] `http://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
   - [ ] `https://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
   - [ ] `https://thechoosentalks.org/community` -> `https://www.thechoosentalks.org/community`
   - [ ] `https://www.thechoosentalks.org/` -> `https://www.thechoosentalks.org/today`
-- Risks: Preflight OPTIONS request bisa dicekal oleh CORS cPanel jika tak dikonfigurasi. Redirect Loop jika `APP_URL` laravel membantah protokol `www` atau terjadi konflik prioritas CDN.
-- Status: READY FOR SERVER CONFIG
+- Risks: Akses `https://www.thechoosentalks.org` saat ini mendapat penolakan SSL (*Common Name Invalid*). Domain Binding TLS untuk `www` di provider CDN belum sinkron. Redirect Loop jika `APP_URL` laravel membantah protokol `www` atau terjadi konflik prioritas CDN.
+- Status: READY FOR SERVER ACTION
 
 ---
 
