@@ -165,9 +165,10 @@ Tencent Edge melayani `https://www.thechoosentalks.org` dengan sertifikat SSL (*
 - all
 
 ### Verification Steps
-1. Validasi DNS A/CNAME `www` mengarah ke Edge.
-2. Validasi *Domain Management* (Bind `www`) di portal Edge/CDN Tencent.
-3. Terbitkan/Renew SSL Certificate untuk `www`.
+### Verification Steps
+1. Pastikan Record `www` (CNAME/A) mengarah presisi ke Edge, *bukan* cPanel backend murni.
+2. Pastikan `www.thechoosentalks.org` berstatus di-_attach_ pada Domain Management CDN.
+3. Terbitkan/Renew SSL Certificate agar list *Subject Alternative Name* (SAN) memuat `thechoosentalks.org` & `www.thechoosentalks.org`.
 4. Paksa HTTPS routing khusus port 443 pada host *www*.
 
 ### Resolution

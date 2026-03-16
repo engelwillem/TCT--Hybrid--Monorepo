@@ -60,16 +60,28 @@
 - status: **BLOCKED**
 
 ### 6. Canonical Host (www) TLS/DNS Invalid
-- root cause: Akses publik ke `https://www.thechoosentalks.org` mengembalikan `ERR_CERT_COMMON_NAME_INVALID`. Ini berarti peladen yang merespons DNS `www` menyajikan sertifikat SSL yang tidak melingkupi domain `www.` (hanya apex/domain lain).
-- file terkait: DNS Provider & Panel TLS (Tencent Edge / cPanel).
-- dampak: Pengunjung tidak bisa mengakses situs utama (Browser menolak koneksi karena tidak aman). Ini adalah *release blocker* mutlak.
-- server/DNS action plan (Untuk Admin):
-  - [ ] **DNS Validation:** Pastikan record `CNAME www` atau `A www` mengarah ke IP/Edge yang benar (sama dengan apex jika keduanya dirender oleh Next.js di Edge).
-  - [ ] **Domain Binding:** Pastikan `www.thechoosentalks.org` sudah ditambahkan secara eksplisit ke dalam *Domain List* di panel Tencent CDN/Edge.
-  - [ ] **Certificate Issuance:** Generate/Apply sertifikat SSL (Let's Encrypt/Edge Cert) yang memiliki *Subject Alternative Name* (SAN) untuk `www.thechoosentalks.org`.
-  - [ ] **Force HTTPS Binding:** Pastikan cert baru aktif dan di-bind ke port 443 untuk host `www`.
-- re-test checklist:
-  - [ ] Buka `https://www.thechoosentalks.org` di incognito. Gembok hijau (*Secure*) harus muncul tanpa peringatan privasi.
+- root cause: Akses publik ke `https://www.thechoosentalks.org` mengembalikan `ERR_CERT_COMMON_NAME_INVALID`. Ini berarti peladen yang merespons DNS `www` menyajikan sertifikat SSL yang cacat konfigurasi. Sertifikat tersebut tidak me-listing domain `www.` di dalam cakupan *Subject Alternative Name* (SAN) miliknya.
+- file terkait: DNS Registrar, Panel Tencent Edge / CDN / Hosting.
+- dampak: Pengunjung tidak bisa mengakses situs dari URL kampanye manapun, karena browser menantang dan memblokir koneksi akibat peringatan merah `Not Secure`.
+- server action runbook (Untuk Admin):
+  - [ ] **1. DNS Checks (Di Panel Registrar/Cloudflare):**
+    - Verifikasi apakah record `www` berjenis `CNAME` atau `A/AAAA`.
+    - Record `www` **wajib** mengarah (Resolve) secara persis ke alamat penyedia *Edge* yang sama dengan apex (`thechoosentalks.org`), yakni node *Tencent Edge* (mis. target CNAME `.tencentcdndomain.com` atau IP spesifik Edge).
+    - Record `www` **dilarang** mengarah ke A Record peladen *cPanel/Backend* murni jika *Next.js Frontend* diletakkan di Tencent Edge, agar tidak terjadi perebutan wewenang *serving*.
+  - [ ] **2. Tencent Edge Checks (Di Panel CDN/Edge):**
+    - Akses modul *Domain Management* atau setaranya.
+    - Pastikan host `www.thechoosentalks.org` explicitly telah ditambahkan (Attached/Bound) sebagai domain frontend yang valid berdampingan dengan apex.
+    - Konfirmasi pengaturan *Canonical Rules* (Page Rules) aktif untuk menggeser trafik HTTP ke HTTPS dan tanpa mencetuskan *Redirect Loop* (aturan apex ke WWW tidak boleh melabrak aturan WWW ke WWW).
+  - [ ] **3. TLS Certificate Checks (Di Panel SSL/TLS Edge):**
+    - Periksa detail sertifikat enkripsi yang terpasang pada port 443.
+    - Sertifikat tersebut harus melindungi **kedua belah kubu**: `thechoosentalks.org` DAN `www.thechoosentalks.org` dalam payung *SAN (Subject Alternative Name)*-nya.
+    - Jika sertifikat lawas hanya melindungi `thechoosentalks.org`, lakukan aksi penerbitan ulang (*Fresh Issuance / Renew Let's Encrypt*) lalu *Bind/Deploy* sertifikat kembar itu khusus untuk lintasan `www`.
+- validation checklist (Sesudah Action Plan):
+  - [ ] Akses `http://thechoosentalks.org` -> Melambung ke `https://www.thechoosentalks.org/today` (Gembok hijau).
+  - [ ] Akses `https://thechoosentalks.org` -> Melambung ke `https://www.thechoosentalks.org/today` (Gembok hijau).
+  - [ ] Akses `https://thechoosentalks.org/community` -> Melambung ke `https://www.thechoosentalks.org/community` (Path diamankan).
+  - [ ] Akses `https://www.thechoosentalks.org` -> Masuk mulus ke `https://www.thechoosentalks.org/today` tanpa tegoran *NXDOMAIN* atau SSL Mismatch.
+  - [ ] Akses `https://www.thechoosentalks.org/today` -> Konten merender murni (200 OK).
 - status: **READY FOR SERVER ACTION**
 
 ## Notes
