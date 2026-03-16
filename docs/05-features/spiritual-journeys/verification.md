@@ -1,11 +1,11 @@
 # Verification: Spiritual Journeys
 
-## Verification Steps
-1. Pindah ke `/paths` via url browser.
-2. Klik Kartu "7 Hari Mengelola Kecewa".
-3. Lakukan pembacaan pada *Timeline Node* 1. 
-4. Tekan aksi komplit (*Selesai*).
-5. Refresh laman dan pastikan *Timeline Node 2* tak terkunci (*gembok lenyap*) berkat efek rekonsiliasi state lokal.
+## Checklist
+1. Buka `/paths`. Pastikan daftar kurikulum diambil dari `GET /api/public/study-paths`. Hardcoded variables seperti `JOURNEYS` telah dimusnahkan.
+2. Buka salah satu path (mis. `/paths/mengelola-kecewa`). Pastikan rincian esay didatangkan utuh dari `GET /api/public/study-paths/{lang}/{slug}` beserta jumlah *progress step* asli.
+3. Klik tombol `Selesai Hari Ini`. Validasi panggilan `POST` merespon parameter *progress* mutakhir dan antarmuka hari itu memantulkan ceklis hijau terselesaikan tanpa perlu me-*refresh*.
+4. *Refresh Browser* pada URL yang sama, dan pastikan gembok tidak terkunci alias sinkron dari Backend (Local Storage tak lagi campur tangan).
 
-## Status
-- **PASS**: Fungsionalitas memori lokal bekerja, progres melingkar merespons mutasi status secara wajar.
+## Status Akhir
+- Status: **PASS**
+- Rekomendasi: MVP Layer `Journey` telah memecahkan teka-teki Local State/Mock Data Trap. Fungsionalitas _retention loop_ terpasang kencang.

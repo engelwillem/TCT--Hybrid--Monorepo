@@ -1,33 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import MobileAppLayout from '@/layouts/MobileAppLayout';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Compass, Clock, CheckCircle2, PlayCircle } from 'lucide-react';
+import { Compass, Clock, PlayCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-
-// Dummy Journey List
-const JOURNEYS = [
-    {
-        id: 'mengelola-kecewa',
-        title: '7 Hari Mengelola Kecewa',
-        description: 'Langkah alkitabiah untuk berdamai dengan ekspektasi yang patah dan menemukan kembali harapan.',
-        total_days: 7,
-        thumbnail_color: 'from-rose-500/20 to-orange-500/5',
-        icon: Compass,
-    },
-    {
-        id: 'dasar-iman',
-        title: 'Fondasi Iman 101',
-        description: 'Memahami kembali pilar-pilar kekristenan dalam bahasa yang relevan dengan hari ini.',
-        total_days: 14,
-        thumbnail_color: 'from-sky-500/20 to-blue-500/5',
-        icon: Compass,
-    }
-];
+import { getStudyPaths } from '@/services/journeys.service';
 
 export default function PathsLibraryPage() {
+    const [paths, setPaths] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getStudyPaths()
+            .then((data) => {
+                if (data.paths) setPaths(data.paths);
+            })
+            .catch((e) => console.error(e))
+            .finally(() => setLoading(false));
+    }, []);
+
     return (
         <MobileAppLayout
             title="Spiritual Journeys"
@@ -46,75 +39,68 @@ export default function PathsLibraryPage() {
             }
         >
             <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-2">
-                <div className="grid gap-5 md:grid-cols-2">
-                    {JOURNEYS.map((item, idx) => {
-                        // In MVP we simulate 0 progress locally just for the list
-                        const progress = idx === 0 ? 2 : 0; // Fake state for visual
-                        const isActive = progress > 0;
-                        const Icon = item.icon;
+                {loading ? (
+                    <div className="flex h-32 items-center justify-center text-white/50">Memuat perjalanan...</div>
+                ) : (
+                    <div className="grid gap-5 md:grid-cols-2">
+                        {paths.map((item, idx) => {
+                            const title = item.title_id || item.title_en || item.slug;
+                            const description = item.description_id || item.description_en || '';
+                            const isActive = false; // Need user progress on index if we want progress display
 
-                        return (
-                            <motion.div
-                                key={item.id}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                            >
-                                <Link href={`/paths/${item.id}`}>
-                                    <Card className="group relative overflow-hidden rounded-[32px] border-white/5 bg-white/[0.02] transition-colors hover:bg-white/[0.04]">
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${item.thumbnail_color} opacity-20`} />
-                                        
-                                        <CardContent className="relative p-6">
-                                            <div className="mb-4 flex items-center justify-between">
-                                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-md ring-1 ring-white/10">
-                                                    <Icon className="h-6 w-6 text-white/70" />
-                                                </div>
-                                                <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white/50 ring-1 ring-white/10">
-                                                    <Clock className="h-3.5 w-3.5" />
-                                                    {item.total_days} Hari
-                                                </div>
-                                            </div>
-
-                                            <h3 className="mb-2 font-serif text-xl font-medium text-white group-hover:text-brand transition-colors">
-                                                {item.title}
-                                            </h3>
-                                            <p className="mb-6 line-clamp-2 text-sm leading-relaxed text-slate-400">
-                                                {item.description}
-                                            </p>
-
-                                            <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                                                <div className="flex items-center gap-2">
-                                                    {isActive ? (
-                                                        <span className="text-xs font-bold uppercase tracking-widest text-brand">
-                                                            Lanjut Hari {progress + 1}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                                                            Belum Dimulai
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-slate-950 transition-transform group-hover:scale-110">
-                                                    {isActive ? <PlayCircle className="h-4 w-4" /> : <ChevronRightIcon />}
-                                                </div>
-                                            </div>
+                            return (
+                                <motion.div
+                                    key={item.id}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                >
+                                    <Link href={`/paths/${item.slug}`}>
+                                        <Card className="group relative overflow-hidden rounded-[32px] border-white/5 bg-white/[0.02] transition-colors hover:bg-white/[0.04]">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/20 to-brand/5 opacity-20" />
                                             
-                                            {/* Progress Bar */}
-                                            {isActive && (
-                                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/5">
-                                                    <div 
-                                                        className="h-full bg-brand transition-all duration-1000" 
-                                                        style={{ width: `${(progress / item.total_days) * 100}%` }} 
-                                                    />
+                                            <CardContent className="relative p-6">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-md ring-1 ring-white/10">
+                                                        <Compass className="h-6 w-6 text-white/70" />
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white/50 ring-1 ring-white/10">
+                                                        <Clock className="h-3.5 w-3.5" />
+                                                        {item.estimated_minutes || 0} Menit / sesi
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            </motion.div>
-                        );
-                    })}
-                </div>
+
+                                                <h3 className="mb-2 font-serif text-xl font-medium text-white group-hover:text-brand transition-colors">
+                                                    {title}
+                                                </h3>
+                                                <p className="mb-6 line-clamp-2 text-sm leading-relaxed text-slate-400">
+                                                    {description}
+                                                </p>
+
+                                                <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                                                    <div className="flex items-center gap-2">
+                                                        {isActive ? (
+                                                            <span className="text-xs font-bold uppercase tracking-widest text-brand">
+                                                                Lanjut
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                                                                Mulai Perjalanan
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-slate-950 transition-transform group-hover:scale-110">
+                                                        {isActive ? <PlayCircle className="h-4 w-4" /> : <ChevronRightIcon />}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </MobileAppLayout>
     );
