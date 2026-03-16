@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostComposer } from "../components/PostComposer";
 import { MemberPostCard } from "../components/MemberPostCard";
@@ -21,6 +22,24 @@ const slugifyRef = (ref: string) =>
         .replace(/[:\.\s_]+/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-+|-+$/g, '');
+
+function SmartPostComposer({ onPost }: { onPost: any }) {
+  const searchParams = useSearchParams();
+  const intent = searchParams?.get("intent");
+  const text = searchParams?.get("text") || "";
+  
+  const isReflection = intent === "reflection";
+  const initialExpanded = isReflection || text.length > 0;
+  
+  return (
+    <PostComposer 
+      onPost={onPost} 
+      initialType={isReflection ? "reflection" : "user_post"} 
+      initialText={text}
+      initialExpanded={initialExpanded}
+    />
+  );
+}
 
 export function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -260,7 +279,9 @@ export function CommunityPage() {
           </div>
 
           <TabsContent value="discussions" className="space-y-6 mt-0">
-            <PostComposer onPost={handlePost} />
+            <Suspense fallback={<PostComposer onPost={handlePost} />}>
+              <SmartPostComposer onPost={handlePost} />
+            </Suspense>
 
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">

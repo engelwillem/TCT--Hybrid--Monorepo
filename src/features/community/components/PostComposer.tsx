@@ -14,6 +14,9 @@ interface PostComposerProps {
   currentUser?: CommunityUser;
   className?: string;
   channels?: Array<{ id: string; slug: string; title: string }>;
+  initialText?: string;
+  initialType?: PostType;
+  initialExpanded?: boolean;
 }
 
 export function PostComposer({
@@ -21,14 +24,19 @@ export function PostComposer({
   currentUser,
   className,
   channels = [],
+  initialText = "",
+  initialType = "user_post",
+  initialExpanded = false,
 }: PostComposerProps) {
-  const [text, setText] = useState("");
-  const [type, setType] = useState<PostType>("user_post");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [text, setText] = useState(initialText);
+  const [type, setType] = useState<PostType>(initialType);
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
-  const [layoutVariant, setLayoutVariant] = useState<"standard" | "twitter" | "quote">("standard");
+  const [layoutVariant, setLayoutVariant] = useState<"standard" | "twitter" | "quote">(
+    initialType === "reflection" ? "quote" : "standard"
+  );
 
   useEffect(() => {
     const next: Record<string, string> = {};

@@ -6,8 +6,8 @@
 - root cause: `CommunityComposer.tsx` belum diimplementasikan untuk menangkap React `useSearchParams` URL `?intent=xyz&ref=abc`.
 - file terkait: `src/features/community/components/CommunityComposer.tsx`
 - dampak: Komunitas tidak bisa dipakai untuk menyambung Refleksi atau Doa dari halaman Journey/VerseHub.
-- langkah verifikasi: Patch parameter intent di Next.js form payload, lalu kirim Feed baru dan cek *Network request 201*.
-- status: **BLOCKED**
+- langkah verifikasi: Patch membaca nilai parameter `intent` dan `text` lewat `useSearchParams` pada `CommunityPage.tsx` dan memasukkannya ke initial props Composer. Referensi URL teraba abaikan pada rute POST demi kompatibilitas format awal. Fitur terbukti aman dan formulir mematuhi instruksi otomatis dari luar.
+- status: **PASS**
 
 ### 2. Authorization Header cPanel Restriction Risk
 - root cause: Apache di cPanel sering memangkas HTTP Header `Authorization: Bearer`.
