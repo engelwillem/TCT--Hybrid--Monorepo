@@ -41,3 +41,8 @@ Contoh:
 
 ## Scope Discipline
 Satu commit harus merepresentasikan satu unit kerja yang masuk akal. Jangan campur banyak domain tanpa alasan jelas.
+
+## Storage Hygiene Policy
+1. **GitHub Actions Retention:** Atur pelestarian Artifact via setelan retensi Repositori menjadi maksimal 7 hari untuk menghemat biaya *Storage*.
+2. **Local Workflow Cleanup:** Selalu sematkan perintah pembersihan `rm -f <big-file.tar.gz>` pada kondisi penutup klausa CI/CD (`if: always()`) seperti di `backend-cpanel-deploy.yml`.
+3. **No Blind Wipe:** Jangan menggunakan aksi otomatis penghapusan massal peladen maupun cabang *Branch* secara membabi buta tanpa pelaporan atau tanpa persetujuan manual; laporan dokumentatif adalah cara tunggal mendeteksi *legacy*.

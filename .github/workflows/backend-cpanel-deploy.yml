@@ -67,6 +67,16 @@ jobs:
             .
           sha256sum ../build.tar.gz | awk '{print $1}' > ../build.tar.gz.sha256
 
+      - name: Preflight TCP Reachability Check
+        working-directory: .
+        run: |
+          echo "Testing TCP connection to $SSH_HOST:$SSH_PORT..."
+          timeout 10 bash -c "</dev/tcp/$SSH_HOST/$SSH_PORT" || {
+            echo "::error::Network unreachable. The GitHub Actions runner IP is likely blocked by cPanel CSF Firewall."
+            exit 1
+          }
+          echo "Network reachable."
+
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -75,16 +85,18 @@ jobs:
       - name: Upload artifact and deploy scripts
         working-directory: .
         run: |
-          scp -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new build.tar.gz "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/build.tar.gz"
-          scp -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new build.tar.gz.sha256 "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/build.tar.gz.sha256"
-          scp -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new backend-api/deploy.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/deploy.sh"
-          scp -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new backend-api/healthcheck.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/healthcheck.sh"
-          scp -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new backend-api/rollback.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/rollback.sh"
+          # Added ConnectTimeout to prevent hanging jobs
+          SCP_OPTIONS="-P $SSH_PORT -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          scp $SCP_OPTIONS build.tar.gz "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/build.tar.gz"
+          scp $SCP_OPTIONS build.tar.gz.sha256 "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/build.tar.gz.sha256"
+          scp $SCP_OPTIONS backend-api/deploy.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/deploy.sh"
+          scp $SCP_OPTIONS backend-api/healthcheck.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/healthcheck.sh"
+          scp $SCP_OPTIONS backend-api/rollback.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/rollback.sh"
 
       - name: Run remote deploy
         working-directory: .
         run: |
-          ssh -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST" "
+          ssh -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST" "
             set -e
             mkdir -p '$DEPLOY_PATH'
             chmod 700 '$DEPLOY_PATH/deploy.sh' '$DEPLOY_PATH/healthcheck.sh' '$DEPLOY_PATH/rollback.sh' || true
@@ -92,3 +104,10 @@ jobs:
             export ARTIFACT_SHA256=\$(cat '$DEPLOY_PATH/build.tar.gz.sha256')
             bash '$DEPLOY_PATH/deploy.sh'
           "
+
+      - name: Local Workspace Hygiene Cleanup
+        if: always()
+        working-directory: .
+        run: |
+          echo "Cleaning up heavy local build artifacts to save GitHub Storage..."
+          rm -f build.tar.gz build.tar.gz.sha256

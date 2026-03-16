@@ -47,7 +47,7 @@
   1. (Opsional A) Buka pelacakan IP dinamis GitHub Actions di *Whitelist* CSF Server secara makro.
   2. (Opsional B) Manfaatkan skrip `Action` perantara (*Tailscale/VPN*) jika panel mengizinkan koneksi simetris.
   3. Uji *run ulang* `backend-cpanel-deploy.yml` hingga stempel `scp` sukses merobek masuk.
-- status: **BLOCKED**
+- status: **READY FOR SERVER CONFIG** (Patch Timeout Handling *Hardening* telah diterapkan).
 
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
