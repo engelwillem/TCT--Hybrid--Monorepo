@@ -1,5 +1,12 @@
 # Changelog Domain (Community)
 
+## [Domain Closure] - 2026-03-17
+
+### Ditetapkan
+- Domain resmi ditutup (**CLOSED**). Integrasi *handoff* dari rantai referensi luaran (VerseHub/Reflection) teraplikasikan dengan stabil. Fungsionalitas inti (Composer, Post, Comment, Like, Share) divalidasi kokoh. Tidak ada ancaman _blocker_ tersisa pada trajektori MVP ini.
+
+---
+
 ## [Composer Parameters] - 2026-03-17
 
 ### Ditambahkan

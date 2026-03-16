@@ -9,9 +9,9 @@ Hybrid monorepo sedang berjalan dalam dua track:
 - Profile lifecycle
 - Inbox / DM
 - VerseHub
+- Community
 
 ## Active Domains
-- Community
 - Today
 
 ## Active Experience Features
@@ -21,7 +21,7 @@ Hybrid monorepo sedang berjalan dalam dua track:
 - Spiritual journeys
 
 ## Current Priority
-1. Siapkan E2E main apps dengan environment deterministik (VerseHub Parity tuntas, domain telah divalidasi `CLOSED`).
+1. Eksekusi penguncian layer `Today` (Paritas Homempage) atau susun landasan persistensi untuk kelanjutan rute `Journey`. (Paritas VerseHub dan Community telah divalidasi mutlak `CLOSED`).
 4. selesaikan mitigasi local vs production parity yang masih berselimut status `NEEDS SERVER VALIDATION` (khususnya isu Env CORS dan CGIPassAuth cPanel).
 
 ## Non-Negotiable Constraints
