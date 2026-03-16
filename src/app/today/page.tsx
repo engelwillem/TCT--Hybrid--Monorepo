@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 // Atomic Sections
 import GreetingHeader from './components/sections/GreetingHeader';
 import ActionShortcutBar from './components/sections/ActionShortcutBar';
+import StateChips, { SpiritualState } from './components/sections/StateChips';
 
 // Dashboard Cards
 import DailyVerseHeroCard from '@/components/versehub/DailyVerseHeroCard';
@@ -22,6 +23,7 @@ import ReflectionCard from './components/cards/ReflectionCard';
 // Feed Components
 import FeedList from './components/feed/FeedList';
 import ThrowingCard from './components/ThrowingCard';
+import HookCard from '@/components/cards/HookCard';
 
 // Types
 import type { DailyVerse } from '@/types/versehub-daily';
@@ -70,6 +72,7 @@ export default function TodayPage() {
     const [apiRituals, setApiRituals] = useState<any>(null);
     const [apiWelcomeVerse, setApiWelcomeVerse] = useState<DailyVerse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [activeState, setActiveState] = useState<SpiritualState>('fresh');
 
     const dailyVerse = apiDailyVerse ?? fallbackDailyVerse;
     const welcomeVerse = apiWelcomeVerse ?? undefined;
@@ -110,8 +113,31 @@ export default function TodayPage() {
         return () => { isActive = false; };
     }, []);
 
-    const firstItems = apiHighlights.slice(0, 2);
-    const restItems = apiHighlights.slice(2);
+    // ---------------------------------------------------------
+    // STATE-DRIVEN REORDERING (Architecture MVP)
+    // ---------------------------------------------------------
+    
+    const relevantHighlights = useMemo(() => {
+        if (activeState === 'fresh') return apiHighlights;
+        
+        // MVP: Client-side sorting/filtering based on state
+        return [...apiHighlights].sort((a, b) => {
+            // Priority for 'prayer_request' if weary or anxious
+            if (activeState === 'weary' || activeState === 'anxious') {
+                if (a.type === 'prayer_request') return -1;
+                if (b.type === 'prayer_request') return 1;
+            }
+            // Priority for 'testimony' or 'quote' if grateful
+            if (activeState === 'grateful' || activeState === 'on-fire') {
+                if (['testimony', 'quote'].includes(a.type)) return -1;
+                if (['testimony', 'quote'].includes(b.type)) return 1;
+            }
+            return 0; // maintain original order otherwise
+        });
+    }, [apiHighlights, activeState]);
+
+    const firstItems = relevantHighlights.slice(0, 2);
+    const restItems = relevantHighlights.slice(2);
     
     const ritualVerse = rituals?.today_verse ?? null;
     const ritualRef = String(ritualVerse?.ref ?? dailyVerse?.ref ?? '').trim();
@@ -141,23 +167,56 @@ export default function TodayPage() {
             header={<GreetingHeader />}
         >
             <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                key={activeState}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-2"
             >
                 <div className="space-y-5">
-                    {/* Entry Points */}
-                    <ThrowingCard index={-1}>
-                        <ActionShortcutBar />
-                    </ThrowingCard>
+                    <StateChips activeState={activeState} onChange={setActiveState} />
+
+                    {/* Entry Points: Only show ActionShortcutBar when 'fresh' */}
+                    {activeState === 'fresh' && (
+                        <ThrowingCard index={-1}>
+                            <ActionShortcutBar />
+                        </ThrowingCard>
+                    )}
+
+                    {/* If Anxious/Weary, push Prayer/Community Hooks higher */}
+                    {(activeState === 'weary' || activeState === 'anxious') && (
+                        <ThrowingCard index={0}>
+                            <HookCard
+                                variant="urgent"
+                                hookText="Tuhan dekat kepada orang-orang yang patah hati, dan Ia menyelamatkan orang-orang yang remuk jiwanya."
+                                verseReference="Mazmur 34:19"
+                                relevanceText="Kami siap mendukungmu dalam doa. Ada beban yang ingin dilepaskan hari ini?"
+                                primaryAction={{
+                                    type: 'pray',
+                                    href: '/community?intent=pray',
+                                    label: 'Minta Dukungan Doa'
+                                }}
+                            />
+                        </ThrowingCard>
+                    )}
 
                     {/* Sacred Anchor (Verse) */}
-                    <ThrowingCard index={0}>
-                        <DailyVerseHeroCard
-                            welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
-                            fallbackVerse={dailyVerse}
-                        />
-                    </ThrowingCard>
+                    {/* Move to bottom if user is 'on-fire' and wants to continue lesson instead */}
+                    {activeState !== 'on-fire' && (
+                        <ThrowingCard index={0}>
+                            <DailyVerseHeroCard
+                                welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
+                                fallbackVerse={dailyVerse}
+                            />
+                        </ThrowingCard>
+                    )}
+
+                    {/* Learning Path - Bring to top if On-Fire */}
+                    {apiPinnedLesson && (
+                        <ThrowingCard index={activeState === 'on-fire' ? -1 : 5}>
+                            <PinnedLessonCard pinned={apiPinnedLesson} />
+                        </ThrowingCard>
+                    )}
 
                     {/* Active Ritual (Reflection) */}
                     {rituals?.reflection_prompt && (
@@ -166,18 +225,21 @@ export default function TodayPage() {
                         </ThrowingCard>
                     )}
 
-                    {/* Feed Part 1 (Direct Engagement) */}
+                    {/* Feed Part 1 (Direct Engagement - Context Aware) */}
                     <FeedList items={firstItems} />
 
-                    {/* Learning Path */}
-                    {apiPinnedLesson && (
+                    {/* If On-Fire, move Verse here */}
+                    {activeState === 'on-fire' && (
                         <ThrowingCard index={5}>
-                            <PinnedLessonCard pinned={apiPinnedLesson} />
+                            <DailyVerseHeroCard
+                                welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
+                                fallbackVerse={dailyVerse}
+                            />
                         </ThrowingCard>
                     )}
 
                     {/* Wisdom Pearl (Quote) */}
-                    {rituals?.quote_of_day && (
+                    {rituals?.quote_of_day && activeState === 'grateful' && (
                         <ThrowingCard index={10}>
                             <QuoteCard payload={rituals.quote_of_day} />
                         </ThrowingCard>
