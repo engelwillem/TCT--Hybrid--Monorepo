@@ -572,6 +572,89 @@ Aturan:
 8. Jika belum bisa memverifikasi server langsung, jangan klaim production parity final. Tandai dengan jelas sebagai NEEDS SERVER VALIDATION atau BLOCKED.
 
 
+# Mulai sekarang, setiap pekerjaan harus mempertimbangkan parity antara local dan server produksi.
+
+Environment target:
+- local development
+- backend production di cPanel
+- frontend production di Tencent Edge
+
+Aturan:
+1. Jangan anggap fitur selesai hanya karena berjalan di local.
+2. Untuk setiap flow penting, petakan:
+   - env vars yang memengaruhi flow
+   - API contract yang dipakai
+   - auth/session/cookie behavior
+   - storage/asset URL behavior
+   - database schema dependency
+3. Semua temuan parity wajib dicatat hanya di `docs/06-testing/parity/` dan `docs/09-handover/`.
+4. Jika ada asumsi environment yang belum terverifikasi, nyatakan sebagai risiko atau blocker.
+5. Jangan membuat file laporan di root.
+6. Sebelum menyatakan PASS pada flow kritis, cek:
+   - local behavior
+   - expected production behavior
+   - kemungkinan mismatch di cPanel atau Tencent Edge
+7. Jika ada potensi drift local vs production, buat/update:
+   - `docs/06-testing/parity/local-vs-production-checklist.md`
+   - `docs/06-testing/parity/api-contract-diff-log.md`
+   - `docs/06-testing/parity/database-schema-diff-log.md`
+   - `docs/06-testing/parity/env-diff-log.md`
+8. Jika belum bisa memverifikasi server langsung, jangan klaim production parity final. Tandai dengan jelas sebagai NEEDS SERVER VALIDATION atau BLOCKED.
+
+
+
+# Mulai sekarang, ikuti aturan permanen berikut:
+
+A. Root repository harus clean.
+- Dilarang membuat file report, dump, log, notes, atau dokumentasi di root.
+- Semua dokumentasi wajib hanya di `docs/`.
+- Jika tidak ada lokasi docs yang valid, tandai BLOCKED, jangan taruh file di root.
+
+B. Terapkan struktur docs yang sudah ditetapkan.
+- Gunakan hanya nama folder dan file yang sudah disetujui.
+- Gunakan kebab-case.
+- Jangan membuat nama file acak.
+
+C. Buat atau rapikan isi awal file governance dan handover dengan format ketat sesuai struktur yang ditetapkan:
+- `docs/00-governance/repo-rules.md`
+- `docs/00-governance/documentation-rules.md`
+- `docs/00-governance/git-workflow.md`
+- `docs/00-governance/environment-parity-policy.md`
+- `docs/00-governance/migration-master-index.md`
+- `docs/09-handover/current-status.md`
+- `docs/09-handover/next-actions.md`
+- `docs/09-handover/open-blockers.md`
+- `docs/09-handover/release-readiness.md`
+
+D. Terapkan parity discipline untuk local vs production:
+- local
+- backend cPanel
+- frontend Tencent Edge
+Jangan klaim production parity final jika belum diverifikasi nyata. Gunakan status jujur seperti:
+- PASS
+- BLOCKED
+- NEEDS SERVER VALIDATION
+- CLOSED
+
+E. Cek Git panel:
+- pastikan tidak ada file liar di root
+- pastikan docs dan code terpisah logis
+- jangan commit file sampah
+- working tree harus bersih setelah commit
+
+Tugas sekarang:
+1. sinkronkan struktur docs dan isi file governance/handover
+2. audit apakah masih ada file liar di root atau di luar scope docs
+3. buat/update dokumen parity environment di:
+   - `docs/06-testing/parity/local-vs-production-checklist.md`
+   - `docs/06-testing/parity/api-contract-diff-log.md`
+   - `docs/06-testing/parity/database-schema-diff-log.md`
+   - `docs/06-testing/parity/env-diff-log.md`
+4. jangan lanjut fitur baru dulu
+
+Output wajib:
+TEMUAN -> DOCS NORMALIZATION -> GOVERNANCE FILES UPDATED -> PARITY POLICY FILES UPDATED -> GIT HYGIENE RESULT -> STATUS
+
 
 
 
