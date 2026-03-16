@@ -52,11 +52,12 @@
         *Rekomendasi Reguler:* Otomasi daftarkan Meta rentang IP Github Actions ke file `csf.allow` (`/etc/csf/csf.allow`).
         *Opsi Pengganti Buntut:* Batalkan Push Deploy, ubah ke Arsitektur Pull Deploy (*WebHook script* pemicu dari dalam).
 - re-test checklist & success criteria:
-  - [ ] Admin VPS mengkonfirmasi mitigasi mod_security/firewall telah aktif sepenuhnya.
-  - [ ] Pemanggilan *Re-run* pada *Deploy Job* `backend-cpanel-deploy.yml` dari panel GitHub Actions ditekankan manual.
+  - [x] Admin VPS mengkonfirmasi mitigasi mod_security/firewall telah aktif sepenuhnya. (ASUMSI DIBATALKAN KARENA GAGAL)
+  - [x] Pemanggilan *Re-run* pada *Deploy Job* `backend-cpanel-deploy.yml` dari panel GitHub Actions ditekankan manual.
   - [ ] **Evidence 1:** Mata rantai langkah `Upload artifact and deploy scripts` melepaskan jebakan *timeout*, log `scp` mengalir lancar ke server.
   - [ ] **Evidence 2:** Eksekusi `ssh` remote bash script menggapai baris final: `Deployment completed successfully`.
-- status: **READY FOR SERVER EXECUTION**
+  - **HASIL TERBARU:** Pekerjaan mati di pijakan awal `Preflight TCP Reachability Check` yang berteriak `Network unreachable`. Artinya server masih menutup akses.
+- status: **BLOCKED**
 
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
