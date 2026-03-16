@@ -1,16 +1,14 @@
 # Next Actions
 
 ## Immediate
-1. selesaikan blocker Community yang masih aktif
-2. audit dan kunci experience architecture baru
-3. siapkan local-to-production parity checklist
-4. siapkan E2E inventory untuk main apps
+1. Eksekusi konfigurasi panel DNS / Tencent Edge untuk *Domain Redirect Matrix* (Canonical Host WWW & HTTPS Force).
+2. Selesaikan mitigasi Auth Header cPanel (Patch `.htaccess` sudah siap, butuh uji *Server Validation* nyata).
+3. Selesaikan *Community Smart Composer* unlinked parameters.
+4. Siapkan E2E inventory (dengan host *production* kelak).
 
 ## After Immediate
-1. lock technical architecture untuk relevance engine
-2. hubungkan journeys ke backend nyata
-3. verifikasi Today dan VerseHub sebagai bagian dari experience layer baru
-4. siapkan release-readiness report
+1. Verifikasi Today dan VerseHub sebagai bagian dari experience layer baru
+2. Siapkan release-readiness report
 
 ## Execution Rule
 Jangan buka step berikutnya sebelum step sekarang berstatus PASS atau BLOCKED.

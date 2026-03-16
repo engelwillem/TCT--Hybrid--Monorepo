@@ -24,11 +24,20 @@
 - status: **NEEDS SERVER VALIDATION**
 
 ### 4. Canonical Host & SSL Force Routing
-- root cause: Pengalihan apex *non-www* `thechoosentalks.org` ke `www.thechoosentalks.org` beserta validasi paksaan *HTTPS* sebaiknya ditangani oleh peladen *CDN DNS Panel* agar tidak membenahi perulangan *request/redirect loop* di Node.js Edge. Konfigurasi panel belum disegerakan.
-- file terkait: Panel Administrasi Tencent Edge / CDN / DNS registrar. (Lokal telah menambal root `next.config.ts` untuk membelokkan rute masuk `/` ke halaman `/today`).
-- dampak: Jika lalai, pengguna mungkin login pada varian *http* (rentan bahaya) atau buntu di *state* cookies yang saling silang.
-- langkah verifikasi: Hit dari luar URL berantai `http://thechoosentalks.org` dan saksikan ia membelok menuju `https://www.thechoosentalks.org/today`.
-- status: **NEEDS SERVER VALIDATION**
+- root cause: Pengalihan apex *non-www* `thechoosentalks.org` ke `www.thechoosentalks.org` beserta validasi paksaan *HTTPS* harus ditangani oleh Panel Tencent Edge / CDN untuk mencegah *redirect loop* Node.js Edge. 
+- file terkait: Panel Administrasi Tencent Edge / CDN / DNS registrar. (Lokal telah menambal root `next.config.ts` untuk `/` -> `/today`).
+- instruksi panel server:
+  1. Akses menu **Domain Settings / Page Rules** di konsol Tencent Edge/CDN.
+  2. Buat **Rule 1 (HTTPS Enforce)**: Paksa asal skema origin "HTTP" (`http://thechoosentalks.org/` dan `http://www.thechoosentalks.org/`) ter-redirect ke "HTTPS" (Status 301).
+  3. Buat **Rule 2 (Apex to WWW)**: Arahkan `https://thechoosentalks.org/*` ke `https://www.thechoosentalks.org/$1` dengan status 301 Permanent. Biarkan argumen rute tersalin utuh ($1/preserve path).
+  4. Sangat krusial agar Urutan (*Priority*) dieksekusi dengan mendahulukan HTTPS Force agar rute tidak nyasar.
+- dampak: Ketiadaan aturan peladen eksternal ini akan menjebol *Sanctum Session Domain* (sebab HTTP biasa dan apex non-www dinilai sebagai asal rentan oleh Laravel Middleware) yang berpenetrasi ke `419 Page Expired`.
+- langkah verifikasi: Lakukan pengunjungan anonim (*incognito*):
+  - [ ] `http://thechoosentalks.org` -> harus membelok ke `https://www.thechoosentalks.org/today`
+  - [ ] `https://thechoosentalks.org` -> harus membelok ke `https://www.thechoosentalks.org/today`
+  - [ ] `https://thechoosentalks.org/community` -> harus membelok ke `https://www.thechoosentalks.org/community`
+  - [ ] `https://www.thechoosentalks.org/` -> harus membelok ke `https://www.thechoosentalks.org/today`
+- status: **READY FOR SERVER CONFIG**
 
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
