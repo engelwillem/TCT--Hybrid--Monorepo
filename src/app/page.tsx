@@ -92,30 +92,30 @@ function FeatureCard({ icon: Icon, title, description, href, ctaLabel = 'Buka', 
 
     return (
         <article 
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-8 md:p-12 backdrop-blur-3xl transition-all duration-500 shadow-premium ring-1 ring-white/5 min-h-[480px] md:min-h-[540px] justify-between" 
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-8 md:p-12 backdrop-blur-3xl transition-all duration-500 shadow-premium ring-1 ring-white/5 min-h-[440px] md:min-h-[540px] justify-between" 
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                 style={{ background: `radial-gradient(600px circle at 0% 0%, ${accentMap.glow}, transparent 70%)` }}
             />
             
-            <div className="relative z-10 flex flex-col space-y-6 md:space-y-8">
+            <div className="relative z-10 flex flex-col space-y-5 md:space-y-8">
                 {/* Icon Block */}
-                <div className={cn('flex h-14 w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
-                    <Icon className="h-7 w-7" />
+                <div className={cn('flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-[1.25rem] transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-xl ring-1 ring-white/10', accentMap.icon)}>
+                    <Icon className="h-6 w-6 md:h-7 md:w-7" />
                 </div>
 
-                <div className="space-y-4">
-                    <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight">{title}</h3>
-                    <p className="text-base md:text-lg leading-relaxed text-white/50 font-medium">{description}</p>
+                <div className="space-y-3 md:space-y-4">
+                    <h3 className="text-xl md:text-3xl font-bold text-white tracking-tight leading-tight">{title}</h3>
+                    <p className="text-sm md:text-lg leading-relaxed text-white/50 font-medium">{description}</p>
                 </div>
             </div>
 
-            <div className="relative z-10 pt-8">
-                <Button asChild variant="outline" className="h-14 w-full rounded-2xl border-white/10 bg-white/[0.02] px-6 text-sm font-bold uppercase tracking-widest text-white/80 backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-[0.97] relative overflow-hidden group/btn shadow-lg">
+            <div className="relative z-10 pt-6 md:pt-8">
+                <Button asChild variant="outline" className="h-12 md:h-14 w-full rounded-2xl border-white/10 bg-white/[0.02] px-6 text-xs md:text-sm font-bold uppercase tracking-widest text-white/80 backdrop-blur-md transition-all duration-300 hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-[0.97] relative overflow-hidden group/btn shadow-lg">
                     <Link href={href} className="group/cta inline-flex items-center justify-center gap-3">
                         <span className="relative z-10">{ctaLabel}</span>
-                        <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover/cta:translate-x-2 relative z-10" />
+                        <ArrowRight className="h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 group-hover/cta:translate-x-2 relative z-10" />
                         <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/btn:animate-[shine_1.5s_infinite]" />
                     </Link>
                 </Button>
@@ -255,6 +255,62 @@ function Background() {
     );
 }
 
+/* ─────────────────── Quick Access Launcher (floating, 2×2 grid) ─────────────────── */
+function QuickAccessLauncher() {
+    const [open, setOpen] = useState(false);
+
+    const items = [
+        { href: '/channels', label: 'Channels', icon: BookOpen, tone: 'from-violet-400 to-fuchsia-500' },
+        { href: '/versehub/id', label: 'Bible', icon: BookMarked, tone: 'from-blue-400 to-indigo-500' },
+    ];
+
+    return (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex flex-col items-center gap-2">
+            <AnimatePresence>
+                {open && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.92 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.92 }}
+                        className="mb-3 grid grid-cols-2 gap-2"
+                    >
+                        {items.map((item, i) => {
+                            const Icon = item.icon;
+                            return (
+                                <motion.div key={item.href} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                                    <Link href={item.href} className="group flex w-[92px] flex-col items-center gap-2 rounded-2xl bg-slate-900/90 px-2 py-3.5 ring-1 ring-white/12 shadow-2xl backdrop-blur-md active:scale-95 transition-all">
+                                        <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm', item.tone)}>
+                                            <Icon className="h-5 w-5 text-slate-950" />
+                                        </span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+                                            {item.label}
+                                        </span>
+                                    </Link>
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <button
+                type="button"
+                onClick={() => setOpen(v => !v)}
+                className={cn(
+                    'relative inline-flex h-14 w-14 items-center justify-center rounded-full ring-1 ring-white/20 transition-all duration-300',
+                    open
+                        ? 'bg-slate-800 text-white shadow-xl'
+                        : 'bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-[0_12px_32px_rgba(34,211,238,0.3)]',
+                )}
+            >
+                <motion.span animate={{ rotate: open ? 45 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+                    <Plus className="h-6 w-6" />
+                </motion.span>
+            </button>
+        </div>
+    );
+}
+
 /**
  * ──────────────────────────────────────────────────────────────────────────────
  * MAIN PAGE COMPONENT
@@ -281,31 +337,31 @@ export default function LandingPage() {
             <Background />
 
             {/* Navbar */}
-            <header className="relative z-30 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8 sm:px-8">
-                <span className="tct-serif text-2xl font-bold tracking-tight text-white">
+            <header className="relative z-30 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 sm:py-8 sm:px-8">
+                <span className="tct-serif text-xl sm:text-2xl font-bold tracking-tight text-white">
                     TheChosen<span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Talks</span>
                 </span>
-                <Button asChild variant="ghost" className="h-11 rounded-full bg-white/5 px-6 text-xs font-bold uppercase tracking-widest text-white/70 ring-1 ring-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95">
+                <Button asChild variant="ghost" className="h-10 sm:h-11 rounded-full bg-white/5 px-5 sm:px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 ring-1 ring-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95">
                     <Link href="/today" className="flex items-center gap-2"><LogIn size={14} /> Login</Link>
                 </Button>
             </header>
 
             <main className="relative z-10">
                 {/* Hero Section */}
-                <section className="flex min-h-[85dvh] flex-col items-center justify-center px-6 py-12">
+                <section className="flex min-h-[80dvh] sm:min-h-[85dvh] flex-col items-center justify-center px-6 py-12">
                     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }} className="w-full max-w-xl">
-                        <div className="w-full rounded-[3.5rem] border border-white/10 bg-white/[0.03] px-8 py-14 text-center backdrop-blur-3xl shadow-[0_32px_100px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/5">
-                            <div className="space-y-10">
+                        <div className="w-full rounded-[3rem] sm:rounded-[3.5rem] border border-white/10 bg-white/[0.03] px-6 sm:px-8 py-12 sm:py-14 text-center backdrop-blur-3xl shadow-[0_32px_100px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/5">
+                            <div className="space-y-8 sm:space-y-10">
                                 <div className="flex justify-center">
-                                    <div className="flex h-20 w-20 items-center justify-center rounded-[2rem] bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_15px_40px_rgba(34,211,238,0.25)] ring-4 ring-white/5">
-                                        <Users className="h-10 w-10 text-slate-950" strokeWidth={2.5} />
+                                    <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-[1.75rem] sm:rounded-[2rem] bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_15px_40px_rgba(34,211,238,0.25)] ring-4 ring-white/5">
+                                        <Users className="h-8 w-8 sm:h-10 sm:w-10 text-slate-950" strokeWidth={2.5} />
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <h1 className="tct-serif text-5xl font-bold tracking-tight text-white leading-[1.1]">Bertumbuh<br />Bersama</h1>
-                                    <p className="text-lg text-white/50 max-w-xs mx-auto leading-relaxed font-medium">Platform digital harian untuk inspirasi, doa, dan komunitas yang menguatkan.</p>
+                                <div className="space-y-3 sm:space-y-4">
+                                    <h1 className="tct-serif text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">Bertumbuh<br />Bersama</h1>
+                                    <p className="text-base sm:text-lg text-white/50 max-w-xs mx-auto leading-relaxed font-medium">Platform digital harian untuk inspirasi, doa, dan komunitas yang menguatkan.</p>
                                 </div>
-                                <Button asChild className="h-16 w-full rounded-[2rem] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-500/20 active:scale-[0.97] transition-all hover:brightness-110">
+                                <Button asChild className="h-14 sm:h-16 w-full rounded-[1.75rem] sm:rounded-[2rem] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-500/20 active:scale-[0.97] transition-all hover:brightness-110">
                                     <Link href="/today" className="flex items-center justify-center gap-3">Mulai Journey <ArrowRight size={20} strokeWidth={3} /></Link>
                                 </Button>
                             </div>
@@ -318,33 +374,33 @@ export default function LandingPage() {
                     <div className="sticky top-0 h-[100dvh] flex items-center justify-center overflow-hidden">
                         <div className="mx-auto w-full max-w-6xl px-6 grid lg:grid-cols-2 gap-12 items-center">
                             
-                            <div className="space-y-6 md:space-y-10">
+                            <div className="space-y-5 md:space-y-10">
                                 <Badge><Sparkles size={12} className="text-brand" /> Ecosystem Modules</Badge>
-                                <h2 className="tct-serif text-5xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
+                                <h2 className="tct-serif text-4xl sm:text-7xl leading-[1.05] tracking-tight text-white font-bold">
                                     Satu Platform,<br />
                                     <span className="text-white/20">Banyak Cara</span><br />
                                     <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Bertumbuh.</span>
                                 </h2>
-                                <p className="text-lg md:text-xl text-white/40 max-w-md leading-relaxed font-medium">
+                                <p className="text-base md:text-xl text-white/40 max-w-md leading-relaxed font-medium">
                                     Modul terintegrasi yang didesain untuk membantu setiap Chosen People menemukan ritme spiritualnya.
                                 </p>
                                 
-                                <div className="flex items-center gap-3 pt-4">
+                                <div className="flex items-center gap-2 pt-2 md:pt-4">
                                     {featureItems.map((_, i) => (
                                          <div 
                                             key={i} 
                                             className={cn(
-                                                "rounded-full transition-all duration-500", 
+                                                "h-1.5 rounded-full transition-all duration-500", 
                                                 i === activeIndex 
-                                                    ? "w-10 h-1.5 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)]" 
-                                                    : "w-1.5 h-1.5 bg-white/10"
+                                                    ? "w-8 sm:w-10 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)]" 
+                                                    : "w-1.5 bg-white/10"
                                             )} 
                                         />
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="relative h-[480px] md:h-[540px] w-full max-w-xl mx-auto lg:mx-0">
+                            <div className="relative h-[440px] md:h-[540px] w-full max-w-xl mx-auto lg:mx-0">
                                 {featureItems.map((item, i) => (
                                     <StickyStackScene 
                                         key={item.id} 
@@ -360,39 +416,41 @@ export default function LandingPage() {
                 </section>
 
                 {/* Final CTA & Trust Layer */}
-                <section className="px-6 py-24 bg-white/[0.02] border-y border-white/5 backdrop-blur-3xl">
-                    <div className="mx-auto max-w-4xl text-center space-y-10">
+                <section className="px-6 py-20 sm:py-24 bg-white/[0.02] border-y border-white/5 backdrop-blur-3xl">
+                    <div className="mx-auto max-w-4xl text-center space-y-8 sm:space-y-10">
                         <div className="flex justify-center">
                             <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                                 <ShieldCheck size={12} className="mr-1.5" /> Trusted Ecosystem
                             </Badge>
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">Membangun Fondasi Rohani Yang Sehat & Aman.</h2>
-                        <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto font-medium">
+                        <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">Membangun Fondasi Rohani Yang Sehat & Aman.</h2>
+                        <p className="text-base md:text-xl text-white/50 max-w-2xl mx-auto font-medium">
                             Bukan sekadar website, melainkan ekosistem digital yang dirancang untuk menjaga privasi, kejujuran refleksi, dan kedalaman iman Anda.
                         </p>
                         <div className="pt-4">
-                            <Button asChild className="h-16 px-12 rounded-[2rem] bg-white text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95">
+                            <Button asChild className="h-14 sm:h-16 px-10 sm:px-12 rounded-[1.75rem] sm:rounded-[2rem] bg-white text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95">
                                 <Link href="/register"> Buat Akun Gratis</Link>
                             </Button>
                         </div>
                     </div>
                 </section>
 
-                <footer className="pb-32 pt-20 text-center space-y-8 px-6">
+                <footer className="pb-32 pt-16 text-center space-y-6 sm:space-y-8 px-6">
                     <div className="inline-flex items-center gap-3 opacity-30">
-                        <div className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                        <h2 className="text-[11px] font-black uppercase tracking-[0.4em] text-white">The Chosen Talks</h2>
-                        <div className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                        <div className="h-1 w-1 rounded-full bg-cyan-400" />
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white">The Chosen Talks</h2>
+                        <div className="h-1 w-1 rounded-full bg-cyan-400" />
                     </div>
-                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">© 2026 — Built for the Chosen People by WillBerth.</p>
-                    <div className="flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-white/30">
-                        <Link href="/privacy" className="hover:text-cyan-400 transition-colors ">Privacy</Link>
+                    <p className="text-[9px] sm:text-[10px] font-bold text-white/20 uppercase tracking-widest leading-relaxed">© 2026 — Built for the Chosen People by WillBerth.</p>
+                    <div className="flex justify-center gap-6 sm:gap-8 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white/30">
+                        <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
                         <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <a href="https://instagram.com/willberth.channel/" target="_blank" className="hover:text-cyan-400 transition-colors">Instagram</a>
                     </div>
                 </footer>
             </main>
+
+            <QuickAccessLauncher />
         </div>
     );
 }
