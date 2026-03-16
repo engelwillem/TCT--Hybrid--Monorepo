@@ -3,10 +3,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Search, ArrowLeft, ChevronRight, Loader2, PlusCircle, UserCircle2 } from 'lucide-react';
+import { Mail, Search, ChevronRight, Loader2, PlusCircle, UserCircle2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { getAppAccessToken, clearAppAccessToken } from '@/services/app-auth-token';
 import MobileAppLayout from '@/layouts/MobileAppLayout';
 import SegmentedTabs from '@/components/core/SegmentedTabs';
 
@@ -21,6 +21,7 @@ type InboxItem = {
         online: boolean;
         avatar?: string;
     };
+    can_approve?: boolean;
 };
 
 type InboxPayload = {
@@ -41,6 +42,13 @@ export default function InboxPage() {
     const [inbox, setInbox] = useState<InboxPayload>({});
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'primary' | 'general' | 'requests'>('primary');
+    const [busyKey, setBusyKey] = useState<string | null>(null);
+    const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const fetchInbox = async (showLoader = false) => {
         const token = getAppAccessToken();
@@ -63,6 +71,9 @@ export default function InboxPage() {
             if (response.ok) {
                 const payload = await response.json();
                 setInbox(payload.inbox ?? {});
+            } else if (response.status === 401 || response.status === 403) {
+                clearAppAccessToken();
+                setInbox({});
             }
         } catch (e) {
             // Keep current state on error
@@ -88,6 +99,41 @@ export default function InboxPage() {
         const d = new Date(iso);
         if (Number.isNaN(d.getTime())) return '';
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const approveRequest = async (e: React.MouseEvent, messageId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const token = getAppAccessToken();
+        if (!token || busyKey) return;
+
+        setBusyKey(`approve:${messageId}`);
+        try {
+            const res = await fetch(`/api/inbox/messages/${messageId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({}),
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json?.ok !== true) {
+                showToast('Gagal menyetujui pesan', 'error');
+                return;
+            }
+
+            showToast('Peringatan telah disetujui');
+            setActiveTab('general');
+            void fetchInbox();
+        } catch {
+            showToast('Gagal menyetujui pesan', 'error');
+        } finally {
+            setBusyKey(null);
+        }
     };
 
     if (loading && !inbox.tabs) {
@@ -148,7 +194,7 @@ export default function InboxPage() {
                         <div className="space-y-1">
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/80">Messaging Hub</span>
                             <p className="text-sm font-bold text-white/40 uppercase tracking-widest">
-                                {Object.values(inbox.counts ?? {}).reduce((a, b) => a + b, 0)} Active Threads
+                                {Object.values(inbox.counts ?? {}).reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0)} Active Threads
                             </p>
                         </div>
                         <div className="h-12 w-12 rounded-2xl bg-sky-400/10 flex items-center justify-center text-sky-400 border border-sky-400/20 shadow-inner">
@@ -202,16 +248,16 @@ export default function InboxPage() {
                                     
                                     <div className="relative flex-none">
                                         <div className="h-14 w-14 rounded-[20px] bg-slate-900 border border-white/10 flex items-center justify-center text-lg font-black text-sky-400 shadow-xl group-hover:scale-105 transition-transform">
-                                            {item.partner.name.slice(0, 1).toUpperCase()}
+                                            {(item.partner?.name || '?').slice(0, 1).toUpperCase()}
                                         </div>
-                                        {item.partner.online && (
+                                        {item.partner?.online && (
                                             <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-emerald-500 border-4 border-white dark:border-slate-900 shadow-sm" />
                                         )}
                                     </div>
 
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
-                                            <p className="font-bold text-sm text-foreground truncate pr-2">{item.partner.name}</p>
+                                            <p className="font-bold text-sm text-foreground truncate pr-2">{item.partner?.name || 'Unknown'}</p>
                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
                                                 {formatTime(item.created_at)}
                                             </p>
@@ -222,6 +268,21 @@ export default function InboxPage() {
                                         )}>
                                             {item.preview || 'No content'}
                                         </p>
+                                        
+                                        {item.can_approve && (
+                                            <div className="mt-3">
+                                                <button
+                                                    disabled={busyKey === `approve:${item.message_id}`}
+                                                    onClick={(e) => void approveRequest(e, item.message_id)}
+                                                    className="px-4 py-2 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-md flex justify-center items-center w-max"
+                                                >
+                                                    {busyKey === `approve:${item.message_id}` ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                                    ) : null}
+                                                    {busyKey === `approve:${item.message_id}` ? 'Menyetujui...' : 'Setujui Pesan'}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex-none opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
@@ -237,6 +298,28 @@ export default function InboxPage() {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Global Toast Parity */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                    >
+                        <div className={cn(
+                            "px-5 py-3.5 rounded-2xl flex items-center gap-3 shadow-2xl ring-1",
+                            toast.type === 'error' 
+                                ? "bg-rose-500 border border-rose-500/20 text-white shadow-rose-500/30"
+                                : "bg-emerald-500 border border-emerald-500/20 text-white shadow-emerald-500/30"
+                        )}>
+                            {toast.type === 'error' ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
+                            <p className="text-[12px] font-black tracking-wide break-words">{toast.message}</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </MobileAppLayout>
     );
 }

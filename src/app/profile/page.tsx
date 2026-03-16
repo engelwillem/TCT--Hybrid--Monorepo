@@ -260,11 +260,11 @@ export default function ProfilePage() {
             });
 
             if (!response.ok) {
-                const payload = await response.json();
+                const payload = await response.json().catch(() => ({}));
                 if (payload.errors) {
                     setProfileErrors(payload.errors);
                 } else {
-                    showToast('Gagal menyimpan profil', 'error');
+                    showToast(payload.message || 'Gagal menyimpan profil', 'error');
                 }
                 return;
             }

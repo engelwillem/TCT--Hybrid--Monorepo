@@ -82,3 +82,4 @@ Teknik yang mendikte perilaku tumpukan di sini secara tradisional identik dengan
 ### Karakteristik Vital Keseluruhan:
 Animasi Legacy di port `8000` tidak mencoba menjadi sebuah "bioskop". Tidak kelenturan inersia berlebihan (tidak ada *Spring Feel*). Ia adalah tumpukan CSS linear kaku yang memanfaatkan perhitungan `position: sticky; top: XXXpx;` seraya bersandar pada progres sentuhan ujung ke ujung, memberikan kesan rapi, profesional, dan menyingkirkan elemen dramatis yang berlebihan.
 ---
+

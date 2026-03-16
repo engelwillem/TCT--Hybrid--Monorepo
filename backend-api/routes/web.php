@@ -283,7 +283,10 @@ Route::post('/versehub/{lang}/{ref}/comments', [VersehubCommentController::class
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+    // Modern Hybrid Redirects for Inbox
+    Route::get('/inbox', function () {
+        return redirect()->to(env('NEXT_PUBLIC_APP_URL', 'http://localhost:9002') . '/inbox');
+    })->name('inbox.index');
 
     // Study Paths (write actions)
     Route::post('/versehub/{lang}/study/{slug}/join', [StudyPathController::class, 'join'])->name('versehub.study.join');
@@ -304,9 +307,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/inbox/{user}/messages', [DirectMessageController::class, 'thread'])
         ->whereNumber('user')
         ->name('inbox.messages.thread');
-    Route::get('/inbox/{user}', [InboxThreadController::class, 'show'])
-        ->whereNumber('user')
-        ->name('inbox.show');
+    Route::get('/inbox/{user}', function ($user) {
+        $userId = $user instanceof \App\Models\User ? $user->id : $user;
+        return redirect()->to(env('NEXT_PUBLIC_APP_URL', 'http://localhost:9002') . '/inbox/' . $userId);
+    })->whereNumber('user')->name('inbox.show');
     Route::post('/users/{user}/follow-toggle', [UserFollowController::class, 'toggle'])
         ->name('users.follow.toggle');
     Route::post('/channels/{channel}/membership', [ChannelMembershipController::class, 'toggle'])

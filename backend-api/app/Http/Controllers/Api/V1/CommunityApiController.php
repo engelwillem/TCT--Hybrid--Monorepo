@@ -7,11 +7,13 @@ use App\Models\MemberPost;
 use App\Models\MemberPostBookmark;
 use App\Models\MemberPostComment;
 use App\Models\User;
+use App\Notifications\MemberPostCommentReplyNotification;
 use App\Services\Interaction\SpiritualInteractionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class CommunityApiController extends Controller
@@ -154,8 +156,8 @@ class CommunityApiController extends Controller
     {
         $comments = MemberPostComment::query()
             ->where('member_post_id', $memberPost->id)
-            ->with('user:id,name,avatar_path')
-            ->orderBy('created_at')
+            ->with(['user:id,name,avatar_path', 'replyTo.user:id,name'])
+            ->orderByDesc('created_at')
             ->limit(100)
             ->get()
             ->map(fn(MemberPostComment $comment) => $this->serializeComment($comment))
@@ -176,15 +178,38 @@ class CommunityApiController extends Controller
 
         $validated = $request->validate([
             'text' => ['required', 'string', 'max:2000'],
+            'reply_to_comment_id' => ['nullable', 'integer'],
         ]);
+
+        $replyToCommentId = isset($validated['reply_to_comment_id'])
+            ? (int) $validated['reply_to_comment_id']
+            : null;
+
+        $replyTarget = null;
+        if ($replyToCommentId) {
+            $replyTarget = MemberPostComment::query()
+                ->with('user:id,name')
+                ->where('member_post_id', $memberPost->id)
+                ->find($replyToCommentId);
+        }
 
         $comment = MemberPostComment::query()->create([
             'member_post_id' => $memberPost->id,
             'user_id' => $user->id,
+            'reply_to_comment_id' => $replyTarget?->id,
             'body' => trim((string) $validated['text']),
         ]);
 
-        $comment->load('user:id,name,avatar_path');
+        if ($replyTarget?->user && $replyTarget->user->id !== $user->id) {
+            $replyTarget->user->notify(new MemberPostCommentReplyNotification(
+                actorName: (string) $user->name,
+                postId: $memberPost->id,
+                snippet: trim((string) $validated['text']),
+            ));
+            Cache::forget("notifications:payload:user:{$replyTarget->user->id}");
+        }
+
+        $comment->load(['user:id,name,avatar_path', 'replyTo.user:id,name']);
 
         return response()->json([
             'data' => [
@@ -244,6 +269,8 @@ class CommunityApiController extends Controller
             'postId' => (string) $comment->member_post_id,
             'text' => (string) $comment->body,
             'createdAt' => $comment->created_at?->diffForHumans(),
+            'replyToId' => $comment->reply_to_comment_id ? (string) $comment->reply_to_comment_id : null,
+            'replyToAuthor' => $comment->replyTo?->user?->name ? (string) $comment->replyTo->user->name : null,
             'author' => [
                 'id' => (string) ($comment->user?->id ?? ''),
                 'name' => (string) ($comment->user?->name ?? 'Member'),
