@@ -115,7 +115,7 @@ async function assertOk(response: Response, message: string): Promise<void> {
 }
 
 export const CommunityService = {
-  async listPosts(): Promise<CommunityPost[]> {
+  async listPosts(): Promise<{ posts: CommunityPost[]; archivePosts: CommunityPost[] }> {
     const response = await fetch("/api/community/posts", {
       method: "GET",
       cache: "no-store",
@@ -123,8 +123,11 @@ export const CommunityService = {
     });
 
     await assertOk(response, "Failed to fetch posts");
-    const payload = await response.json() as ApiEnvelope<{ posts: ApiPost[] }>;
-    return (payload?.data?.posts ?? []).map(mapApiPost);
+    const payload = await response.json() as ApiEnvelope<{ posts: ApiPost[], archivePosts?: ApiPost[] }>;
+    return {
+      posts: (payload?.data?.posts ?? []).map(mapApiPost),
+      archivePosts: (payload?.data?.archivePosts ?? []).map(mapApiPost),
+    };
   },
 
   async createPost(text: string, type: string = 'user_post', images: File[] = []): Promise<CommunityPost> {
