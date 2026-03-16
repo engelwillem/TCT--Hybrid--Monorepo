@@ -13,8 +13,8 @@
 - root cause: `VersehubReaderPage.tsx` merender prompt statik `Bagaimana ayat-ayat ini...` dan mengabaikan suplai prop dinamis `reflection_question` (dari *AI Mentor Insight* pada backend), serta tidak mencegat kondisi `has_reflected`.
 - file terkait: `src/features/versehub/pages/VersehubReaderPage.tsx`
 - dampak: Pengguna kehilangan konteks pertanyaan bimbingan personal dari *Backend Mentor Engine*, menjadikannya pengalaman yang monoton (*static placeholder*).
-- langkah verifikasi: Bongkar objek respons pada `loadChapter`, pancing masuk ke parameter `EndOfChapterPrompt`. Pastikan tulisan di UI menyamai cetakan *Database*.
-- status: **READY FOR PATCH**
+- langkah verifikasi: Bongkar objek respons pada `loadChapter`, pancing masuk ke parameter `EndOfChapterPrompt`. Pastikan tulisan di UI menyamai cetakan *Database*. (TERBUKTI)
+- status: **PASS**
 
 ### 2. Authorization Header cPanel Restriction Risk
 - root cause: Apache di cPanel sering memangkas HTTP Header `Authorization: Bearer`.

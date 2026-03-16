@@ -7,4 +7,10 @@
 - Mengamankan kontrak pembacaan struktur payload balasan backend (`VerseHubReaderController` vs `VersehubReaderPage`).
 
 ### Diketahui (Mismatches / Known Issues)
-- _State_ dinamika refleksi `reflection_question` dan `has_reflected` sengaja dibiarkan keras (*hard-coded*) di sisi antarmuka dan belum ditangkap dari pembongkaran data bawaan endpoint `loadChapter()`.
+- _State_ dinamika refleksi `reflection_question` dan `has_reflected` sengaja dibiarkan keras (*hard-coded*) di sisi antarmuka dan belum ditangkap dari pembongkaran data bawaan endpoint `loadChapter()`. (DISELESAIKAN)
+
+## [Reflection Consistency Patch] - 2026-03-17
+
+### Diubah
+- Menggantikan pertanyaan refleksi _hard-coded_ di `VersehubReaderPage.tsx` menjadi pertanyaan dinamis sesuai payload (_reflection_question_).
+- Mencegat render ulang `<EndOfChapterPrompt>` jika _state_ pengguna sudah disahkan oleh server pernah menulis `has_reflected`.

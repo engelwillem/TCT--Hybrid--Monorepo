@@ -97,6 +97,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const [shareData, setShareData] = useState<any>({});
     const [reflectionComposerOpen, setReflectionComposerOpen] = useState(false);
     const [has_reflected, setHasReflected] = useState(false);
+    const [activeReflectionQuestion, setActiveReflectionQuestion] = useState('');
     
     // Actions & Persistence
     const [actions, setActions] = useState<Record<string, VerseState>>({});
@@ -144,6 +145,12 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                 setVerses(data.verses);
                 setChapterLabel(data.chapter_label);
                 setProgressTotal(data.verses.length);
+                if (data.reflection_question) {
+                    setActiveReflectionQuestion(data.reflection_question);
+                }
+                if (data.has_reflected !== undefined) {
+                    setHasReflected(data.has_reflected);
+                }
                 setIsChapter(true);
             } else {
                 throw new Error('invalid_payload');
@@ -313,8 +320,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const navItems = getUiNavItems(isAuthenticated);
     const selectedVerse = useMemo(() => verses.find(v => v.key === activeVerseKey), [verses, activeVerseKey]);
     
-    const activeReflectionQuestion = ''; // Placeholder for dynamic logic
-    const reflection_question = 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
+    const fallback_reflection_question = 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
 
     const handlePathSelect = (path: { slug: string }) => {
         router.push(`/versehub/${lang}/study/${path.slug}`);
@@ -525,7 +531,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                             {isChapter && !has_reflected && (
                                                 <EndOfChapterPrompt 
                                                     lang={lang}
-                                                    questionText={activeReflectionQuestion || reflection_question}
+                                                    questionText={activeReflectionQuestion || fallback_reflection_question}
                                                     onReflect={() => setReflectionComposerOpen(true)}
                                                     onPathSelect={handlePathSelect}
                                                 />
@@ -693,7 +699,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                 isOpen={reflectionComposerOpen} 
                 onClose={() => setReflectionComposerOpen(false)} 
                 verseRef={activeVerseKey || ''} 
-                questionText={activeReflectionQuestion || reflection_question} 
+                questionText={activeReflectionQuestion || fallback_reflection_question} 
                 lang={lang} 
             />
 
