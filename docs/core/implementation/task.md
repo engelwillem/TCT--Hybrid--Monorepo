@@ -16,12 +16,12 @@
     - [x] Migrate `Community/Index`
     - [x] Migrate `VerseHub` pages
         - [x] Port auxiliary overlays (Mentor, Share, Reflection)
+        - [x] Port Activity & Journey pages
+        - [x] Port Study Paths system (Index & Show)
         - [x] Implement unified Reader logic (`VersehubReaderPage.tsx`)
     - [x] Configure unified dynamic routing ([slug] page) to resolve conflicts
     - [x] Verify Next.js production build (npm run build) passes
     - [x] Resolve case-sensitive directory import conflicts
-        - [x] Port Activity & Journey pages
-        - [x] Port Study Paths system (Index & Show)
     - [x] Migrate `Channels` pages
         - [x] Port Sabbath School (Index, Lesson, Day reader)
         - [x] Port Weekly Series (Index, Post view)
@@ -33,7 +33,8 @@
         - [x] Port `Legal` (Privacy & Terms)
 - [x] Visual & Layout Realignment
     - [x] Mechanical scroll parity for Landing Page (Linear Sticky Stack)
-    - [x] Removal of non-legacy motion filters (Blur/Spring)
+    - [x] Implementation of premium "iOS Native" spring physics and blur effects
+    - [x] Resolution of mobile Z-Index collisions and text bleed-through
 - [x] Integration & Routing (Foundation)
     - [x] Setup Axios/Fetch to communicate with Laravel backend-api
     - [x] Implement Next.js routing parity with Laravel `web.php`

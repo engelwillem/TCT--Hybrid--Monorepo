@@ -3,7 +3,7 @@
 
 import React, { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, MoreVertical, Smile, Image as ImageIcon, ArrowLeft, Loader2, CheckCheck } from 'lucide-react';
+import { Send, MoreVertical, Smile, Image as ImageIcon, ArrowLeft, Loader2, CheckCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAppAccessToken } from '@/services/app-auth-token';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,12 +40,21 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const lastMessageIdRef = useRef<number | null>(null);
 
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const fetchThread = async (showLoader = false) => {
         const token = getAppAccessToken();
-        if (!token || !Number.isFinite(partnerId)) return;
+        if (!token || !Number.isFinite(partnerId)) {
+            if (showLoader) setLoading(false);
+            return;
+        }
 
         if (showLoader) setLoading(true);
         try {
@@ -74,9 +83,11 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                     }, 50);
                 }
+            } else {
+                setPartner(null);
             }
         } catch {
-            // Error handling
+            setPartner(null);
         } finally {
             if (showLoader) setLoading(false);
         }
@@ -127,7 +138,11 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                 }),
             });
 
-            if (!response.ok) throw new Error('Send failed');
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                const errorMsg = payload?.errors?.body?.[0] || payload?.message || 'Gagal mengirim pesan.';
+                throw new Error(errorMsg);
+            }
             
             const payload = await response.json();
             const serverMsg = payload?.message;
@@ -139,19 +154,39 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                         : m
                 )));
             }
-        } catch {
+        } catch (err: any) {
             setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
-            alert('Gagal mengirim pesan.');
+            showToast(err.message || 'Gagal mengirim pesan.', 'error');
         } finally {
             setSending(false);
         }
     };
 
-    if (loading && !partner) {
+    if (!partner) {
+        if (loading) {
+            return (
+                <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col items-center justify-center gap-4">
+                    <Loader2 className="h-10 w-10 text-brand animate-spin" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Secure Connection...</p>
+                </div>
+            );
+        }
+
         return (
-            <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col items-center justify-center gap-4">
-                <Loader2 className="h-10 w-10 text-brand animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Secure Connection...</p>
+            <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col items-center justify-center gap-6 text-center px-4">
+                <AlertTriangle className="h-12 w-12 text-slate-300" />
+                <div className="space-y-2">
+                    <h2 className="text-xl font-black text-slate-900">Percakapan Tidak Tersedia</h2>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 max-w-[240px] mx-auto leading-relaxed">
+                        Koneksi ke mitra percakapan ini ditutup atau tidak ditemukan.
+                    </p>
+                </div>
+                <button 
+                    onClick={() => router.push('/inbox')}
+                    className="px-6 py-3 mt-4 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+                >
+                    Kembali ke Kotak Masuk
+                </button>
             </div>
         );
     }
@@ -168,9 +203,9 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                         <div className="flex items-center gap-3">
                             <div className="relative">
                                 <div className="h-10 w-10 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center text-sky-400 font-black">
-                                    {partner?.name.slice(0, 1).toUpperCase()}
+                                    {partner.name.slice(0, 1).toUpperCase()}
                                 </div>
-                                {partner?.online && (
+                                {partner.online && (
                                     <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-500/20" />
                                 )}
                             </div>
@@ -265,6 +300,28 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                     </button>
                 </div>
             </footer>
+
+            {/* Global Toast Parity */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                    >
+                        <div className={cn(
+                            "px-5 py-3.5 rounded-2xl flex items-center gap-3 shadow-2xl ring-1",
+                            toast.type === 'error' 
+                                ? "bg-rose-500 border border-rose-500/20 text-white shadow-rose-500/30"
+                                : "bg-emerald-500 border border-emerald-500/20 text-white shadow-emerald-500/30"
+                        )}>
+                            {toast.type === 'error' ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
+                            <p className="text-[12px] font-black tracking-wide">{toast.message}</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

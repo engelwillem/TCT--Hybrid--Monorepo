@@ -10,6 +10,8 @@ export interface CommunityComment {
   postId: string;
   text: string;
   createdAt: string;
+  replyToId?: string | null;
+  replyToAuthor?: string | null;
   author: CommunityUser;
 }
 

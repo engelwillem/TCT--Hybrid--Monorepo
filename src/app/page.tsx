@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent, useSpring, useMotionTemplate, AnimatePresence } from "framer-motion";
+import { 
+  motion, 
+  useScroll, 
+  useTransform, 
+  useMotionValueEvent, 
+  useSpring, 
+  useMotionTemplate, 
+  AnimatePresence 
+} from "framer-motion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -156,11 +164,11 @@ function StickyStackScene({
         index + 3    // Pushed back 3
     ];
 
-    // Refined mobile specific stacking logic
+    // Refined mobile specific stacking logic - using 600px entry to avoid overlap
     const y = useTransform(cardProgress, inputRanges, [
         600,    // Start deep below
         0,      // Focused
-        -25,    // Layer 1
+        -25,    // Layer 1 (Adjusted from -20 for better mobile separation)
         -50,    // Layer 2
         -75     // Layer 3
     ]);
@@ -335,8 +343,8 @@ export default function LandingPage() {
                 <span className="tct-serif text-xl sm:text-2xl font-bold tracking-tight text-white">
                     TheChosen<span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Talks</span>
                 </span>
-                <Button asChild variant="ghost" className="h-10 sm:h-11 rounded-full bg-white/5 px-5 sm:px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/70 ring-1 ring-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95">
-                    <Link href="/today" className="flex items-center gap-2"><LogIn size={14} /> Login</Link>
+                <Button asChild variant="ghost" className="h-11 rounded-full bg-white/5 px-6 text-xs font-bold uppercase tracking-widest text-white/70 ring-1 ring-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95">
+                    <Link href="/login" className="flex items-center gap-2"><LogIn size={14} /> Login</Link>
                 </Button>
             </header>
 
@@ -355,8 +363,8 @@ export default function LandingPage() {
                                     <h1 className="tct-serif text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">Faith Talk,<br />for Faith Grow</h1>
                                     <p className="text-base sm:text-lg text-white/50 max-w-xs mx-auto leading-relaxed font-medium">Platform digital harian untuk inspirasi, doa, dan komunitas yang menguatkan.</p>
                                 </div>
-                                <Button asChild className="h-14 sm:h-16 w-full rounded-[1.75rem] sm:rounded-[2rem] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-500/20 active:scale-[0.97] transition-all hover:brightness-110">
-                                    <Link href="/today" className="flex items-center justify-center gap-3">Mulai Journey <ArrowRight size={20} strokeWidth={3} /></Link>
+                                <Button asChild className="h-16 w-full rounded-[2rem] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-500/20 active:scale-[0.97] transition-all hover:brightness-110">
+                                    <Link href="/login" className="flex items-center justify-center gap-3">Mulai Journey <ArrowRight size={20} strokeWidth={3} /></Link>
                                 </Button>
                             </div>
                         </div>
@@ -417,7 +425,7 @@ export default function LandingPage() {
                             Bukan sekadar website, melainkan ekosistem digital yang dirancang untuk menjaga privasi, kejujuran refleksi, dan kedalaman iman Anda.
                         </p>
                         <div className="pt-4">
-                            <Button asChild className="h-14 sm:h-16 px-10 sm:px-12 rounded-[1.75rem] sm:rounded-[2rem] bg-white text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95">
+                            <Button asChild className="h-16 px-12 rounded-[2rem] bg-white text-slate-950 font-black text-sm uppercase tracking-widest shadow-2xl transition-all hover:scale-105 active:scale-95">
                                 <Link href="/register"> Buat Akun Gratis</Link>
                             </Button>
                         </div>

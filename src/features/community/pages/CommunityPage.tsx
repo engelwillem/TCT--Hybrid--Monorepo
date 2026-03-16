@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostComposer } from "../components/PostComposer";
 import { MemberPostCard } from "../components/MemberPostCard";
+import { CommentsSheet } from "../components/CommentsSheet";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityPost } from "../types";
 import { Loader2, ChevronDown, Inbox } from "lucide-react";
@@ -27,6 +28,15 @@ export function CommunityPage() {
    const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [rituals, setRituals] = useState<any>(null);
+  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
+
+  const handleCommentsUpdated = useCallback((postId: string, count: number) => {
+    setPosts(prev => prev.map(p => 
+      p.id === postId 
+        ? { ...p, counts: { ...p.counts, comments: count } } 
+        : p
+    ));
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -252,7 +262,7 @@ export function CommunityPage() {
                   bookmarkLabel={String(p.counts.bookmarks)}
                   onPray={() => toggleLike(p.id)}
                   onBookmark={() => toggleBookmark(p.id)}
-                  onOpenComments={() => {}}
+                  onOpenComments={() => setActiveCommentPostId(p.id)}
                   onShare={() => {}}
                 />
               ))
@@ -323,7 +333,7 @@ export function CommunityPage() {
                         bookmarkLabel={String(p.counts.bookmarks)}
                         onPray={() => toggleLike(p.id)}
                         onBookmark={() => toggleBookmark(p.id)}
-                        onOpenComments={() => {}}
+                        onOpenComments={() => setActiveCommentPostId(p.id)}
                         onShare={() => {}}
                       />
                     ))}
@@ -361,7 +371,7 @@ export function CommunityPage() {
                             bookmarkLabel={String(p.counts.bookmarks)}
                             onPray={() => toggleLike(p.id)}
                             onBookmark={() => toggleBookmark(p.id)}
-                            onOpenComments={() => {}}
+                            onOpenComments={() => setActiveCommentPostId(p.id)}
                             onShare={() => {}}
                         />
                     ))
@@ -379,6 +389,13 @@ export function CommunityPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <CommentsSheet 
+        isOpen={!!activeCommentPostId}
+        onOpenChange={(open) => !open && setActiveCommentPostId(null)}
+        postId={activeCommentPostId}
+        onCommentsUpdated={handleCommentsUpdated}
+      />
     </div>
   );
 }

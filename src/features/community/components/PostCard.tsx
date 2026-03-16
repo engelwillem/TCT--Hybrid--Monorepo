@@ -97,9 +97,7 @@ export function PostCard({ post, comments, onAddComment, onLike, onBookmark, cur
       <CommentsSheet 
         isOpen={isCommentsOpen} 
         onOpenChange={setIsCommentsOpen}
-        comments={comments}
-        onAddComment={(text) => onAddComment(post.id, text)}
-        currentUser={currentUser}
+        postId={isCommentsOpen ? post.id : null}
       />
     </>
   );

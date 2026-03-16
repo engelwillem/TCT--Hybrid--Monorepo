@@ -172,5 +172,70 @@ export const CommunityService = {
     if (!payload?.data?.post) throw new ApiError("Malformed response", 502);
     
     return mapApiPost(payload.data.post);
+  },
+
+  async getComments(postId: string): Promise<CommunityComment[]> {
+    const response = await fetch(`/api/community/posts/${postId}/comments`, {
+      method: "GET",
+      cache: "no-store",
+      headers: buildHeaders(true),
+    });
+
+    await assertOk(response, "Failed to fetch comments");
+    const payload = await response.json() as ApiEnvelope<{ comments: any[] }>;
+    return (payload?.data?.comments ?? []).map((c) => ({
+      id: String(c.id),
+      postId: String(c.postId),
+      text: c.text,
+      createdAt: c.createdAt,
+      replyToId: c.replyToId,
+      replyToAuthor: c.replyToAuthor,
+      author: {
+        id: String(c.author?.id ?? ""),
+        name: String(c.author?.name ?? "Member"),
+        avatarUrl: c.author?.avatarUrl,
+        isOfficial: Boolean(c.author?.isOfficial),
+      },
+    }));
+  },
+
+  async createComment(postId: string, text: string, replyToCommentId?: string): Promise<CommunityComment> {
+    const response = await fetch(`/api/community/posts/${postId}/comments`, {
+      method: "POST",
+      headers: {
+        ...buildHeaders(true),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        text,
+        reply_to_comment_id: replyToCommentId ? Number(replyToCommentId) : null,
+      }),
+    });
+
+    if (!response.ok && response.status === 422) {
+      const errorJson = await response.json().catch(() => ({}));
+      const message = errorJson?.message || 'Validation Error';
+      throw new ApiError(message, 422);
+    }
+
+    await assertOk(response, "Failed to create comment");
+    const payload = await response.json() as ApiEnvelope<{ comment: any }>;
+    if (!payload?.data?.comment) throw new ApiError("Malformed response", 502);
+
+    const c = payload.data.comment;
+    return {
+      id: String(c.id),
+      postId: String(c.postId),
+      text: c.text,
+      createdAt: c.createdAt,
+      replyToId: c.replyToId,
+      replyToAuthor: c.replyToAuthor,
+      author: {
+        id: String(c.author?.id ?? ""),
+        name: String(c.author?.name ?? "Member"),
+        avatarUrl: c.author?.avatarUrl,
+        isOfficial: Boolean(c.author?.isOfficial),
+      },
+    };
   }
 };
