@@ -128,6 +128,58 @@ Contoh:
 ## Active Environment Drift Entries
 
 ### Entry ID
+`env-diff-003`
+
+### Date
+2026-03-17
+
+### Layer
+- shared
+
+### Variable Name
+- `cPanel CSF Firewall / SSH Reachability`
+
+### Secret?
+- no
+
+### Expected Role
+Mengizinkan mesin dari GitHub Actions Runners bersenjatakan `CPANEL_SSH_KEY` untuk mengeksekusi sambungan terminal (`ssh` & `scp`) dan menyuntikkan aset rilis melalui Port `2121`/`22`.
+
+### Expected Local Value Pattern
+`Whitelist Active / Bastion IP`
+
+### Expected Production Value Pattern
+- `IP runners` tidak di-*Drop*.
+- Antarmuka cPanel meloloskan permintaan TCP lintasan mesin *action*.
+
+### Observed Local State
+- n/a
+
+### Observed Production State
+- `Connection timed out` 
+- notes: `scp` diblokir tepat pada *port knocking* pertama.
+
+### Risk if Drift Exists
+- Deployment stagnan. Rilis kode tidak mungkin digulirkan secara CI/CD.
+
+### Related Flows
+- all
+
+### Verification Steps (Server Action Plan)
+1. Periksa `service sshd status` dan listen *port* di server (Apache/cPanel).
+2. Tinjau `/var/log/lfd.log` atau tabel pengeblokkan *ConfigServer Security & Firewall*. 
+3. Rekonsiliasi akses lewat pendaftaran putih (*Whitelist*) atas IP runner dinamis `curl -s https://api.github.com/meta | jq .actions` ATAU menyusun proksi *Jump Host* / VPN Tailscale.
+4. Ulangi alur penyebaran `backend-cpanel-deploy.yml`.
+
+### Resolution
+- pending server action
+
+### Status
+- READY FOR SERVER ACTION
+
+---
+
+### Entry ID
 `env-diff-002`
 
 ### Date

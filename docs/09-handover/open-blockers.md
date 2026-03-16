@@ -43,11 +43,13 @@
 - root cause: Alamat IP dari peladen *GitHub Actions runners* ditolak oleh *Firewall* (CSF/mod_security) cPanel milik penyedia *hosting*. Titik gagal (*Failure Point*) berada secara nyata pada baris `Upload artifact and deploy scripts`: `ssh: connect to host *** port ***: Connection timed out`.
 - file terkait: `.github/workflows/backend-cpanel-deploy.yml` dan konfigurasi *Security Panel* di server cPanel.
 - dampak: Pipeline CI/CD `main` menjadi rongsokan dan gagal mengeksekusi otomatisasi skrip `deploy.sh`. Seluruh rilis akan tertahan.
-- langkah verifikasi: Setujui rancangan mitigasi jaringan:
-  1. (Opsional A) Buka pelacakan IP dinamis GitHub Actions di *Whitelist* CSF Server secara makro.
-  2. (Opsional B) Manfaatkan skrip `Action` perantara (*Tailscale/VPN*) jika panel mengizinkan koneksi simetris.
-  3. Uji *run ulang* `backend-cpanel-deploy.yml` hingga stempel `scp` sukses merobek masuk.
-- status: **READY FOR SERVER CONFIG** (Patch Timeout Handling *Hardening* telah diterapkan).
+- langkah verifikasi: Setujui rancangan mitigasi jaringan (Server Action Plan):
+  - **Validasi Pertama:** Pastikan *Service* SSH cPanel berjalan pada *port* yang sesuai (default 2121 / 22) dan dapat diping dari luar (`nmap` / telnet).
+  - **Audit CSF/ModSecurity:** Periksa log `/var/log/lfd.log` atau antarmuka *ConfigServer Security & Firewall* untuk memastikan apakah rentang IP GitHub Actions diblok oleh *Port Scan Tracking* atau dibalas `DROP`.
+  - **Mitigasi Opsi A (Temporary/Dynamic Allowlist):** Buat satu skrip khusus (di GitHub Actions via API WHM / cPanel) untuk mendinamiskan IP runner ke daftar putih peladen.
+  - **Mitigasi Opsi B (Static Bastion/VPN):** (Lebih aman) Hubungkan Tailscale / Wireguard antara GitHub Runner dan cPanel. Setel port lokal di runner via *Action VPN*.
+  - **Mitigasi Opsi C (Manual Fixed IP):** Tetapkan pemulihan VPS IP tunggal dengan proksi pro-aktif, atau pertimbangkan deploy pull via WebHook.
+- status: **READY FOR SERVER ACTION**
 
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
