@@ -7,3 +7,13 @@
 
 ## Risks/Decisions
 - Pemilihan *Client-side filtering* (hanya filter di frontend UI) tanpa membebani query backend Laravel. (Resiko: batas batch data *pagination* masih perlu dipikirkan).
+
+## Visual System Foundation (Phase 2)
+### Actions Taken
+- Melakukan reset besar ke `src/app/globals.css`.
+- Menanam `The Dawn Theme` Color Tokens (hsl 210/215).
+- Menanam `The Glassmorphism Shell` (shadow-premium, blur overlays).
+- Mendaftarkan hierarki teks, spacing ultra-lapang (`radius-[40px]`), dan `tct-pressable` micro-animations.
+
+### Risks/Decisions
+- Modifikasi ini memaksa `globals.css` menimpa warisan tailwind *inline*. Halaman yang masih berpegang pada utilitas kaku mungkin akan perlu disesuaikan (*padding* dll).

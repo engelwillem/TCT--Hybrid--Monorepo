@@ -140,19 +140,19 @@ export function VerseHubFeaturedCard({
         </a>
       </div>
 
-      <Card className="rounded-[32px] bg-surface/80 p-5 shadow-card ring-1 ring-border/60 backdrop-blur-xl transition-all hover:bg-surface-elevated">
-        <a href={verseHref} className="mt-1 block overflow-hidden rounded-2xl ring-1 ring-border/60" aria-label={`Buka OG ayat ${verse.reference}`}>
+      <Card className="rounded-[32px] md:rounded-[40px] border-0 glass-card p-5 transition-all hover:shadow-card">
+        <a href={verseHref} className="mt-1 block overflow-hidden rounded-[24px] md:rounded-[32px] ring-1 ring-black/[0.04] shadow-sm transform transition-transform duration-500 hover:scale-[1.01]" aria-label={`Buka OG ayat ${verse.reference}`}>
           <img
             src={ogImageUrl ?? `/versehub/id/${verse.ref}/og.png`}
             alt={`OG image ${verse.reference}`}
-            className="aspect-[1200/630] w-full object-cover transition-transform duration-700 hover:scale-105"
+            className="aspect-[1200/630] w-full object-cover"
             loading="lazy"
           />
         </a>
       </Card>
 
-      <Card className="rounded-[32px] bg-surface/80 shadow-card ring-1 ring-border/60 backdrop-blur-xl">
-        <CardContent className="p-7 md:p-9">
+      <Card className="rounded-[32px] md:rounded-[40px] border-0 glass-card">
+        <CardContent className="tct-card-pad">
           <a href={verseHref} className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40" aria-label={`Buka ayat ${verse.reference}`}>
             <VerseQuoteRail text={verse.text} />
           </a>

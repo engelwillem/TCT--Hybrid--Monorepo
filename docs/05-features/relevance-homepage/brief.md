@@ -9,4 +9,5 @@ Merombak "Silo Konten" (tumpukan feed kaku) menjadi "Spiritual Relevance Engine"
 - Pengenalan kartu Hook (seperti ajakan minta dukungan doa) saat *state* darurat (e.g. `weary`).
 
 ## Status
-- **COMPLETED** (MVP 1 Phase)
+- **Phase 1 (MVP Logic)**: COMPLETED.
+- **Phase 2 (Visual Reset & Cleanup)**: IN PROGRESS. Mengimplementasi sistem kartu kaca (_glassmorphism_), elevasi bayangan halus, membuang keping antarmuka usang, dan menerapkan hierarki spasial ultra-lega untuk menghapuskan jejak peninggalan era silo.

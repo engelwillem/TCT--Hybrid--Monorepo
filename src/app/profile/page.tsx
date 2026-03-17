@@ -501,10 +501,10 @@ export default function ProfilePage() {
                             <Grid className="h-5 w-5 text-muted-foreground" />
                         </button>
                     </PopoverTrigger>
-                    <PopoverContent align="end" className="w-56 p-2 bg-white dark:bg-slate-900 rounded-[24px] shadow-2xl border-none ring-1 ring-black/5">
+                    <PopoverContent align="end" className="w-56 p-2 bg-surface rounded-[24px] shadow-soft border border-border/50">
                         <button
                             onClick={logout}
-                            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-rose-500"
+                            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl hover:bg-surface-elevated transition-colors text-rose-500"
                         >
                             <LogOut className="h-4 w-4" />
                             <span className="text-sm font-bold">Log out</span>
@@ -520,10 +520,10 @@ export default function ProfilePage() {
                     <div className="relative z-10 flex flex-col items-center text-center">
                         <div className="relative">
                             <div className="absolute -inset-2 rounded-full bg-brand/20 opacity-20 blur-xl animate-pulse" />
-                            <div className="relative h-28 w-28 rounded-[2rem] bg-slate-900 flex items-center justify-center overflow-hidden ring-4 ring-white/10 shadow-2xl">
+                            <div className="relative h-28 w-28 rounded-[2rem] bg-surface-muted flex items-center justify-center overflow-hidden ring-4 ring-border/50 shadow-soft">
                                 {submittingAvatar && (
-                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-20">
-                                        <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-20">
+                                        <Loader2 className="h-6 w-6 text-brand animate-spin" />
                                     </div>
                                 )}
                                 {user.avatarUrl ? (
@@ -544,8 +544,8 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="mt-8 space-y-1">
-                            <h2 className="text-3xl font-black tracking-tighter text-white leading-tight">{user.name}</h2>
-                            <p className="text-brand font-bold tracking-wide text-sm">{user.email}</p>
+                            <h2 className="text-3xl font-black tracking-tighter text-foreground leading-tight">{user.name}</h2>
+                            <p className="text-muted-foreground font-bold tracking-wide text-sm">{user.email}</p>
                         </div>
 
                         <div className="mt-6">
@@ -567,23 +567,23 @@ export default function ProfilePage() {
                                 <div className="p-5 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                                         <div>
-                                            <p className="text-sm font-black text-white/90">Welcome back, {firstName}.</p>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Control Center Access</p>
+                                            <p className="text-sm font-black text-foreground">Welcome back, {firstName}.</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Control Center Access</p>
                                         </div>
                                         <div className={cn(
-                                            "px-4 py-2 rounded-2xl text-[10px] font-black border uppercase tracking-widest text-center shadow-lg",
-                                            opsGateway.status === 'High Risk' ? "bg-rose-500/20 text-rose-400 border-rose-500/30" : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                                            "px-4 py-2 rounded-2xl text-[10px] font-black border uppercase tracking-widest text-center shadow-soft",
+                                            opsGateway.status === 'High Risk' ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                                         )}>
                                             Status: {opsGateway.status}
                                         </div>
                                     </div>
-                                    <div className="p-4 rounded-2xl bg-black/20 border border-white/5 mb-6">
+                                    <div className="p-4 rounded-2xl bg-surface border border-border/50 mb-6">
                                         <p className="text-[10px] font-black text-brand uppercase tracking-[0.2em] mb-2 px-1">Aksi Prioritas</p>
-                                        <p className="text-sm text-white/70 leading-relaxed font-medium">{opsGateway.topAction}</p>
+                                        <p className="text-sm text-muted-foreground leading-relaxed font-medium">{opsGateway.topAction}</p>
                                     </div>
                                     <div className="grid gap-3 sm:grid-cols-2">
-                                        <Button onClick={() => router.push('/settings/ops-visibility')} className="w-full h-12 bg-white text-slate-950 font-black text-[11px] uppercase tracking-widest rounded-2xl">Open Ops Triage</Button>
-                                        <Button variant="outline" onClick={() => router.push('/settings/kpi-dashboard')} className="w-full h-12 border-white/10 bg-white/5 text-white font-black text-[11px] uppercase tracking-widest rounded-2xl">KPI Dashboard</Button>
+                                        <Button onClick={() => router.push('/settings/ops-visibility')} className="w-full h-12 bg-foreground text-background font-black text-[11px] uppercase tracking-widest rounded-2xl">Open Ops Triage</Button>
+                                        <Button variant="outline" onClick={() => router.push('/settings/kpi-dashboard')} className="w-full h-12 border-border/50 bg-surface-muted text-foreground font-black text-[11px] uppercase tracking-widest rounded-2xl">KPI Dashboard</Button>
                                     </div>
                                 </div>
                             </div>
@@ -591,14 +591,14 @@ export default function ProfilePage() {
                     )}
 
                     <AccordionCard title="Your Spiritual Journey">
-                        <button onClick={() => router.push('/versehub/id/my-spiritual-journey')} className="flex items-center justify-between w-full p-6 rounded-[28px] bg-white/[0.02] hover:bg-white/[0.04] transition-all border border-white/10 group shadow-lg">
+                        <button onClick={() => router.push('/versehub/id/my-spiritual-journey')} className="flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft">
                             <div className="text-left space-y-1">
-                                <p className="text-lg font-black text-white tracking-tight">Growth Monitoring</p>
-                                <p className="text-xs text-amber-500/70 font-bold uppercase tracking-widest">Riwayat hafalan & catatan batin</p>
+                                <p className="text-lg font-black text-foreground tracking-tight">Growth Monitoring</p>
+                                <p className="text-xs text-brand/80 font-bold uppercase tracking-widest">Riwayat hafalan & catatan batin</p>
                             </div>
                             <div className="flex items-center gap-4">
-                                {journeyBadge > 0 && <span className="h-6 min-w-[24px] px-2 flex items-center justify-center rounded-full bg-rose-500 text-[10px] font-black">{journeyBadge}</span>}
-                                <div className="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-brand group-hover:text-slate-950 transition-all">
+                                {journeyBadge > 0 && <span className="h-6 min-w-[24px] px-2 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-black">{journeyBadge}</span>}
+                                <div className="h-10 w-10 rounded-2xl bg-surface-muted flex items-center justify-center group-hover:bg-brand group-hover:text-brand-foreground transition-all">
                                     <ChevronRight className="h-5 w-5" />
                                 </div>
                             </div>
@@ -608,13 +608,13 @@ export default function ProfilePage() {
                     <AccordionCard title="Informasi Personal">
                         <form className="space-y-6 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Nama Lengkap</label>
-                                <Input value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl text-[16px] font-bold px-5" disabled={profileBusy} />
+                                <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Nama Lengkap</label>
+                                <Input value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
                                 {profileErrors.name && profileErrors.name.map((err, i) => <p key={`name-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Alamat Email</label>
-                                <Input type="email" value={profileData.email} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl text-[16px] font-bold px-5" disabled={profileBusy} />
+                                <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Alamat Email</label>
+                                <Input type="email" value={profileData.email} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
                                 {profileErrors.email && profileErrors.email.map((err, i) => <p key={`email-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="pt-2">
@@ -631,22 +631,22 @@ export default function ProfilePage() {
                     <AccordionCard title="Keamanan & Password">
                         <form className="space-y-6 pt-2" onSubmit={handlePasswordUpdate}>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Password Saat Ini</label>
-                                <Input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" disabled={passwordBusy} />
+                                <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Password Saat Ini</label>
+                                <Input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                 {passwordErrors.current_password && passwordErrors.current_password.map((err, i) => <p key={`curr-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Password Baru</label>
-                                    <Input type="password" value={passwordData.new} onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" disabled={passwordBusy} />
+                                    <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Password Baru</label>
+                                    <Input type="password" value={passwordData.new} onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                     {passwordErrors.password && passwordErrors.password.map((err, i) => <p key={`new-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-amber-500/50 uppercase tracking-[0.25em] ml-2">Konfirmasi</label>
-                                    <Input type="password" value={passwordData.confirm} onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} className="h-13 bg-white/[0.03] border-white/10 rounded-2xl px-5 font-bold" disabled={passwordBusy} />
+                                    <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Konfirmasi</label>
+                                    <Input type="password" value={passwordData.confirm} onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                 </div>
                             </div>
-                            <Button type="submit" disabled={passwordBusy} className="w-full bg-white/10 hover:bg-white/15 h-13 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg transition-all active:scale-[0.98]">
+                            <Button type="submit" disabled={passwordBusy} className="w-full bg-surface-muted hover:bg-surface-elevated text-foreground border border-border/50 h-13 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-soft transition-all active:scale-[0.98]">
                                 {passwordBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Perbarui Kata Sandi'}
                             </Button>
                         </form>
@@ -654,14 +654,14 @@ export default function ProfilePage() {
 
                     <AccordionCard title="Two-Factor Authentication">
                         <div className="space-y-6 pt-2">
-                            <div className="p-5 rounded-[28px] bg-white/[0.02] border border-white/10 shadow-lg backdrop-blur-md flex items-center justify-between">
+                            <div className="p-5 rounded-[28px] bg-surface border border-border/50 shadow-soft backdrop-blur-md flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner", twoFactor.enabled ? "bg-emerald-500/10 text-emerald-400" : "bg-brand/10 text-brand")}>
+                                    <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner", twoFactor.enabled ? "bg-emerald-500/10 text-emerald-500" : "bg-brand/10 text-brand")}>
                                         <ShieldCheck className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <p className="text-base font-black text-white tracking-tight">2FA Status</p>
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                                        <p className="text-base font-black text-foreground tracking-tight">2FA Status</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
                                             {twoFactor.enabled ? `${twoFactor.recoveryCodesRemaining} Codes Left` : 'Proteksi Tambahan'}
                                         </p>
                                     </div>
@@ -673,7 +673,7 @@ export default function ProfilePage() {
                                     }}
                                     className={cn(
                                         "h-10 px-6 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all",
-                                        twoFactor.enabled ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" : "bg-brand text-brand-foreground shadow-lg"
+                                        twoFactor.enabled ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" : "bg-brand text-brand-foreground shadow-sm"
                                     )}
                                 >
                                     {twoFactor.enabled ? 'Disable' : 'Enable'}
@@ -681,19 +681,19 @@ export default function ProfilePage() {
                             </div>
 
                             {twoFactorStep !== 'idle' && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-[28px] bg-black/20 border border-white/5 space-y-5">
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-[28px] bg-surface-muted border border-border/50 space-y-5">
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-[11px] font-black text-brand uppercase tracking-[0.2em]">
                                             {twoFactorStep === 'disable' ? 'Nonaktifkan Keamanan' : 'Konfigurasi 2FA'}
                                         </h4>
-                                        <button onClick={() => setTwoFactorStep('idle')} className="text-slate-500 hover:text-white"><X size={16} /></button>
+                                        <button onClick={() => setTwoFactorStep('idle')} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
                                     </div>
 
                                     {twoFactorStep === 'password' && (
                                         <div className="space-y-4">
-                                            <p className="text-xs text-white/60 leading-relaxed font-medium">Langkah 1: Verifikasi identitas Anda untuk membuat kunci rahasia baru.</p>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Masukkan password Anda" className="bg-white/5 border-white/10 rounded-xl" disabled={twoFactorBusy} />
-                                            <Button onClick={handleTwoFactorSetup} disabled={twoFactorBusy || !twoFactorPassword} className="w-full h-11 bg-white text-slate-950 font-bold text-xs rounded-xl">
+                                            <p className="text-xs text-muted-foreground leading-relaxed font-medium">Langkah 1: Verifikasi identitas Anda untuk membuat kunci rahasia baru.</p>
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Masukkan password Anda" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Button onClick={handleTwoFactorSetup} disabled={twoFactorBusy || !twoFactorPassword} className="w-full h-11 bg-foreground text-background font-bold text-xs rounded-xl">
                                                 {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4" /> : 'Generate QR Code'}
                                             </Button>
                                         </div>
@@ -702,26 +702,26 @@ export default function ProfilePage() {
                                     {twoFactorStep === 'setup' && twoFactorSetupData && (
                                         <div className="space-y-6">
                                             <div className="flex flex-col items-center gap-4 text-center">
-                                                <div className="p-3 bg-white rounded-2xl shadow-2xl ring-8 ring-white/5">
+                                                <div className="p-3 bg-white rounded-2xl shadow-soft ring-4 ring-black/5">
                                                     <img src={twoFactorSetupData.qrCodeDataUri} alt="QR Code" className="w-40 h-40" />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Atau Masukkan Manual</p>
-                                                    <code className="text-xs font-mono bg-white/10 px-3 py-1 rounded-lg text-brand select-all">{twoFactorSetupData.secret}</code>
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Atau Masukkan Manual</p>
+                                                    <code className="text-xs font-mono bg-surface border border-border/50 px-3 py-1 rounded-lg text-brand select-all">{twoFactorSetupData.secret}</code>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-3">
-                                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest text-center">Simpan Recovery Codes (Penting!)</p>
+                                                <p className="text-[10px] font-bold text-brand uppercase tracking-widest text-center">Simpan Recovery Codes (Penting!)</p>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {twoFactorSetupData.recoveryCodes.map(code => (
-                                                        <code key={code} className="text-[9px] font-mono bg-white/5 p-2 rounded-lg text-white/60 border border-white/5">{code}</code>
+                                                        <code key={code} className="text-[9px] font-mono bg-surface p-2 rounded-lg text-muted-foreground border border-border/50">{code}</code>
                                                     ))}
                                                 </div>
                                             </div>
 
                                             <div className="space-y-3 pt-2">
-                                                <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Masukkan 6 Digit OTP" className="bg-white/5 border-white/10 rounded-xl text-center tracking-[0.5em] font-black h-12" maxLength={6} disabled={twoFactorBusy} />
+                                                <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Masukkan 6 Digit OTP" className="bg-surface border-border/50 rounded-xl text-center tracking-[0.5em] font-black h-12 text-foreground" maxLength={6} disabled={twoFactorBusy} />
                                                 <Button onClick={handleTwoFactorConfirm} disabled={twoFactorBusy || twoFactorCode.length < 6} className="w-full h-12 bg-brand text-brand-foreground font-black text-[11px] uppercase tracking-widest rounded-xl">
                                                     {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Aktifkan Sekarang'}
                                                 </Button>
@@ -731,39 +731,39 @@ export default function ProfilePage() {
 
                                     {twoFactorStep === 'disable' && (
                                         <div className="space-y-4">
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
                                                 <AlertTriangle size={16} className="shrink-0" />
                                                 <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Menonaktifkan 2FA akan mengurangi keamanan akun Anda secara signifikan.</p>
                                             </div>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-white/5 border-white/10 rounded-xl" disabled={twoFactorBusy} />
-                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code" className="bg-white/5 border-white/10 rounded-xl" disabled={twoFactorBusy} />
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
                                             <Button onClick={handleTwoFactorDisable} disabled={twoFactorBusy || !twoFactorPassword || !twoFactorCode} className="w-full h-11 bg-rose-500 text-white font-bold text-xs rounded-xl">
                                                 {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Konfirmasi Nonaktif'}
                                             </Button>
                                         </div>
                                     )}
 
-                                    {twoFactorError && <p className="text-rose-400 text-[10px] font-black uppercase text-center">{twoFactorError}</p>}
+                                    {twoFactorError && <p className="text-rose-500 text-[10px] font-black uppercase text-center">{twoFactorError}</p>}
                                 </motion.div>
                             )}
 
                             {twoFactor.enabled && (
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] ml-2">Manajemen Kunci</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] ml-2">Manajemen Kunci</label>
                                     <div className="grid gap-2">
-                                        <button onClick={() => setTwoFactorStep('disable')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-all group">
+                                        <button onClick={() => setTwoFactorStep('disable')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-border/50 hover:bg-surface-elevated transition-all group">
                                             <div className="flex items-center gap-3">
-                                                <RefreshCw size={16} className="text-slate-500 group-hover:rotate-180 transition-transform duration-700" />
-                                                <span className="text-xs font-bold text-white/70">Buat Ulang Recovery Codes</span>
+                                                <RefreshCw size={16} className="text-muted-foreground group-hover:rotate-180 transition-transform duration-700" />
+                                                <span className="text-xs font-bold text-foreground/80">Buat Ulang Recovery Codes</span>
                                             </div>
-                                            <ChevronRight size={14} className="text-slate-700" />
+                                            <ChevronRight size={14} className="text-muted-foreground" />
                                         </button>
                                     </div>
                                     {newRecoveryCodes && (
-                                        <div className="p-5 rounded-3xl bg-amber-500/5 border border-amber-500/20 animate-in zoom-in-95">
-                                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">Recovery Codes Baru Anda</p>
+                                        <div className="p-5 rounded-3xl bg-brand/5 border border-brand/20 animate-in zoom-in-95">
+                                            <p className="text-[10px] font-black text-brand uppercase tracking-widest mb-3">Recovery Codes Baru Anda</p>
                                             <div className="grid grid-cols-2 gap-2">
-                                                {newRecoveryCodes.map(code => <code key={code} className="text-[9px] font-mono bg-black/20 p-2 rounded-lg text-amber-200/70">{code}</code>)}
+                                                {newRecoveryCodes.map(code => <code key={code} className="text-[9px] font-mono bg-surface p-2 rounded-lg text-brand/80">{code}</code>)}
                                             </div>
                                         </div>
                                     )}
@@ -776,15 +776,15 @@ export default function ProfilePage() {
                         <button 
                             onClick={handleDeleteAccount} 
                             disabled={deleteBusy}
-                            className="group mx-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border border-rose-500/10 text-rose-500/40 hover:text-rose-500 transition-all duration-500 disabled:opacity-50 disabled:grayscale hover:bg-rose-500/5"
+                            className="group mx-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border border-rose-500/10 text-rose-500 hover:text-rose-600 transition-all duration-500 disabled:opacity-50 disabled:grayscale hover:bg-rose-500/5"
                         >
                             {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 transition-transform group-hover:scale-110" />}
                             <span className="text-[10px] font-black uppercase tracking-[0.3em]">{deleteBusy ? 'Menghapus...' : 'Hapus Akun Permanen'}</span>
                         </button>
                         
                         <div className="flex flex-col items-center gap-4 opacity-20">
-                             <div className="h-px w-12 bg-white" />
-                             <p className="text-[10px] font-black uppercase tracking-[0.5em]">TCT HYBRID MONOREPO</p>
+                             <div className="h-px w-12 bg-foreground" />
+                             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground">TCT HYBRID MONOREPO</p>
                         </div>
                     </div>
                 </div>
@@ -797,7 +797,7 @@ export default function ProfilePage() {
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
                         className={cn(
                             "fixed bottom-28 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest shadow-2xl flex items-center gap-3 ring-1",
-                            toast.type === 'error' ? "bg-rose-500 text-white ring-rose-400" : "bg-slate-900 text-white ring-white/10"
+                            toast.type === 'error' ? "bg-rose-500 text-white ring-rose-400" : "bg-foreground text-background ring-border/50"
                         )}
                     >
                         {toast.type === 'success' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}

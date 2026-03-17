@@ -50,24 +50,24 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
     }, [slug]);
 
     if (!data) {
-        return <div className="min-h-screen bg-slate-950/40 animate-pulse" />;
+        return <div className="min-h-screen bg-background animate-pulse" />;
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-20 text-white selection:bg-brand/30">
+        <div className="min-h-screen bg-background pb-20 text-foreground selection:bg-brand/30">
             {/* Minimalist Reader Navigation */}
-            <nav className="sticky top-0 z-40 bg-slate-950/80 p-4 backdrop-blur-xl border-b border-white/5">
+            <nav className="sticky top-0 z-40 bg-background/80 p-4 backdrop-blur-xl border-b border-border/50">
                 <div className="mx-auto flex max-w-2xl items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-muted-foreground transition-all hover:bg-white/10 hover:text-white active:scale-95"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-muted-foreground transition-all hover:bg-surface-elevated hover:text-foreground active:scale-95"
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <span className="text-[12px] font-bold uppercase tracking-widest text-muted-foreground/70">
                         Refleksi Harian
                     </span>
-                    <button className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-muted-foreground transition-all hover:bg-white/10 hover:text-white active:scale-95">
+                    <button className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-muted-foreground transition-all hover:bg-surface-elevated hover:text-foreground active:scale-95">
                         <Share2 className="h-4.5 w-4.5" />
                     </button>
                 </div>
@@ -86,14 +86,14 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
                     {data.title}
                 </h1>
                 
-                <p className="mb-10 text-lg font-medium leading-relaxed text-slate-300/90 md:text-xl">
+                <p className="mb-10 text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">
                     {data.relevance_intro}
                 </p>
 
                 {/* 2. Anchor Verse (The Truth) */}
-                <div className="relative mb-12 overflow-hidden rounded-[32px] bg-surface-muted/30 p-8 ring-1 ring-border/50 backdrop-blur-sm">
-                    <Quote className="absolute right-6 top-6 h-16 w-16 text-slate-800/10" />
-                    <p className="relative z-10 font-serif text-2xl italic leading-relaxed text-white md:text-3xl">
+                <div className="relative mb-12 overflow-hidden rounded-[32px] bg-surface p-8 ring-1 ring-border/50 backdrop-blur-sm shadow-soft">
+                    <Quote className="absolute right-6 top-6 h-16 w-16 text-foreground/5 z-0" />
+                    <p className="relative z-10 font-serif text-2xl italic leading-relaxed text-foreground md:text-3xl">
                         "{data.verse_quote}"
                     </p>
                     <div className="mt-6 flex items-center justify-between">
@@ -104,7 +104,7 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
                 </div>
 
                 {/* 3. Reflection Body (The Guidance) */}
-                <div className="prose prose-invert prose-lg max-w-none text-slate-300">
+                <div className="prose prose-invert prose-lg max-w-none text-foreground/80">
                     {data.body_content}
                 </div>
 
@@ -114,16 +114,16 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
                         <Flame className="h-5 w-5" />
                         <h3 className="font-bold uppercase tracking-wider text-sm">Aplikasi Praktis</h3>
                     </div>
-                    <p className="text-base font-medium leading-relaxed text-slate-200">
+                    <p className="text-base font-medium leading-relaxed text-foreground">
                         {data.practical_application}
                     </p>
                 </div>
 
                 {/* Divider */}
-                <div className="my-12 py-6 border-t border-white/5 flex justify-center">
-                    <div className="h-1 w-1 bg-white/20 rounded-full mx-1"></div>
-                    <div className="h-1 w-1 bg-white/20 rounded-full mx-1"></div>
-                    <div className="h-1 w-1 bg-white/20 rounded-full mx-1"></div>
+                <div className="my-12 py-6 border-t border-border/50 flex justify-center">
+                    <div className="h-1 w-1 bg-border rounded-full mx-1"></div>
+                    <div className="h-1 w-1 bg-border rounded-full mx-1"></div>
+                    <div className="h-1 w-1 bg-border rounded-full mx-1"></div>
                 </div>
 
                 {/* 5. Journaling/Discussion Prompt & CTA */}
@@ -142,12 +142,12 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
                     />
                     
                     {/* Private Journal Fallback Action */}
-                    <button className="w-full flex items-center justify-between rounded-[24px] bg-white/[0.03] p-5 ring-1 ring-white/10 hover:bg-white/[0.05] transition-colors focus:outline-none">
-                        <div className="flex items-center gap-3 text-slate-400">
+                    <button className="w-full flex items-center justify-between rounded-[24px] bg-surface-muted p-5 ring-1 ring-border/50 hover:bg-surface-elevated transition-colors focus:outline-none">
+                        <div className="flex items-center gap-3 text-muted-foreground">
                             <Edit3 className="h-5 w-5" />
                             <span className="text-sm font-medium">Buat Jurnal Pribadi (Hanya Anda yang melihat)</span>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-slate-500" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     </button>
                 </div>
             </motion.article>

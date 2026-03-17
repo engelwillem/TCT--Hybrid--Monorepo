@@ -192,8 +192,8 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-                <div className="h-10 w-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="h-10 w-10 border-4 border-brand/20 border-t-brand rounded-full animate-spin" />
             </div>
         );
     }
@@ -202,21 +202,21 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
 
     if (error === 'verse_not_found' || !verse) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
-                <div className="mb-6 h-20 w-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                    <X className="h-10 w-10 text-slate-500" />
+            <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center">
+                <div className="mb-6 h-20 w-20 rounded-full bg-surface-muted border border-border/50 flex items-center justify-center">
+                    <X className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <h1 className="text-2xl font-bold mb-2">
                     {isId ? 'Ayat tidak ditemukan' : 'Verse not found'}
                 </h1>
-                <p className="text-slate-400 max-w-xs mb-8">
+                <p className="text-muted-foreground max-w-xs mb-8">
                     {isId 
                         ? 'Maaf, ayat yang Anda cari tidak tersedia atau slug tidak valid.' 
                         : 'Sorry, the verse you are looking for is not available or the slug is invalid.'}
                 </p>
                 <button
                     onClick={() => router.push(`/versehub/${lang}`)}
-                    className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-amber-400 active:scale-95"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-bold text-background transition hover:bg-brand/90 active:scale-95 shadow-sm"
                 >
                     <ChevronLeft className="h-4 w-4" />
                     {isId ? 'Kembali ke Alkitab' : 'Back to Bible'}
@@ -227,21 +227,21 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
-                <div className="mb-6 h-20 w-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+            <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center">
+                <div className="mb-6 h-20 w-20 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center">
                     <Send className="h-10 w-10 text-rose-500" />
                 </div>
                 <h1 className="text-2xl font-bold mb-2">
                     {isId ? 'Terjadi kesalahan' : 'Something went wrong'}
                 </h1>
-                <p className="text-slate-400 max-w-xs mb-8">
+                <p className="text-muted-foreground max-w-xs mb-8">
                     {isId 
                         ? 'Gagal memuat data ayat. Silakan coba lagi nanti.' 
                         : 'Failed to load verse data. Please try again later.'}
                 </p>
                 <button
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 font-bold text-white transition hover:bg-white/20 active:scale-95"
+                    className="inline-flex items-center gap-2 rounded-full bg-surface hover:bg-surface-elevated px-6 py-3 font-bold text-foreground transition active:scale-95 shadow-sm ring-1 ring-border/50"
                 >
                     {isId ? 'Coba Lagi' : 'Try Again'}
                 </button>
@@ -250,10 +250,9 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pb-20">
-            <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-                <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-3xl opacity-50"></div>
-                <div className="absolute -bottom-40 right-[-120px] h-[520px] w-[520px] rounded-full bg-emerald-400/5 blur-3xl opacity-50"></div>
+        <div className="min-h-screen bg-background text-foreground pb-20">
+            <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden bg-mesh">
+                {/* mesh bg handled by globals */}
             </div>
 
             <main className="relative mx-auto max-w-3xl px-4 py-6 md:py-10">
@@ -262,32 +261,32 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                         <div className="flex items-center justify-between">
                             <button
                                 onClick={() => router.push(`/versehub/${lang}`)}
-                                className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-[10px] font-bold text-white/50 border border-white/10 transition hover:text-white hover:bg-white/10 active:scale-95"
+                                className="inline-flex items-center gap-2 rounded-full bg-surface-muted px-4 py-1.5 text-[10px] font-bold text-muted-foreground border border-border transition hover:text-foreground hover:bg-surface active:scale-95"
                             >
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" aria-hidden></span>
+                                <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden></span>
                                 VerseHub
                             </button>
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={() => router.push(`/versehub/${lang}`)}
-                                    className="text-xs font-bold text-slate-400 hover:text-white"
+                                    className="text-xs font-bold text-muted-foreground hover:text-foreground"
                                 >
                                     {isId ? 'Kembali ke Alkitab' : 'Back to Bible'}
                                 </button>
-                                <div className="h-3 w-px bg-white/10" />
-                                <button className="text-xs font-bold text-amber-600">
+                                <div className="h-3 w-px bg-border" />
+                                <button className="text-xs font-bold text-brand">
                                     {isId ? 'EN' : 'ID'}
                                 </button>
                             </div>
                         </div>
 
-                        <h1 className="tct-brand-gradient text-4xl font-bold tracking-tight">
+                        <h1 className="tct-h1 text-foreground">
                             {verse.reference}
                         </h1>
                     </header>
 
-                    <section className="group relative overflow-hidden rounded-[40px] bg-white/[0.02] p-4 shadow-2xl border border-white/5 backdrop-blur-md">
-                        <div className="overflow-hidden rounded-[28px] border border-white/10">
+                    <section className="group relative overflow-hidden rounded-[40px] glass-card tct-card-pad border-0 shadow-soft">
+                        <div className="overflow-hidden rounded-[24px] md:rounded-[32px] ring-1 ring-black/[0.04]">
                             <img
                                 src={verse.og_image_url}
                                 alt="Shared Verse"
@@ -298,10 +297,10 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                         </div>
                     </section>
 
-                    <section className="rounded-[40px] bg-white/[0.03] border border-white/10 shadow-2xl backdrop-blur-xl overflow-hidden">
-                        <div className="p-8 md:p-14">
+                    <section className="rounded-[40px] glass-card border-0 shadow-soft overflow-hidden">
+                        <div className="tct-card-pad">
                             <blockquote className="relative">
-                                <div className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 text-white/5" aria-hidden>
+                                <div className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/10" aria-hidden>
                                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M10 11H6V7a4 4 0 0 1 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                         <path d="M18 11h-4V7a4 4 0 0 1 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -311,15 +310,15 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                                 </div>
 
                                 <div className="pl-6 md:pl-10">
-                                    <div className="text-xl leading-relaxed text-white/90 font-medium md:text-3xl md:leading-relaxed font-serif italic">
+                                    <div className="tct-serif text-xl leading-relaxed text-foreground md:text-3xl md:leading-relaxed italic">
                                         {verse.text}
                                     </div>
 
-                                    <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold text-white/30">
+                                    <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold text-muted-foreground/50">
                                         <span className="uppercase tracking-[0.2em]">{verse.provider ?? 'versehub'}</span>
                                         {verse.translation_name && (
                                             <>
-                                                <span className="opacity-20">•</span>
+                                                <span className="opacity-40">•</span>
                                                 <span className="tracking-widest">{verse.translation_name}</span>
                                             </>
                                         )}
@@ -327,13 +326,13 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                                 </div>
                             </blockquote>
 
-                            <div className="mt-10 border-t border-white/5 pt-6 flex items-center justify-between">
+                            <div className="mt-10 border-t border-border pt-6 flex items-center justify-between">
                                 <div className="flex items-center gap-1">
                                     <button
                                         onClick={handleLike}
                                         className={cn(
                                             "flex h-11 items-center gap-2.5 rounded-full px-5 transition-all active:scale-90",
-                                            liked ? "bg-rose-500/10 text-rose-500" : "text-slate-500 hover:bg-white/5"
+                                            liked ? "bg-rose-500/10 text-rose-500" : "text-muted-foreground hover:bg-surface-muted"
                                         )}
                                     >
                                         <Heart className={cn("h-5 w-5", liked ? "fill-current" : "")} />
@@ -341,14 +340,14 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                                     </button>
 
                                     <button
-                                        className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-white/5 active:scale-95 transition-all"
+                                        className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted active:scale-95 transition-all"
                                     >
                                         <MessageSquare className="h-5 w-5" />
                                     </button>
 
                                     <button
                                         onClick={handleShare}
-                                        className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-white/5 active:scale-95 transition-all"
+                                        className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-muted active:scale-95 transition-all"
                                     >
                                         <Send className="h-5 w-5" />
                                     </button>
@@ -358,7 +357,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                                     onClick={handleBookmark}
                                     className={cn(
                                         "flex h-11 items-center gap-2.5 rounded-full px-5 transition-all active:scale-95",
-                                        bookmarked ? "bg-sky-500/10 text-sky-500" : "text-slate-500 hover:bg-white/5"
+                                        bookmarked ? "bg-brand/10 text-brand" : "text-muted-foreground hover:bg-surface-muted"
                                     )}
                                 >
                                     <Bookmark className={cn("h-5 w-5", bookmarked ? "fill-current" : "")} />
@@ -369,7 +368,7 @@ export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang
                     </section>
 
                     <footer className="text-center py-10">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300">thechoosentalks.org</p>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/50">thechoosentalks.org</p>
                     </footer>
                 </div>
             </main>

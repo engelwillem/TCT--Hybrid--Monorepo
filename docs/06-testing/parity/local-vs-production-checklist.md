@@ -47,14 +47,20 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
   2. `https://thechoosentalks.org/*` -> `https://www.thechoosentalks.org/*` (Server Edge Panel)
   3. `https://www.thechoosentalks.org/` -> `https://www.thechoosentalks.org/today` (Next.JS `next.config.ts`)
   4. Path `/xyz` tetap dilestarikan (Next.JS routing).
-- Verifikasi Manual (Incognito):
-  - [ ] **TLS Certificate Valid:** Buka `https://www.thechoosentalks.org` tidak boleh mengembalikan `ERR_CERT_COMMON_NAME_INVALID`.
-  - [ ] `http://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
-  - [ ] `https://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
-  - [ ] `https://thechoosentalks.org/community` -> `https://www.thechoosentalks.org/community`
-  - [ ] `https://www.thechoosentalks.org/` -> `https://www.thechoosentalks.org/today`
-- Risks: Akses `https://www.thechoosentalks.org` saat ini mendapat penolakan SSL (*Common Name Invalid*). Domain Binding TLS untuk `www` di provider CDN belum sinkron. Redirect Loop jika `APP_URL` laravel membantah protokol `www` atau terjadi konflik prioritas CDN.
-- Status: READY FOR SERVER ACTION
+- Verification URLs & Expected Final Destinations:
+  - `http://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
+  - `https://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
+  - `http://thechoosentalks.org/today` -> `https://www.thechoosentalks.org/today`
+  - `https://thechoosentalks.org/community` -> `https://www.thechoosentalks.org/community`
+- Success Criteria:
+  - All listed URLs must reach their exact expected final URL.
+  - Path must be preserved during redirects (no dropping of `/today` or `/community`).
+- Failure Patterns to Watch For:
+  - Loop errors (`ERR_TOO_MANY_REDIRECTS`)
+  - Path loss (e.g., `https://thechoosentalks.org/community` ends up at `https://www.thechoosentalks.org/today` instead of `/community`)
+  - Mixed-host issues or `ERR_CERT_COMMON_NAME_INVALID` for apex domain
+  - Staying on HTTP instead of forwarding to HTTPS
+- Status: READY FOR SERVER VALIDATION
 
 ---
 

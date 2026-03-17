@@ -165,25 +165,25 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     if (!partner) {
         if (loading) {
             return (
-                <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col items-center justify-center gap-4">
+                <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-4">
                     <Loader2 className="h-10 w-10 text-brand animate-spin" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Secure Connection...</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Secure Connection...</p>
                 </div>
             );
         }
 
         return (
-            <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col items-center justify-center gap-6 text-center px-4">
-                <AlertTriangle className="h-12 w-12 text-slate-300" />
+            <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-6 text-center px-4">
+                <AlertTriangle className="h-12 w-12 text-muted-foreground/30" />
                 <div className="space-y-2">
-                    <h2 className="text-xl font-black text-slate-900">Percakapan Tidak Tersedia</h2>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 max-w-[240px] mx-auto leading-relaxed">
+                    <h2 className="text-xl font-black text-foreground">Percakapan Tidak Tersedia</h2>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
                         Koneksi ke mitra percakapan ini ditutup atau tidak ditemukan.
                     </p>
                 </div>
                 <button 
                     onClick={() => router.push('/inbox')}
-                    className="px-6 py-3 mt-4 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+                    className="px-6 py-3 mt-4 bg-foreground text-background rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
                 >
                     Kembali ke Kotak Masuk
                 </button>
@@ -192,35 +192,35 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     }
 
     return (
-        <div className="fixed inset-0 bg-[#FAFAF8] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
             {/* Thread Header Parity */}
-            <header className="flex-none bg-white border-b border-slate-100 px-4 py-3 z-10 shadow-sm">
+            <header className="flex-none bg-surface/80 backdrop-blur-md border-b border-border/50 px-4 py-3 z-10 shadow-sm">
                 <div className="mx-auto max-w-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => router.push('/inbox')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-all active:scale-90">
-                            <ArrowLeft className="h-5 w-5 text-slate-900" />
+                        <button onClick={() => router.push('/inbox')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated transition-all active:scale-90">
+                            <ArrowLeft className="h-5 w-5 text-foreground" />
                         </button>
                         <div className="flex items-center gap-3">
                             <div className="relative">
-                                <div className="h-10 w-10 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center text-sky-400 font-black">
+                                <div className="h-10 w-10 rounded-2xl bg-surface-muted border border-border/50 flex items-center justify-center text-brand font-black">
                                     {partner.name.slice(0, 1).toUpperCase()}
                                 </div>
                                 {partner.online && (
-                                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-500/20" />
+                                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background ring-1 ring-emerald-500/20" />
                                 )}
                             </div>
                             <div>
-                                <p className="font-bold text-[15px] text-slate-900 leading-tight">{partner?.name}</p>
+                                <p className="font-bold text-[15px] text-foreground leading-tight">{partner?.name}</p>
                                 <p className={cn(
                                     "text-[10px] font-bold uppercase tracking-widest",
-                                    partner?.online ? "text-emerald-500" : "text-slate-400"
+                                    partner?.online ? "text-emerald-500" : "text-muted-foreground"
                                 )}>
                                     {partner?.online ? 'Online' : 'Offline'}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 text-slate-400">
+                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated text-muted-foreground">
                         <MoreVertical className="h-5 w-5" />
                     </button>
                 </div>
@@ -228,7 +228,7 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
 
             <main 
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth scrollbar-hide bg-[#FAFAF8]"
+                className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth scrollbar-hide bg-background"
             >
                 <div className="mx-auto max-w-2xl space-y-4 pt-4 pb-10">
                     <AnimatePresence initial={false}>
@@ -242,19 +242,19 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                                 <div className={cn(
                                     "max-w-[85%] px-5 py-3.5 rounded-[28px] shadow-sm text-[15px] leading-relaxed relative",
                                     m.is_mine
-                                        ? "bg-slate-900 text-white rounded-br-none"
-                                        : "bg-white text-slate-800 ring-1 ring-black/[0.02] rounded-bl-none"
+                                        ? "bg-foreground text-background rounded-br-none"
+                                        : "bg-surface text-foreground ring-1 ring-border/50 rounded-bl-none"
                                 )}>
                                     <p className="font-medium whitespace-pre-wrap">{m.body}</p>
                                     <div className={cn(
                                         "flex items-center justify-end gap-1.5 mt-1.5 opacity-50",
-                                        m.is_mine ? "text-white" : "text-slate-400"
+                                        m.is_mine ? "text-background" : "text-muted-foreground"
                                     )}>
                                         <p className="text-[9px] font-bold uppercase tracking-widest">
                                             {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                         </p>
                                         {m.is_mine && (
-                                            <CheckCheck className={cn("h-3 w-3", m.read_at ? "text-sky-400" : "text-white")} />
+                                            <CheckCheck className={cn("h-3 w-3", m.read_at ? "text-brand" : "text-background")} />
                                         )}
                                     </div>
                                 </div>
@@ -265,10 +265,10 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
             </main>
 
             {/* Composer Parity */}
-            <footer className="flex-none bg-white p-4 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-slate-100">
+            <footer className="flex-none bg-surface/80 backdrop-blur-md p-4 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-border/50">
                 <div className="mx-auto max-w-2xl flex items-end gap-3">
-                    <div className="flex-1 bg-slate-50 rounded-[28px] ring-1 ring-black/[0.03] px-4 py-2 flex items-end gap-2">
-                        <button className="h-10 w-10 flex-none flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                    <div className="flex-1 bg-surface-muted rounded-[28px] border border-border/50 px-4 py-2 flex items-end gap-2">
+                        <button className="h-10 w-10 flex-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
                             <Smile className="h-5.5 w-5.5" />
                         </button>
                         <textarea
@@ -281,10 +281,10 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                                 }
                             }}
                             placeholder="Tulis pesan..."
-                            className="w-full bg-transparent border-none focus:ring-0 text-[15px] py-2.5 resize-none max-h-32 min-h-[44px] font-medium placeholder:text-slate-400"
+                            className="w-full bg-transparent border-none focus:ring-0 text-[15px] py-2.5 resize-none max-h-32 min-h-[44px] font-medium placeholder:text-muted-foreground/50 text-foreground"
                             rows={1}
                         />
-                        <button className="h-10 w-10 flex-none flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                        <button className="h-10 w-10 flex-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
                             <ImageIcon className="h-5.5 w-5.5" />
                         </button>
                     </div>
@@ -292,8 +292,8 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                         onClick={() => void handleSend()}
                         disabled={!text.trim() || sending}
                         className={cn(
-                            "h-13 w-13 flex items-center justify-center rounded-full transition-all active:scale-90 shadow-lg",
-                            text.trim() ? "bg-slate-900 text-white shadow-slate-900/20" : "bg-slate-100 text-slate-300 shadow-none"
+                            "h-13 w-13 flex items-center justify-center rounded-full transition-all active:scale-90 shadow-soft",
+                            text.trim() ? "bg-foreground text-background" : "bg-surface-muted text-muted-foreground/30 shadow-none border border-border/50"
                         )}
                     >
                         {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5.5 w-5.5 fill-current" />}

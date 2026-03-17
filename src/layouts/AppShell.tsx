@@ -48,18 +48,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
-  if (!mounted) return <div className="min-h-screen bg-slate-950" />;
+  if (!mounted) return <div className="min-h-screen bg-background" />;
 
   const isLanding = pathname === "/";
   const isReader = pathname.includes('/versehub/'); // Equivalent to density='reader'
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-slate-950 dark:bg-[#050505] touch-pan-y">
+    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground touch-pan-y">
       {/* Ambient Background Layers (100% legacy parity from app.blade.php) */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -left-[10%] -top-[10%] h-[60%] w-[60%] rounded-full bg-indigo-200/20 blur-[120px] dark:bg-indigo-900/10" />
-        <div className="absolute -right-[5%] top-[10%] h-[50%] w-[50%] rounded-full bg-sky-200/20 blur-[100px] dark:bg-sky-900/10" />
-        <div className="absolute bottom-[10%] left-[20%] h-[40%] w-[40%] rounded-full bg-rose-200/10 blur-[110px] dark:bg-rose-900/5" />
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-mesh">
+        <div className="absolute -right-[5%] top-[10%] h-[50%] w-[50%] rounded-full bg-brand/5 blur-[100px]" />
+        <div className="absolute bottom-[10%] left-[20%] h-[40%] w-[40%] rounded-full bg-amber-500/5 blur-[110px]" />
       </div>
 
       <div

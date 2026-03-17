@@ -33,8 +33,8 @@ export default function QuoteCard({
     };
 
     return (
-        <Card className="overflow-hidden rounded-[32px] border-0 bg-surface/80 shadow-soft ring-1 ring-border/60 backdrop-blur-xl">
-            <CardContent className="px-5 pb-5 pt-5 md:px-7 md:pb-7 md:pt-7">
+        <Card className="overflow-hidden rounded-[32px] md:rounded-[40px] border-0 glass-card">
+            <CardContent className="tct-card-pad">
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className="inline-flex items-center rounded-full bg-surface-muted px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground ring-1 ring-border/70">
@@ -45,13 +45,13 @@ export default function QuoteCard({
                     <Sparkles className="h-4 w-4 text-brand/40" />
                 </div>
 
-                <div className="relative overflow-hidden rounded-2xl shadow-inner ring-1 ring-slate-900/5">
-                    <div className="aspect-[4/5] bg-[radial-gradient(120%_110%_at_5%_95%,rgba(15,23,42,0.95),transparent_45%),radial-gradient(80%_80%_at_82%_20%,rgba(30,58,138,0.6),transparent_55%),linear-gradient(145deg,#0f172a_0%,#1e293b_52%,#0f172a_100%)] md:aspect-[21/9]" />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+                <div className="relative overflow-hidden rounded-2xl shadow-inner ring-1 ring-border/50">
+                    <div className="aspect-[4/5] bg-[radial-gradient(120%_110%_at_5%_95%,rgba(15,23,42,0.95),transparent_45%),radial-gradient(80%_80%_at_82%_20%,rgba(30,58,138,0.6),transparent_55%),linear-gradient(145deg,#0f172a_0%,#1e293b_52%,#0f172a_100%)] md:aspect-[21/9] opacity-90" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
                         <div className="space-y-1">
-                            <div className="select-none font-serif text-3xl text-white/20">"</div>
-                            <p className="line-clamp-3 font-serif text-lg italic leading-relaxed text-slate-200">
+                            <div className="select-none font-serif text-3xl text-white/30">"</div>
+                            <p className="line-clamp-3 font-serif text-lg italic leading-relaxed text-white/90">
                                 Satu kutipan yang menguatkan perjalananmu hari ini.
                             </p>
                         </div>

@@ -121,16 +121,11 @@ export function MemberPostCard({
   return (
     <Card
       className={cn(
-        "rounded-[32px] bg-surface shadow-card border border-border/70 overflow-hidden transition-all duration-300 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4",
+        "rounded-[32px] md:rounded-[40px] border-0 glass-card overflow-hidden transition-all duration-300 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4 tct-card-pad",
         className
       )}
     >
-      <CardHeader
-        className={cn(
-          "transition-all duration-500",
-          compact ? "pb-2 px-5 pt-5 md:px-6 md:pt-6" : "pb-2 px-6 pt-6 md:px-8 md:pt-8"
-        )}
-      >
+      <CardHeader className="p-0 pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 group/author cursor-pointer">
             <div className="relative h-11 w-11 shrink-0">
@@ -177,7 +172,7 @@ export function MemberPostCard({
         </div>
       </CardHeader>
 
-      <CardContent className={cn("flex flex-col gap-4", compact ? "px-5 pb-5" : "px-6 pb-6 md:px-8 md:pb-8")}>
+      <CardContent className="p-0 flex flex-col gap-4">
         {/* Text Above Layout */}
         {hasText && textPosition === "above" && !isTwitterStyle && (
           <p className="text-[16px] leading-relaxed text-foreground font-medium px-1">

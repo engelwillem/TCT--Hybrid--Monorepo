@@ -37,44 +37,40 @@ export default function PinnedLessonCard({ pinned }: Props) {
               : 'Start';
 
     return (
-        <Card className="overflow-hidden rounded-3xl bg-surface shadow-soft">
-            <CardHeader className="pb-3">
+        <Card className="overflow-hidden rounded-[32px] md:rounded-[40px] border-0 glass-card p-0">
+            <CardContent className="tct-card-pad space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <Badge variant="secondary" className="chip border-0">
                         Pinned • Today’s Lesson
                     </Badge>
-                    <p className="tct-meta">
+                    <p className="tct-meta font-medium">
                         ~{lesson.estimated_minutes} min
                     </p>
                 </div>
 
-                <CardTitle className="mt-2 tct-h2">
-                    {lesson.title}
-                </CardTitle>
+                <div className="space-y-1.5">
+                    <h3 className="tct-h2 text-foreground">
+                        {lesson.title}
+                    </h3>
+                    {lesson.excerpt ? (
+                        <p className="tct-body text-muted-foreground line-clamp-2">
+                            {lesson.excerpt}
+                        </p>
+                    ) : null}
+                </div>
 
-                {lesson.excerpt ? (
-                    <p className="mt-2 tct-meta">
-                        {lesson.excerpt}
-                    </p>
-                ) : null}
-            </CardHeader>
-
-            <CardContent className="pt-0">
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2">
-                        <Button
-                            className="tct-pressable"
-                        >
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <Button className="tct-pressable rounded-xl shadow-md bg-foreground text-background font-bold tracking-wide hover:opacity-90 active:scale-95">
                             {ctaLabel}
                         </Button>
-
-                        <Button asChild variant="outline" className="tct-pressable">
-                            <Link href="/channels/sabbath-school">View Quarter</Link>
+                        <Button asChild variant="outline" className="tct-pressable rounded-xl font-bold tracking-wide active:scale-95">
+                            <Link href="/paths">View Path</Link>
                         </Button>
                     </div>
 
-                    <div className="ms-auto flex items-center gap-2">
-                        <span className="tct-meta">
+                    <div className="flex items-center">
+                        <span className="tct-meta font-medium text-slate-400">
                             {quarter.title}
                         </span>
                     </div>

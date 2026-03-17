@@ -104,22 +104,22 @@ export default function WeeklyChannelIndexPage() {
 
     if (loading || !channel) {
         return (
-            <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-                <div className="h-10 w-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="h-10 w-10 border-4 border-foreground border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-24">
+        <div className="min-h-screen bg-background text-foreground pb-24">
             {/* Nav Header Parity */}
-            <header className="sticky top-0 z-50 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60 px-4 py-4">
+            <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 px-4 py-4">
                 <div className="mx-auto max-w-2xl flex items-center justify-between">
-                    <button onClick={() => router.push('/channels')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white active:scale-95 transition-all">
+                    <button onClick={() => router.push('/channels')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated active:scale-95 transition-all text-foreground">
                         <ArrowLeft className="h-5 w-5" />
                     </button>
-                    <h1 className="font-bold text-lg leading-tight">{channel.title}</h1>
-                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white active:scale-95 transition-all text-slate-400">
+                    <h1 className="font-bold text-lg leading-tight text-foreground">{channel.title}</h1>
+                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated active:scale-95 transition-all text-muted-foreground hover:text-foreground">
                         <Bell className="h-5 w-5" />
                     </button>
                 </div>
@@ -128,21 +128,21 @@ export default function WeeklyChannelIndexPage() {
             <main className="mx-auto max-w-2xl px-4 py-8 space-y-8">
                 {/* Channel Info Parity */}
                 <section className="space-y-4">
-                    <div className="flex items-center justify-between p-5 rounded-[28px] bg-white shadow-soft ring-1 ring-black/[0.03]">
+                    <div className="flex items-center justify-between p-5 rounded-[28px] bg-surface shadow-soft ring-1 ring-border/50">
                         <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white">
+                            <div className="h-12 w-12 rounded-2xl bg-foreground flex items-center justify-center text-background">
                                 <Users className="h-6 w-6" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-slate-900">{channel.members_count} Anggota</p>
-                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Active Community</p>
+                                <p className="text-sm font-bold text-foreground">{channel.members_count} Anggota</p>
+                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Active Community</p>
                             </div>
                         </div>
                         <button
                             onClick={handleMembershipToggle}
                             className={cn(
                             "rounded-full px-5 py-2 text-xs font-bold transition-all active:scale-95",
-                            channel.is_joined ? "bg-slate-100 text-slate-900" : "bg-slate-900 text-white shadow-lg"
+                            channel.is_joined ? "bg-surface-elevated text-foreground" : "bg-foreground text-background shadow-md hover:bg-foreground/90"
                         )}>
                             {channel.is_joined ? 'Joined' : 'Join Channel'}
                         </button>
@@ -151,53 +151,53 @@ export default function WeeklyChannelIndexPage() {
 
                 {/* Posts List Parity */}
                 <section className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-2">Published Posts</h3>
+                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-2">Published Posts</h3>
                     <div className="grid gap-3">
                         {posts.map(post => (
                             <button
                                 key={post.id}
                                 onClick={() => router.push(`/channels/${slug}/${post.publish_at.slice(0, 10)}`)}
-                                className="group flex items-center justify-between p-5 rounded-[28px] bg-white shadow-soft ring-1 ring-black/[0.03] transition-all hover:ring-slate-900/10 active:scale-[0.98]"
+                                className="group flex items-center justify-between p-5 rounded-[28px] bg-surface shadow-soft ring-1 ring-border/50 transition-all hover:ring-border active:scale-[0.98]"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-slate-900 transition-colors">
+                                    <div className="h-10 w-10 rounded-xl bg-surface-muted flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
                                         <MessageSquare className="h-5 w-5" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-bold text-[15px] text-slate-900 line-clamp-1">{post.title}</p>
-                                        <p className="text-[11px] font-bold text-slate-400 mt-0.5">{formatDate(post.publish_at)}</p>
+                                        <p className="font-bold text-[15px] text-foreground line-clamp-1">{post.title}</p>
+                                        <p className="text-[11px] font-bold text-muted-foreground mt-0.5">{formatDate(post.publish_at)}</p>
                                     </div>
                                 </div>
-                                <ChevronRight className="h-4 w-4 text-slate-200 group-hover:text-slate-900 transition-colors" />
+                                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                             </button>
                         ))}
                     </div>
                     {posts.length === 0 && (
-                        <div className="rounded-[24px] border border-dashed border-slate-200 p-8 text-center bg-white/70">
-                            <p className="text-sm font-semibold text-slate-500">Belum ada konten mingguan dipublikasikan.</p>
+                        <div className="rounded-[24px] border border-dashed border-border p-8 text-center bg-surface/70">
+                            <p className="text-sm font-semibold text-muted-foreground">Belum ada konten mingguan dipublikasikan.</p>
                         </div>
                     )}
                 </section>
 
                 {/* Community Section Parity */}
                 {memberPosts.length > 0 && (
-                    <section className="space-y-4 pt-4 border-t border-slate-200/60">
+                    <section className="space-y-4 pt-4 border-t border-border/60">
                          <div className="flex items-center justify-between px-2">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Community Posts</h3>
-                            <button className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Community Posts</h3>
+                            <button className="text-[10px] font-bold text-brand bg-brand/5 px-3 py-1 rounded-full border border-brand/10 hover:bg-brand/10 transition-colors">
                                 <Plus className="h-3 w-3 inline mr-1" /> Buat Post
                             </button>
                          </div>
                          <div className="grid gap-3">
                             {memberPosts.map(m => (
-                                <div key={m.id} className="p-5 rounded-[28px] bg-white shadow-soft ring-1 ring-black/[0.02]">
+                                <div key={m.id} className="p-5 rounded-[28px] bg-surface shadow-soft ring-1 ring-border/50">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
+                                        <div className="h-6 w-6 rounded-full bg-surface-muted flex items-center justify-center text-[10px] font-bold text-foreground">
                                             {m.author?.slice(0, 1)}
                                         </div>
-                                        <span className="text-[11px] font-bold text-slate-400">{m.author}</span>
+                                        <span className="text-[11px] font-bold text-muted-foreground">{m.author}</span>
                                     </div>
-                                    <p className="text-sm text-slate-800 leading-relaxed font-medium">{m.text}</p>
+                                    <p className="text-sm text-foreground leading-relaxed font-medium">{m.text}</p>
                                 </div>
                             ))}
                          </div>

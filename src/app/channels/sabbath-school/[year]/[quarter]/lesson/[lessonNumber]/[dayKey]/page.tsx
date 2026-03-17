@@ -80,29 +80,29 @@ export default function SabbathSchoolDayPage() {
 
     if (loading || !day) {
         return (
-            <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-                <div className="h-10 w-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="h-10 w-10 border-4 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 pb-24">
+        <div className="min-h-screen bg-background text-foreground pb-24">
             {/* Header Parity */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3">
+            <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 px-4 py-3">
                 <div className="mx-auto max-w-3xl flex items-center justify-between">
                     <button 
                         onClick={() => router.back()}
-                        className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-all active:scale-95"
+                        className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated transition-all active:scale-95 text-foreground"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                     <div className="text-center">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Lesson {lessonNumber}</p>
-                        <p className="text-xs font-bold text-slate-900 truncate max-w-[200px]">{day.title}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Lesson {lessonNumber}</p>
+                        <p className="text-xs font-bold text-foreground truncate max-w-[200px]">{day.title}</p>
                     </div>
-                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-all active:scale-95">
-                        <Share2 className="h-5 w-5 text-slate-500" />
+                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated transition-all active:scale-95 text-muted-foreground hover:text-foreground">
+                        <Share2 className="h-5 w-5" />
                     </button>
                 </div>
             </header>
@@ -127,44 +127,44 @@ export default function SabbathSchoolDayPage() {
                 </div>
 
                 {/* Reader Content Parity */}
-                <article className="px-6 py-10 md:px-12 prose prose-slate max-w-none">
+                <article className="px-6 py-10 md:px-12 max-w-none">
                     <div 
                         dangerouslySetInnerHTML={{ __html: day.content }} 
-                        className="text-[17px] leading-relaxed text-slate-800 space-y-6 selection:bg-cyan-100"
+                        className="reader-prose text-[17px] leading-relaxed text-foreground/80 space-y-6 selection:bg-brand/20"
                     />
                 </article>
 
                 {/* Action Bar Parity */}
-                <div className="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 pb-8 z-40">
+                <div className="fixed bottom-0 inset-x-0 bg-background/90 backdrop-blur-md border-t border-border/50 p-4 pb-8 z-40">
                     <div className="mx-auto max-w-3xl flex items-center justify-between">
                         <div className="flex items-center gap-2">
                              <button 
                                 onClick={() => setLiked(!liked)}
                                 className={cn(
-                                    "flex h-12 px-5 items-center gap-2.5 rounded-full transition-all active:scale-90",
-                                    liked ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-500"
+                                    "flex h-12 px-5 items-center gap-2.5 rounded-full transition-all active:scale-90 border shadow-sm",
+                                    liked ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-surface text-muted-foreground hover:bg-surface-elevated border-border/50"
                                 )}
                              >
-                                <Heart className={cn("h-5 w-5", liked ? "fill-rose-500" : "")} />
+                                <Heart className={cn("h-5 w-5", liked ? "fill-current" : "")} />
                                 <span className="text-sm font-bold">124</span>
                              </button>
-                             <button className="h-12 w-12 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 active:scale-90">
+                             <button className="h-12 w-12 flex items-center justify-center rounded-full bg-surface text-muted-foreground active:scale-90 border border-border/50 shadow-sm hover:bg-surface-elevated transition-colors">
                                 <MessageCircle className="h-5 w-5" />
                              </button>
                         </div>
 
                         <div className="flex items-center gap-2">
-                             <button className="h-12 w-12 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 active:scale-90">
+                             <button className="h-12 w-12 flex items-center justify-center rounded-full bg-surface text-muted-foreground active:scale-90 border border-border/50 shadow-sm hover:bg-surface-elevated transition-colors">
                                 <BookOpen className="h-5 w-5" />
                              </button>
                              <button 
                                 onClick={() => setBookmarked(!bookmarked)}
                                 className={cn(
-                                    "h-12 w-12 flex items-center justify-center rounded-full transition-all active:scale-90",
-                                    bookmarked ? "bg-cyan-50 text-cyan-600" : "bg-slate-50 text-slate-500"
+                                    "h-12 w-12 flex items-center justify-center rounded-full transition-all active:scale-90 border shadow-sm",
+                                    bookmarked ? "bg-brand/10 text-brand border-brand/20" : "bg-surface text-muted-foreground hover:bg-surface-elevated border-border/50"
                                 )}
                              >
-                                <Bookmark className={cn("h-5 w-5", bookmarked ? "fill-cyan-500" : "")} />
+                                <Bookmark className={cn("h-5 w-5", bookmarked ? "fill-current" : "")} />
                              </button>
                         </div>
                     </div>

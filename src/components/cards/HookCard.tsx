@@ -49,8 +49,8 @@ export default function HookCard({
     const primaryColor = ACTION_MAP[primaryAction.type].color;
 
     return (
-        <Card className={cn('overflow-hidden rounded-3xl backdrop-blur-md', VARIANT_STYLES[variant], className)}>
-            <CardContent className="p-5 md:p-6">
+        <Card className={cn('overflow-hidden rounded-[32px] md:rounded-[40px] backdrop-blur-2xl shadow-soft', VARIANT_STYLES[variant], className)}>
+            <CardContent className="tct-card-pad">
                 <div className="flex items-start justify-between gap-4">
                     {/* Verse Badge */}
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/10 px-2.5 py-1 ring-1 ring-border/50">

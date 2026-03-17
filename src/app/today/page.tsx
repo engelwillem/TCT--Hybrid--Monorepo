@@ -174,7 +174,7 @@ export default function TodayPage() {
             title="Today"
             activeNavId="home"
             backHref="/"
-            className="md:max-w-none bg-surface-muted/40"
+            className="md:max-w-[720px] md:mx-auto"
             header={<GreetingHeader />}
         >
             <motion.div

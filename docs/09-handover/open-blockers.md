@@ -104,19 +104,20 @@
     - [ ] Inspeksi bahwa SAN (Subject Alternative Name) pada sertifikat meng-_cover_ kembaran ganda: `thechoosentalks.org` dan `www.thechoosentalks.org`.
     - [ ] Lakukan penerbitan ulang sertifikat (*re-issue*) dan penyematan bundel (*re-bind*) jika nama `www.` tidak tercakup di sertifikat yang aktif.
     - [ ] Bukti kebenaran TLS: *Handshake* SSL pada `curl -vI https://www.thechoosentalks.org` mengkonfirmasi CN/SAN *match*.
-- browser validation layer:
-  - [ ] `http://thechoosentalks.org` memindahkan (*redirect*) mulus ke pendaratan utama `https://www.thechoosentalks.org/today`
-  - [ ] `https://thechoosentalks.org` memindahkan mulus ke pendaratan utama `https://www.thechoosentalks.org/today`
-  - [ ] `https://thechoosentalks.org/community` memindahkan merawat sisa lajur spesifik ke `https://www.thechoosentalks.org/community`
-  - [ ] `https://www.thechoosentalks.org` memindahkan mulus ke pendaratan utama `https://www.thechoosentalks.org/today`
-  - [ ] `https://www.thechoosentalks.org/today` menggapai HTTP 200 OK beserta UI termuat penuh.
-- success criteria:
-  - Lenyapnya ancaman *NXDOMAIN*.
-  - Lenyapnya *certificate mismatch* / gembok merah/keamanan tercoreng.
-  - Lenyapnya kutukan *redirect loop*.
-  - Pendaratan *root* persis berpatok di garis *canonical landing*.
-  - Pengetikan panjang (*Non-root paths*) mengekalkan *path* ekornya.
-- status: **READY FOR SERVER EXECUTION**
+- strict apex validation checklist:
+  - Required validation URLs:
+    - [ ] `http://thechoosentalks.org` -> expected final: `https://www.thechoosentalks.org/today`
+    - [ ] `https://thechoosentalks.org` -> expected final: `https://www.thechoosentalks.org/today`
+    - [ ] `http://thechoosentalks.org/today` -> expected final: `https://www.thechoosentalks.org/today`
+    - [ ] `https://thechoosentalks.org/community` -> expected final: `https://www.thechoosentalks.org/community`
+  - Success criteria:
+    - All URLs land exactly on their expected final destination.
+    - Path preservation must work natively across redirect hops without dropping context.
+  - Failure patterns to watch for:
+    - Redirect loops (`ERR_TOO_MANY_REDIRECTS`).
+    - Loss of path precision (`/community` incorrectly resolving back to `/today`).
+    - Mixed-host issues where `thechoosentalks.org` encounters an `ERR_CERT_COMMON_NAME_INVALID` failure.
+- status: **READY FOR SERVER VALIDATION**
 
 ## Notes
 Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.

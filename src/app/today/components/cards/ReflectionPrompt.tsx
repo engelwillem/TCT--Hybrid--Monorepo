@@ -35,8 +35,8 @@ export default function ReflectionPrompt({ payload }: { payload?: { question: st
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
         >
-            <Card className="overflow-hidden rounded-[32px] border-0 bg-surface/80 shadow-soft ring-1 ring-border/60 backdrop-blur-xl">
-                <CardContent className="p-6 md:p-8">
+            <Card className="overflow-hidden rounded-[32px] md:rounded-[40px] border-0 glass-card">
+                <CardContent className="tct-card-pad">
                     <div className="flex flex-col items-center space-y-5 text-center">
                         <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand ring-1 ring-brand/20">
                             <Sparkles className="h-6 w-6" />

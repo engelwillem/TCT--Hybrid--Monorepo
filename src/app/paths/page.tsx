@@ -31,13 +31,13 @@ export default function PathsLibraryPage() {
             title="Spiritual Journeys"
             activeNavId="paths"
             backHref="/today"
-            className="md:max-w-none bg-slate-950 text-white min-h-screen"
+            className="md:max-w-none bg-background text-foreground min-h-screen"
             header={
                 <div className="px-4 py-4 md:px-0">
-                    <h1 className="font-serif text-3xl font-medium tracking-tight text-white">
+                    <h1 className="tct-h1 text-foreground">
                         Spiritual Journeys
                     </h1>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm font-medium text-muted-foreground">
                         Pilih satu jalan, dan bertumbuhlah satu hari pada satu waktu.
                     </p>
                 </div>
@@ -45,9 +45,9 @@ export default function PathsLibraryPage() {
         >
             <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-2">
                 {loading ? (
-                    <div className="flex h-32 items-center justify-center text-white/50">Memuat perjalanan...</div>
+                    <div className="flex h-32 items-center justify-center text-muted-foreground">Memuat perjalanan...</div>
                 ) : error || paths.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center pt-20 text-center text-white/50 px-4">
+                    <div className="flex flex-col items-center justify-center pt-20 text-center text-muted-foreground px-4">
                         <Compass className="h-10 w-10 mb-4 opacity-50" />
                         <p>Belum ada perjalanan spiritual yang tersedia saat ini.<br/>Silakan kembali lagi nanti.</p>
                     </div>
@@ -66,40 +66,40 @@ export default function PathsLibraryPage() {
                                     transition={{ delay: idx * 0.1 }}
                                 >
                                     <Link href={`/paths/${item.slug}`}>
-                                        <Card className="group relative overflow-hidden rounded-[32px] border-white/5 bg-white/[0.02] transition-colors hover:bg-white/[0.04]">
-                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/20 to-brand/5 opacity-20" />
+                                        <Card className="group relative overflow-hidden rounded-[32px] md:rounded-[40px] border-0 glass-card transition-all hover:shadow-card">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-50" />
                                             
-                                            <CardContent className="relative p-6">
+                                            <CardContent className="relative tct-card-pad">
                                                 <div className="mb-4 flex items-center justify-between">
-                                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 backdrop-blur-md ring-1 ring-white/10">
-                                                        <Compass className="h-6 w-6 text-white/70" />
+                                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-muted backdrop-blur-md ring-1 ring-border/50">
+                                                        <Compass className="h-6 w-6 text-brand" />
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white/50 ring-1 ring-white/10">
+                                                    <div className="flex items-center gap-1.5 rounded-full bg-surface-muted px-3 py-1 text-xs font-bold text-muted-foreground ring-1 ring-border/50">
                                                         <Clock className="h-3.5 w-3.5" />
-                                                        {item.estimated_minutes || 0} Menit / sesi
+                                                        {item.estimated_minutes || 0} Menit
                                                     </div>
                                                 </div>
 
-                                                <h3 className="mb-2 font-serif text-xl font-medium text-white group-hover:text-brand transition-colors">
+                                                <h3 className="mb-2 tct-h2 text-foreground group-hover:text-brand transition-colors">
                                                     {title}
                                                 </h3>
-                                                <p className="mb-6 line-clamp-2 text-sm leading-relaxed text-slate-400">
+                                                <p className="mb-6 line-clamp-2 text-sm leading-relaxed text-muted-foreground font-medium">
                                                     {description}
                                                 </p>
 
-                                                <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                                                <div className="flex items-center justify-between border-t border-border pt-4">
                                                     <div className="flex items-center gap-2">
                                                         {isActive ? (
                                                             <span className="text-xs font-bold uppercase tracking-widest text-brand">
                                                                 Lanjut
                                                             </span>
                                                         ) : (
-                                                            <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                                                            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
                                                                 Mulai Perjalanan
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-slate-950 transition-transform group-hover:scale-110">
+                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background transition-transform group-hover:scale-110">
                                                         {isActive ? <PlayCircle className="h-4 w-4" /> : <ChevronRightIcon />}
                                                     </div>
                                                 </div>

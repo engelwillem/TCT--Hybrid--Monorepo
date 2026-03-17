@@ -219,10 +219,8 @@ export default function DailyVerseHeroCard({
             ref={cardRef}
             className="
                 relative overflow-hidden
-                rounded-[32px] border-0 px-5 py-7 md:p-8
-                bg-white/40 dark:bg-white/5 backdrop-blur-xl
-                ring-1 ring-black/[0.03] dark:ring-white/[0.08]
-                shadow-[0_8px_32px_rgba(0,0,0,0.04)]
+                rounded-[32px] md:rounded-[40px] border-0 tct-card-pad
+                glass-card
             "
         >
             {/* Artistic Decorative Background */}

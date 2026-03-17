@@ -143,13 +143,13 @@ export default function ChannelsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#f7f8fa] px-4 py-10">
+            <div className="min-h-screen bg-background px-4 py-10">
                 <div className="mx-auto max-w-2xl space-y-4">
-                    <div className="h-12 rounded-2xl bg-slate-200/70 animate-pulse" />
-                    <div className="h-60 rounded-3xl bg-slate-200/70 animate-pulse" />
+                    <div className="h-12 rounded-2xl bg-surface-muted animate-pulse border border-border/50" />
+                    <div className="h-60 rounded-3xl bg-surface-muted animate-pulse border border-border/50" />
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="h-40 rounded-3xl bg-slate-200/70 animate-pulse" />
-                        <div className="h-40 rounded-3xl bg-slate-200/70 animate-pulse" />
+                        <div className="h-40 rounded-3xl bg-surface-muted animate-pulse border border-border/50" />
+                        <div className="h-40 rounded-3xl bg-surface-muted animate-pulse border border-border/50" />
                     </div>
                 </div>
             </div>
@@ -157,28 +157,28 @@ export default function ChannelsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f7f8fa] text-slate-900 pb-24">
-            <header className="sticky top-0 z-40 bg-[#f7f8fa]/90 backdrop-blur-md border-b border-slate-200/70">
+        <div className="min-h-screen bg-background text-foreground pb-24">
+            <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border/50">
                 <div className="mx-auto max-w-2xl px-4 py-4">
                     <h1 className="text-lg font-bold tracking-tight">Channels</h1>
                 </div>
             </header>
 
             <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
-                <section className="overflow-hidden rounded-[30px] bg-white ring-1 ring-black/[0.05] shadow-sm">
+                <section className="overflow-hidden rounded-[30px] bg-surface ring-1 ring-border/50 shadow-soft">
                     <div className="relative h-48">
                         <img
                             src={sabbathSchool?.channel?.cover_image_url ?? 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=800'}
                             alt="Sabbath School"
                             className="h-full w-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/25 to-transparent" />
                         <div className="absolute inset-x-0 bottom-0 p-5">
-                            <p className="inline-flex rounded-full bg-white/20 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
+                            <p className="inline-flex rounded-full bg-surface-elevated/50 backdrop-blur-md border border-border/50 text-foreground text-[10px] font-bold px-3 py-1 uppercase tracking-widest shadow-sm">
                                 Sabbath School
                             </p>
-                            <h2 className="mt-2 text-2xl font-bold text-white">{selectedQuarter?.title ?? 'Quarter Study'}</h2>
-                            <p className="mt-1 text-xs font-semibold text-white/80">
+                            <h2 className="mt-2 text-2xl font-bold text-foreground">{selectedQuarter?.title ?? 'Quarter Study'}</h2>
+                            <p className="mt-1 text-xs font-semibold text-muted-foreground">
                                 {shortDate(selectedQuarter?.start_date)} - {shortDate(selectedQuarter?.end_date)}
                             </p>
                         </div>
@@ -186,7 +186,7 @@ export default function ChannelsPage() {
 
                     <div className="p-5 space-y-4">
                         <Button
-                            className="h-12 w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                            className="h-12 w-full rounded-2xl bg-foreground hover:bg-foreground/90 text-background font-bold shadow-soft"
                             onClick={() => {
                                 if (!sabbathSchool?.todayTarget) return;
                                 const target = sabbathSchool.todayTarget;
@@ -207,8 +207,8 @@ export default function ChannelsPage() {
                                         className={cn(
                                             'shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ring-1 transition-colors',
                                             selectedQuarterId === quarter.id
-                                                ? 'bg-slate-900 text-white ring-slate-900'
-                                                : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50',
+                                                ? 'bg-foreground text-background ring-foreground'
+                                                : 'bg-surface text-muted-foreground ring-border/50 hover:bg-surface-elevated',
                                         )}
                                     >
                                         Q{quarter.quarter} {quarter.year}
@@ -217,13 +217,13 @@ export default function ChannelsPage() {
                             </div>
                         )}
 
-                        <div className="rounded-2xl border border-slate-200 p-4 space-y-2">
+                        <div className="rounded-2xl border border-border/50 p-4 space-y-2 bg-surface-muted/50">
                             <div className="flex items-center justify-between text-xs font-bold">
-                                <span className="text-slate-700">Progress lesson quarter ini</span>
-                                <span className="text-slate-500">{completedLessons}/{lessonCount}</span>
+                                <span className="text-foreground/80">Progress lesson quarter ini</span>
+                                <span className="text-muted-foreground">{completedLessons}/{lessonCount}</span>
                             </div>
-                            <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                                <div className="h-full bg-slate-900 transition-all" style={{ width: progressWidth }} />
+                            <div className="h-2 rounded-full bg-surface overflow-hidden border border-border/50">
+                                <div className="h-full bg-brand transition-all shadow-[0_0_10px_rgba(var(--brand-rgb),0.5)]" style={{ width: progressWidth }} />
                             </div>
                         </div>
 
@@ -233,13 +233,13 @@ export default function ChannelsPage() {
                                     key={lesson.id}
                                     type="button"
                                     onClick={() => router.push(`/channels/sabbath-school/${selectedQuarter?.year}/q${selectedQuarter?.quarter}/lesson/${lesson.lesson_number}`)}
-                                    className="flex items-start justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left hover:bg-slate-100 transition-colors"
+                                    className="flex items-start justify-between rounded-2xl bg-surface-muted px-4 py-3 text-left hover:bg-surface-elevated transition-colors border border-border/50"
                                 >
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Lesson {lesson.lesson_number}</p>
-                                        <p className="mt-1 text-sm font-semibold text-slate-800">{lesson.title ?? 'Untitled lesson'}</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-brand">Lesson {lesson.lesson_number}</p>
+                                        <p className="mt-1 text-sm font-semibold text-foreground">{lesson.title ?? 'Untitled lesson'}</p>
                                     </div>
-                                    <ChevronRight className="h-4 w-4 text-slate-400 mt-1" />
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
                                 </button>
                             ))}
                         </div>
@@ -248,32 +248,32 @@ export default function ChannelsPage() {
 
                 <section className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Channel Lainnya</h3>
-                        <span className="text-[11px] font-bold text-slate-500">{channels.length} channels</span>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Channel Lainnya</h3>
+                        <span className="text-[11px] font-bold text-muted-foreground">{channels.length} channels</span>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {channels.map(channel => (
-                            <article key={channel.slug} className="rounded-[26px] bg-white ring-1 ring-black/[0.05] overflow-hidden shadow-sm">
+                            <article key={channel.slug} className="rounded-[26px] bg-surface ring-1 ring-border/50 overflow-hidden shadow-soft">
                                 <button
                                     type="button"
                                     onClick={() => router.push(`/channels/${channel.slug}`)}
-                                    className="w-full text-left"
+                                    className="w-full text-left group"
                                 >
                                     <div className="h-28 w-full overflow-hidden">
                                         <img
                                             src={channel.cover_image_url ?? 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=800'}
                                             alt={channel.title}
-                                            className="h-full w-full object-cover"
+                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                     </div>
                                     <div className="p-4 space-y-2">
-                                        <p className="text-sm font-bold tracking-tight">{channel.title}</p>
-                                        <p className="text-xs text-slate-500 line-clamp-2 min-h-8">{channel.description ?? 'Weekly devotion channel.'}</p>
+                                        <p className="text-sm font-bold tracking-tight text-foreground">{channel.title}</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-2 min-h-8">{channel.description ?? 'Weekly devotion channel.'}</p>
                                     </div>
                                 </button>
                                 <div className="px-4 pb-4 flex items-center justify-between">
-                                    <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                                    <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
                                         <Users className="h-3.5 w-3.5" />
                                         <span>{channel.members_count ?? 0}</span>
                                     </div>
@@ -281,8 +281,8 @@ export default function ChannelsPage() {
                                         type="button"
                                         onClick={() => handleMembershipToggle(channel.slug)}
                                         className={cn(
-                                            'text-[11px] font-bold rounded-full px-3 py-1.5 transition-colors',
-                                            channel.is_joined ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-slate-900 text-white hover:bg-slate-800',
+                                            'text-[11px] font-bold rounded-full px-3 py-1.5 transition-colors shadow-sm ring-1',
+                                            channel.is_joined ? 'bg-surface-elevated text-foreground ring-border/50 hover:bg-surface-muted' : 'bg-foreground text-background hover:bg-foreground/90 ring-foreground/50',
                                         )}
                                     >
                                         {channel.is_joined ? 'Joined' : 'Join'}
@@ -294,10 +294,12 @@ export default function ChannelsPage() {
                 </section>
 
                 {channels.length === 0 && (
-                    <section className="rounded-3xl bg-white ring-1 ring-slate-200 p-8 text-center">
-                        <CalendarDays className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                        <p className="text-sm font-semibold text-slate-600">Belum ada channel aktif.</p>
-                        <p className="text-xs text-slate-400 mt-1">Silakan refresh beberapa saat lagi.</p>
+                    <section className="rounded-[32px] bg-surface ring-1 ring-border/50 p-8 text-center shadow-soft">
+                        <div className="mx-auto bg-surface-muted border border-border/50 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                            <CalendarDays className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">Belum ada channel aktif.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Silakan refresh beberapa saat lagi.</p>
                     </section>
                 )}
             </main>

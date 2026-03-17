@@ -80,7 +80,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${inter.variable} ${dmSerifDisplay.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased text-[15px] leading-[1.6] md:text-[16px] bg-slate-950 text-white" suppressHydrationWarning>
+      <body className="font-sans antialiased tct-body" suppressHydrationWarning>
         <FirebaseClientProvider>
           <FirebaseAuthSync />
           <AppShell>

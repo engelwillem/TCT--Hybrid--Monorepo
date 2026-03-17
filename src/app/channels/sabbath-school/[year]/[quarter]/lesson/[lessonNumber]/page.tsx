@@ -69,23 +69,23 @@ export default function SabbathSchoolLessonPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-                <div className="h-10 w-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="h-10 w-10 border-4 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FAFAF8] text-slate-900 pb-20">
+        <div className="min-h-screen bg-background text-foreground pb-20">
             {/* Header Parity */}
-            <div className="sticky top-0 z-40 bg-[#FAFAF8]/80 backdrop-blur-md border-b border-slate-200/60">
+            <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/60">
                 <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/50 active:scale-95 transition-all">
+                    <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated active:scale-95 transition-all text-foreground">
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                     <div className="text-center">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Lesson {lessonNumber}</p>
-                        <h1 className="font-bold text-base leading-tight">Materi Mingguan</h1>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Lesson {lessonNumber}</p>
+                        <h1 className="font-bold text-base leading-tight text-foreground">Materi Mingguan</h1>
                     </div>
                     <div className="w-10" />
                 </div>
@@ -97,28 +97,28 @@ export default function SabbathSchoolLessonPage() {
                         <button
                             key={day.day_key}
                             onClick={() => router.push(`/channels/sabbath-school/${year}/${quarter}/lesson/${lessonNumber}/${day.day_key}`)}
-                            className="group flex items-center justify-between p-5 rounded-[28px] bg-white shadow-soft ring-1 ring-black/[0.03] transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
+                            className="group flex items-center justify-between p-5 rounded-[28px] bg-surface shadow-soft ring-1 ring-border/50 transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
                         >
                             <div className="flex items-center gap-5">
-                                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex flex-col items-center justify-center ring-1 ring-slate-100">
-                                    <span className="text-[9px] font-bold uppercase text-slate-400">{day.day_key}</span>
-                                    <span className="text-sm font-bold text-slate-900">{formatShortDate(day.date)}</span>
+                                <div className="h-12 w-12 rounded-2xl bg-surface-muted flex flex-col items-center justify-center ring-1 ring-border/50">
+                                    <span className="text-[9px] font-bold uppercase text-muted-foreground">{day.day_key}</span>
+                                    <span className="text-sm font-bold text-foreground">{formatShortDate(day.date)}</span>
                                 </div>
-                                <div>
-                                    <p className="font-bold text-[15px] text-slate-900 leading-tight">{day.title}</p>
+                                <div className="text-left">
+                                    <p className="font-bold text-[15px] text-foreground leading-tight">{day.title}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
-                                        <BookOpen className="h-3 w-3 text-cyan-500" />
-                                        <span className="text-[11px] font-bold text-slate-400">Baca Materi</span>
+                                        <BookOpen className="h-3 w-3 text-brand" />
+                                        <span className="text-[11px] font-bold text-muted-foreground">Baca Materi</span>
                                     </div>
                                 </div>
                             </div>
-                            <ChevronRight className="h-5 w-5 text-slate-200 group-hover:text-cyan-500 transition-colors" />
+                            <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-brand transition-colors" />
                         </button>
                     ))}
                 </div>
 
                 <div className="pt-8 text-center">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300">Sabbath School Channel</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/50">Sabbath School Channel</p>
                 </div>
             </main>
         </div>

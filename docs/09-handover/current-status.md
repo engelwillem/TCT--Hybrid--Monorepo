@@ -12,16 +12,15 @@ Hybrid monorepo sedang berjalan dalam dua track:
 - Community
 
 ## Active Domains
-- Today
+- Visual System & UI Architecture Reset
 
 ## Active Experience Features
-- Relevance homepage
-- Hook card system
-- Reflection template
-- Spiritual journeys
+- Core Navigation Restructuring (Completed Docs Base)
+- Thematic Design Layout (Dawn Theme in globals.css)
+- Screen Deprecation (merging redundant flows)
 
 ## Current Priority
-1. Paritas layer `Today` (Homepage) MVP terbukti bekerja dan merekam presistensi *SpiritualState*. Kini memasuki fase persiapan *cleanup*.
+1. Melakukan transisi bertahap untuk *Visual Patch & Arsitektur Layar* dengan melerai komponen statis. Pondasi Design Tokens (warna, kelengkungan p-6+, bayangan lapang) sudah diinjeksikan pada `globals.css`. Selanjutnya adalah menerapkannya ke `/today`.
 2. selesaikan mitigasi local vs production parity yang masih berselimut status `NEEDS SERVER VALIDATION` (khususnya isu Env CORS dan CGIPassAuth cPanel).
 
 ## Non-Negotiable Constraints

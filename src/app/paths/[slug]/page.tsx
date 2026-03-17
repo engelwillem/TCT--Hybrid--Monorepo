@@ -55,9 +55,9 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                 title="Memuat..."
                 activeNavId="paths"
                 backHref="/paths"
-                className="md:max-w-none bg-slate-950 text-white min-h-screen"
+                className="md:max-w-none bg-background text-foreground min-h-screen"
             >
-                <div className="flex h-screen items-center justify-center text-white/50">Memuat perjalanan...</div>
+                <div className="flex h-screen items-center justify-center text-muted-foreground">Memuat perjalanan...</div>
             </MobileAppLayout>
         );
     }
@@ -68,13 +68,13 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                 title="Perjalanan Tidak Ditemukan"
                 activeNavId="paths"
                 backHref="/paths"
-                className="md:max-w-none bg-slate-950 text-white min-h-screen"
+                className="md:max-w-none bg-background text-foreground min-h-screen"
             >
                 <div className="flex h-screen flex-col items-center pt-32 text-center px-4">
-                    <p className="text-white/50 mb-4">Perjalanan ini tidak dapat ditemukan atau gagal dimuat dari server.</p>
+                    <p className="text-muted-foreground mb-4">Perjalanan ini tidak dapat ditemukan atau gagal dimuat dari server.</p>
                     <button 
                         onClick={() => router.push('/paths')}
-                        className="bg-white/10 hover:bg-white/20 transition-all text-white font-medium px-6 py-3 rounded-full text-sm"
+                        className="bg-surface hover:bg-surface-elevated transition-all text-foreground font-medium px-6 py-3 rounded-full text-sm shadow-sm ring-1 ring-border/50"
                     >
                         Kembali ke Perpustakaan
                     </button>
@@ -100,16 +100,16 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
             title={title}
             activeNavId="paths"
             backHref="/paths"
-            className="md:max-w-none bg-slate-950 text-white min-h-screen"
+            className="md:max-w-none bg-background text-foreground min-h-screen"
         >
             <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-2">
                 {/* Hero / Progress Status */}
                 <div className="mb-10 text-center">
                     <div className="mb-6 flex justify-center">
-                        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white/5 border border-white/10 p-2 shadow-2xl">
+                        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-surface-muted border border-border/50 p-2 shadow-card">
                             {/* SVG Circle Progress */}
                             <svg className="absolute inset-0 h-full w-full rotate-[-90deg]">
-                                <circle cx="48" cy="48" r="45" className="fill-none stroke-white/10 stroke-[4]" />
+                                <circle cx="48" cy="48" r="45" className="fill-none stroke-border/50 stroke-[4]" />
                                 <motion.circle
                                     cx="48" cy="48" r="45"
                                     className="fill-none stroke-brand stroke-[4] transition-all duration-1000 ease-in-out"
@@ -118,18 +118,18 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                                 />
                             </svg>
                             <div className="text-center font-serif">
-                                <span className="text-2xl font-bold">{currentProgressIndex}</span>
-                                <span className="text-xs text-white/50">/{totalDays}</span>
+                                <span className="text-2xl font-bold text-foreground">{currentProgressIndex}</span>
+                                <span className="text-xs text-muted-foreground">/{totalDays}</span>
                             </div>
                         </div>
                     </div>
-                    <h2 className="font-serif text-2xl font-normal leading-tight text-white/90">
+                    <h2 className="font-serif text-2xl font-normal leading-tight text-foreground">
                         {currentProgressIndex >= totalDays && totalDays > 0 ? 'Perjalanan Selesai!' : `Lanjut Hari ke-${currentProgressIndex + 1}`}
                     </h2>
                 </div>
 
                 {/* Vertical Timeline */}
-                <div className="relative space-y-4 before:absolute before:bottom-0 before:left-[27px] before:top-4 before:w-[2px] before:bg-white/5">
+                <div className="relative space-y-4 before:absolute before:bottom-0 before:left-[27px] before:top-4 before:w-[2px] before:bg-border/50">
                     {days.map((day: any, idx: number) => {
                         const isCompleted = completedSteps.includes(day.id);
                         const isLocked = !isCompleted && idx > currentProgressIndex;
@@ -143,16 +143,16 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                             <div key={day.id} className="relative z-10 pl-16">
                                 {/* Timeline Node */}
                                 <div className={cn(
-                                    "absolute left-[16px] top-6 flex h-[24px] w-[24px] items-center justify-center rounded-full border-4 border-slate-950 transition-colors",
-                                    isCompleted ? "bg-brand text-slate-900" : (isActive ? "bg-amber-500 animate-pulse text-amber-900" : "bg-white/20 text-white/50")
+                                    "absolute left-[16px] top-6 flex h-[24px] w-[24px] items-center justify-center rounded-full border-4 border-background transition-colors",
+                                    isCompleted ? "bg-brand text-background" : (isActive ? "bg-amber-500 animate-pulse text-amber-900" : "bg-surface-muted text-muted-foreground")
                                 )}>
                                     {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <div className="h-2 w-2 rounded-full bg-current" />}
                                 </div>
 
                                 <Card 
                                     className={cn(
-                                        "overflow-hidden transition-all duration-300 rounded-[28px] border-white/5",
-                                        isLocked ? "bg-white/[0.01] opacity-50 select-none" : "bg-white/[0.03] hover:bg-white/[0.05]",
+                                        "overflow-hidden transition-all duration-300 rounded-[28px] border-border/50",
+                                        isLocked ? "bg-surface/50 opacity-50 select-none" : "bg-surface hover:bg-surface-elevated shadow-soft",
                                         isActive && !isExpanded ? "ring-1 ring-amber-500/30" : ""
                                     )}
                                 >
@@ -170,19 +170,19 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                                             <div className="flex flex-col">
                                                 <span className={cn(
                                                     "text-[10px] font-bold uppercase tracking-widest",
-                                                    isCompleted ? "text-brand" : (isActive ? "text-amber-500" : "text-slate-500")
+                                                    isCompleted ? "text-brand" : (isActive ? "text-amber-500" : "text-muted-foreground")
                                                 )}>
                                                     {isCompleted ? 'Selesai' : `Hari ${day.step_order}`}
                                                 </span>
-                                                <h3 className={cn("font-serif text-lg", isLocked ? "text-slate-400" : "text-white")}>
+                                                <h3 className={cn("font-serif text-lg", isLocked ? "text-muted-foreground" : "text-foreground")}>
                                                     {dayTitle}
                                                 </h3>
                                             </div>
                                         </div>
                                         <div>
-                                            {isLocked ? <Lock className="h-5 w-5 text-slate-600" /> : 
+                                            {isLocked ? <Lock className="h-5 w-5 text-muted-foreground" /> : 
                                             isCompleted ? null : 
-                                            <ChevronDown className={cn("h-5 w-5 transition-transform text-white/50", isExpanded && "rotate-180")} />}
+                                            <ChevronDown className={cn("h-5 w-5 transition-transform text-muted-foreground", isExpanded && "rotate-180")} />}
                                         </div>
                                     </div>
 
@@ -193,10 +193,10 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: 'auto', opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                className="border-t border-white/5"
+                                                className="border-t border-border/50"
                                             >
                                                 <div className="p-6 md:p-8 space-y-6">
-                                                    <p className="text-slate-300 leading-relaxed font-medium">
+                                                    <p className="text-foreground/80 leading-relaxed font-medium">
                                                         {dayContent}
                                                     </p>
                                                     
@@ -215,13 +215,13 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                                                     <div className="pt-4 flex justify-end gap-3">
                                                         <button 
                                                             onClick={() => setExpandedDay(null)}
-                                                            className="px-4 py-2 rounded-full text-sm font-medium text-slate-400 hover:text-white"
+                                                            className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                                                         >
                                                             Tutup
                                                         </button>
                                                         <button 
                                                             onClick={() => handleCompleteDay(day.id)}
-                                                            className="flex items-center gap-2 px-6 py-2 rounded-full bg-brand text-slate-900 text-sm font-bold shadow-lg shadow-brand/20 active:scale-95 transition-all"
+                                                            className="flex items-center gap-2 px-6 py-2 rounded-full bg-brand text-background text-sm font-bold shadow-soft hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all ring-1 ring-background/10"
                                                         >
                                                             Selesai Hari Ini
                                                         </button>
@@ -243,7 +243,7 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                     >
                         <button 
                             onClick={() => router.push('/paths')}
-                            className="bg-white/10 hover:bg-white/20 transition-all text-white font-medium px-6 py-3 rounded-full text-sm"
+                            className="bg-surface hover:bg-surface-elevated transition-all text-foreground font-medium px-6 py-3 rounded-full text-sm shadow-sm ring-1 ring-border/50"
                         >
                             Jelajahi Perjalanan Lainnya
                         </button>

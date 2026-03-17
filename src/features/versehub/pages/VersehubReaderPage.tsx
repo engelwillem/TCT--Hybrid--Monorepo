@@ -325,15 +325,15 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     };
 
     if (loading) {
-        return <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-            <Loader2 className="h-10 w-10 text-amber-500 animate-spin" />
+        return <div className="min-h-screen bg-background flex items-center justify-center">
+            <Loader2 className="h-10 w-10 text-brand animate-spin" />
         </div>;
     }
 
     return (
         <div className={cn(
             "min-h-screen transition-colors duration-500",
-            readingMode === 'dark' ? "bg-slate-900 text-slate-100" : "bg-[#FAFAF8] text-slate-900"
+            readingMode === 'dark' ? "bg-background text-foreground" : "bg-background text-foreground"
         )}>
             <div className="mx-auto w-full max-w-6xl px-4 py-4 md:py-6">
                 <div className="flex w-full">
@@ -346,17 +346,17 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                     <div className="w-full md:flex-1 md:ml-8">
                         <div className={cn(
                             "sticky top-0 z-30 border-b backdrop-blur-xl transition-all",
-                            readingMode === 'dark' ? "border-white/5 bg-slate-900/80" : "border-slate-200 bg-white/80"
+                            readingMode === 'dark' ? "border-border/50 bg-background/80" : "border-border/50 bg-background/80"
                         )}>
                             <div className="flex items-center justify-between px-4 py-3.5">
-                                <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 active:scale-90 transition-all">
+                                <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-surface-muted border border-border/50 hover:bg-surface-elevated active:scale-90 transition-all text-muted-foreground">
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
                                 <h1 className="tct-brand-gradient text-xl font-bold tracking-tight">
                                     {chapter_label || (isId ? 'Alkitab' : 'Bible')}
                                 </h1>
-                                <button onClick={() => setPickerOpen(true)} className="flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-bold border border-white/10 bg-white/5 hover:bg-white/10 transition-all">
-                                    <Library className="h-3.5 w-3.5 text-amber-500" />
+                                <button onClick={() => setPickerOpen(true)} className="flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-bold border border-border/50 bg-surface-muted hover:bg-surface-elevated transition-all text-foreground shadow-sm">
+                                    <Library className="h-3.5 w-3.5 text-brand" />
                                     {isId ? 'Perpustakaan' : 'Library'}
                                 </button>
                             </div>
@@ -386,7 +386,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     <p className="text-slate-500 text-sm mb-8">Maaf, terjadi kesalahan saat mengambil data dari server.</p>
                                     <button 
                                         onClick={() => { setError(null); fetchBooks(); }}
-                                        className="px-8 py-3 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all"
+                                        className="px-8 py-3 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 transition-all shadow-sm"
                                     >
                                         Coba Lagi
                                     </button>
@@ -486,7 +486,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                             <p className="text-slate-500 text-sm mb-8">Maaf, terjadi kesalahan saat mengambil data Alkitab (Status: {error}).</p>
                                             <button 
                                                 onClick={() => window.location.reload()}
-                                                className="px-8 py-3 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all"
+                                                className="px-8 py-3 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 transition-all shadow-sm"
                                             >
                                                 Coba Lagi
                                             </button>

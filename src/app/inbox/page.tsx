@@ -138,9 +138,9 @@ export default function InboxPage() {
 
     if (loading && !inbox.tabs) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
-                <Loader2 className="h-10 w-10 text-sky-400 animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Syncing Conversations...</p>
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-10 w-10 text-brand animate-spin" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Syncing Conversations...</p>
             </div>
         );
     }
@@ -160,7 +160,7 @@ export default function InboxPage() {
                     </div>
                     <button 
                         onClick={() => router.push('/profile')}
-                        className="px-8 py-3 bg-brand text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-brand/20 active:scale-95 transition-all"
+                        className="px-8 py-3 bg-brand text-background rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-brand/20 active:scale-95 transition-all"
                     >
                         Masuk Sekarang
                     </button>
@@ -177,7 +177,7 @@ export default function InboxPage() {
             rightAction={
                 <button 
                     onClick={() => {}} // Placeholder for now
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-xl active:scale-90 transition-all border border-white/10"
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-soft hover:bg-foreground/90 active:scale-90 transition-all border border-border/50"
                 >
                     <PlusCircle size={24} />
                 </button>
@@ -188,16 +188,16 @@ export default function InboxPage() {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-6 rounded-[32px] border border-white/10 bg-white/[0.02] shadow-premium backdrop-blur-xl ring-1 ring-white/5"
+                    className="p-6 rounded-[32px] md:rounded-[40px] border-0 glass-card tct-card-pad shadow-soft mb-6"
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/80">Messaging Hub</span>
-                            <p className="text-sm font-bold text-white/40 uppercase tracking-widest">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand/80">Messaging Hub</span>
+                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
                                 {Object.values(inbox.counts ?? {}).reduce((a, b) => (Number(a) || 0) + (Number(b) || 0), 0)} Active Threads
                             </p>
                         </div>
-                        <div className="h-12 w-12 rounded-2xl bg-sky-400/10 flex items-center justify-center text-sky-400 border border-sky-400/20 shadow-inner">
+                        <div className="h-12 w-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand border border-brand/20 shadow-inner">
                             <Mail className="h-6 w-6" />
                         </div>
                     </div>
@@ -222,12 +222,12 @@ export default function InboxPage() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="p-16 text-center rounded-[40px] bg-white/[0.01] border border-dashed border-white/10"
+                                className="p-16 text-center rounded-[40px] glass-card border-0 border-dashed shadow-none bg-transparent"
                             >
-                                <div className="h-16 w-16 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/5 opacity-40">
-                                    <Search className="h-8 w-8 text-white" />
+                                <div className="h-16 w-16 bg-surface-muted rounded-3xl flex items-center justify-center mx-auto mb-4 border border-border/50">
+                                    <Search className="h-8 w-8 text-muted-foreground" />
                                 </div>
-                                <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">No {activeTab} threads</p>
+                                <p className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.3em]">No {activeTab} threads</p>
                             </motion.div>
                         ) : (
                             visibleItems.map((item, idx) => (
@@ -238,8 +238,8 @@ export default function InboxPage() {
                                     transition={{ delay: idx * 0.04 }}
                                     onClick={() => router.push(`/inbox/${item.partner.id}`)}
                                     className={cn(
-                                        "group flex items-center gap-5 p-5 rounded-[28px] bg-surface/80 border border-border/60 transition-all active:scale-[0.98] text-left relative overflow-hidden",
-                                        item.is_unread ? "ring-2 ring-brand/20 bg-surface-elevated shadow-lg" : "hover:bg-surface-elevated"
+                                        "group flex items-center gap-5 p-5 rounded-[28px] md:rounded-[32px] bg-surface/80 border border-border/60 transition-all active:scale-[0.98] text-left relative overflow-hidden",
+                                        item.is_unread ? "ring-2 ring-brand/20 bg-surface-elevated shadow-card" : "hover:bg-surface-elevated"
                                     )}
                                 >
                                     {item.is_unread && (
@@ -247,11 +247,11 @@ export default function InboxPage() {
                                     )}
                                     
                                     <div className="relative flex-none">
-                                        <div className="h-14 w-14 rounded-[20px] bg-slate-900 border border-white/10 flex items-center justify-center text-lg font-black text-sky-400 shadow-xl group-hover:scale-105 transition-transform">
+                                        <div className="h-14 w-14 rounded-[20px] bg-surface-muted border border-border/50 flex items-center justify-center text-lg font-black text-brand shadow-sm group-hover:scale-105 transition-transform">
                                             {(item.partner?.name || '?').slice(0, 1).toUpperCase()}
                                         </div>
                                         {item.partner?.online && (
-                                            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-emerald-500 border-4 border-white dark:border-slate-900 shadow-sm" />
+                                            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-emerald-500 border-4 border-background shadow-sm" />
                                         )}
                                     </div>
 
@@ -274,7 +274,7 @@ export default function InboxPage() {
                                                 <button
                                                     disabled={busyKey === `approve:${item.message_id}`}
                                                     onClick={(e) => void approveRequest(e, item.message_id)}
-                                                    className="px-4 py-2 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-md flex justify-center items-center w-max"
+                                                    className="px-4 py-2 bg-foreground text-background rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-sm flex justify-center items-center w-max hover:bg-foreground/90"
                                                 >
                                                     {busyKey === `approve:${item.message_id}` ? (
                                                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
