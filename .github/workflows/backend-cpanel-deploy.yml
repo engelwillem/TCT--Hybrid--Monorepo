@@ -71,15 +71,6 @@ jobs:
             .
           sha256sum ../build.tar.gz | awk '{print $1}' > ../build.tar.gz.sha256
 
-      - name: Preflight TCP Reachability Check
-        working-directory: .
-        run: |
-          echo "Testing TCP connection to $SSH_HOST:$SSH_PORT..."
-          timeout 10 bash -c "</dev/tcp/$SSH_HOST/$SSH_PORT" || {
-            echo "::error::Network unreachable. The GitHub Actions runner IP is likely blocked by cPanel CSF Firewall."
-            exit 1
-          }
-          echo "Network reachable."
 
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0

@@ -16,6 +16,7 @@
 - Mendaftarkan hierarki teks, spacing ultra-lapang (`radius-[40px]`), dan `tct-pressable` micro-animations.
 - **Architectural Cleanup**: Membersihkan `bg-mesh` blur blobs legacy dari `AppShell` dan `MobileAppLayout` untuk murni bertumpu pada clean `bg-background` Dawn Theme.
 - **Navigation Lock**: Memodifikasi `getUiNavItems` (bottom tab) dan `DesktopSidebarNav` menuju V1 Core (`Today`, `VerseHub`, `Paths`, `Community`, `Profile`) dan membuang relik lama.
+- **UI Component Rollout**: Mengaplikasikan kelas semantik Dawn (seperti `bg-surface-elevated`, `text-muted-foreground`) secara rekursif ke seluruh komponen `/today` (`TodayFeed`, `GreetingHeader`, `PinnedLessonCard`).
 
 ### Risks/Decisions
 - Modifikasi ini memaksa `globals.css` menimpa warisan tailwind *inline*. Halaman yang masih berpegang pada utilitas kaku mungkin akan perlu disesuaikan (*padding* dll). Hapus rute mati (`library`, `visitors`, dsb) akan dilakukan di fase page pruning.

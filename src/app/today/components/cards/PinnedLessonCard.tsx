@@ -70,7 +70,7 @@ export default function PinnedLessonCard({ pinned }: Props) {
                     </div>
 
                     <div className="flex items-center">
-                        <span className="tct-meta font-medium text-slate-400">
+                        <span className="tct-meta font-medium text-muted-foreground">
                             {quarter.title}
                         </span>
                     </div>

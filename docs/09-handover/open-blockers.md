@@ -64,8 +64,10 @@
   - [x] Pemanggilan *Re-run* pada *Deploy Job* `backend-cpanel-deploy.yml` dari panel GitHub Actions ditekankan manual.
   - [ ] **Evidence 1:** Mata rantai langkah `Upload artifact and deploy scripts` melepaskan jebakan *timeout*, log `scp` mengalir lancar ke server.
   - [ ] **Evidence 2:** Eksekusi `ssh` remote bash script menggapai baris final: `Deployment completed successfully`.
-  - **HASIL TERBARU:** Pekerjaan mati di pijakan awal `Preflight TCP Reachability Check` yang berteriak `Network unreachable`. Artinya server masih menutup akses.
-- status: **BLOCKED**
+  - **HASIL TERBARU (2026-03-17):** Log terbaru menunjukkan `Preflight TCP Reachability Check` **BERHASIL** (`Network reachable.`), namun gagal seketika di langkah berikutnya pada eksekusi `scp` (`ssh: connect to host *** port ***: Connection timed out`).
+- akar masalah sebenarnya: Koneksi TCP dari Github Actions ke peladen secara fundamental tembus. Kegagalan *timeout* sesaat setelahnya kuat mengindikasikan fitur firewall dinamis LFD (Login Failure Daemon) cPanel salah mendiagnosis `Preflight TCP Reachability Check` (yang membuat koneksi TCP kosong/buntung) sebagai *port-scanning* atau tindakan berbahaya (*abuse*), yang memicu sanksi IP-blocking detik itu juga, mencekik alur *scp* dan bash script setelahnya.
+- action taken: Job `Preflight TCP Reachability Check` dihapus dari berkas `backend-cpanel-deploy.yml` secara permanen untuk memblokir pemicu rate-limit.
+- status: **READY FOR RE-RUN**
 
 - context: Akses publik `www.thechoosentalks.org` mengalami `ERR_CERT_COMMON_NAME_INVALID`. Error ini murni konfigurasi rilis eksternal. Repo code tidak membutuhkan *patch* atau perbaikan. Titik masalah terisolasi pada sisi DNS, CDN Binding, atau SAN TLS.
 - exact checks by layer:

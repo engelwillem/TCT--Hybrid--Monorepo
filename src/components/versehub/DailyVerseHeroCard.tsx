@@ -224,12 +224,12 @@ export default function DailyVerseHeroCard({
             "
         >
             {/* Artistic Decorative Background */}
-            <div className="absolute inset-0 opacity-20 dark:opacity-10">
+            <div className="absolute inset-0 opacity-20">
                 <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-cyan-300 blur-[80px]" />
                 <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-indigo-300 blur-[80px]" />
             </div>
 
-            <div className="pointer-events-none absolute inset-0 bg-white/40 dark:bg-slate-950/40 backdrop-blur-[1px]" />
+            <div className="pointer-events-none absolute inset-0 bg-surface/40 backdrop-blur-[1px]" />
             <div
                 ref={parallaxRef}
                 className="pointer-events-none absolute inset-0 will-change-transform"
@@ -243,34 +243,34 @@ export default function DailyVerseHeroCard({
                     <div
                         className={`
                             mx-auto inline-flex items-center gap-2
-                            rounded-full bg-white/70 px-4 py-2
-                            text-xs font-semibold text-slate-700
-                            ring-1 ring-black/5 backdrop-blur
+                            rounded-full bg-surface-elevated/80 px-4 py-2
+                            text-xs font-semibold text-foreground
+                            ring-1 ring-border/50 backdrop-blur-xl
                             ${revealClass(0)}
                         `}
                         style={revealStyle(0)}
                     >
-                        <CardTitle className="inline-flex items-center text-xs font-semibold text-slate-700"><Book className="h-4 w-4 mr-1.5 text-brand" /> Ayat Kekuatanku</CardTitle>
+                        <CardTitle className="inline-flex items-center text-xs font-semibold text-foreground"><Book className="h-4 w-4 mr-1.5 text-brand" /> Ayat Kekuatanku</CardTitle>
                     </div>
                 </div>
             </CardHeader>
 
             <CardContent className="relative z-10 p-0">
                 <p
-                    className={`mt-5 text-center text-[26px] leading-[1.22] font-serif font-semibold tracking-[0.005em] text-slate-700 line-clamp-3 md:text-[36px] md:leading-[1.15] md:tracking-[0.01em] ${revealClass(1)}`}
+                    className={`mt-5 text-center text-[26px] leading-[1.22] font-serif font-semibold tracking-[0.005em] text-foreground line-clamp-3 md:text-[36px] md:leading-[1.15] md:tracking-[0.01em] ${revealClass(1)}`}
                     style={revealStyle(1)}
                 >
                     {quoteHeadline}
                 </p>
                 <p
-                    className={`mt-3 text-center text-sm leading-relaxed text-slate-600/80 line-clamp-2 md:mt-4 md:text-base ${revealClass(2)}`}
+                    className={`mt-3 text-center text-sm leading-relaxed text-muted-foreground line-clamp-2 md:mt-4 md:text-base ${revealClass(2)}`}
                     style={revealStyle(2)}
                 >
                     {quoteSubline}
                 </p>
 
                 <div className={`mt-4 text-center md:mt-5 ${revealClass(3)}`} style={revealStyle(3)}>
-                    <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-slate-500">
+                    <p className="tct-kicker">
                         {refLine}
                     </p>
                 </div>
@@ -280,13 +280,13 @@ export default function DailyVerseHeroCard({
                         type="button"
                         onClick={() => typeof window !== 'undefined' && window.location.assign(heroRefHref)}
                         className={`
-                            group tct-pressable relative inline-flex h-12 w-full items-center justify-center rounded-2xl overflow-hidden
-                            bg-gradient-to-b from-slate-800 via-slate-700 to-slate-800
-                            text-white text-sm font-semibold
-                            shadow-[0_12px_22px_rgba(15,23,42,0.22)]
-                            hover:brightness-[1.01] hover:shadow-[0_15px_28px_rgba(15,23,42,0.28)]
-                            active:translate-y-[1px] active:brightness-[0.98] active:shadow-[0_6px_14px_rgba(15,23,42,0.2)]
-                            transition-[transform,box-shadow,filter,background-color] duration-150 ease-out motion-reduce:transition-none
+                            group tct-pressable relative inline-flex h-12 w-full items-center justify-center rounded-full overflow-hidden
+                            bg-brand
+                            text-background text-sm font-bold
+                            shadow-card
+                            hover:brightness-[1.05] hover:shadow-premium
+                            active:translate-y-[1px]
+                            transition-all duration-300 ease-out motion-reduce:transition-none
                             ${revealClass(4)}
                         `}
                         style={revealStyle(4)}
@@ -297,18 +297,17 @@ export default function DailyVerseHeroCard({
                 </div>
 
                 <div className={`mt-4 flex items-center justify-between md:mt-5 ${revealClass(6)}`} style={revealStyle(6)}>
-                    <p className="text-xs font-semibold text-slate-500">Bagikan atau simpan</p>
+                    <p className="tct-kicker">Bagikan atau simpan</p>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             className="
                                 group tct-pressable relative inline-flex items-center gap-2 rounded-full overflow-hidden
-                                border border-white/40 bg-white/60 px-4 py-2
-                                text-xs font-semibold text-slate-700/90
-                                backdrop-blur
-                                hover:brightness-[1.01]
-                                active:translate-y-[1px] active:bg-white/75
-                                transition-[transform,box-shadow,filter,background-color] duration-150 ease-out motion-reduce:transition-none
+                                border border-border/50 bg-surface-elevated/70 px-4 py-2
+                                text-xs font-semibold text-foreground
+                                backdrop-blur-xl shadow-soft
+                                hover:bg-surface-elevated
+                                transition-all duration-300 ease-out motion-reduce:transition-none
                             "
                             aria-label="Share"
                             onClick={shareVerse}
@@ -320,7 +319,7 @@ export default function DailyVerseHeroCard({
 
                         <button
                             type="button"
-                            className={`group tct-pressable relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold border border-white/40 backdrop-blur hover:brightness-[1.01] active:translate-y-[1px] transition-[transform,box-shadow,filter,background-color] duration-150 ease-out motion-reduce:transition-none overflow-hidden ${saved ? 'bg-slate-800 text-white' : 'bg-white/55 text-slate-700/90'
+                            className={`group tct-pressable relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold border border-border/50 backdrop-blur-xl shadow-soft transition-all duration-300 ease-out motion-reduce:transition-none overflow-hidden ${saved ? 'bg-brand text-background' : 'bg-surface-elevated/70 text-foreground hover:bg-surface-elevated'
                                 }`}
                             aria-label="Save"
                             aria-pressed={saved}

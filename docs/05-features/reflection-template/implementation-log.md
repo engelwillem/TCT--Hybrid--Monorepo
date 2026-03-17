@@ -5,6 +5,7 @@
 - Membagi formating visual render *body/prose*.
 - Pemasangan Anchor Verse di area tengah untuk pemisah psikologis *reading point*.
 - Pemasangan `<HookCard>` di akhir (Response Layer).
+- **Frontend Visual Reset**: Primitif pendukung (`<HookCard>`, `glass-card`) disinkronkan sepenuhnya ke `Dawn Theme` semantik (menghapus literal slate dan abu-abu kaku).
 
 ## Risks/Decisions
 - Saat ini datanya statis `DUMMY_REFLECTION` melalui *delay setTimeout*. Pada realisasi *Backend Integration*, Laravel CMS diperlukan untuk membungkus metadata tersebut ke blok terstruktur.

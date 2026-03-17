@@ -257,7 +257,7 @@ export function CommunityPage() {
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
           <div className="sticky top-0 z-40 py-2 -mx-1 px-1">
-            <TabsList className="relative flex h-[52px] w-full items-center justify-between rounded-[20px] bg-surface-muted/70 p-1.5 backdrop-blur-2xl shadow-inner ring-1 ring-border/70 overflow-hidden text-slate-900">
+            <TabsList className="relative flex h-[52px] w-full items-center justify-between rounded-[20px] bg-surface-muted/70 p-1.5 backdrop-blur-2xl shadow-inner ring-1 ring-border/70 overflow-hidden text-foreground">
               {[
                 { id: "discussions", label: "Diskusi" },
                 { id: "archive", label: "Arsip" },
@@ -336,7 +336,7 @@ export function CommunityPage() {
           </TabsContent>
 
           <TabsContent value="archive" className="space-y-6">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide text-slate-900">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide text-foreground">
               {[
                 { key: "all", label: "Semua" },
                 { key: "quotes", label: "Quotes" },

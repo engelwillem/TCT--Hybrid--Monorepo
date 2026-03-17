@@ -183,9 +183,9 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - Local: CSR & Next.js proxying API tervalidasi `npm run dev`.
 - Production: Deployment #21 via GitHub Actions `backend-cpanel-deploy.yml` secara inheren dilarang (TCP Drop) akibat mitigasi proaktif pada *runner*. Status repositori sudah mendapat perlindungan kebersihan memori (`concurrency` mitigasi ganda/tabrakan deploy & pembatalan gantung). 
 - Action Plan cPanel: Eksekusi *Server Validation Checklist* (Buka Blokade CSF Port 22/2121 via VPN / Whitelist) agar IP Github *runner* sah menembus tembok api.
-- Re-Test Deploy: GAGAL. Pengerjaan tertolak di tahap TCP ping (Port 2121/22).
-- Risks: Alur CI/CD repositori saat ini benar-benar tidak berguna karena dipecat oleh provider hosting cPanel Anda. Segala patch tidak akan naik ke *Production*.
-- Status: BLOCKED
+- Re-Test Deploy: GAGAL. Berdasarkan log terbaru (2026-03-17), `Preflight TCP Reachability Check` lolos (`Network reachable.`), tetapi eksekusi `scp` terdekat ditendang mati seketika (`ssh: connect to host *** port ***: Connection timed out`). Hal ini mengonfirmasi blokade perlindungan akibat "Port Scan" palsu yang dilakukan *preflight* tadi.
+- Action Taken (2026-03-17): Rantai komando TCP raw *Preflight* dicabut dan dibuang seluruhnya dari `backend-cpanel-deploy.yml` untuk mencegah trigger ban LFD cPanel saat *workflow* merapat secara sah ke peladen SSH.
+- Status: READY FOR RE-RUN
 
 ---
 

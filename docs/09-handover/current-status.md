@@ -17,8 +17,8 @@ Dua track utama masih berlaku:
 - **Track 3: Frontend Visual Reset & Application Shell Redesign** (In Progress)
 - [x] Lock Navigation Model & UI Architecture Docs.
 - [x] Build `Dawn Theme` semantic styling base in `globals.css` and `AppShell.tsx`.
-- [ ] Next: Implement Dawn theme explicitly on individual core screens (Today, VerseHub, Community).
-- Continued resolving parity action items strictly isolated around EdgeOne and cPanel external configs.
+- [x] Implement Dawn theme explicitly on Core V1 individual screens (`/today`, `/versehub`, `/paths`, `/community`).
+- [ ] Next: Implement clean up of defunct fragments and secondary pages (like Profile and Inbox).
 
 ## Current Priority
 1. Rapikan dan samakan sumber kebenaran dokumentasi agar status lokal yang sudah selesai tidak tetap tercatat sebagai blocker.
