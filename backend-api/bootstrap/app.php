@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Enable Sanctum's stateful SPA handling for the decoupled Next.js frontend.
+        $middleware->statefulApi();
+
         // Any guest that hits auth-protected routes should go to landing page,
         // not directly to /login.
         $middleware->redirectGuestsTo(function (Request $request) {

@@ -152,7 +152,7 @@ export function CommunityPage() {
   };
 
   const handleShare = async (postId: string, text?: string | null) => {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://thechoosentalks.com";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.thechoosentalks.org";
     const url = `${baseUrl}/community/posts/${postId}/share`;
     
     if (navigator.share) {

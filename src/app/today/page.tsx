@@ -67,6 +67,34 @@ const fallbackDailyVerse: DailyVerse = {
     quote: 'TUHAN adalah gembalaku, takkan kekurangan aku.'
 };
 
+const stateMoodCopy: Record<SpiritualState, { kicker: string; title: string; body: string }> = {
+    fresh: {
+        kicker: 'Ritme Hari Ini',
+        title: 'Mulai dari jangkar yang tenang, lalu biarkan arah harimu terbentuk.',
+        body: 'Ayat, refleksi, dan percakapan komunitas disusun untuk membantumu memulai dengan fokus yang jernih.',
+    },
+    anxious: {
+        kicker: 'Ruang Bernapas',
+        title: 'Kita perlambat ritmenya dulu, lalu pilih satu langkah yang paling menenangkan.',
+        body: 'Kami mendorong doa, ayat penguat, dan pintu ke komunitas agar kamu tidak memikul semuanya sendirian.',
+    },
+    grateful: {
+        kicker: 'Syukur yang Mengalir',
+        title: 'Saat hati sedang lapang, biarkan rasa syukur berubah menjadi kesaksian dan dorongan.',
+        body: 'Feed akan memberi ruang lebih besar untuk quote, refleksi, dan momen yang layak dibagikan kembali.',
+    },
+    weary: {
+        kicker: 'Tempat Singgah',
+        title: 'Hari yang berat tidak perlu dijalani sendirian.',
+        body: 'Kami menaruh dukungan doa dan penghiburan lebih dekat supaya langkah berikutnya terasa lebih ringan.',
+    },
+    'on-fire': {
+        kicker: 'Momentum Bertumbuh',
+        title: 'Saat semangat sedang menyala, arahkan energinya ke langkah yang paling membangun.',
+        body: 'Lesson dan ritme lanjutan dinaikkan agar dorongan hari ini tidak habis sebagai inspirasi sesaat.',
+    },
+};
+
 export default function TodayPage() {
     const [apiPinnedLesson, setApiPinnedLesson] = useState<PinnedLesson>(null);
     const [apiDailyVerse, setApiDailyVerse] = useState<DailyVerse | null>(null);
@@ -164,6 +192,8 @@ export default function TodayPage() {
         };
     }, [ritualRef, ritualVerse, dailyVerse]);
 
+    const moodCopy = stateMoodCopy[activeState];
+
     const handleStateChange = (newState: SpiritualState) => {
         setActiveState(newState);
         submitSpiritualState(newState).catch(console.error);
@@ -182,21 +212,32 @@ export default function TodayPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-2"
+                className="mx-auto w-full max-w-[720px] space-y-6 pb-28 pt-2"
             >
-                <div className="space-y-5">
+                <div className="relative space-y-6">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px] rounded-[44px] bg-gradient-to-b from-brand/10 to-transparent blur-3xl opacity-50" />
+
                     <StateChips activeState={activeState} onChange={handleStateChange} />
+
+                    <section className="relative overflow-hidden rounded-[32px] border border-border/50 bg-surface-elevated p-6 shadow-card md:rounded-[40px] md:p-8">
+                        <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-brand/5 to-transparent" />
+                        <div className="relative max-w-[34rem] space-y-3">
+                            <p className="tct-kicker text-brand">{moodCopy.kicker}</p>
+                            <h2 className="tct-h2 text-balance text-foreground">{moodCopy.title}</h2>
+                            <p className="tct-body text-muted-foreground">{moodCopy.body}</p>
+                        </div>
+                    </section>
 
                     {/* Entry Points: Only show ActionShortcutBar when 'fresh' */}
                     {activeState === 'fresh' && (
-                        <ThrowingCard index={-1}>
+                        <ThrowingCard index={-1} className="rounded-[32px]">
                             <ActionShortcutBar />
                         </ThrowingCard>
                     )}
 
                     {/* If Anxious/Weary, push Prayer/Community Hooks higher */}
                     {(activeState === 'weary' || activeState === 'anxious') && (
-                        <ThrowingCard index={0}>
+                        <ThrowingCard index={0} className="rounded-[32px]">
                             <HookCard
                                 variant="urgent"
                                 hookText="Tuhan dekat kepada orang-orang yang patah hati, dan Ia menyelamatkan orang-orang yang remuk jiwanya."
@@ -214,7 +255,7 @@ export default function TodayPage() {
                     {/* Sacred Anchor (Verse) */}
                     {/* Move to bottom if user is 'on-fire' and wants to continue lesson instead */}
                     {activeState !== 'on-fire' && (
-                        <ThrowingCard index={0}>
+                        <ThrowingCard index={0} className="rounded-[32px]">
                             <DailyVerseHeroCard
                                 welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
                                 fallbackVerse={dailyVerse}
@@ -224,14 +265,14 @@ export default function TodayPage() {
 
                     {/* Learning Path - Bring to top if On-Fire */}
                     {apiPinnedLesson && (
-                        <ThrowingCard index={activeState === 'on-fire' ? -1 : 5}>
+                        <ThrowingCard index={activeState === 'on-fire' ? -1 : 5} className="rounded-[32px]">
                             <PinnedLessonCard pinned={apiPinnedLesson} />
                         </ThrowingCard>
                     )}
 
                     {/* Active Ritual (Reflection) */}
                     {rituals?.reflection_prompt && (
-                        <ThrowingCard index={1}>
+                        <ThrowingCard index={1} className="rounded-[32px]">
                             <ReflectionPrompt payload={rituals.reflection_prompt} />
                         </ThrowingCard>
                     )}
@@ -241,7 +282,7 @@ export default function TodayPage() {
 
                     {/* If On-Fire, move Verse here */}
                     {activeState === 'on-fire' && (
-                        <ThrowingCard index={5}>
+                        <ThrowingCard index={5} className="rounded-[32px]">
                             <DailyVerseHeroCard
                                 welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
                                 fallbackVerse={dailyVerse}
@@ -251,7 +292,7 @@ export default function TodayPage() {
 
                     {/* Wisdom Pearl (Quote) */}
                     {rituals?.quote_of_day && activeState === 'grateful' && (
-                        <ThrowingCard index={10}>
+                        <ThrowingCard index={10} className="rounded-[32px]">
                             <QuoteCard payload={rituals.quote_of_day} />
                         </ThrowingCard>
                     )}

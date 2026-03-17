@@ -42,11 +42,17 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 ### Notes
 - Local: Root `/` di-redirect 308 (permanent) ke `/today` oleh `next.config.ts`. Modul WWW/HTTPS diabaikan dalam lokal.
 - Production: Origin Tencent Edge disiapkan sebagai Domain Parity utama, menunggu server delegation (Edge Rule / CDN Config).
-- Target Redirect Matrix Akhir:
+- Target Redirect Matrix Akhir (cPanel Origin Apex Recovery Plan):
   1. `http://*` -> `https://www.*` (Server Edge Panel)
-  2. `https://thechoosentalks.org/*` -> `https://www.thechoosentalks.org/*` (Server Edge Panel)
+  2. `https://thechoosentalks.org/*` -> `https://www.thechoosentalks.org/*` (cPanel Origin `.htaccess` 301 Redirect)
   3. `https://www.thechoosentalks.org/` -> `https://www.thechoosentalks.org/today` (Next.JS `next.config.ts`)
   4. Path `/xyz` tetap dilestarikan (Next.JS routing).
+- cPanel Apex Redirect Deployment Spec (`.htaccess`):
+  ```apache
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^thechoosentalks\.org$ [NC]
+  RewriteRule ^(.*)$ https://www.thechoosentalks.org/$1 [L,R=301]
+  ```
 - Verification URLs & Expected Final Destinations:
   - `http://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
   - `https://thechoosentalks.org` -> `https://www.thechoosentalks.org/today`
@@ -60,8 +66,21 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
   - Path loss (e.g., `https://thechoosentalks.org/community` ends up at `https://www.thechoosentalks.org/today` instead of `/community`)
   - Mixed-host issues or `ERR_CERT_COMMON_NAME_INVALID` for apex domain
   - Staying on HTTP instead of forwarding to HTTPS
-- Status: READY FOR SERVER VALIDATION
-
+- Target Architecture:
+  - Canonical Host: `www.thechoosentalks.org` (Runs active frontend on EdgeOne)
+  - Redirect Host: `thechoosentalks.org` (Runs on detached cPanel/origin, terminating HTTPS to bounce traffic to www)
+- cPanel Deployment Checklist:
+  - [ ] SSL Requirement: AutoSSL/Let's Encrypt must be actively issued for apex `thechoosentalks.org` on the cPanel server.
+  - [ ] File Location: Rules must be placed at the very top of `public_html/.htaccess`.
+  - [ ] Verification: Do not overwrite Laravel/origin routing logic (append redirect before Laravel's `index.php` front controller rules).
+  - [ ] Hands-off: Do not add `www` to this redirect rule (to avoid breaking the backend API which might need it later or loop).
+- Live Evidence (2026-03-17):
+  - `http://thechoosentalks.org` returns `302` to `https://www.thechoosentalks.org`
+  - `http://thechoosentalks.org/today` returns `302` to `https://www.thechoosentalks.org/today`
+  - `http://thechoosentalks.org/community` returns `302` to `https://www.thechoosentalks.org/community`
+  - `https://www.thechoosentalks.org`, `/today`, dan `/community` return `200 OK` from `edgeone-pages`
+  - `https://thechoosentalks.org` still fails during TLS/connection setup (`Recv failure: Connection was reset`)
+- Status: READY FOR SERVER ACTION
 ---
 
 ## 2. Auth / Session / Sanctum Parity
@@ -78,7 +97,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 ### Notes
 - Local: Token JWT Firebase diselaraskan mulus ke API Proxy Next.js dan diterima Sanctum lokal.
 - Production: Risiko Apache menghapus header `Authorization: Bearer`.
-- Risks: Patch `CGIPassAuth On` di `.htaccess` sudah siap, menunggu server verification aktual.
+- Risks: Patch `CGIPassAuth On` di `.htaccess` sudah siap, dan bootstrap Laravel kini juga mengaktifkan `statefulApi()` untuk flow SPA Sanctum. Validasi server nyata tetap dibutuhkan.
 - Status: NEEDS SERVER VALIDATION
 
 ---
@@ -98,14 +117,14 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - [x] Auth login / forgot / reset
 - [x] Profile read / update / avatar / password / 2FA / delete
 - [x] Inbox list / thread / send / mark all read / approval
-- [ ] Community feed / create post / comments / share (Blocked di sisi frontend parsing intent parameternya)
+- [x] Community feed / create post / comments / share
 - [x] Today / VerseHub / Journeys / lainnya yang aktif
 
 ### Notes
 - Local: Mayoritas rute read/write parity telah PASS via pengujian E2E lokal.
 - Production: N/A
 - Risks: Drift contract bila Laravel cPanel tidak setara versi dengan monolith lokal.
-- Status: BLOCKED
+- Status: NEEDS SERVER VALIDATION
 
 ---
 
@@ -128,7 +147,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 ### Notes
 - Local: Skema legacy sudah teraplikasi konsisten.
 - Production: N/A
-- Risks: Penambahan fitur Journey saat ini memotong DB (hanya mengandalkan Local Storage), jika akan naik ke server harus ada skema tabel `user_journeys` baru.
+- Risks: Fitur Journey pada docs implementasi terbaru sudah bergerak ke flow berbasis API/backend, tetapi parity schema production tetap perlu divalidasi sebelum dianggap aman.
 - Status: NEEDS SERVER VALIDATION
 
 ---
@@ -182,9 +201,9 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - Notes: Unread badge mutasi lolos uji coba.
 
 ### Community
-- Local Status: BLOCKED
+- Local Status: PASS
 - Production Status: NOT STARTED
-- Notes: Fitur "Smart Composer" gagal mengurai `intent` URL, sehingga konteks Doa/Refleksi tidak terkirim di Request Payload.
+- Notes: Smart Composer hydration untuk `intent` dan `text` sudah lolos verifikasi lokal; production parity belum divalidasi.
 
 ### Today
 - Local Status: PASS
@@ -205,11 +224,10 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 
 ## 8. Final Release Gate
 ### Blocking Issues
-- `Community Smart Composer` tak bisa menangkap parameter Intent di lokal.
 - Origin Production dan env `SANCTUM_STATEFUL_DOMAINS` di Edge & cPanel sama sekali tak terpetakan/terkonfigurasi.
 
 ### Residual Risks
 - Apache cPanel Mod_Security berisiko mencekal header `Authorization`. Patch `CGIPassAuth On` diaplikasikan, menunggu validasi server nyata.
 
 ### Final Status
-- BLOCKED
+- NEEDS SERVER VALIDATION

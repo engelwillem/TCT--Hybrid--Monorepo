@@ -2,41 +2,6 @@
 
 ## Active Blockers
 
-### 1e. Today Local-Only Spiritual State Memory
-- root cause: `TodayPage` hanya mempedomani state secara murni-klien dari *React useState*, yang mereset status (_amnesic fallbacks_) ke `'fresh'` setiap kali termuat (_hard refresh_).
-- file terkait: `src/app/today/page.tsx`, `src/services/today.service.ts`, `backend-api/routes/api.php`
-- dampak: Preferensi spiritual *user* tidak terikat kuat. *Relevance Engine* terbukti semu serta gagal melintasi navigasi lintas gawai/halaman (_loss-of-context_).
-- langkah verifikasi: Menancapkan pelacak state secara utuh ke `users.spiritual_state` dengan rute `POST`. Terhidrasi langsung sehabis dimuat dari proksi Next.js.
-- status: **PASS**
-
-### 1. Community Smart Composer Unlinked Parameters
-- root cause: `CommunityComposer.tsx` belum diimplementasikan untuk menangkap React `useSearchParams` URL `?intent=xyz&ref=abc`.
-- file terkait: `src/features/community/components/CommunityComposer.tsx`
-- dampak: Komunitas tidak bisa dipakai untuk menyambung Refleksi atau Doa dari halaman Journey/VerseHub.
-- langkah verifikasi: Patch membaca nilai parameter `intent` dan `text` lewat `useSearchParams` pada `CommunityPage.tsx` dan memasukkannya ke initial props Composer. Referensi URL teraba abaikan pada rute POST demi kompatibilitas format awal. Fitur terbukti aman dan formulir mematuhi instruksi otomatis dari luar.
-- status: **PASS**
-
-### 1d. Spiritual Journeys Local-Only Mock Data Trap
-- root cause: Halaman `/paths` dan `/paths/[slug]` menggunakan array statis `JOURNEYS` murni dan menyalurkan memori penyelesaian jejak harian semata via `localStorage`. Tidak ada rekam jejak pada DB Laravel (`UserStudyPathProgress`) karena koneksi Fetch / API terputus.
-- file terkait: `src/app/paths/page.tsx`, `src/app/paths/[slug]/page.tsx`, `src/services/journeys.service.ts`
-- dampak: Rutinitas bacaan pengguna (_retention loop_) musnah apabila beralih piranti (cross-device) atau membersihkan tembolok _Browser_. Fitur MVP ini mati secara fungsional.
-- langkah verifikasi: Dibuat `journeys.service.ts` untuk melayani panggilan GET katalog kurikulum, GET detail langkah, serta POST pelunasan rute. Menggusur `JOURNEYS` statik. Coba lengkapi tugas 1 hari; nilai kemajuan kini tersimpan kekal melalui respon API backend. (TERBUKTI)
-- status: **CLOSED**
-
-### 1b. VerseHub End of Chapter Reflection Mismatch
-- root cause: `VersehubReaderPage.tsx` merender prompt statik `Bagaimana ayat-ayat ini...` dan mengabaikan suplai prop dinamis `reflection_question` (dari *AI Mentor Insight* pada backend), serta tidak mencegat kondisi `has_reflected`.
-- file terkait: `src/features/versehub/pages/VersehubReaderPage.tsx`
-- dampak: Pengguna kehilangan konteks pertanyaan bimbingan personal dari *Backend Mentor Engine*, menjadikannya pengalaman yang monoton (*static placeholder*).
-- langkah verifikasi: Bongkar objek respons pada `loadChapter`, pancing masuk ke parameter `EndOfChapterPrompt`. Pastikan tulisan di UI menyamai cetakan *Database*. (TERBUKTI)
-- status: **PASS**
-
-### 1c. VerseHub Reflection CTA to Community Transition Cut-off
-- root cause: `VersehubReaderPage.tsx` merender komponen `<EndOfChapterPrompt>` yang mana tombol *Tulis Refleksimu* memanggil modal lokal eksklusif (`<ReflectionComposer>`) bukan melempar *(redirect)* pengguna menuju sistem *Smart Composer* lewat `/community?intent=reflection`.
-- file terkait: `src/features/versehub/pages/VersehubReaderPage.tsx`
-- dampak: Jurnal refleksi tertutup mati di backend sebagai spesimen `ReflectionResponse` tanpa pernah menjangkau papan etalase Diskusi Anggota (tidak direkam sebagai `MemberPost`). Perjalanan pengguna terbelit jalan buntu (_isolated dead-end_).
-- langkah verifikasi: Patch prop `onReflect` pada panitan `<EndOfChapterPrompt>` agar memicu transisi rute langsung ke `router.push('/community?intent=reflection&ref=...&text=...&question=...` (meninggalkan modal sama sekali). Pastikan Komunitas menangkap utuh muatan parameter tersebut secara alami. (TERBUKTI)
-- status: **PASS**
-
 ### 2. Authorization Header cPanel Restriction Risk
 - root cause: Apache di cPanel sering memangkas HTTP Header `Authorization: Bearer`.
 - file terkait: `backend-api/public/.htaccess`
@@ -54,17 +19,32 @@
 ### 4. Canonical Host & SSL Force Routing
 - root cause: Pengalihan apex *non-www* `thechoosentalks.org` ke `www.thechoosentalks.org` beserta validasi paksaan *HTTPS* harus ditangani oleh Panel Tencent Edge / CDN untuk mencegah *redirect loop* Node.js Edge. 
 - file terkait: Panel Administrasi Tencent Edge / CDN / DNS registrar. (Lokal telah menambal root `next.config.ts` untuk `/` -> `/today`).
-- instruksi panel server:
+- instruksi panel server (cPanel Apex Recovery Plan):
   1. Akses menu **Domain Settings / Page Rules** di konsol Tencent Edge/CDN.
-  2. Buat **Rule 1 (HTTPS Enforce)**: Paksa asal skema origin "HTTP" (`http://thechoosentalks.org/` dan `http://www.thechoosentalks.org/`) ter-redirect ke "HTTPS" (Status 301).
-  3. Buat **Rule 2 (Apex to WWW)**: Arahkan `https://thechoosentalks.org/*` ke `https://www.thechoosentalks.org/$1` dengan status 301 Permanent. Biarkan argumen rute tersalin utuh ($1/preserve path).
-  4. Sangat krusial agar Urutan (*Priority*) dieksekusi dengan mendahulukan HTTPS Force agar rute tidak nyasar.
+  2. Buat **Rule 1 (HTTPS Enforce)**: Paksa asal skema origin "HTTP" (`http://www.thechoosentalks.org/`) ter-redirect ke "HTTPS" (Status 301).
+  3. **Apex Redirect Logic di cPanel**: Tambahkan blok `.htaccess` berikut di direktori root public cPanel:
+     ```apache
+     <IfModule mod_rewrite.c>
+     RewriteEngine On
+     RewriteCond %{HTTP_HOST} ^thechoosentalks\.org$ [NC]
+     RewriteRule ^(.*)$ https://www.thechoosentalks.org/$1 [L,R=301]
+     </IfModule>
+     ```
+  4. Aturan ini spesifik menangkap apex dan membelokkan lalu lintas permanen (301) tanpa merusak origin Laravel. Sertifikat Let's Encrypt / AutoSSL **harus** aktif untuk apex di cPanel.
 - dampak: Ketiadaan aturan peladen eksternal ini akan menjebol *Sanctum Session Domain* (sebab HTTP biasa dan apex non-www dinilai sebagai asal rentan oleh Laravel Middleware) yang berpenetrasi ke `419 Page Expired`.
 - langkah verifikasi: Lakukan pengunjungan anonim (*incognito*):
   - [ ] `http://thechoosentalks.org` -> harus membelok ke `https://www.thechoosentalks.org/today`
   - [ ] `https://thechoosentalks.org` -> harus membelok ke `https://www.thechoosentalks.org/today`
   - [ ] `https://thechoosentalks.org/community` -> harus membelok ke `https://www.thechoosentalks.org/community`
   - [ ] `https://www.thechoosentalks.org/` -> harus membelok ke `https://www.thechoosentalks.org/today`
+- bukti terbaru (2026-03-17):
+  - `http://thechoosentalks.org` -> `302 Location: https://www.thechoosentalks.org`
+  - `http://thechoosentalks.org/today` -> `302 Location: https://www.thechoosentalks.org/today`
+  - `http://thechoosentalks.org/community` -> `302 Location: https://www.thechoosentalks.org/community`
+  - `https://www.thechoosentalks.org` -> `200 OK` (`Server: edgeone-pages`)
+  - `https://www.thechoosentalks.org/today` -> `200 OK` (`Server: edgeone-pages`)
+  - `https://www.thechoosentalks.org/community` -> `200 OK` (`Server: edgeone-pages`)
+  - `https://thechoosentalks.org` dan `https://thechoosentalks.org/community` masih gagal (`curl: (35) Recv failure: Connection was reset`)
 - status: **READY FOR SERVER CONFIG**
 
 ### 5. Deployment cPanel #21 GitHub Actions Timeout
@@ -104,6 +84,9 @@
     - [ ] Inspeksi bahwa SAN (Subject Alternative Name) pada sertifikat meng-_cover_ kembaran ganda: `thechoosentalks.org` dan `www.thechoosentalks.org`.
     - [ ] Lakukan penerbitan ulang sertifikat (*re-issue*) dan penyematan bundel (*re-bind*) jika nama `www.` tidak tercakup di sertifikat yang aktif.
     - [ ] Bukti kebenaran TLS: *Handshake* SSL pada `curl -vI https://www.thechoosentalks.org` mengkonfirmasi CN/SAN *match*.
+- target architecture:
+  - Canonical Host: `www.thechoosentalks.org` (EdgeOne)
+  - Redirect Host: `thechoosentalks.org` (cPanel)
 - strict apex validation checklist:
   - Required validation URLs:
     - [ ] `http://thechoosentalks.org` -> expected final: `https://www.thechoosentalks.org/today`
@@ -117,7 +100,7 @@
     - Redirect loops (`ERR_TOO_MANY_REDIRECTS`).
     - Loss of path precision (`/community` incorrectly resolving back to `/today`).
     - Mixed-host issues where `thechoosentalks.org` encounters an `ERR_CERT_COMMON_NAME_INVALID` failure.
-- status: **READY FOR SERVER VALIDATION**
+- status: **READY FOR SERVER ACTION**
 
 ## Notes
-Setiap blocker harus terus dipantau dan statusnya harus dinaikkan dari BLOCKED/NV menjadi PASS/CLOSED pada lembar ini beserta `06-testing/parity/*-diff-log.md` terkait.
+Dokumen ini sekarang hanya memuat blocker yang masih aktif. Item yang sudah `PASS` atau `CLOSED` harus dipertahankan pada dokumen domain/feature terkait dan tidak perlu tinggal di sini.

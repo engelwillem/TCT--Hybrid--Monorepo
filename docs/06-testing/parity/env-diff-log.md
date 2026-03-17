@@ -279,6 +279,68 @@ Menentukan domain eksternal React/Next.js (Edge Frontend) yang berhak meminjam t
 ---
 
 ### Entry ID
+`env-diff-005`
+
+### Date
+2026-03-17
+
+### Layer
+- backend
+
+### Variable Name
+- `SESSION_DOMAIN`
+- `SESSION_SECURE_COOKIE`
+- `SESSION_SAME_SITE`
+- `CORS_SUPPORTS_CREDENTIALS`
+
+### Secret?
+- no
+
+### Expected Role
+Mengizinkan cookie sesi dan CSRF berperilaku benar saat frontend Next.js dan backend Laravel berjalan lintas origin namun tetap first-party secara domain.
+
+### Expected Local Value Pattern
+- `SESSION_DOMAIN=null`
+- `SESSION_SECURE_COOKIE=false`
+- `SESSION_SAME_SITE=lax`
+- `CORS_SUPPORTS_CREDENTIALS=false` atau sesuai mode lokal yang diuji
+
+### Expected Production Value Pattern
+- `SESSION_DOMAIN=.thechoosentalks.org`
+- `SESSION_SECURE_COOKIE=true`
+- `SESSION_SAME_SITE=none` bila benar-benar mengandalkan cookie lintas origin
+- `CORS_SUPPORTS_CREDENTIALS=true` bila flow production memakai cookie/CSRF
+
+### Observed Local State
+- documented
+- notes: `.env.example` kini sudah mendokumentasikan variable pendukung parity ini.
+
+### Observed Production State
+- unknown
+- notes: Masih menunggu validasi di server nyata setelah DNS/TLS canonical host stabil.
+
+### Risk if Drift Exists
+- cookie sesi tidak terkirim
+- CSRF gagal
+- login/logout drift antar local dan production
+
+### Related Flows
+- auth
+- profile
+- inbox
+- community
+- today
+
+### Resolution
+- documented
+- pending server validation
+
+### Status
+- NEEDS SERVER VALIDATION
+
+---
+
+### Entry ID
 `env-diff-001`
 
 ### Date
