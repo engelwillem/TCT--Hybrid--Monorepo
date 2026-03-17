@@ -21,8 +21,8 @@ Hybrid monorepo sedang berjalan dalam dua track:
 - Spiritual journeys
 
 ## Current Priority
-1. Siapkan penguncian status *cleanup* untuk lajur `Journey`, atau mulailah mengeksekusi paritas layer `Today` (Homepage).
-4. selesaikan mitigasi local vs production parity yang masih berselimut status `NEEDS SERVER VALIDATION` (khususnya isu Env CORS dan CGIPassAuth cPanel).
+1. Paritas layer `Today` (Homepage) MVP terbukti bekerja dan merekam presistensi *SpiritualState*. Kini memasuki fase persiapan *cleanup*.
+2. selesaikan mitigasi local vs production parity yang masih berselimut status `NEEDS SERVER VALIDATION` (khususnya isu Env CORS dan CGIPassAuth cPanel).
 
 ## Non-Negotiable Constraints
 - root repo harus clean

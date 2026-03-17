@@ -13,3 +13,10 @@
 
 ### Dihapus
 - Ketergantungan statis pembacaan komponen *hard-coded* di posisi `ThrowingCard index={0}`.
+
+## [Phase 2: Persistensi Spiritual State] - 2026-03-17
+
+### Ditambahkan
+- Endpoint `POST /api/v1/today/state` pada backend Laravel untuk merekam `SpiritualState` ke dalam parameter database tabel `users.spiritual_state`.
+- Layanan integrasi baru `src/services/today.service.ts` untuk memfasilitasi _fetch mutation_ ke proksi.
+- Re-hidrasi UI dari pasokan Payload Proksi (`payload.data.spiritual_state`) menggantikan inisiasi bawaan gampangan `'fresh'`.

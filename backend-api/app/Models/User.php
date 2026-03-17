@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser, Has
         'is_it',
         'is_system',
         'system_type',
+        'spiritual_state',
     ];
 
     /**

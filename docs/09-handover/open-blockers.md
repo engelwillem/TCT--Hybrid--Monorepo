@@ -2,6 +2,13 @@
 
 ## Active Blockers
 
+### 1e. Today Local-Only Spiritual State Memory
+- root cause: `TodayPage` hanya mempedomani state secara murni-klien dari *React useState*, yang mereset status (_amnesic fallbacks_) ke `'fresh'` setiap kali termuat (_hard refresh_).
+- file terkait: `src/app/today/page.tsx`, `src/services/today.service.ts`, `backend-api/routes/api.php`
+- dampak: Preferensi spiritual *user* tidak terikat kuat. *Relevance Engine* terbukti semu serta gagal melintasi navigasi lintas gawai/halaman (_loss-of-context_).
+- langkah verifikasi: Menancapkan pelacak state secara utuh ke `users.spiritual_state` dengan rute `POST`. Terhidrasi langsung sehabis dimuat dari proksi Next.js.
+- status: **PASS**
+
 ### 1. Community Smart Composer Unlinked Parameters
 - root cause: `CommunityComposer.tsx` belum diimplementasikan untuk menangkap React `useSearchParams` URL `?intent=xyz&ref=abc`.
 - file terkait: `src/features/community/components/CommunityComposer.tsx`

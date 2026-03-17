@@ -28,6 +28,7 @@ import HookCard from '@/components/cards/HookCard';
 // Types
 import type { DailyVerse } from '@/types/versehub-daily';
 import { getAppAccessToken } from '@/services/app-auth-token';
+import { submitSpiritualState } from '@/services/today.service';
 
 const slugifyRef = (ref: string) =>
     ref.toLowerCase().trim()
@@ -56,6 +57,7 @@ type TodayApiResponse = {
         rituals?: any;
         pinnedLesson?: PinnedLesson;
         welcomeVerse?: DailyVerse | null;
+        spiritual_state?: SpiritualState;
     };
 };
 
@@ -102,6 +104,10 @@ export default function TodayPage() {
                 setApiPinnedLesson(payload?.data?.pinnedLesson ?? null);
                 setApiRituals(payload?.data?.rituals ?? null);
                 setApiWelcomeVerse(payload?.data?.welcomeVerse ?? null);
+                
+                if (payload?.data?.spiritual_state) {
+                    setActiveState(payload.data.spiritual_state);
+                }
             } catch {
                 // Keep visual fallbacks
             } finally {
@@ -158,6 +164,11 @@ export default function TodayPage() {
         };
     }, [ritualRef, ritualVerse, dailyVerse]);
 
+    const handleStateChange = (newState: SpiritualState) => {
+        setActiveState(newState);
+        submitSpiritualState(newState).catch(console.error);
+    };
+
     return (
         <MobileAppLayout
             title="Today"
@@ -174,7 +185,7 @@ export default function TodayPage() {
                 className="mx-auto w-full max-w-[720px] space-y-5 pb-28 pt-2"
             >
                 <div className="space-y-5">
-                    <StateChips activeState={activeState} onChange={setActiveState} />
+                    <StateChips activeState={activeState} onChange={handleStateChange} />
 
                     {/* Entry Points: Only show ActionShortcutBar when 'fresh' */}
                     {activeState === 'fresh' && (

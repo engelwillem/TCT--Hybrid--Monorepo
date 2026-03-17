@@ -26,7 +26,26 @@ class TodayApiController extends Controller
                 'dailyVerse' => $data['rituals']['today_verse'] ?? null,
                 'rituals' => $data['rituals'],
                 'highlights' => $data['feed'],
+                'spiritual_state' => $user?->spiritual_state ?? 'fresh',
             ],
+        ]);
+    }
+
+    public function updateState(\Illuminate\Http\Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::guard('sanctum')->user();
+        
+        $validated = $request->validate([
+            'state' => 'required|string|in:fresh,anxious,grateful,weary,on-fire',
+        ]);
+        
+        $user->spiritual_state = $validated['state'];
+        $user->save();
+        
+        return response()->json([
+            'status' => 'success',
+            'state' => $user->spiritual_state,
         ]);
     }
 }
