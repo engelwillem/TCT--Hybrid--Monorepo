@@ -10,4 +10,4 @@ Merombak "Silo Konten" (tumpukan feed kaku) menjadi "Spiritual Relevance Engine"
 
 ## Status
 - **Phase 1 (MVP Logic)**: COMPLETED.
-- **Phase 2 (Visual Reset & Cleanup)**: IN PROGRESS. Mengimplementasi sistem kartu kaca (_glassmorphism_), elevasi bayangan halus, membuang keping antarmuka usang, dan menerapkan hierarki spasial ultra-lega untuk menghapuskan jejak peninggalan era silo.
+- **Phase 2 (Visual Reset & Layout Shell)**: IN PROGRESS. Mengimplementasi _Dawn Theme_ murni menggunakan class semantik (`bg-background`, `bg-surface`, `bg-surface-elevated`). Mengusir jejak antarmuka warisan (legacy) dan mematikan rute-rute buntu untuk menyolidkan rute _Today_ sebagai wajah utama.

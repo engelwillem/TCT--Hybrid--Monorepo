@@ -1,14 +1,21 @@
 # Next Actions
 
 ## Immediate
-1. Eksekusi `Apex Redirect Validation Checklist` menggunakan URL Uji Strict: `http://thechoosentalks.org`, `https://thechoosentalks.org`, `http://thechoosentalks.org/today`, `https://thechoosentalks.org/community`.
-2. Selesaikan mitigasi Auth Header cPanel (Patch `.htaccess` sudah siap, butuh uji *Server Validation* nyata).
-3. URGENT: TLS SAN / Domain Binding untuk Host WWW. Status `www.thechoosentalks.org` saat ini terkunci di `ERR_CERT_COMMON_NAME_INVALID`. Admin Server / Registrar WAJIB mengeksekusi 3 lapisan pemeriksaan eksternal mutlak (DNS CNAME ke Edge, Edge Panel Domain Binding, & TLS SAN Certificate Re-issue ganda). Tidak ada sentuhan di dalam repositori kode yang bisa menambal ini. Rujuk checklist eksekusi murni pada Blocker #6.
-4. Bersihkan laman tersisa (`/library`, `/visitors`) karena fondasi warna dan sistem (_Globals.css_, Token CSS Dawn Theme, dsb) telah mapan. Serta ganti keping desain `MobileAppLayout` dan `Today` agar menyerap _spacing_ p-8 dan _glass drop-shadows_ baru.
+1. Pertahankan folder bernomor sebagai sumber kebenaran current web situation, dan simpan seluruh material historis hanya di `docs/archive/`.
+2. Selesaikan parity production yang murni berada di luar repo:
+   - fokus utama: stabilkan `https://thechoosentalks.org` karena `www.thechoosentalks.org` sudah hidup di `edgeone-pages`
+   - pastikan apex HTTPS tidak lagi reset dan benar-benar mengalir ke host canonical
+   - Sanctum / CORS production origin
+   - validasi `Authorization` header cPanel
+3. Setelah konfigurasi server disentuh, jalankan kembali `Apex Redirect Validation Checklist` dan parity validation yang relevan.
+4. **URGENT UI ACTION:** Lakukan perombakan _Visual System Reset & UI Shell Redesign_ mengikuti urutan target MVP:
+   - Terlebih dahulu pastikan semua layar non-esensial atau lapuk (seperti `/library`, `/visitors`, `/channels` native render) benar dihapus/diarahkan sesuai struktur _Clean Architecture_.
+   - Mulai _layouting shell_ baru pada `/today` menggunakan `Dawn Theme` semantik penuh (white/slate murni berbayang *soft* tembus pandang).
+   - Kemudian refaktor layar berikutnya `/versehub`, `/community`, `/paths`, hingga ke `/profile/inbox`.
 
 ## After Immediate
-1. Rapihkan halaman sisa (`/versehub`, `/community`, `/paths`) dengan tata letak (_Layout Shell_) elegan (warna Twilight cerah, sudut _rounded_ lapang, efek _glassmorphism_ tipis).
-2. Siapkan release-readiness report
+1. Tutup placeholder dokumentasi yang memang masih dipakai pada roadmap, architecture, dan testing.
+2. Siapkan release-readiness report final setelah blocker server berubah menjadi `PASS`, `CLOSED`, atau `ACCEPTED RISK`.
 
 ## Execution Rule
 Jangan buka step berikutnya sebelum step sekarang berstatus PASS atau BLOCKED.

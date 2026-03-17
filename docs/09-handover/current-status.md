@@ -1,27 +1,34 @@
 # Current Status
 
-## Project State
-Hybrid monorepo sedang berjalan dalam dua track:
-1. parity migration domain lama
-2. experience layer baru berbasis relevance, reflection, journeys, dan community response
+## Project Stage
+Proyek sekarang berada di fase `late implementation / pre-release hardening`.
 
-## Closed Domains
-- Profile lifecycle
-- Inbox / DM
-- VerseHub
-- Community
+Dua track utama masih berlaku:
+1. parity migration domain lama ke hybrid monorepo
+2. experience layer web baru berbasis relevance, reflection, journeys, dan community response
 
-## Active Domains
-- Visual System & UI Architecture Reset
+## What Is Effectively Done
+- `Profile lifecycle`: domain docs menunjukkan `CLOSED`
+- `Inbox / DM`: domain docs menunjukkan `CLOSED`
+- `Community`: local flow utama dan smart-composer handoff menunjukkan `PASS/CLOSED`
+- `Spiritual journeys`: docs terbaru menunjukkan migrasi dari local-only ke API-backed flow sudah selesai di level implementasi/verifikasi lokal
 
-## Active Experience Features
-- Core Navigation Restructuring (Completed Docs Base)
-- Thematic Design Layout (Dawn Theme in globals.css)
-- Screen Deprecation (merging redundant flows)
+## What Is Active Now
+- **Track 3: Frontend Visual Reset & Application Shell Redesign** (In Progress)
+- `Dawn Theme` semantic styling for primary active screens (`/today`, `/versehub`, `/community`, `/paths`).
+- Eradicating legacy layout fragments to enforce a pure, light, non-fragmented design architecture.
+- Continuing resolving parity action items strictly isolated around EdgeOne and cPanel external configs.
 
 ## Current Priority
-1. Melakukan transisi bertahap untuk *Visual Patch & Arsitektur Layar* dengan melerai komponen statis. Pondasi Design Tokens (warna, kelengkungan p-6+, bayangan lapang) sudah diinjeksikan pada `globals.css`. Selanjutnya adalah menerapkannya ke `/today`.
-2. selesaikan mitigasi local vs production parity yang masih berselimut status `NEEDS SERVER VALIDATION` (khususnya isu Env CORS dan CGIPassAuth cPanel).
+1. Rapikan dan samakan sumber kebenaran dokumentasi agar status lokal yang sudah selesai tidak tetap tercatat sebagai blocker.
+2. Selesaikan parity production yang memang berada di luar repo: DNS/TLS/canonical host, CORS/Sanctum, validasi `Authorization` header di cPanel, dan akses deploy.
+3. Setelah blocker server jelas, lanjutkan hardening visual/layout pada halaman aktif web dimulai dari `/today`, lalu shell halaman lain yang masih membawa pola lama.
+
+## Reality Check
+- Sebagian besar hambatan terbesar saat ini bukan lagi di ide produk atau struktur fitur.
+- Risiko tertinggi ada pada `server readiness`, bukan pada komponen UI lokal.
+- Dokumen parity masih memiliki beberapa status lama yang perlu dibersihkan agar tim tidak salah membaca progres.
+- Bukti terbaru menunjukkan `www.thechoosentalks.org` sudah melayani halaman publik dari `edgeone-pages`, sedangkan masalah utama tersisa terkonsentrasi di jalur `https://thechoosentalks.org` (apex HTTPS / TLS / binding).
 
 ## Non-Negotiable Constraints
 - root repo harus clean
