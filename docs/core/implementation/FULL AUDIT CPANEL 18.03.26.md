@@ -1,3 +1,121 @@
+STEP 1 — COMMAND WAJIB PERTAMA
+
+Tujuan step ini hanya satu:
+
+membuat audit snapshot server production yang aman, read-only, dan memverifikasi asumsi deploy aktual.
+
+Tempel command ini di terminal cPanel:
+
+```bash
+set -e
+
+echo "===== TCT STEP 1: SERVER REALITY AUDIT ====="
+echo "DATE: $(date)"
+echo "USER: $(whoami)"
+echo "HOME: $HOME"
+echo
+
+echo "---- PHP / COMPOSER / GIT ----"
+command -v php || true
+php -v || true
+command -v composer || true
+composer --version || true
+command -v git || true
+git --version || true
+echo
+
+echo "---- PUBLIC_HTML BRIDGE ----"
+ls -la "$HOME/public_html" || true
+echo
+echo "public_html/index.php:"
+sed -n '1,80p' "$HOME/public_html/index.php" || true
+echo
+
+echo "---- DEPLOY ROOT ----"
+APP_DIR="$HOME/deploy/apps/thechoosentalks"
+echo "APP_DIR=$APP_DIR"
+ls -la "$HOME/deploy" || true
+echo
+ls -la "$HOME/deploy/apps" || true
+echo
+ls -la "$APP_DIR" || true
+echo
+
+echo "---- CURRENT SYMLINK ----"
+readlink "$APP_DIR/current" || true
+readlink -f "$APP_DIR/current" || true
+echo
+
+echo "---- RELEASES ----"
+find "$APP_DIR/releases" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort || true
+echo
+
+echo "---- SHARED ----"
+ls -la "$APP_DIR/shared" || true
+echo
+[ -f "$APP_DIR/shared/.env" ] && echo "shared .env exists" || echo "shared .env MISSING"
+[ -d "$APP_DIR/shared/storage" ] && echo "shared storage exists" || echo "shared storage MISSING"
+echo
+
+echo "---- CURRENT RELEASE FILES ----"
+CURRENT_REAL="$(readlink -f "$APP_DIR/current" || true)"
+echo "CURRENT_REAL=$CURRENT_REAL"
+[ -n "$CURRENT_REAL" ] && ls -la "$CURRENT_REAL" || true
+echo
+[ -n "$CURRENT_REAL" ] && ls -la "$CURRENT_REAL/public" || true
+echo
+
+echo "---- DEPLOY SCRIPTS ----"
+for f in "$APP_DIR/deploy.sh" "$APP_DIR/rollback.sh" "$APP_DIR/healthcheck.sh"; do
+  if [ -f "$f" ]; then
+    echo "[FOUND] $f"
+    ls -l "$f"
+    echo "--- HEAD $f ---"
+    sed -n '1,120p' "$f"
+    echo
+  else
+    echo "[MISSING] $f"
+  fi
+done
+
+echo "---- WEBHOOK / SECRET ----"
+[ -f "$HOME/.deploy_secret" ] && echo ".deploy_secret exists" || echo ".deploy_secret MISSING"
+find "$HOME/public_html" -maxdepth 1 -type f \( -name "*webhook*.php" -o -name "deploy*.php" \) -print || true
+echo
+
+echo "---- CURRENT RELEASE HEALTH BASICS ----"
+if [ -n "$CURRENT_REAL" ]; then
+  [ -f "$CURRENT_REAL/artisan" ] && echo "artisan exists" || echo "artisan MISSING"
+  [ -f "$CURRENT_REAL/vendor/autoload.php" ] && echo "vendor exists" || echo "vendor MISSING"
+  [ -d "$CURRENT_REAL/bootstrap/cache" ] && echo "bootstrap/cache exists" || echo "bootstrap/cache MISSING"
+  [ -d "$CURRENT_REAL/storage" ] && echo "storage exists" || echo "storage MISSING"
+  php "$CURRENT_REAL/artisan" --version || true
+fi
+echo
+
+echo "===== END STEP 1 ====="
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ok kalau begitu berikutnya anda harus memberikan saya command line untuk full audit folder, file dan real condition yang ada di server cpanel saya, agar anda tau persis membuat prompt yang tepat untuk gemini lakukan agar sesuai dengan status dan kondisi server cpanel saya saat ini.
 
 ---
