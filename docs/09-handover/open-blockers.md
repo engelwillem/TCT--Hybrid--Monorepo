@@ -75,8 +75,8 @@
   - Tonton via terminal server: `tail -f /home/user/deploy_webhook.log`.
   - **405** (Akses GET browser), **403** (Token Beda/Hilang), **500** (Salah Absolute Path Config), **Timeout/Hening** (`shell_exec` dikunci *php.ini* peladen).
   - Tautan webhook harus dikaitkan di repositori Github > Setelan > Rahasia (`WEBHOOK_URL` dan `DEPLOY_SECRET_TOKEN`). Gunakan URL host yang sehat TLS.
-- resolusi transisi (2026-03-18): Hasil audit nyata membuktikan arsitektur *release-based zero-downtime* canggih telah hidup di server (`deploy.sh` memuat logik bongkar *artifact*, symlink `shared/`, dan perputaran sakelar *current*). Merombak paksa menjadi sinkronisasi sederhana ("Path A") akan meledakkan sistem *rollback* server. Proyek ini migrasi ke "Path B": Mempertahankan struktur rilis matang peladen sekaligus mengkonversi mekanisme ambil data (dari *SCP artifact-drop* tak jalan ke metode lokal *git-based pull fetch*). *Webhook trigger* yang sudah direkayasa akan didesain memanggil kerangka skrip tua (yang kita modifikasi) ini.
-- status: **READY FOR DEPLOYMENT REDESIGN**
+- resolusi final (2026-03-18): *File* repositori tunggal `backend-api/deploy.sh` telah dirombak ulang secara tuntas menuju Path B1. Eksekusi ini meniru struktur perlindungan nol-waktu putus peladen cPanel aslinya secara penuh. Ia telah diberi tambalan `Sparse Checkout` sehingga hanya folder aplikasi gubah yang dimaterialisasi, menghapus risiko *clutter* root secara bersih. Otomatisasi pangkalan data disaring via kunci kondisional `RUN_MIGRATIONS=true` demi lapis keamanan perdana. Operator harus mulai eksekusi panduan *Final First-Run Checklist* di file `local-vs-production-checklist.md`.
+- status: **READY FOR SERVER ACTION**
 
 - context: Akses publik `www.thechoosentalks.org` mengalami `ERR_CERT_COMMON_NAME_INVALID`. Error ini murni konfigurasi rilis eksternal. Repo code tidak membutuhkan *patch* atau perbaikan. Titik masalah terisolasi pada sisi DNS, CDN Binding, atau SAN TLS.
 - exact checks by layer:
