@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { PenSquare, BookOpen, LayoutGrid, Inbox } from 'lucide-react';
+import { PenSquare, BookOpen, Route, Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const actions = [
@@ -16,9 +16,9 @@ const actions = [
         href: '/versehub/id',
     },
     {
-        icon: LayoutGrid,
-        label: 'Ikut',
-        href: '/channels',
+        icon: Route,
+        label: 'Paths',
+        href: '/paths',
     },
     {
         icon: Inbox,

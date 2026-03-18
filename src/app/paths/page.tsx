@@ -8,7 +8,7 @@ import { Compass, Clock, PlayCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getStudyPaths } from '@/services/journeys.service';
 
-export default function PathsLibraryPage() {
+export default function PathsPage() {
     const [paths, setPaths] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);

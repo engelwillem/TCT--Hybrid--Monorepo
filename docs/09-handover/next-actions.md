@@ -1,130 +1,21 @@
-# Current Status
+# Next Actions
 
-## Summary
+## Prioritas Eksekusi Frontend (V1)
 
-Project state is now split more cleanly across infrastructure, backend deployment, and frontend product work.
+1. Stabilisasi route inti agar tidak ada CTA yang kembali ke route legacy.
+2. Perkuat alur `Today -> Paths -> Community` dengan copy yang konsisten di semua surface aktif.
+3. Audit komponen reusable yang masih membawa label/navigation lama lalu samakan dengan IA inti.
+4. Rapikan empty/loading/error state untuk halaman inti agar UX lebih tenang dan jelas.
+5. Finalisasi acceptance checklist parity local vs production untuk route inti.
 
-The most important recent shift came from direct manual cPanel/server audit. That audit confirmed that the production backend is **not** a blank Laravel root and **not** a simple single-folder deploy. Production already uses a release-based deployment architecture with:
+## Definisi Selesai Batch Ini
 
-- `releases/`
-- `shared/.env`
-- `shared/storage`
-- `current`
-- `deploy.sh`
-- `rollback.sh`
-- `healthcheck.sh`
+- Tidak ada CTA aktif yang mendorong user ke `library`, `visitors`, `gate-updates`, atau `reflections` lama.
+- Semua shortcut primer pada surface aktif selaras ke pilar inti: Today, VerseHub, Paths, Community.
+- Dokumentasi status dan changelog harian mencerminkan perubahan aktual yang sudah live di codebase.
 
-It also confirmed that:
+## Risiko yang Perlu Dijaga
 
-- `~/public_html/index.php` forwards to:
-  `/home/thechoosentalks/deploy/apps/thechoosentalks/current/public/index.php`
-- the existing deployment model was artifact-based
-- the repo-side deployment redesign has now been adapted toward **Path B1**:
-  preserve `releases/current/shared`, but replace artifact materialization with release-based shallow clone + sparse checkout of `backend-api`
-
-## Stable / Closed Areas
-
-The following product/domain tracks are already considered stable/closed for the current phase:
-
-- Profile lifecycle — CLOSED
-- Inbox / DM — CLOSED
-- Community — CLOSED
-- VerseHub — CLOSED
-- Spiritual Journeys — CLOSED
-
-Infrastructure/public host progress already achieved:
-
-- `https://www.thechoosentalks.org` is healthy
-- EdgeOne binding for `www` is effective
-- HTTPS for `www` is deployed and working
-
-Frontend system progress already achieved:
-
-- visual foundation / shell reset has passed
-- Core V1 navigation has been tightened
-- Dawn/light-direction shell cleanup has started successfully
-
-## In Progress
-
-### Backend deployment redesign
-Repo-side deployment redesign is now considered **PASS**.
-
-What has been completed:
-
-- push-based GitHub Actions deploy via SSH/SCP has been retired as the preferred path
-- deployment redesign now targets a pull-style release materialization model
-- existing production release architecture is being preserved
-- Path B1 was selected:
-  release-based shallow clone with sparse checkout of `backend-api`
-- `backend-api/deploy.sh` has been adapted repo-side accordingly
-
-### Manual server execution
-Manual cPanel/server work has started and several steps are already complete:
-
-- server environment validated:
-  - `php` available
-  - `composer` available
-  - `git` available
-- current symlink verified
-- existing `deploy.sh` backed up
-- replacement `deploy.sh` placed server-side
-- `/home/thechoosentalks/.deploy_secret` created
-- GitHub deploy key created
-- GitHub SSH authentication works
-
-## Newly Learned From Manual cPanel Audit
-
-The manual shell audit changed several earlier assumptions.
-
-### Production backend layout is real and already operational
-The server already has a real production deployment structure. This means deployment redesign must **adapt** an existing system rather than replace it from scratch.
-
-### `public_html` is only a bridge
-`public_html` is not the full backend root. It acts as a webroot bridge to the active release through `current/public/index.php`.
-
-### Existing deploy system is more mature than originally assumed
-The presence of:
-
-- release directories
-- shared state
-- rollback
-- healthcheck
-- current symlink switching
-
-means production already has a zero-downtime style deployment shape worth preserving.
-
-## Still Open / Unresolved
-
-### Backend deploy execution not yet validated
-Repo-side redesign is complete, but the new deployment path has **not yet been executed successfully on the real server**.
-
-Still pending:
-
-- create real webhook file in `public_html`
-- validate webhook PHP syntax
-- validate absolute paths in webhook
-- run new `deploy.sh` manually
-- verify release creation and `current` switch
-- verify sparse-checkout materialization is complete and correct
-- manually test webhook via `curl`
-- only then wire GitHub Actions to the new webhook
-
-### Apex HTTPS remains unresolved
-`https://thechoosentalks.org` is still a separate unresolved server-side concern.
-
-Current understanding:
-
-- `www` is healthy and should remain the active public host
-- apex HTTPS recovery still requires separate server-side handling
-- webhook should use the healthy `www` host for now
-
-### Frontend V1 redesign batch is paused, not cancelled
-Frontend shell/foundation reset already passed, but deeper V1 surface redesign has not resumed yet because backend deployment execution and server reality work took priority.
-
-Pending frontend continuation later:
-
-- Today redesign
-- VerseHub surface redesign
-- Community surface redesign
-- Paths surface redesign
-- route deprecation/removal cleanup after redesign stabilizes
+- Drift copy pada komponen lama yang masih dipakai lintas halaman.
+- Redirect berlapis (route config + page redirect) yang bisa menambah kompleksitas bila tidak dipantau.
+- QA visual mobile jika ada surface lawas yang belum disentuh tetapi masih bisa diakses dari deep link.

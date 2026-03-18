@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Quote, 
   BookOpen, 
-  Hash, 
+  Route, 
   Inbox, 
   PlusCircle, 
   ChevronRight,
@@ -51,7 +51,7 @@ export function TodayPage() {
   const quickActions = [
     { label: "Post", icon: PlusCircle, href: "/community", color: "bg-blue-500/10 text-blue-600", desc: "Bagikan inspirasi" },
     { label: "Read", icon: BookOpen, href: "/versehub/en", color: "bg-green-500/10 text-green-600", desc: "Baca firman" },
-    { label: "Channels", icon: Hash, href: "/channels", color: "bg-purple-500/10 text-purple-600", desc: "Diskusi grup" },
+    { label: "Paths", icon: Route, href: "/paths", color: "bg-purple-500/10 text-purple-600", desc: "Perjalanan rohani" },
     { label: "Inbox", icon: Inbox, href: "/inbox", color: "bg-orange-500/10 text-orange-600", desc: "Pesan masuk" },
   ];
 
@@ -185,7 +185,7 @@ export function TodayPage() {
                 <h4 className="font-black text-sm uppercase tracking-widest">Premium Active</h4>
               </div>
               <p className="text-xs opacity-90 leading-relaxed font-medium">
-                Anda memiliki akses penuh ke semua fitur eksklusif VerseHub dan Channels. Selamat bertumbuh!
+                Anda memiliki akses penuh ke semua fitur eksklusif VerseHub dan Paths. Selamat bertumbuh!
               </p>
               <Button variant="secondary" className="w-full rounded-full font-black text-xs h-10 bg-white text-brand hover:bg-white/90">
                 LIHAT PROGRES

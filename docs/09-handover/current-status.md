@@ -1,5 +1,21 @@
 # Current Status
 
+## Frontend Product Snapshot (Updated 2026-03-18)
+
+Core experience sekarang sudah bergerak ke arah utama produk:
+
+- Landing `/` sudah diganti menjadi narasi spiritual companion yang fokus.
+- Shortcut utama di Today sudah dipindah dari `channels` ke `paths`.
+- CTA refleksi dari detail Paths sudah handoff ke Community composer (`intent=reflection`).
+- Halaman `channels` masih tersedia sebagai lapisan transisi dengan arahan ke pilar inti.
+- Permukaan legacy `library`, `visitors`, dan `gate-updates` sekarang diperlakukan sebagai legacy bridge menuju route inti.
+
+Implikasi:
+
+- Drift antara IA lama vs IA baru sudah berkurang signifikan di entry point utama.
+- User baru lebih cepat masuk ke flow inti: Today -> VerseHub/Paths -> Community.
+- Risiko kebingungan akibat halaman lawas yang masih "terlihat aktif" berhasil ditekan.
+
 ## Summary
 
 Project state is now split more cleanly across infrastructure, backend deployment, and frontend product work.
@@ -128,3 +144,37 @@ Pending frontend continuation later:
 - Community surface redesign
 - Paths surface redesign
 - route deprecation/removal cleanup after redesign stabilizes
+
+
+Deploy backend sekarang sukses penuh.
+Status akhir yang sudah terbukti:
+frontend public:
+https://thechoosentalks.org → OK
+https://www.thechoosentalks.org → OK
+
+backend:
+https://api.thechoosentalks.org/api/v1/today → OK JSON
+https://admin.thechoosentalks.org/admintalk/login → OK
+
+deploy:
+release aktif 20260318155349
+healthcheck OK
+prune fix berhasil
+rollback logic tetap ada
+
+Jadi fondasi production sekarang sudah rapi:
+frontend = Tencent Edge
+backend/api/admin = cPanel Laravel
+DNS = Cloudflare
+deploy backend = hardened dan working
+
+Diagnosis akhir
+
+Blocker besar Anda sebelumnya memang bukan fitur, melainkan:
+DNS/domain routing kacau
+deploy script rusak
+env backend belum sesuai domain final
+cleanup deploy tidak kompatibel
+Semua itu sekarang sudah tertutup.
+
+

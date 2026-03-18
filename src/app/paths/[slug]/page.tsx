@@ -76,7 +76,7 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                         onClick={() => router.push('/paths')}
                         className="bg-surface hover:bg-surface-elevated transition-all text-foreground font-medium px-6 py-3 rounded-full text-sm shadow-sm ring-1 ring-border/50"
                     >
-                        Kembali ke Perpustakaan
+                        Kembali ke Paths
                     </button>
                 </div>
             </MobileAppLayout>
@@ -207,8 +207,8 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                                                         relevanceText="Renungkan sabda ini sebelum mengakhiri harimu."
                                                         primaryAction={{
                                                             type: 'reflect',
-                                                            href: `/reflections/${slug}-day-${day.step_order}`,
-                                                            label: 'Baca Renungan & Selesaikan'
+                                                            href: `/community?intent=reflection&ref=${encodeURIComponent(verseRef)}&text=${encodeURIComponent(dayTitle)}`,
+                                                            label: 'Lanjutkan ke Refleksi'
                                                         }}
                                                     />
 

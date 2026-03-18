@@ -39,6 +39,26 @@ const nextConfig: NextConfig = {
         destination: '/today',
         permanent: true,
       },
+      {
+        source: '/library',
+        destination: '/versehub/id',
+        permanent: true,
+      },
+      {
+        source: '/visitors',
+        destination: '/community',
+        permanent: true,
+      },
+      {
+        source: '/gate-updates',
+        destination: '/today',
+        permanent: true,
+      },
+      {
+        source: '/reflections/:path*',
+        destination: '/community?intent=reflection',
+        permanent: true,
+      },
     ];
   },
 };

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { 
-    Search, Library, History, Zap, Compass, Heart, 
+    Search, History, Zap, Compass, Heart, 
     MessageSquareQuote, SendHorizontal, Bookmark, Wand2, 
     StickyNote, Highlighter, Network, ArrowRight, X, Scroll,
     ChevronLeft, ChevronRight, Loader2, ArrowRightCircle, BookOpenText,
@@ -356,8 +356,8 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     {chapter_label || (isId ? 'Alkitab' : 'Bible')}
                                 </h1>
                                 <button onClick={() => setPickerOpen(true)} className="flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-bold border border-border/50 bg-surface-muted hover:bg-surface-elevated transition-all text-foreground shadow-sm">
-                                    <Library className="h-3.5 w-3.5 text-brand" />
-                                    {isId ? 'Perpustakaan' : 'Library'}
+                                    <BookOpenText className="h-3.5 w-3.5 text-brand" />
+                                    {isId ? 'Pilih Kitab' : 'Choose Book'}
                                 </button>
                             </div>
                             
