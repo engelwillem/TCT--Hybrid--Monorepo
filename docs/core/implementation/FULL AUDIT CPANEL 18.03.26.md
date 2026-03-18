@@ -1,7 +1,7 @@
 ok kalau begitu berikutnya anda harus memberikan saya command line untuk full audit folder, file dan real condition yang ada di server cpanel saya, agar anda tau persis membuat prompt yang tepat untuk gemini lakukan agar sesuai dengan status dan kondisi server cpanel saya saat ini.
 
+---
 Bisa. Dan ini langkah yang sangat tepat.
-
 Karena pada titik ini, kita sudah cukup banyak membangun teori dan desain deploy. Sekarang yang paling bernilai adalah mengambil potret nyata server Anda:
 
 struktur folder
@@ -529,10 +529,374 @@ ls -lah "$CUR/bootstrap/cache" 2>/dev/null || echo "no bootstrap/cache"
 Ini akan membantu kita melihat:
 .env shared benar-benar di-link atau tidak
 storage shared benar-benar di-link atau tidak
+---
 
 
+ok sebelum lanjut saya mau anda buatkan dahulu dokumentasi terupdate saat ini , karena anda sudah tidak buatkan prompt ke gemini  lagi, supaya saya tau apa saja informasi output yang anda dapatkan sejak tidak lagi menggunakan prompt ke gemini, yaitu sejak interaksi anda dan saya melalui command line manual ke cpanel, dan task selanjutnya yang belum dikerjakan
 
-Kemudian Upload hasilnya ke saya.
+---
+Tentu. Saya susunkan dokumentasi ringkas-terupdate berdasarkan temuan sejak kita beralih dari prompt Gemini ke audit manual via command line di cPanel.
 
-Kalau Anda mau, saya juga bisa bantu membuat satu script audit .sh siap copy-paste yang berisi semua blok ini sekaligus, supaya Anda cukup upload satu file hasil audit saja.
+Ini saya buat dalam format yang bisa langsung Anda pakai untuk mengisi docs atau handover internal.
+
+Dokumentasi Status Terkini — Pasca Audit Manual cPanel
+1. Ringkasan kondisi saat ini
+
+Sejak audit manual langsung ke server cPanel, kita sudah mendapatkan beberapa fakta operasional penting yang sebelumnya belum terlihat dari repo saja.
+
+A. Environment server cPanel tervalidasi
+
+Server aktif dan sehat untuk kebutuhan deploy berbasis script:
+
+user shell: thechoosentalks
+
+home directory: /home/thechoosentalks
+
+shell: /bin/bash
+
+PHP CLI tersedia dan aktif: PHP 8.3.30
+
+Composer tersedia: 2.8.12
+
+Git tersedia: 2.48.2【turn57file0†L1-L25】
+
+B. Layout production backend nyata berhasil ditemukan
+
+Backend production ternyata sudah memakai release-based deployment architecture, bukan folder Laravel tunggal langsung di public_html.
+
+Bukti utamanya:
+
+~/public_html/index.php me-load:
+/home/thechoosentalks/deploy/apps/thechoosentalks/current/public/index.php
+
+terdapat struktur:
+
+releases/<timestamp>
+
+shared/.env
+
+shared/storage
+
+current
+
+deploy.sh
+
+rollback.sh
+
+healthcheck.sh【turn58file0†L1-L30】【turn59file0†L1-L28】
+
+C. public_html hanyalah jembatan webroot
+
+public_html saat ini berisi:
+
+index.php
+
+.htaccess
+
+folder asset lama seperti build/, css/, fonts/, js/
+
+Artinya:
+
+public_html bukan root Laravel penuh
+
+ia hanya menjadi entry web yang meneruskan ke release aktif di luar webroot【turn57file0†L26-L52】【turn58file0†L1-L12】
+
+D. Sistem deploy lama ternyata cukup matang
+
+Script lama bukan deploy improvisasi. Ia sudah punya:
+
+release per timestamp
+
+shared env/storage
+
+symlink current
+
+rollback script
+
+healthcheck script
+
+Dan deploy lama bersifat artifact-based, karena deploy.sh mengandalkan build.tar.gz dan checksum sebelum mengekstrak release baru【turn59file0†L1-L28】
+
+2. Keputusan arsitektur yang sudah berubah karena audit manual
+
+Audit manual mengubah beberapa asumsi besar.
+
+Sebelumnya kita mengira:
+
+backend root di server belum jelas
+
+mungkin belum ada sistem deploy yang nyata
+
+pull-deploy baru perlu didesain dari nol
+
+Sekarang kita tahu:
+
+backend production sudah ada
+
+release system sudah ada
+
+rollback sudah ada
+
+healthcheck sudah ada
+
+yang perlu diubah adalah mekanisme materialisasi release, bukan seluruh arsitektur deploy【turn59file0†L1-L28】
+
+Implikasi keputusan:
+
+Kita tidak boleh mengganti sistem deploy dengan model sederhana “git pull ke satu folder tetap”.
+
+Yang benar adalah:
+
+mempertahankan pola:
+
+releases/
+
+shared/
+
+current
+
+lalu mengganti cara release baru dibuat, karena artifact push lama tidak lagi cocok dengan kondisi firewall/server.
+
+3. Keputusan deploy backend terbaru
+A. Push-based deploy resmi dianggap tidak viable
+
+Eksperimen sebelumnya sudah membuktikan:
+
+deploy via scp/ssh dari GitHub Actions gagal karena timeout
+
+bahkan setelah preflight probe dihapus, failure tetap terjadi
+
+blocker utamanya berada di firewall/server policy, bukan di Laravel app atau YAML repo【turn50file0†L1-L24】【turn51file0†L1-L18】
+
+B. Path A ditinggalkan
+
+Path A = tetap artifact-based push deploy dengan trigger baru.
+
+Ini tidak dipilih karena:
+
+masih bergantung pada inbound transfer/upload
+
+tetap berisiko mentok di layer server connectivity
+
+tidak menyelesaikan masalah inti lingkungan hosting Anda【turn60file0†L1-L23】
+
+C. Path B dipilih
+
+Path B = mempertahankan release architecture lama, tetapi mengganti cara release baru dibuat.
+
+Setelah dibandingkan, dipilih:
+
+Path B1 — per-release shallow clone
+
+Alasan:
+
+paling mudah dipahami
+
+paling mudah di-debug
+
+paling cocok untuk implementasi pertama
+
+tetap mempertahankan rollback confidence【turn61file0†L1-L21】
+
+4. Adaptasi deploy script yang sudah berhasil di repo
+A. deploy.sh sudah diadaptasi dari artifact-based menjadi Path B1
+
+Perubahan arah:
+
+tidak lagi bergantung pada build.tar.gz
+
+tetap memakai release folder baru per timestamp
+
+tetap memakai current
+
+tetap memakai shared/.env dan shared/storage
+
+tetap menjaga atomic switch dan rollback compatibility【turn62file0†L1-L19】
+
+B. Koreksi implementasi materialisasi monorepo juga sudah dilakukan
+
+Versi awal adaptasi masih terlalu rapuh karena clone penuh lalu “mengangkat” isi backend-api.
+
+Itu kemudian dikoreksi menjadi:
+
+sparse checkout
+
+Supaya:
+
+hanya bagian backend-api yang dimaterialisasi
+
+release target lebih bersih
+
+proses lebih aman untuk rollout pertama【turn63file0†L1-L16】
+
+C. Status patch deploy repo-side
+
+Saat ini status yang paling tepat:
+
+PASS untuk repo-side deploy redesign
+
+Karena:
+
+arah arsitektur sudah benar
+
+Path B1 sudah dipakai
+
+release system lama tetap dihormati
+
+artifact logic lama sudah tidak lagi menjadi ketergantungan utama【turn63file0†L1-L16】
+
+5. Progres eksekusi manual di server yang sudah dilakukan
+
+Berikut langkah nyata yang sudah Anda lakukan di server.
+
+Sudah tervalidasi:
+
+binary utama tersedia (php, composer, git)【turn57file0†L1-L25】
+
+deploy root lama ada dan current symlink valid【turn64file0†L1-L20】
+
+deploy.sh lama sudah dibackup menjadi deploy.sh.bak【turn64file0†L21-L27】
+
+deploy.sh baru sudah ditempel ke server【turn64file0†L28-L33】
+
+secret file /home/thechoosentalks/.deploy_secret sudah dibuat dengan permission 600【turn64file0†L34-L39】
+
+deploy SSH key untuk GitHub sudah dibuat【turn64file0†L40-L58】
+
+SSH config untuk GitHub sudah dibuat
+
+autentikasi ssh -T git@github.com berhasil【turn64file0†L59-L64】
+
+Yang belum selesai di eksekusi manual:
+
+file webhook belum dibuat karena masih memakai placeholder <RANDOM_WEBHOOK> saat command dijalankan, sehingga shell error syntax【turn64file0†L65-L71】
+
+6. Status domain / host publik yang relevan terhadap deploy
+Host sehat publik:
+
+https://www.thechoosentalks.org sudah sehat
+
+EdgeOne + HTTPS untuk www sudah deployed
+
+ini adalah host publik utama yang valid【turn41file0†L1-L14】
+
+Apex domain:
+
+https://thechoosentalks.org masih belum sehat penuh
+
+apex HTTPS recovery masih dipisahkan sebagai task server-side
+
+karena itu, webhook sebaiknya tidak memakai apex dulu
+
+host webhook yang aman untuk saat ini adalah:
+https://www.thechoosentalks.org/...【turn41file0†L1-L14】【turn43file0†L1-L17】
+
+7. Informasi baru terpenting yang didapat sejak tidak lagi memakai prompt Gemini
+
+Ini daftar “fakta baru” yang muncul murni dari interaksi manual command line:
+
+Server production backend sudah punya release architecture matang, jadi deploy redesign harus adaptif, bukan mulai dari nol【turn58file0†L1-L30】【turn59file0†L1-L28】
+
+public_html hanya bootstrap bridge ke release aktif, bukan Laravel root penuh【turn58file0†L1-L12】
+
+deploy.sh lama bersifat artifact-based dan memanfaatkan build.tar.gz【turn59file0†L1-L28】
+
+Root deploy production yang benar adalah:
+/home/thechoosentalks/deploy/apps/thechoosentalks
+
+current symlink saat ini valid dan menunjuk ke release aktif:
+20260317012344【turn64file0†L1-L20】
+
+Lingkungan cPanel server secara binary/tooling siap untuk pull-deploy:
+PHP, Composer, Git, Curl semuanya tersedia【turn57file0†L1-L25】
+
+Server-side GitHub deploy key dan autentikasi SSH ke GitHub sudah berhasil dipersiapkan【turn64file0†L40-L64】
+
+Eksekusi tertahan hanya karena file webhook belum dibuat dengan nama nyata, bukan karena problem server besar baru【turn64file0†L65-L71】
+
+Task berikutnya yang belum dikerjakan
+
+Ini saya susun dalam urutan paling logis.
+
+A. Lanjutan deploy backend — prioritas operasional
+
+rapikan permission deploy.sh kembali ke 700
+
+tentukan nama webhook nyata, misalnya deploy-k9x72p.php
+
+buat file webhook di public_html
+
+isi path absolut yang benar di webhook:
+
+secret file
+
+deploy script
+
+absolute log path
+
+cek syntax webhook dengan php -l
+
+audit isi webhook untuk memastikan token/header/path benar
+
+cek syntax deploy.sh (bash -n)
+
+jalankan deploy.sh manual
+
+verifikasi release baru terbentuk dengan benar
+
+verifikasi current switch dan shared links
+
+baru test webhook via curl
+
+baru setelah itu sambungkan GitHub Actions
+
+B. Domain / apex
+
+Masih ada task terpisah:
+
+implementasi apex HTTPS redirect host di cPanel/provider yang benar
+
+saat ini belum selesai, tetapi tidak lagi menghalangi progres deploy backend karena webhook bisa memakai host www
+
+C. Frontend wajah baru
+
+Track ini belum dilanjutkan setelah foundation/shell reset.
+Yang belum dikerjakan:
+
+redesign batch V1 screens:
+
+Today
+
+VerseHub
+
+Community
+
+Paths
+
+deprecation/retirement final untuk layar yang tidak dipakai
+
+visual cleanup layar inti
+
+Status keseluruhan saat ini
+Backend deploy redesign
+
+repo-side redesign: PASS
+
+server-side installation: IN PROGRESS
+
+blocker aktif saat ini: webhook file belum dibuat dan diuji
+
+Domain
+
+www: sehat
+
+apex HTTPS: belum selesai
+
+Frontend UI reset
+
+foundation/shell: sudah
+
+redesign layar inti: belum lanjut
+
+---
 

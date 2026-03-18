@@ -1,117 +1,97 @@
 # Open Blockers
 
-## Active Blockers
+## 1. Backend pull-deploy has not yet been executed on the real server
+**Status:** OPEN  
+**Type:** server execution blocker  
+**Owner:** server/operator execution
 
-### 2. Authorization Header cPanel Restriction Risk
-- root cause: Apache di cPanel sering memangkas HTTP Header `Authorization: Bearer`.
-- file terkait: `backend-api/public/.htaccess`
-- dampak: Autentikasi lintas server (*hybrid*) patah (`401 Unauthenticated`) karena header JWT lenyap.
-- langkah verifikasi: Patch `CGIPassAuth On` sudah ditambahkan. Lakukan deployment staging dan hit proxy dari UI terotentikasi.
-- status: **NEEDS SERVER VALIDATION**
+### Why it is still open
+Repo-side deployment redesign is complete, but the new deploy path has not yet been proven on the actual server.
 
-### 3. Stateful Sanctum / CORS Missing Server Origins
-- root cause: Berkas `.env` (Legacy dan Local) belum mendefinisikan origin Tencent Edge (*app.thechoosentalks.com*) pada konfigurasi `SANCTUM_STATEFUL_DOMAINS` dan `CORS_ALLOWED_ORIGINS`.
-- file terkait: `backend-api/.env`
-- dampak: Form submit atau *Fetch API* dari sisi browser publik dipastikan terkena pemblokiran CORS policy *Failed to Fetch*.
-- langkah verifikasi: Rilis Next.js UI ke sub-domain Tencent, coba masuk dengan akun lokal valid. Pastikan *Console logs* hijau.
-- status: **NEEDS SERVER VALIDATION**
+The following still remain unverified:
 
-### 4. Canonical Host & SSL Force Routing
-- root cause: Pengalihan apex *non-www* `thechoosentalks.org` ke `www.thechoosentalks.org` beserta validasi paksaan *HTTPS* harus ditangani oleh Panel Tencent Edge / CDN untuk mencegah *redirect loop* Node.js Edge. 
-- file terkait: Panel Administrasi Tencent Edge / CDN / DNS registrar. (Lokal telah menambal root `next.config.ts` untuk `/` -> `/today`).
-- instruksi panel server (cPanel Apex Recovery Plan):
-  1. Akses menu **Domain Settings / Page Rules** di konsol Tencent Edge/CDN.
-  2. Buat **Rule 1 (HTTPS Enforce)**: Paksa asal skema origin "HTTP" (`http://www.thechoosentalks.org/`) ter-redirect ke "HTTPS" (Status 301).
-  3. **Apex Redirect Logic di cPanel**: Tambahkan blok `.htaccess` berikut di direktori root public cPanel:
-     ```apache
-     <IfModule mod_rewrite.c>
-     RewriteEngine On
-     RewriteCond %{HTTP_HOST} ^thechoosentalks\.org$ [NC]
-     RewriteRule ^(.*)$ https://www.thechoosentalks.org/$1 [L,R=301]
-     </IfModule>
-     ```
-  4. Aturan ini spesifik menangkap apex dan membelokkan lalu lintas permanen (301) tanpa merusak origin Laravel. Sertifikat Let's Encrypt / AutoSSL **harus** aktif untuk apex di cPanel.
-- dampak: Ketiadaan aturan peladen eksternal ini akan menjebol *Sanctum Session Domain* (sebab HTTP biasa dan apex non-www dinilai sebagai asal rentan oleh Laravel Middleware) yang berpenetrasi ke `419 Page Expired`.
-- langkah verifikasi: Lakukan pengunjungan anonim (*incognito*):
-  - [ ] `http://thechoosentalks.org` -> harus membelok ke `https://www.thechoosentalks.org/today`
-  - [ ] `https://thechoosentalks.org` -> harus membelok ke `https://www.thechoosentalks.org/today`
-  - [ ] `https://thechoosentalks.org/community` -> harus membelok ke `https://www.thechoosentalks.org/community`
-  - [ ] `https://www.thechoosentalks.org/` -> harus membelok ke `https://www.thechoosentalks.org/today`
-- bukti terbaru (2026-03-17):
-  - `http://thechoosentalks.org` -> `302 Location: https://www.thechoosentalks.org`
-  - `http://thechoosentalks.org/today` -> `302 Location: https://www.thechoosentalks.org/today`
-  - `http://thechoosentalks.org/community` -> `302 Location: https://www.thechoosentalks.org/community`
-  - `https://www.thechoosentalks.org` -> `200 OK` (`Server: edgeone-pages`)
-  - `https://www.thechoosentalks.org/today` -> `200 OK` (`Server: edgeone-pages`)
-  - `https://www.thechoosentalks.org/community` -> `200 OK` (`Server: edgeone-pages`)
-  - `https://thechoosentalks.org` dan `https://thechoosentalks.org/community` masih gagal (`curl: (35) Recv failure: Connection was reset`)
-- status: **READY FOR SERVER CONFIG**
+- real webhook file creation under `public_html`
+- webhook syntax validation
+- manual `deploy.sh` execution with the new Path B1 logic
+- sparse-checkout release materialization correctness
+- `current` symlink switch correctness
+- healthcheck compatibility under the new release materialization path
+- manual webhook trigger success
+- GitHub Actions integration with the new webhook path
 
-### 5. Deployment cPanel #21 GitHub Actions Timeout
-- root cause: Alamat IP dari peladen *GitHub Actions runners* ditolak oleh *Firewall* (CSF/mod_security) cPanel milik penyedia *hosting*. Titik gagal (*Failure Point*) berada secara nyata pada baris `Upload artifact and deploy scripts`: `ssh: connect to host *** port ***: Connection timed out`.
-- file terkait: `.github/workflows/backend-cpanel-deploy.yml` dan konfigurasi *Security Panel* di server cPanel.
-- dampak: Pipeline CI/CD `main` menjadi rongsokan dan gagal mengeksekusi otomatisasi skrip `deploy.sh`. Seluruh rilis akan tertahan.
-- server execution checklist (Untuk Admin cPanel):
-  - [ ] **SSH Service Validation:** Verifikasi SSH daemon (`sshd`) beroperasi tangguh. Pastikan `CPANEL_SSH_PORT` (mis. 2121 atau 22) di Github Secrets sudah cocok dengan setelan daemon.
-  - [ ] **Port Validation:** Test *port* pendengar dari IP publik di luar jaringan dengan `telnet [IP] [PORT]`. Jika menggantung (*timeout*), drop di tingkat network terlarang.
-  - [ ] **CSF / Firewall Validation:** Buka panel WHM -> *ConfigServer Security & Firewall*. Periksa log IP masuk terblokir (*Port Scan Tracking*) via `/var/log/lfd.log`. 
-  - [ ] **Pilih & Terapkan Opsi Jaringan Terbuka (Pilih satu):**
-        *Rekomendasi Utama (Paling Aman):* Gelar **VPN/Tailscale** pada OS peladen VPS, rutekan *Action Tailscale* statis dari *runner*.
-        *Rekomendasi Reguler:* Otomasi daftarkan Meta rentang IP Github Actions ke file `csf.allow` (`/etc/csf/csf.allow`).
-        *Opsi Pengganti Buntut:* Batalkan Push Deploy, ubah ke Arsitektur Pull Deploy (*WebHook script* pemicu dari dalam).
-- re-test checklist & success criteria:
-  - **HASIL TERBARU (2026-03-17 Re-run):** Workflow dieksekusi ulang tanpa *Preflight TCP probe*. Ternyata eksekusi log terbaru (Run #23188599919) kembali mogok mutlak di `Upload artifact and deploy scripts` via `scp` (`ssh: connect to host *** port ***: Connection timed out`).
-- akar masalah final: Firewall IP/TCP cPanel (CSF/LFD) menolak secara statis terhadap IP luar tanpa VPN (termasuk GitHub Runner IP ranges). Ini berarti pemblokiran adalah prosedur keamanan *default*, bukan *rate-limit* aktif.
-- transisi arsitektur (2026-03-17): Repositori beralih ke arsitektur **Pull-Based Deployment** termutakhir (Hardened). Memisahkan file PHP *webhook* rahasia murni di luar repositori (atau bernama *hash unguessable*), mencegah eksploitasi URL, menggunakan metode log asinkron minimal (tanpa *echo* bash), *git reset --hard* (mencegah *stash conflict*), serta strategi *cache* konservatif (menghindari `route:cache` tahap awal).
-- pergerakan implementasi (2026-03-18): *File workflow* GitHub Action telah dibongkar sepenuhnya menjadi *webhook trigger* (`curl`). *Deploy script* repositori diringkas khusus untuk mengeksekusi *cache reset*, *git pull*, dan sinkronisasi pustaka PHP secara lokal. Kerangka dasar server `webhook-template.php` dilepaskan khusus untuk konfigurasi manual.
-- persyaratan eksekusi cPanel (Administrator):
-  - [ ] Bangun kunci rilis (`ssh-keygen -t ed25519 -f ~/.ssh/github_deploy_key`) dan otentikasi *Deploy Key* di GitHub.
-  - [ ] _Clone_ repo murni di direktori yang *absolut* (misal `/home/user/thechoosentalksnext`).
-  - [ ] Kustomisasi ganti nama `webhook-template.php` menjadi _hash url_ acak di dalam `public_html/`.
-  - [ ] Buat *file* rahasia mandiri di luar `/public_html` (misal di `/home/user/.deploy_secret`) dan tanam logik `DEPLOY_SECRET_TOKEN=kodeacak`.
-  - [ ] Edit file _webhook_ PHP untuk merujuk ke path absolut berkas rahasia tersebut, dan path absolut menuju `/home/user/thechoosentalksnext/backend-api/deploy.sh`. Pasang `chmod +x` pada bash script.
-- validasi & kegagalan (Failure Checkpoints):
-  - Test Curl: `curl -X POST -H "X-Deploy-Token: [secret_terpilih]" https://[host]/[webhook]-[hash].php`.
-  - Tonton via terminal server: `tail -f /home/user/deploy_webhook.log`.
-  - **405** (Akses GET browser), **403** (Token Beda/Hilang), **500** (Salah Absolute Path Config), **Timeout/Hening** (`shell_exec` dikunci *php.ini* peladen).
-  - Tautan webhook harus dikaitkan di repositori Github > Setelan > Rahasia (`WEBHOOK_URL` dan `DEPLOY_SECRET_TOKEN`). Gunakan URL host yang sehat TLS.
-- resolusi final (2026-03-18): *File* repositori tunggal `backend-api/deploy.sh` telah dirombak ulang secara tuntas menuju Path B1. Eksekusi ini meniru struktur perlindungan nol-waktu putus peladen cPanel aslinya secara penuh. Ia telah diberi tambalan `Sparse Checkout` sehingga hanya folder aplikasi gubah yang dimaterialisasi, menghapus risiko *clutter* root secara bersih. Otomatisasi pangkalan data disaring via kunci kondisional `RUN_MIGRATIONS=true` demi lapis keamanan perdana. Operator harus mulai eksekusi panduan *Final First-Run Checklist* di file `local-vs-production-checklist.md`.
-- status: **READY FOR SERVER ACTION**
+### What must happen next
+- create and validate the real webhook file
+- run `deploy.sh` manually
+- inspect release and shared links
+- test webhook manually
+- only then connect GitHub Actions
 
-- context: Akses publik `www.thechoosentalks.org` mengalami `ERR_CERT_COMMON_NAME_INVALID`. Error ini murni konfigurasi rilis eksternal. Repo code tidak membutuhkan *patch* atau perbaikan. Titik masalah terisolasi pada sisi DNS, CDN Binding, atau SAN TLS.
-- exact checks by layer:
-  - **1. DNS Layer**
-    - [ ] Tentukan tipe record `www` di registrar (layaknya CNAME jika pakai host CDN, atau A/AAAA jika diberi IP langsung).
-    - [ ] Pastikan record `www` secara konseptual menunjuk ke *Tencent Edge* tempat aset frontend disadur.
-    - [ ] Pastikan record `www` DILARANG KERAS menunjuk ke server hosting *cPanel* tempat backend ditaruh.
-    - [ ] Bukti kebenaran DNS: Eksekusi `ping www.thechoosentalks.org` menghasilkan IP yang merepresentasikan server node Tencent Edge, propogasi tuntas.
-  - **2. Tencent Edge / CDN Layer**
-    - [ ] Verifikasi `www.thechoosentalks.org` telah ditambahkan selaiknya entitas domain (attached/bound) di control panel CDN.
-    - [ ] Konfirmasi *Apex* maupun rute awalan `www` sama-sama terdaftar pada layanan aktif.
-    - [ ] Cek agar taktik pemaksaan Canonical (HTTP ke HTTPS / Apex ke WWW) tidak direplika tabrakan hingga menyulut *redirect loop*.
-    - [ ] Bukti kebenaran Binding: Baris domain di dasbor CDN berstatus operasional/siap layan (*Active*).
-  - **3. TLS Layer**
-    - [ ] Periksa rincian properti sertifikat yang menyertai lalu lintas masuk.
-    - [ ] Inspeksi bahwa SAN (Subject Alternative Name) pada sertifikat meng-_cover_ kembaran ganda: `thechoosentalks.org` dan `www.thechoosentalks.org`.
-    - [ ] Lakukan penerbitan ulang sertifikat (*re-issue*) dan penyematan bundel (*re-bind*) jika nama `www.` tidak tercakup di sertifikat yang aktif.
-    - [ ] Bukti kebenaran TLS: *Handshake* SSL pada `curl -vI https://www.thechoosentalks.org` mengkonfirmasi CN/SAN *match*.
-- target architecture:
-  - Canonical Host: `www.thechoosentalks.org` (EdgeOne)
-  - Redirect Host: `thechoosentalks.org` (cPanel)
-- strict apex validation checklist:
-  - Required validation URLs:
-    - [ ] `http://thechoosentalks.org` -> expected final: `https://www.thechoosentalks.org/today`
-    - [ ] `https://thechoosentalks.org` -> expected final: `https://www.thechoosentalks.org/today`
-    - [ ] `http://thechoosentalks.org/today` -> expected final: `https://www.thechoosentalks.org/today`
-    - [ ] `https://thechoosentalks.org/community` -> expected final: `https://www.thechoosentalks.org/community`
-  - Success criteria:
-    - All URLs land exactly on their expected final destination.
-    - Path preservation must work natively across redirect hops without dropping context.
-  - Failure patterns to watch for:
-    - Redirect loops (`ERR_TOO_MANY_REDIRECTS`).
-    - Loss of path precision (`/community` incorrectly resolving back to `/today`).
-    - Mixed-host issues where `thechoosentalks.org` encounters an `ERR_CERT_COMMON_NAME_INVALID` failure.
-- status: **READY FOR SERVER ACTION**
+---
 
-## Notes
-Dokumen ini sekarang hanya memuat blocker yang masih aktif. Item yang sudah `PASS` atau `CLOSED` harus dipertahankan pada dokumen domain/feature terkait dan tidak perlu tinggal di sini.
+## 2. Webhook is not yet installed and validated
+**Status:** OPEN  
+**Type:** server-local deploy blocker  
+**Owner:** server/operator execution
+
+### Why it is still open
+The earlier server command sequence stopped at the webhook creation step because a placeholder filename was used literally (`<RANDOM_WEBHOOK>`), which caused shell syntax failure.
+
+That means:
+
+- the real webhook file does not yet exist
+- webhook syntax has not yet been checked
+- token validation has not yet been proven
+- webhook logging has not yet been proven
+- webhook-triggered deploy has not yet been observed
+
+### What must happen next
+- choose a real webhook filename
+- create the PHP webhook file under `public_html`
+- confirm absolute paths inside it
+- validate with `php -l`
+- test with manual `curl`
+
+---
+
+## 3. Apex HTTPS is still unresolved
+**Status:** OPEN  
+**Type:** infrastructure / public host blocker  
+**Owner:** server/provider-side action
+
+### Current state
+- `https://www.thechoosentalks.org` is healthy
+- apex HTTP redirect behavior is only partial
+- apex HTTPS is not yet fully healthy
+
+### Why this remains open
+Registrar/domain forwarding alone is not sufficient to guarantee safe apex HTTPS behavior in the current provider setup.
+
+The likely practical path remains:
+- use server/cPanel-side HTTPS handling for apex
+- terminate HTTPS safely for `thechoosentalks.org`
+- perform permanent redirect to `https://www.thechoosentalks.org/*`
+- preserve path
+
+### Important note
+This blocker does **not** need to stop backend deploy execution right now, because the webhook can and should use the healthy `www` host.
+
+---
+
+## 4. Frontend V1 redesign batch has not resumed yet
+**Status:** OPEN WORK / NOT AN ACTIVE BLOCKER TO BACKEND DEPLOY  
+**Type:** product/UI execution backlog  
+**Owner:** frontend/product workstream
+
+### Current state
+Frontend shell/foundation reset already passed, but deeper screen redesign work is paused while backend deploy execution/server validation is being stabilized.
+
+Pending work later includes:
+
+- Today redesign
+- VerseHub redesign
+- Community redesign
+- Paths redesign
+- final deprecation/removal decisions for parked routes
+
+### Why it is listed here
+This is not blocking backend deployment execution, but it remains an active unfinished workstream and should not be forgotten while server-side work is ongoing.

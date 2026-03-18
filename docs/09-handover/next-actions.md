@@ -1,35 +1,130 @@
-# Next Actions
+# Current Status
 
-## Immediate
-1. Pertahankan folder bernomor sebagai sumber kebenaran current web situation, dan simpan seluruh material historis hanya di `docs/archive/`.
-2. Selesaikan parity production yang murni berada di luar repo:
-   - fokus utama: stabilkan `https://thechoosentalks.org` karena `www.thechoosentalks.org` sudah hidup di `edgeone-pages`
-   - pastikan apex HTTPS tidak lagi reset dan benar-benar mengalir ke host canonical
-   - Sanctum / CORS production origin
-   - validasi `Authorization` header cPanel
-3. Setelah konfigurasi server disentuh, jalankan kembali `Apex Redirect Validation Checklist` dan parity validation yang relevan.
+## Summary
 
-## Track 4: Backend Pipeline Fixes (Patch First)
-1. [x] **Patch CI/CD Workflow**: Eksekusi pembuangan (*remove*) sesi `Preflight TCP Reachability Check` dari berkas `.github/workflows/backend-cpanel-deploy.yml`. Taktik pengosongan jaringan tersebut terbukti fatal dalam log rilis terbaru karena menyulut sensor LFD / port-scan protection cPanel yang aktif memblokir IP Github pasca-ping.
-2. [x] **Pipeline Re-Run (IMMEDIATE ACTION)**: Karena *file workflow* lokal telah dihilangkan duri *TCP timeout*-nya, kode perlu diikat ke commit baru dan digeser ke *remote repository*. Validasi log Github Action secara nyata untuk memastikan blokade rilis tidak menyala.
-## Track 4: Backend Pull Deploy Redesign (Active Design Lock)
-1. [x] **DECISION: Push vs Pull Deploy Redesign**: Evaluasi hasil kebuntuan blokir LFD cPanel terbaru menyatakan opsi menyusup ke `scp` `ssh` diblokir permanen oleh tembok api provider hosting. Konfigurasi beralih ke arsitektur **Pull-Based Deployment**.
-2. [x] **IMPLEMENTATION: Deploy Scripts (Repo Boundary)**: Tulis `backend-api/deploy.sh` murni, difokuskan pada `git fetch --all`, `git reset --hard`, `composer install`, dan eksekusi cache secara konservatif (`optimize:clear`, `config:cache`, `view:cache`). Dilarang memakai `git stash` atau `route:cache` yang prematur.
-3. [x] **IMPLEMENTATION: Secure Webhook (Server Boundary)**: Buat skrip *template* `deploy.php` yang dilindungi dengan *secret token header*, metode abstrak POST, perlindungan terminal *log-to-file*, dan direkomendasikan ditempatkan secara rahasia sebagai `deploy-[hash].php` atau minimal di-*proxy* di cPanel, menghindari pencurian kode rahasia di dalam `.env` publik root cPanel.
-5. [x] **SERVER RE-AUDIT (EXISTING SYSTEM)**: Desain *pure pull deploy* digugurkan berkat pemahaman struktur peladen faktual (`deploy.sh` bawaan server memanggil `build.tar.gz` di atas mesin rilis *zero-downtime* semacam Envoyer pada `/apps/thechoosentalks`).
-6. [x] **DEPLOYMENT REDESIGN (PATH B1 - SHALLOW CLONE)**: Lestarikan utuh infrastruktur *release layout* cPanel (`current`, `releases/`, `shared/` & skrip *rollback*). Konversi ekspektasi skrip `deploy.sh` dari membaca `build.tar.gz` eksternal menjadi eksekusi `git clone --depth 1` per rilis repositori aslinya. Hapus logik *artifact* bawaan lama, pastikan `route:cache` tetap dilarang, dan pertahankan otomatisasi migrasi database.
-7. [ ] **SERVER-SIDE MANUAL SETUP & GITHUB SIDE SETUP**: Eksekusi penerapan (sandi otentikasi, trigger webhook rahasia, git permissions) digiring sesudah penyusunan modifikasi script rilis diselesaikan dan disuntikkan ke server.
+Project state is now split more cleanly across infrastructure, backend deployment, and frontend product work.
 
-## Track 5: Frontend Visual Reset & Component Redesign (Paused)
+The most important recent shift came from direct manual cPanel/server audit. That audit confirmed that the production backend is **not** a blank Laravel root and **not** a simple single-folder deploy. Production already uses a release-based deployment architecture with:
 
-1. [x] **App Layout & Global Shell:** Implement `Dawn Theme` variables logic lock internally inside `globals.css` and `AppShell.tsx` layouts. Remove `bg-mesh` and old shadow artifacts.
-2. [x] **Core Batch Redesign:** Apply structural redesign (`tct-card-pad`, explicit semantic mapped class instead of `slate` tokens) against `/today`, `/versehub/[uuid]`, `/paths`, dan `/community` screens. 
-3. [ ] **Secondary UI Sweep**: Migrate profile, inbox, and other standalone UI routes into `Dawn Theme` constraints. Add missing responsive alignments.
-4. [ ] **Page Pruning:** Execute hard delete of obsolete routes mapped as REMOVE (`/library`, `/visitors`) from `navigation-ia.md`. Fix references and linkings afterward.
+- `releases/`
+- `shared/.env`
+- `shared/storage`
+- `current`
+- `deploy.sh`
+- `rollback.sh`
+- `healthcheck.sh`
 
-## After Immediate
-1. Tutup placeholder dokumentasi yang memang masih dipakai pada roadmap, architecture, dan testing.
-2. Siapkan release-readiness report final setelah blocker server berubah menjadi `PASS`, `CLOSED`, atau `ACCEPTED RISK`.
+It also confirmed that:
 
-## Execution Rule
-Jangan buka step berikutnya sebelum step sekarang berstatus PASS atau BLOCKED.
+- `~/public_html/index.php` forwards to:
+  `/home/thechoosentalks/deploy/apps/thechoosentalks/current/public/index.php`
+- the existing deployment model was artifact-based
+- the repo-side deployment redesign has now been adapted toward **Path B1**:
+  preserve `releases/current/shared`, but replace artifact materialization with release-based shallow clone + sparse checkout of `backend-api`
+
+## Stable / Closed Areas
+
+The following product/domain tracks are already considered stable/closed for the current phase:
+
+- Profile lifecycle — CLOSED
+- Inbox / DM — CLOSED
+- Community — CLOSED
+- VerseHub — CLOSED
+- Spiritual Journeys — CLOSED
+
+Infrastructure/public host progress already achieved:
+
+- `https://www.thechoosentalks.org` is healthy
+- EdgeOne binding for `www` is effective
+- HTTPS for `www` is deployed and working
+
+Frontend system progress already achieved:
+
+- visual foundation / shell reset has passed
+- Core V1 navigation has been tightened
+- Dawn/light-direction shell cleanup has started successfully
+
+## In Progress
+
+### Backend deployment redesign
+Repo-side deployment redesign is now considered **PASS**.
+
+What has been completed:
+
+- push-based GitHub Actions deploy via SSH/SCP has been retired as the preferred path
+- deployment redesign now targets a pull-style release materialization model
+- existing production release architecture is being preserved
+- Path B1 was selected:
+  release-based shallow clone with sparse checkout of `backend-api`
+- `backend-api/deploy.sh` has been adapted repo-side accordingly
+
+### Manual server execution
+Manual cPanel/server work has started and several steps are already complete:
+
+- server environment validated:
+  - `php` available
+  - `composer` available
+  - `git` available
+- current symlink verified
+- existing `deploy.sh` backed up
+- replacement `deploy.sh` placed server-side
+- `/home/thechoosentalks/.deploy_secret` created
+- GitHub deploy key created
+- GitHub SSH authentication works
+
+## Newly Learned From Manual cPanel Audit
+
+The manual shell audit changed several earlier assumptions.
+
+### Production backend layout is real and already operational
+The server already has a real production deployment structure. This means deployment redesign must **adapt** an existing system rather than replace it from scratch.
+
+### `public_html` is only a bridge
+`public_html` is not the full backend root. It acts as a webroot bridge to the active release through `current/public/index.php`.
+
+### Existing deploy system is more mature than originally assumed
+The presence of:
+
+- release directories
+- shared state
+- rollback
+- healthcheck
+- current symlink switching
+
+means production already has a zero-downtime style deployment shape worth preserving.
+
+## Still Open / Unresolved
+
+### Backend deploy execution not yet validated
+Repo-side redesign is complete, but the new deployment path has **not yet been executed successfully on the real server**.
+
+Still pending:
+
+- create real webhook file in `public_html`
+- validate webhook PHP syntax
+- validate absolute paths in webhook
+- run new `deploy.sh` manually
+- verify release creation and `current` switch
+- verify sparse-checkout materialization is complete and correct
+- manually test webhook via `curl`
+- only then wire GitHub Actions to the new webhook
+
+### Apex HTTPS remains unresolved
+`https://thechoosentalks.org` is still a separate unresolved server-side concern.
+
+Current understanding:
+
+- `www` is healthy and should remain the active public host
+- apex HTTPS recovery still requires separate server-side handling
+- webhook should use the healthy `www` host for now
+
+### Frontend V1 redesign batch is paused, not cancelled
+Frontend shell/foundation reset already passed, but deeper V1 surface redesign has not resumed yet because backend deployment execution and server reality work took priority.
+
+Pending frontend continuation later:
+
+- Today redesign
+- VerseHub surface redesign
+- Community surface redesign
+- Paths surface redesign
+- route deprecation/removal cleanup after redesign stabilizes
