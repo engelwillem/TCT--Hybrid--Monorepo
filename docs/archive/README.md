@@ -13,6 +13,6 @@ Folder ini menyimpan arsip non-runtime:
 Folder ini tidak ditujukan untuk workflow harian dan sebaiknya tidak dibebani git history aktif.
 
 ## Archive Layout
-- `core-legacy/`: bekas `docs/core/`, dipertahankan hanya sebagai jejak historis.
+- `core-legacy/`: salinan arsip dari `docs/core/` untuk pemisahan historis non-destruktif.
 - `TCT--Laravel--Legacy-main/`: snapshot repo legacy.
 - `legacy-references/`, `laravel-root-orphans/`, `visual-audits/`, dan folder lain: material referensi lama.

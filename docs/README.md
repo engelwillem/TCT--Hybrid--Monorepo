@@ -1,6 +1,6 @@
 # Documentation Index
 
-Folder `docs/` adalah pusat dokumentasi proyek. Untuk kebutuhan web saat ini, gunakan folder bernomor sebagai sumber kebenaran utama. Semua material historis, legacy, dan referensi kerja lama dipusatkan ke `docs/archive/`.
+Folder `docs/` adalah pusat dokumentasi proyek. Untuk kebutuhan web saat ini, gunakan folder bernomor sebagai sumber kebenaran utama. Struktur lama tetap dipertahankan, dan `docs/archive/` dipakai sebagai lapisan arsip tambahan tanpa mengganti nama folder/file yang sudah ada.
 
 ## Source of Truth
 - `docs/09-handover/`: status proyek, blocker aktif, dan urutan aksi terbaru.
@@ -22,9 +22,10 @@ Folder `docs/` adalah pusat dokumentasi proyek. Untuk kebutuhan web saat ini, gu
 - `docs/09-handover/`: pegangan eksekusi terbaru untuk melanjutkan pekerjaan.
 
 ## Historical / Non-Primary Areas
+- `docs/core/`: struktur lama yang tetap dipertahankan apa adanya untuk kompatibilitas referensi lama.
 - `docs/archive/`: arsip historis, visual audits, bundle, dan snapshot lama.
 - `docs/quarantine/`: dump sensitif atau artefak sementara yang tidak boleh dijadikan rujukan kerja harian.
-- `docs/archive/core-legacy/`: dokumen kerja lama yang dipertahankan hanya untuk jejak historis.
+- `docs/archive/core-legacy/`: salinan arsip dari material `docs/core/` untuk pemisahan historis non-destruktif.
 - `docs/archive/TCT--Laravel--Legacy-main/`: snapshot legacy repo untuk referensi, bukan area dokumentasi aktif.
 
 ## Current Reality
@@ -34,5 +35,7 @@ Folder `docs/` adalah pusat dokumentasi proyek. Untuk kebutuhan web saat ini, gu
 
 ## Documentation Rules
 - Tambahkan dokumen kerja baru ke folder bernomor yang relevan.
+- Jangan rename atau memindahkan folder/file dokumentasi yang sudah ada hanya untuk merapikan struktur.
+- Bila current situation butuh jalur yang lebih jelas, tambahkan folder atau dokumen baru tanpa merusak struktur lama.
 - Jangan menaruh dokumen aktif baru di `archive/` atau `quarantine/`.
 - Jika status feature/domain berubah, update minimal `04-domains/*`, `06-testing/*`, dan `09-handover/*` agar tidak terjadi drift status.

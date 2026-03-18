@@ -63,7 +63,8 @@
   - **HASIL TERBARU (2026-03-17 Re-run):** Workflow dieksekusi ulang tanpa *Preflight TCP probe*. Ternyata eksekusi log terbaru (Run #23188599919) kembali mogok mutlak di `Upload artifact and deploy scripts` via `scp` (`ssh: connect to host *** port ***: Connection timed out`).
 - akar masalah final: Firewall IP/TCP cPanel (CSF/LFD) menolak secara statis terhadap IP luar tanpa VPN (termasuk GitHub Runner IP ranges). Ini berarti pemblokiran adalah prosedur keamanan *default*, bukan *rate-limit* aktif.
 - transisi arsitektur (2026-03-17): Repositori beralih ke arsitektur **Pull-Based Deployment** termutakhir (Hardened). Memisahkan file PHP *webhook* rahasia murni di luar repositori (atau bernama *hash unguessable*), mencegah eksploitasi URL, menggunakan metode log asinkron minimal (tanpa *echo* bash), *git reset --hard* (mencegah *stash conflict*), serta strategi *cache* konservatif (menghindari `route:cache` tahap awal).
-- status: **READY FOR PATCH (Pull Deploy Redesign)**
+- pergerakan implementasi (2026-03-18): *File workflow* GitHub Action telah dibongkar sepenuhnya menjadi *webhook trigger* (`curl`). *Deploy script* repositori diringkas khusus untuk mengeksekusi *cache reset*, *git pull*, dan sinkronisasi pustaka PHP secara lokal. Kerangka dasar server `webhook-template.php` dilepaskan khusus untuk konfigurasi manual.
+- status: **READY FOR SERVER ACTION (Webhook Registration)**
 
 - context: Akses publik `www.thechoosentalks.org` mengalami `ERR_CERT_COMMON_NAME_INVALID`. Error ini murni konfigurasi rilis eksternal. Repo code tidak membutuhkan *patch* atau perbaikan. Titik masalah terisolasi pada sisi DNS, CDN Binding, atau SAN TLS.
 - exact checks by layer:

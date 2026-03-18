@@ -1,108 +1,31 @@
-name: Backend cPanel Deploy
+name: Backend Pull Deploy Trigger
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
     paths:
       - 'backend-api/**'
       - '.github/workflows/backend-cpanel-deploy.yml'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
 
 jobs:
-  deploy-backend:
+  trigger-pull-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend-api
-    env:
-      DEPLOY_PATH: ${{ secrets.CPANEL_DEPLOY_PATH }}
-      SSH_HOST: ${{ secrets.CPANEL_SSH_HOST }}
-      SSH_PORT: ${{ secrets.CPANEL_SSH_PORT }}
-      SSH_USER: ${{ secrets.CPANEL_SSH_USER }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: backend-api/package-lock.json
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, pdo_mysql
-          coverage: none
-
-      - name: Validate required deploy secrets
+      - name: Trigger Webhook
         run: |
-          test -n "$DEPLOY_PATH"
-          test -n "$SSH_HOST"
-          test -n "$SSH_PORT"
-          test -n "$SSH_USER"
-
-      - name: Install backend PHP dependencies
-        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-
-      - name: Install backend frontend dependencies
-        run: npm ci
-
-      - name: Build backend assets
-        run: npm run build
-
-      - name: Create backend release artifact
-        run: |
-          tar -czf ../build.tar.gz \
-            --exclude=.git \
-            --exclude=node_modules \
-            --exclude=tests \
-            --exclude=storage/logs \
-            --exclude=storage/framework/cache \
-            --exclude=database/database.sqlite \
-            --exclude=.env \
-            .
-          sha256sum ../build.tar.gz | awk '{print $1}' > ../build.tar.gz.sha256
-
-
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.CPANEL_SSH_KEY }}
-
-      - name: Upload artifact and deploy scripts
-        working-directory: .
-        run: |
-          # Added ConnectTimeout to prevent hanging jobs
-          SCP_OPTIONS="-P $SSH_PORT -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
-          scp $SCP_OPTIONS build.tar.gz "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/build.tar.gz"
-          scp $SCP_OPTIONS build.tar.gz.sha256 "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/build.tar.gz.sha256"
-          scp $SCP_OPTIONS backend-api/deploy.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/deploy.sh"
-          scp $SCP_OPTIONS backend-api/healthcheck.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/healthcheck.sh"
-          scp $SCP_OPTIONS backend-api/rollback.sh "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/rollback.sh"
-
-      - name: Run remote deploy
-        working-directory: .
-        run: |
-          ssh -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST" "
-            set -e
-            mkdir -p '$DEPLOY_PATH'
-            chmod 700 '$DEPLOY_PATH/deploy.sh' '$DEPLOY_PATH/healthcheck.sh' '$DEPLOY_PATH/rollback.sh' || true
-            export ARTIFACT_PATH='$DEPLOY_PATH/build.tar.gz'
-            export ARTIFACT_SHA256=\$(cat '$DEPLOY_PATH/build.tar.gz.sha256')
-            bash '$DEPLOY_PATH/deploy.sh'
-          "
-
-      - name: Local Workspace Hygiene Cleanup
-        if: always()
-        working-directory: .
-        run: |
-          echo "Cleaning up heavy local build artifacts to save GitHub Storage..."
-          rm -f build.tar.gz build.tar.gz.sha256
+          echo "Triggering pull deployment on cPanel..."
+          
+          # HTTP Status Code validation
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "HTTP_X_DEPLOY_TOKEN: ${{ secrets.DEPLOY_SECRET_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.WEBHOOK_URL }}")
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "Successfully queued pull deployment over HTTPS!"
+          else
+            echo "::error::Webhook trigger failed with status code $HTTP_STATUS."
+            exit 1
+          fi

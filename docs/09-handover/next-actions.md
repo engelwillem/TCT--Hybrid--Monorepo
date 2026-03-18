@@ -14,9 +14,14 @@
 2. [x] **Pipeline Re-Run (IMMEDIATE ACTION)**: Karena *file workflow* lokal telah dihilangkan duri *TCP timeout*-nya, kode perlu diikat ke commit baru dan digeser ke *remote repository*. Validasi log Github Action secara nyata untuk memastikan blokade rilis tidak menyala.
 ## Track 4: Backend Pull Deploy Redesign (Active Design Lock)
 1. [x] **DECISION: Push vs Pull Deploy Redesign**: Evaluasi hasil kebuntuan blokir LFD cPanel terbaru menyatakan opsi menyusup ke `scp` `ssh` diblokir permanen oleh tembok api provider hosting. Konfigurasi beralih ke arsitektur **Pull-Based Deployment**.
-2. [ ] **IMPLEMENTATION: Deploy Scripts (Repo Boundary)**: Tulis `backend-api/deploy.sh` murni, difokuskan pada `git fetch --all`, `git reset --hard`, `composer install`, dan eksekusi cache secara konservatif (`optimize:clear`, `config:cache`, `view:cache`). Dilarang memakai `git stash` atau `route:cache` yang prematur.
-3. [ ] **IMPLEMENTATION: Secure Webhook (Server Boundary)**: Buat skrip *template* `deploy.php` yang dilindungi dengan *secret token header*, metode abstrak POST, perlindungan terminal *log-to-file*, dan direkomendasikan ditempatkan secara rahasia sebagai `deploy-[hash].php` atau minimal di-*proxy* di cPanel, menghindari pencurian kode rahasia di dalam `.env` publik root cPanel.
-4. [ ] **CI/CD Workflow**: Ubah `backend-cpanel-deploy.yml` semata-mata menjadi pemanggil API (`curl -X POST`) yang mengalokasikan Token untuk memantik Webhook tersebut seusai fase QA Code selesai.
+2. [x] **IMPLEMENTATION: Deploy Scripts (Repo Boundary)**: Tulis `backend-api/deploy.sh` murni, difokuskan pada `git fetch --all`, `git reset --hard`, `composer install`, dan eksekusi cache secara konservatif (`optimize:clear`, `config:cache`, `view:cache`). Dilarang memakai `git stash` atau `route:cache` yang prematur.
+3. [x] **IMPLEMENTATION: Secure Webhook (Server Boundary)**: Buat skrip *template* `deploy.php` yang dilindungi dengan *secret token header*, metode abstrak POST, perlindungan terminal *log-to-file*, dan direkomendasikan ditempatkan secara rahasia sebagai `deploy-[hash].php` atau minimal di-*proxy* di cPanel, menghindari pencurian kode rahasia di dalam `.env` publik root cPanel.
+4. [x] **CI/CD Workflow**: Ubah `backend-cpanel-deploy.yml` semata-mata menjadi pemanggil API (`curl -X POST`) yang mengalokasikan Token untuk memantik Webhook tersebut seusai fase QA Code selesai.
+5. [ ] **SERVER-SIDE MANUAL SETUP**: Operator sisi server cPanel wajib: 
+   - Meletakkan `webhook-template.php` sebagai public web root file dengan nama tak tertebak (misal `deploy-random123.php`).
+   - Menyimpan *deploy secret* dalam config atau file `.env` absolut di folder tersembunyi.
+   - Mengatur SSH keys server ke repository.
+   - Memasukkan parameter otentikasi ke Github Secret `WEBHOOK_URL` & `DEPLOY_SECRET_TOKEN`.
 
 ## Track 5: Frontend Visual Reset & Component Redesign (Paused)
 

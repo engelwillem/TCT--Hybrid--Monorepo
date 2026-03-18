@@ -186,7 +186,9 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - Re-Test Deploy (2026-03-17): GAGAL. Menghapus job *Preflight TCP Reachability Check* dari berkas `backend-cpanel-deploy.yml` ternyata **tidak memecahkan masalah**. Eksekusi log terbaru masih mogok persis pada langkah `scp` di urutan `Upload artifact and deploy scripts` (`ssh: connect to host *** port ***: Connection timed out`).
 - Kesimpulan Lanjutan: Penolakan TCP *timeout* murni berasal dari aturan tembok api *cPanel (CSF/mod_security)* blokir IP default, BUKAN akibat sekadar *false positive rate-limit port scan*. Server secara absolut tidak mengizinkan satupun *IP range* Github Runner untuk melakukan koneksi SSH ke nomor IP/Port tersebut.
 - Action Plan cPanel: Mempertahankan arsitektur *Push Deploy* memaksakan admin VPS memelihara *whitelist* IP Github Action yang terus berubah secara konstan. Disarankan beralih ke arsitektur **Pull-Based Deploy** yang di-*harden* secara keamanan: Endpoint *webhook* dienkripsi dengan *unguessable hash path* (`deploy-[hash].php`), metode respons minimal, tidak ada `git stash` acak (harus `reset --hard`), serta secret token murni lokal tanpa ada di *repository*.
-- Status: READY FOR PATCH
+- Action Taken (2026-03-18): Repo sudah resmi memiliki aset *Pull Deploy Redesign*. Berkas `backend-api/deploy.sh` menggunakan arsitektur aman `reset --hard` (tanpa `stash`) dengan eksekusi `cache` konservatif. `backend-cpanel-deploy.yml` diubah 100% menjadi trigger webhook JSON via POST HTTP. Berkas pendamping manual server (`backend-api/webhook-template.php`) telah diregistrasi BUKAN sebagai rilis otomatis.
+- Implementasi Mandatory cPanel: Administrator SERVER harus mengambil `webhook-template.php`, melakukan _rename_ menjadi hash acak, memindahkannya ke lokasi eksekusi yang valid, menyesuaikan path ke `.env` utama yang berada DI LUAR WEBROOT (`public_html/.env` rawan eksploitasi), serta men-set Github Actions Secret: `WEBHOOK_URL` & `DEPLOY_SECRET_TOKEN` ke portal repositori.
+- Status: PASS (Repo Boundary) | NEEDS SERVER CONFIGURATION (Server Boundary)
 
 ---
 

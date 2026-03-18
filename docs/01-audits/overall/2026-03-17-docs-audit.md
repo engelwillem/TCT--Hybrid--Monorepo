@@ -30,7 +30,7 @@ Dokumentasi menunjukkan proyek sudah melewati fase migrasi domain inti dan kini 
 
 ## High-Signal Findings
 ### 1. Sumber kebenaran masih terpecah
-Folder bernomor sudah dipakai sebagai dokumentasi aktif, tetapi sebelumnya dokumen historis dan snapshot legacy masih terlalu dekat dengan area kerja harian. Pada audit ini, material tersebut dipusatkan ke `docs/archive/` agar current web situation lebih tegas.
+Folder bernomor sudah dipakai sebagai dokumentasi aktif, tetapi dokumen historis dan snapshot legacy masih terlalu dekat dengan area kerja harian. Arah perapihannya adalah memakai `docs/archive/` sebagai lapisan arsip tambahan tanpa harus merusak struktur lama.
 
 ### 2. Ada drift status antar dokumen
 Contoh paling jelas: `community smart composer` sudah `PASS/CLOSED` di dokumen domain dan blocker, tetapi masih tertulis `BLOCKED` di checklist parity.
@@ -84,7 +84,7 @@ Urutan paling aman:
 
 ## Cleanup Actions Applied in This Audit
 - Memperjelas `docs/README.md` agar tim tahu area aktif vs historis.
-- Memindahkan material historis/legacy ke `docs/archive/` agar tidak bercampur dengan area current.
+- Menegaskan `docs/archive/` sebagai area arsip tambahan, tanpa menjadikannya alasan untuk mengganti nama struktur lama yang sudah ada.
 - Memperbarui `docs/09-handover/current-status.md` agar lebih sesuai dengan realitas web saat ini.
 - Menyelaraskan bagian penting di `docs/06-testing/parity/local-vs-production-checklist.md` dengan bukti docs terbaru.
 - Menulis changelog audit hari ini di `docs/08-changelog/daily/2026-03-17.md`.
