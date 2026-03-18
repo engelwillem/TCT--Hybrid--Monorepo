@@ -188,7 +188,27 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - Action Plan cPanel: Mempertahankan arsitektur *Push Deploy* memaksakan admin VPS memelihara *whitelist* IP Github Action yang terus berubah secara konstan. Disarankan beralih ke arsitektur **Pull-Based Deploy** yang di-*harden* secara keamanan: Endpoint *webhook* dienkripsi dengan *unguessable hash path* (`deploy-[hash].php`), metode respons minimal, tidak ada `git stash` acak (harus `reset --hard`), serta secret token murni lokal tanpa ada di *repository*.
 - Action Taken (2026-03-18): Repo sudah resmi memiliki aset *Pull Deploy Redesign*. Berkas `backend-api/deploy.sh` menggunakan arsitektur aman `reset --hard` (tanpa `stash`) dengan eksekusi `cache` konservatif. `backend-cpanel-deploy.yml` diubah 100% menjadi trigger webhook JSON via POST HTTP. Berkas pendamping manual server (`backend-api/webhook-template.php`) telah diregistrasi BUKAN sebagai rilis otomatis.
 - Implementasi Mandatory cPanel: Administrator SERVER harus mengambil `webhook-template.php`, melakukan _rename_ menjadi hash acak, memindahkannya ke lokasi eksekusi yang valid, menyesuaikan path ke `.env` utama yang berada DI LUAR WEBROOT (`public_html/.env` rawan eksploitasi), serta men-set Github Actions Secret: `WEBHOOK_URL` & `DEPLOY_SECRET_TOKEN` ke portal repositori.
-- Status: PASS (Repo Boundary) | NEEDS SERVER CONFIGURATION (Server Boundary)
+- **Pre-Install Checklist**: 
+  - Git & Composer ter-install di server (pastikan path ke eksekusi murni via bash terjamin).
+  - Pastikan host URL webhook sehat (gunakan subdomain `www` sehat atau TLS valid agar trigger GitHub tidak terputus).
+- **Server Install Checklist** (Contoh asumsi user `username`):
+  1. `ssh-keygen -t ed25519 -f /home/username/.ssh/github_deploy_key`. Pasang `.pub` sebagai *Read-Only Deploy Key* di GitHub repo.
+  2. Eksekusi `git clone` murni di peladen menggunakan *absolute path*, misalnya ke `/home/username/thechoosentalksnext`.
+  3. Pindahkan `webhook-template.php` ke `/home/username/public_html/deploy-[unguessable-hash].php`.
+  4. Simpan nilai secret pada file khusus yang aman di luar webroot, misalnya di `/home/username/.deploy_secret` berisi token `DEPLOY_SECRET_TOKEN=my_random_secret_password`.
+  5. Edit file `.php` tersebut: pastikan lintasan variabel murni absolute (misal `$secretFilePath = '/home/username/.deploy_secret';` dan `$deployScript = '/home/username/thechoosentalksnext/backend-api/deploy.sh';`).
+  6. Setel permission skrip: `chmod +x /home/username/thechoosentalksnext/backend-api/deploy.sh`.
+  7. Pastikan variabel `LOG_FILE` di `deploy.sh` mengarah ke *absolute path* yang sah (misal `/home/username/deploy_webhook.log`).
+- **GitHub Side Checklist**:
+  1. Daftarkan rahasia repositori `WEBHOOK_URL` sesuai target HTTPS penuh dari `.php` yang disembunyikan.
+  2. Daftarkan `DEPLOY_SECRET_TOKEN` bernada sama persis dengan properti di peladen.
+  3. Hindari sama sekali menuntaskan rahasia atau rancangan *path* ke dalam *commit* kode.
+- **Validation & Failures**:
+  - Test via terminal manual: `curl -X POST -H "X-Deploy-Token: [secret]" https://[host]/deploy-[hash].php`.
+  - Harapan output: `{"status":"deployment queued"}` diikuti log yang mengalir stabil (via `tail -f /home/username/deploy_webhook.log`).
+  - **405** = Dilarang `GET`. **403** = *X-Deploy-Token* Meleset. **500** = File PHP gagal menggapai *absolute path* ke script/log. Log hening = `shell_exec` dikunci *php.ini*.
+- **BLOCKER RESOLVED (2026-03-18)**: Audit mengungkap keberadaan struktur *zero-downtime symlink release*. Keputusan diambil untuk mengeksekusi migrasi Path B: Memodifikasi skrip `deploy.sh` lama milik server (mengganti tar/artifact drop menjadi Git fetch/archive local) & melestarikannya di samping *webhook trigger* baru. Hal ini mempertahankan arsitektur mapan tanpa membongkar fungsionalitas pengondisian symlink cPanel.
+- Status: PASS (Repo Boundary) | READY FOR DEPLOYMENT REDESIGN (Server Boundary)
 
 ---
 

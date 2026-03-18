@@ -64,7 +64,19 @@
 - akar masalah final: Firewall IP/TCP cPanel (CSF/LFD) menolak secara statis terhadap IP luar tanpa VPN (termasuk GitHub Runner IP ranges). Ini berarti pemblokiran adalah prosedur keamanan *default*, bukan *rate-limit* aktif.
 - transisi arsitektur (2026-03-17): Repositori beralih ke arsitektur **Pull-Based Deployment** termutakhir (Hardened). Memisahkan file PHP *webhook* rahasia murni di luar repositori (atau bernama *hash unguessable*), mencegah eksploitasi URL, menggunakan metode log asinkron minimal (tanpa *echo* bash), *git reset --hard* (mencegah *stash conflict*), serta strategi *cache* konservatif (menghindari `route:cache` tahap awal).
 - pergerakan implementasi (2026-03-18): *File workflow* GitHub Action telah dibongkar sepenuhnya menjadi *webhook trigger* (`curl`). *Deploy script* repositori diringkas khusus untuk mengeksekusi *cache reset*, *git pull*, dan sinkronisasi pustaka PHP secara lokal. Kerangka dasar server `webhook-template.php` dilepaskan khusus untuk konfigurasi manual.
-- status: **READY FOR SERVER ACTION (Webhook Registration)**
+- persyaratan eksekusi cPanel (Administrator):
+  - [ ] Bangun kunci rilis (`ssh-keygen -t ed25519 -f ~/.ssh/github_deploy_key`) dan otentikasi *Deploy Key* di GitHub.
+  - [ ] _Clone_ repo murni di direktori yang *absolut* (misal `/home/user/thechoosentalksnext`).
+  - [ ] Kustomisasi ganti nama `webhook-template.php` menjadi _hash url_ acak di dalam `public_html/`.
+  - [ ] Buat *file* rahasia mandiri di luar `/public_html` (misal di `/home/user/.deploy_secret`) dan tanam logik `DEPLOY_SECRET_TOKEN=kodeacak`.
+  - [ ] Edit file _webhook_ PHP untuk merujuk ke path absolut berkas rahasia tersebut, dan path absolut menuju `/home/user/thechoosentalksnext/backend-api/deploy.sh`. Pasang `chmod +x` pada bash script.
+- validasi & kegagalan (Failure Checkpoints):
+  - Test Curl: `curl -X POST -H "X-Deploy-Token: [secret_terpilih]" https://[host]/[webhook]-[hash].php`.
+  - Tonton via terminal server: `tail -f /home/user/deploy_webhook.log`.
+  - **405** (Akses GET browser), **403** (Token Beda/Hilang), **500** (Salah Absolute Path Config), **Timeout/Hening** (`shell_exec` dikunci *php.ini* peladen).
+  - Tautan webhook harus dikaitkan di repositori Github > Setelan > Rahasia (`WEBHOOK_URL` dan `DEPLOY_SECRET_TOKEN`). Gunakan URL host yang sehat TLS.
+- resolusi transisi (2026-03-18): Hasil audit nyata membuktikan arsitektur *release-based zero-downtime* canggih telah hidup di server (`deploy.sh` memuat logik bongkar *artifact*, symlink `shared/`, dan perputaran sakelar *current*). Merombak paksa menjadi sinkronisasi sederhana ("Path A") akan meledakkan sistem *rollback* server. Proyek ini migrasi ke "Path B": Mempertahankan struktur rilis matang peladen sekaligus mengkonversi mekanisme ambil data (dari *SCP artifact-drop* tak jalan ke metode lokal *git-based pull fetch*). *Webhook trigger* yang sudah direkayasa akan didesain memanggil kerangka skrip tua (yang kita modifikasi) ini.
+- status: **READY FOR DEPLOYMENT REDESIGN**
 
 - context: Akses publik `www.thechoosentalks.org` mengalami `ERR_CERT_COMMON_NAME_INVALID`. Error ini murni konfigurasi rilis eksternal. Repo code tidak membutuhkan *patch* atau perbaikan. Titik masalah terisolasi pada sisi DNS, CDN Binding, atau SAN TLS.
 - exact checks by layer:
