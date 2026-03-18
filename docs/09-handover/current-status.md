@@ -178,3 +178,39 @@ cleanup deploy tidak kompatibel
 Semua itu sekarang sudah tertutup.
 
 
+Bagus. Hasil audit end-to-end sekarang lulus di layer infrastruktur dan auth dasar.
+
+Yang sudah terbukti benar
+
+Frontend public live:
+thechoosentalks.org → OK
+www.thechoosentalks.org → OK
+
+API backend live:
+api.thechoosentalks.org/api/v1/today → 200 JSON
+
+Admin backend live:
+admin.thechoosentalks.org/admintalk/login → 200
+
+CORS preflight dari frontend asli lulus:
+apex → 204
+www → 204
+Access-Control-Allow-Origin sudah benar
+
+Sanctum CSRF/session cookie sudah benar:
+domain .thechoosentalks.org
+secure
+samesite=lax
+
+Kesimpulan audit
+Secara end-to-end, jalur frontend ↔ API sekarang sudah sehat untuk:
+DNS
+TLS
+routing
+backend env
+CORS
+Sanctum cookie issuance
+deployment backend
+
+Jadi blocker besar integrasi sudah selesai.
+
