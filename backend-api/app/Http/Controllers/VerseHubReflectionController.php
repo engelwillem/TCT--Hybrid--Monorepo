@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ReflectionResponse;
-use Inertia\Inertia;
 
 class VerseHubReflectionController extends Controller
 {
@@ -28,20 +27,16 @@ class VerseHubReflectionController extends Controller
             'is_private' => $request->is_private ?? true,
         ]);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'data' => [
-                    'id' => (string) $reflection->id,
-                    'verse_ref' => (string) $reflection->verse_ref,
-                    'question_text' => (string) $reflection->question_text,
-                    'answer_text' => (string) $reflection->answer_text,
-                    'is_private' => (bool) $reflection->is_private,
-                    'created_at' => optional($reflection->created_at)?->toIso8601String(),
-                ],
-            ], 201);
-        }
-
-        return back()->with('success', $lang === 'id' ? 'Refleksi tersimpan.' : 'Reflection saved.');
+        return response()->json([
+            'data' => [
+                'id' => (string) $reflection->id,
+                'verse_ref' => (string) $reflection->verse_ref,
+                'question_text' => (string) $reflection->question_text,
+                'answer_text' => (string) $reflection->answer_text,
+                'is_private' => (bool) $reflection->is_private,
+                'created_at' => optional($reflection->created_at)?->toIso8601String(),
+            ],
+        ], 201);
     }
 
     /**
@@ -53,23 +48,16 @@ class VerseHubReflectionController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'data' => [
-                    'items' => $reflections->items(),
-                    'meta' => [
-                        'current_page' => $reflections->currentPage(),
-                        'last_page' => $reflections->lastPage(),
-                        'per_page' => $reflections->perPage(),
-                        'total' => $reflections->total(),
-                    ],
+        return response()->json([
+            'data' => [
+                'items' => $reflections->items(),
+                'meta' => [
+                    'current_page' => $reflections->currentPage(),
+                    'last_page' => $reflections->lastPage(),
+                    'per_page' => $reflections->perPage(),
+                    'total' => $reflections->total(),
                 ],
-            ]);
-        }
-
-        return Inertia::render('VerseHub/MySpiritualJourney', [
-            'lang' => $lang,
-            'reflections' => $reflections,
+            ],
         ]);
     }
 }

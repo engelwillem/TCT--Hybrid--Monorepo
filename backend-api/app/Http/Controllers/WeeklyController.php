@@ -7,12 +7,10 @@ use App\Models\MemberPost;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class WeeklyController extends Controller
 {
-    public function index(string $slug): Response|JsonResponse
+    public function index(string $slug): JsonResponse
     {
         $user = auth()->user();
         $channel = Channel::query()
@@ -52,14 +50,10 @@ class WeeklyController extends Controller
             'memberPosts' => $memberPosts,
         ];
 
-        if (request()->expectsJson()) {
-            return response()->json($payload);
-        }
-
-        return Inertia::render('Channels/Weekly/Index', $payload);
+        return response()->json($payload);
     }
 
-    public function show(string $slug, string $date): Response|JsonResponse
+    public function show(string $slug, string $date): JsonResponse
     {
         $user = auth()->user();
         $channel = Channel::query()
@@ -102,10 +96,6 @@ class WeeklyController extends Controller
             'memberPosts' => $memberPosts,
         ];
 
-        if (request()->expectsJson()) {
-            return response()->json($payload);
-        }
-
-        return Inertia::render('Channels/Weekly/Show', $payload);
+        return response()->json($payload);
     }
 }

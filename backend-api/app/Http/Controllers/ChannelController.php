@@ -8,12 +8,10 @@ use App\Models\SsLesson;
 use App\Models\SsQuarter;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ChannelController extends Controller
 {
-    public function index(): Response|JsonResponse
+    public function index(): JsonResponse
     {
         $user = auth()->user();
         $allowedSlugs = ['sabbath-school', 'god-first', 'faith-journey', 'family', 'public-post'];
@@ -141,28 +139,14 @@ class ChannelController extends Controller
             ];
         }
 
-        if (request()->expectsJson()) {
-            return response()->json([
-                'channels' => $nonSabbathChannels,
-                'sabbathSchool' => [
-                    'channel' => $sabbathChannel,
-                    'activeQuarterId' => $activeQuarter?->id,
-                    'activeQuarter' => $activeQuarter,
-                    'quartersWithLessons' => $quartersWithLessons,
-                    'activeLessons' => $activeLessons->values(),
-                    'todayTarget' => $todayTarget,
-                ],
-            ]);
-        }
-
-        return Inertia::render('Channels/Index', [
+        return response()->json([
             'channels' => $nonSabbathChannels,
             'sabbathSchool' => [
                 'channel' => $sabbathChannel,
                 'activeQuarterId' => $activeQuarter?->id,
                 'activeQuarter' => $activeQuarter,
                 'quartersWithLessons' => $quartersWithLessons,
-                'activeLessons' => $activeLessons,
+                'activeLessons' => $activeLessons->values(),
                 'todayTarget' => $todayTarget,
             ],
         ]);

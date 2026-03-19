@@ -7,12 +7,10 @@ use App\Models\SsLesson;
 use App\Models\SsQuarter;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class SabbathSchoolController extends Controller
 {
-    public function index(): Response|JsonResponse
+    public function index(): JsonResponse
     {
         $quarters = SsQuarter::query()
             ->orderByDesc('year')
@@ -86,14 +84,10 @@ class SabbathSchoolController extends Controller
             'todayTarget' => $todayTarget,
         ];
 
-        if (request()->expectsJson()) {
-            return response()->json($payload);
-        }
-
-        return Inertia::render('Channels/SabbathSchool/QuarterIndex', $payload);
+        return response()->json($payload);
     }
 
-    public function lesson(int $year, int $quarter, int $lessonNumber): Response|JsonResponse
+    public function lesson(int $year, int $quarter, int $lessonNumber): JsonResponse
     {
         $q = SsQuarter::query()
             ->where('year', $year)
@@ -148,14 +142,10 @@ class SabbathSchoolController extends Controller
             'days' => $days,
         ];
 
-        if (request()->expectsJson()) {
-            return response()->json($payload);
-        }
-
-        return Inertia::render('Channels/SabbathSchool/DayShow', $payload);
+        return response()->json($payload);
     }
 
-    public function day(int $year, int $quarter, int $lessonNumber, string $dayKey): Response|JsonResponse
+    public function day(int $year, int $quarter, int $lessonNumber, string $dayKey): JsonResponse
     {
         $q = SsQuarter::query()
             ->where('year', $year)
@@ -186,10 +176,6 @@ class SabbathSchoolController extends Controller
             'days' => $days,
         ];
 
-        if (request()->expectsJson()) {
-            return response()->json($payload);
-        }
-
-        return Inertia::render('Channels/SabbathSchool/DayShow', $payload);
+        return response()->json($payload);
     }
 }

@@ -7,12 +7,10 @@ use App\Services\InboxService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Inertia\Inertia;
-use Symfony\Component\HttpFoundation\Response;
 
 class InboxController extends Controller
 {
-    public function index(Request $request, InboxService $service): Response
+    public function index(Request $request, InboxService $service): JsonResponse
     {
         $user = $request->user();
         abort_unless($user, 401);
@@ -21,14 +19,7 @@ class InboxController extends Controller
             'inbox' => $service->build($user),
         ];
 
-        // Support both:
-        // - JSON polling/fetch (`Accept: application/json`)
-        // - Inertia navigation (`Link` / router.visit('/inbox'))
-        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
-            return response()->json($payload);
-        }
-
-        return Inertia::render('Inbox/Index', $payload);
+        return response()->json($payload);
     }
 
     public function markAllRead(Request $request): JsonResponse

@@ -88,6 +88,19 @@ Manual cPanel/server work has started and several steps are already complete:
 - GitHub deploy key created
 - GitHub SSH authentication works
 
+### Backend codebase cleanup (Laravel scope narrowing)
+Cleanup menuju scope backend saat ini sudah berjalan dan progres utama tercapai:
+
+- web legacy routes telah dipangkas ke minimum yang masih relevan untuk Next + Filament
+- auth/web legacy controllers dan middleware yang tidak dipakai lagi telah dihapus
+- dependency cleanup fase 2 selesai untuk paket yang sudah tidak terpakai:
+  - `tightenco/ziggy` removed
+  - `laravel/breeze` removed
+- fase 3 selesai:
+  - controller campuran API/Inertia sudah direfactor menjadi API JSON-only
+  - `inertiajs/inertia-laravel` removed (final)
+- validasi integritas aplikasi pasca-cleanup: route list dan composer validation tetap lulus
+
 ## Newly Learned From Manual cPanel Audit
 
 The manual shell audit changed several earlier assumptions.
@@ -214,3 +227,33 @@ deployment backend
 
 Jadi blocker besar integrasi sudah selesai.
 
+# hasil yang sangat penting:
+Kesimpulan audit end-to-end
+
+## Flow login sudah tembus penuh:
+- csrf-cookie → 204
+- POST /api/auth/login → 422 JSON valid
+
+## response body backend terbaca normal:
+These credentials do not match our records.
+
+## Artinya:
+- frontend → proxy → backend sudah berfungsi
+- session/XSRF sudah benar
+- JSON response sudah benar
+
+error “tidak dapat terhubung ke server” yang tadi muncul adalah error handling UI lama, bukan kegagalan koneksi aktual
+
+## Diagnosis akhir
+Secara integrasi, sistem Anda sekarang sudah sehat.
+Yang gagal sekarang hanya autentikasi karena kredensial tidak cocok, bukan karena infrastruktur.
+
+# Apa artinya untuk project
+Anda sudah menyelesaikan bagian tersulit:
+- domain split frontend/backend
+- TLS frontend
+- proxy frontend ke Laravel
+- cookie Sanctum
+- deploy backend
+- CORS
+login endpoint end-to-end

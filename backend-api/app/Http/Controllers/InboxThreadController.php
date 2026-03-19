@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Inertia\Inertia;
-use Inertia\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class InboxThreadController extends Controller
 {
-    public function show(Request $request, User $user, DirectMessageController $dmController): Response|JsonResponse
+    public function show(Request $request, User $user, DirectMessageController $dmController): JsonResponse
     {
         $auth = $request->user();
         abort_unless($auth, 401);
@@ -25,15 +23,7 @@ class InboxThreadController extends Controller
             'last_seen_at' => optional($user->last_seen_at)?->toISOString(),
         ];
 
-        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
-            return response()->json([
-                'partner' => $partner,
-                'messages' => $chunk['messages'],
-                'paging' => $chunk['paging'],
-            ]);
-        }
-
-        return Inertia::render('Inbox/Show', [
+        return response()->json([
             'partner' => $partner,
             'messages' => $chunk['messages'],
             'paging' => $chunk['paging'],

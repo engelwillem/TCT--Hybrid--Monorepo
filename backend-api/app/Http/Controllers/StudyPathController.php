@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\StudyPath;
 use App\Models\UserStudyPathProgress;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class StudyPathController extends Controller
 {
@@ -20,14 +19,7 @@ class StudyPathController extends Controller
             ->orderBy('sort_order', 'asc')
             ->get();
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'lang' => $lang,
-                'paths' => $paths,
-            ]);
-        }
-
-        return Inertia::render('VerseHub/StudyPaths/Index', [
+        return response()->json([
             'lang' => $lang,
             'paths' => $paths,
         ]);
@@ -65,21 +57,7 @@ class StudyPathController extends Controller
         $canonicalUrl = url("/versehub/{$lang}/study/{$path->slug}");
         $ogImageUrl = url("/versehub/{$lang}/study/{$path->slug}/og.png");
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'lang' => $lang,
-                'path' => $path,
-                'userProgress' => $userProgress,
-                'meta' => [
-                    'title' => $title,
-                    'description' => $description,
-                    'canonical_url' => $canonicalUrl,
-                    'og_image_url' => $ogImageUrl,
-                ],
-            ]);
-        }
-
-        return Inertia::render('VerseHub/StudyPaths/Show', [
+        return response()->json([
             'lang' => $lang,
             'path' => $path,
             'userProgress' => $userProgress,
@@ -106,18 +84,14 @@ class StudyPathController extends Controller
         // Optional: Logic to track overall path enrollment state
         // For now, completion of first step effectively joins the path.
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'ok' => true,
-                'status' => 'joined',
-                'path' => [
-                    'id' => $path->id,
-                    'slug' => $path->slug,
-                ],
-            ]);
-        }
-
-        return back()->with('success', 'Joined the study path!');
+        return response()->json([
+            'ok' => true,
+            'status' => 'joined',
+            'path' => [
+                'id' => $path->id,
+                'slug' => $path->slug,
+            ],
+        ]);
     }
 
     /**
@@ -156,18 +130,14 @@ class StudyPathController extends Controller
             ->values()
             ->all();
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'ok' => true,
-                'progress' => [
-                    'last_step_order' => (int) $progress->last_step_order,
-                    'completed_at' => optional($progress->completed_at)?->toISOString(),
-                    'completed_step_ids' => $completedStepIds,
-                ],
-            ]);
-        }
-
-        return back();
+        return response()->json([
+            'ok' => true,
+            'progress' => [
+                'last_step_order' => (int) $progress->last_step_order,
+                'completed_at' => optional($progress->completed_at)?->toISOString(),
+                'completed_step_ids' => $completedStepIds,
+            ],
+        ]);
     }
 
     /**
