@@ -1,97 +1,40 @@
 # Open Blockers
 
-## 1. Backend pull-deploy has not yet been executed on the real server
+## 1. GitHub Actions SSH/SCP Access Blocked (Firewall)
 **Status:** OPEN  
-**Type:** server execution blocker  
-**Owner:** server/operator execution
+**Type:** infrastructure / CI-CD blocker  
+**Owner:** infrastructure/admin
 
 ### Why it is still open
-Repo-side deployment redesign is complete, but the new deploy path has not yet been proven on the actual server.
+Trigger deployment backend dari GitHub Actions runner (`backend-cpanel-deploy.yml`) secara konsisten gagal menjangkau server cPanel (TCP Timeout). Hal ini disebabkan oleh kebijakan firewall (CSF/LFD) di sisi hosting yang memblokir akses SSH masuk dari rentang IP dinamis GitHub runner.
 
-The following still remain unverified:
+### Impact
+Otomatisasi rilis dari GitHub terganggu. Saat ini rilis harus dilakukan secara manual dari terminal cPanel atau melalui pemicu lokal lainnya.
 
-- real webhook file creation under `public_html`
-- webhook syntax validation
-- manual `deploy.sh` execution with the new Path B1 logic
-- sparse-checkout release materialization correctness
-- `current` symlink switch correctness
-- healthcheck compatibility under the new release materialization path
-- manual webhook trigger success
-- GitHub Actions integration with the new webhook path
+### Official Workaround (The Daily Operation)
+Gunakan terminal cPanel untuk eksekusi asinkron:
+```bash
+HEALTHCHECK_BASE_URL="https://api.thechoosentalks.org" bash /home/thechoosentalks/deploy/apps/thechoosentalks/deploy.sh
+```
 
-### What must happen next
-- create and validate the real webhook file
-- run `deploy.sh` manually
-- inspect release and shared links
-- test webhook manually
-- only then connect GitHub Actions
+### Path to Resolution
+- Whitelist rentang IP GitHub Actions (High Maintenance).
+- Perkuat sistem Webhook HTTP (pemicu alternatif tanpa SSH).
+- Instalasi Runner lokal di VPS (Self-hosted runner).
 
 ---
 
-## 2. Webhook is not yet installed and validated
-**Status:** OPEN  
-**Type:** server-local deploy blocker  
-**Owner:** server/operator execution
-
-### Why it is still open
-The earlier server command sequence stopped at the webhook creation step because a placeholder filename was used literally (`<RANDOM_WEBHOOK>`), which caused shell syntax failure.
-
-That means:
-
-- the real webhook file does not yet exist
-- webhook syntax has not yet been checked
-- token validation has not yet been proven
-- webhook logging has not yet been proven
-- webhook-triggered deploy has not yet been observed
-
-### What must happen next
-- choose a real webhook filename
-- create the PHP webhook file under `public_html`
-- confirm absolute paths inside it
-- validate with `php -l`
-- test with manual `curl`
-
----
-
-## 3. Apex HTTPS is still unresolved
-**Status:** OPEN  
-**Type:** infrastructure / public host blocker  
-**Owner:** server/provider-side action
-
-### Current state
-- `https://www.thechoosentalks.org` is healthy
-- apex HTTP redirect behavior is only partial
-- apex HTTPS is not yet fully healthy
-
-### Why this remains open
-Registrar/domain forwarding alone is not sufficient to guarantee safe apex HTTPS behavior in the current provider setup.
-
-The likely practical path remains:
-- use server/cPanel-side HTTPS handling for apex
-- terminate HTTPS safely for `thechoosentalks.org`
-- perform permanent redirect to `https://www.thechoosentalks.org/*`
-- preserve path
-
-### Important note
-This blocker does **not** need to stop backend deploy execution right now, because the webhook can and should use the healthy `www` host.
-
----
-
-## 4. Frontend V1 redesign batch has not resumed yet
-**Status:** OPEN WORK / NOT AN ACTIVE BLOCKER TO BACKEND DEPLOY  
+## 2. Frontend V1 redesign batch has not resumed yet
+**Status:** OPEN BACKLOG  
 **Type:** product/UI execution backlog  
-**Owner:** frontend/product workstream
+**Owner:** frontend/product
 
 ### Current state
-Frontend shell/foundation reset already passed, but deeper screen redesign work is paused while backend deploy execution/server validation is being stabilized.
+Frontend shell/foundation reset sudah PASS, namun pembedahan visual pada pilar inti (Today, VerseHub, Community, Paths) dipause sementara untuk menstabilkan integrasi API dan infrastruktur backend.
 
-Pending work later includes:
+---
 
-- Today redesign
-- VerseHub redesign
-- Community redesign
-- Paths redesign
-- final deprecation/removal decisions for parked routes
-
-### Why it is listed here
-This is not blocking backend deployment execution, but it remains an active unfinished workstream and should not be forgotten while server-side work is ongoing.
+## RESOLVED BLOCKERS (2026-03-19)
+- [x] **Backend pull-deploy execution**: Berhasil dieksekusi manual di server. Layout release (`releases/`, `current`, `shared`) terbukti sehat.
+- [x] **Apex HTTPS & Domain Parity**: `thechoosentalks.org` dan `www` keduanya merespons HTTPS dengan sertifikat valid.
+- [x] **Webhook Strategy Alignment**: Keputusan teknis pemicu asinkron sudah diambil; implementasi webhook tidak lagi menghambat rilis harian (karena manual deploy sudah stabil).
