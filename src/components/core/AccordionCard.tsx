@@ -26,21 +26,21 @@ export default function AccordionCard({
     return (
         <div
             className={cn(
-                'rounded-[32px] bg-white/[0.02] text-white shadow-[0_8px_32px_rgba(0,0,0,0.2)] ring-1 ring-white/5 backdrop-blur-md overflow-hidden transition-all hover:ring-white/10',
+                'overflow-hidden rounded-[32px] bg-surface text-foreground shadow-card ring-1 ring-border/60 backdrop-blur-md transition-all hover:ring-border',
                 className,
             )}
         >
             <button
                 type="button"
-                className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-white/[0.04]"
+                className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-surface-muted/70"
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-controls={contentId}
             >
                 <div className="min-w-0">
-                    <h3 className="text-sm font-bold uppercase tracking-[0.15em]">{title}</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-foreground">{title}</h3>
                     {description ? (
-                        <p className="mt-1 text-xs text-white/50 font-medium">{description}</p>
+                        <p className="mt-1 text-xs font-medium text-muted-foreground">{description}</p>
                     ) : null}
                 </div>
 
@@ -48,7 +48,7 @@ export default function AccordionCard({
                     {headerRight ?? null}
                     <span
                         className={cn(
-                            'mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/70 transition-all duration-300 hover:bg-white/10 hover:text-white',
+                            'mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted ring-1 ring-border/60 text-muted-foreground transition-all duration-300 hover:bg-surface-elevated hover:text-foreground',
                             open ? 'rotate-180' : 'rotate-0',
                         )}
                         aria-hidden="true"

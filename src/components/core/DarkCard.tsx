@@ -17,12 +17,12 @@ export default function DarkCard({
     return (
         <div
             className={cn(
-                'rounded-[32px] bg-white/[0.02] p-8 text-white shadow-[0_8px_32px_rgba(0,0,0,0.2)] ring-1 ring-white/10 backdrop-blur-md transition-all hover:bg-white/[0.04]',
+                'rounded-[32px] bg-surface p-8 text-foreground shadow-card ring-1 ring-border/60 backdrop-blur-md transition-all hover:bg-surface-elevated',
                 className,
             )}
         >
             {title ? (
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em] mb-6">{title}</h3>
+                <h3 className="mb-6 text-sm font-bold uppercase tracking-[0.2em] text-foreground/80">{title}</h3>
             ) : null}
             <div className="space-y-4">{children}</div>
             {actions ? <div className="mt-8">{actions}</div> : null}

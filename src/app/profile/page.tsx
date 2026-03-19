@@ -56,14 +56,36 @@ type ApiProfilePayload = {
     };
 };
 
-async function resolveSafeAvatarUrl(rawUrl: string | null | undefined): Promise<string | null> {
+function resolveSafeAvatarUrl(rawUrl: string | null | undefined): string | null {
     const candidate = String(rawUrl || '').trim();
     if (!candidate) return null;
 
+    if (candidate.startsWith('data:image/')) {
+        return candidate;
+    }
+
     try {
-        const response = await fetch(candidate, { method: 'HEAD', cache: 'no-store' });
-        return response.ok ? candidate : null;
+        return new URL(candidate).toString();
     } catch {
+        const apiBase =
+            process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL ||
+            process.env.NEXT_PUBLIC_API_BASE_URL ||
+            'https://api.thechoosentalks.org';
+        if (candidate.startsWith('/')) {
+            if (!apiBase) return candidate;
+            try {
+                return new URL(candidate, apiBase).toString();
+            } catch {
+                return candidate;
+            }
+        }
+        if (apiBase) {
+            try {
+                return new URL(`/${candidate.replace(/^\/+/, '')}`, apiBase).toString();
+            } catch {
+                return null;
+            }
+        }
         return null;
     }
 }
@@ -130,6 +152,11 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
+        const authAvatar = resolveSafeAvatarUrl(authUser?.photoURL || null);
+        if (authAvatar) {
+            setUser((prev) => ({ ...prev, avatarUrl: prev.avatarUrl || authAvatar }));
+        }
+
         const token = getAppAccessToken();
         if (!token) {
             setLoading(false);
@@ -152,7 +179,7 @@ export default function ProfilePage() {
                 const payload = (await response.json()) as ApiProfilePayload;
                 const apiUser = payload?.data?.user;
                 if (!isActive || !apiUser) return;
-                const safeAvatarUrl = await resolveSafeAvatarUrl(apiUser.avatar_url || authUser?.photoURL || null);
+                const safeAvatarUrl = resolveSafeAvatarUrl(apiUser.avatar_url || authUser?.photoURL || null);
                 if (!isActive) return;
 
                 const nextUser = {
@@ -255,7 +282,7 @@ export default function ProfilePage() {
 
             if (response.ok) {
                 if (payload?.data?.avatar_url) {
-                    const safeAvatarUrl = await resolveSafeAvatarUrl(payload.data.avatar_url);
+                    const safeAvatarUrl = resolveSafeAvatarUrl(payload.data.avatar_url);
                     setUser(prev => ({ ...prev, avatarUrl: safeAvatarUrl }));
                     showToast('Foto profil diperbarui');
                 }
@@ -604,7 +631,7 @@ export default function ProfilePage() {
                     {user.is_admin && opsGateway && (
                         <AccordionCard title="Gateway Operasional" className="ring-2 ring-brand/20 bg-brand/[0.02]">
                             <div className="space-y-4 pt-2">
-                                <div className="p-5 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md">
+                                <div className="rounded-3xl border border-border/60 bg-surface-muted p-5 backdrop-blur-md">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                                         <div>
                                             <p className="text-sm font-black text-foreground">Welcome back, {firstName}.</p>
@@ -648,12 +675,12 @@ export default function ProfilePage() {
                     <AccordionCard title="Informasi Personal">
                         <form className="space-y-6 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Nama Lengkap</label>
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Nama Lengkap</label>
                                 <Input value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
                                 {profileErrors.name && profileErrors.name.map((err, i) => <p key={`name-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Alamat Email</label>
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Alamat Email</label>
                                 <Input type="email" value={profileData.email} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
                                 {profileErrors.email && profileErrors.email.map((err, i) => <p key={`email-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
@@ -671,18 +698,18 @@ export default function ProfilePage() {
                     <AccordionCard title="Keamanan & Password">
                         <form className="space-y-6 pt-2" onSubmit={handlePasswordUpdate}>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Password Saat Ini</label>
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Password Saat Ini</label>
                                 <Input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                 {passwordErrors.current_password && passwordErrors.current_password.map((err, i) => <p key={`curr-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Password Baru</label>
+                                    <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Password Baru</label>
                                     <Input type="password" value={passwordData.new} onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                     {passwordErrors.password && passwordErrors.password.map((err, i) => <p key={`new-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-brand/50 uppercase tracking-[0.25em] ml-2">Konfirmasi</label>
+                                    <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Konfirmasi</label>
                                     <Input type="password" value={passwordData.confirm} onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                 </div>
                             </div>
