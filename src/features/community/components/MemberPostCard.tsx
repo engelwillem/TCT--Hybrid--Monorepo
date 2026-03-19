@@ -15,6 +15,7 @@ type MemberPostCardProps = {
   isOfficial?: boolean;
   type?: string;
   text?: string | null;
+  createdAt?: string | null;
   imgSrc?: string | null;
   mediaSrcList?: string[];
   aspectRatio?: "4:5" | "og" | "auto";
@@ -42,6 +43,7 @@ export function MemberPostCard({
   isOfficial,
   type,
   text,
+  createdAt,
   imgSrc,
   mediaSrcList,
   aspectRatio = "auto",
@@ -58,6 +60,37 @@ export function MemberPostCard({
   canModerate = false,
   onAdminHide,
 }: MemberPostCardProps) {
+  const postTimeLabel = useMemo(() => {
+    if (!createdAt) return "Baru saja";
+    const posted = new Date(createdAt);
+    if (Number.isNaN(posted.getTime())) return "Baru saja";
+
+    const now = new Date();
+    const diffMs = posted.getTime() - now.getTime();
+    const diffMinutes = Math.round(diffMs / 60000);
+
+    if (Math.abs(diffMinutes) < 1) return "Baru saja";
+    if (Math.abs(diffMinutes) < 60) {
+      return new Intl.RelativeTimeFormat("id", { numeric: "auto" }).format(diffMinutes, "minute");
+    }
+
+    const diffHours = Math.round(diffMinutes / 60);
+    if (Math.abs(diffHours) < 24) {
+      return new Intl.RelativeTimeFormat("id", { numeric: "auto" }).format(diffHours, "hour");
+    }
+
+    const diffDays = Math.round(diffHours / 24);
+    if (Math.abs(diffDays) <= 7) {
+      return new Intl.RelativeTimeFormat("id", { numeric: "auto" }).format(diffDays, "day");
+    }
+
+    return posted.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }, [createdAt]);
+
   const rawText = String(text ?? "").trim();
   const normalizedText =
     rawText.replace(/^\s*[\s\S]*?\*\*[^*]+\*\*[:：]?\s*/u, "").trim() || rawText.trim();
@@ -149,7 +182,7 @@ export function MemberPostCard({
                 {authorName ?? "Unknown"}
               </CardTitle>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Baru Saja</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{postTimeLabel}</p>
                 {isOfficial && (
                   <span className="flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-brand ring-1 ring-inset ring-brand/20">
                     <div className="h-1 w-1 rounded-full bg-brand animate-pulse" />

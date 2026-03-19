@@ -163,9 +163,14 @@ export default function PathsPage() {
                                 <p className="mt-1 text-xs text-muted-foreground">7 langkah refleksi praktis untuk menjaga hati tetap teduh dan fokus.</p>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="space-y-3">
+                                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">
+                                    Lanjutkan Langkah Hari Ini
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-3">
                                 <Link
                                     href="/versehub/id"
+                                    aria-label="Jelajahi VerseHub dulu"
                                     className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-background transition-all hover:scale-[1.01]"
                                 >
                                     Jelajahi VerseHub Dulu
@@ -173,6 +178,7 @@ export default function PathsPage() {
                                 </Link>
                                 <Link
                                     href="/community"
+                                    aria-label="Cari inspirasi di komunitas"
                                     className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-background px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-foreground transition-colors hover:bg-surface-muted"
                                 >
                                     <BookOpen className="h-4 w-4" />
@@ -180,11 +186,13 @@ export default function PathsPage() {
                                 </Link>
                                 <a
                                     href="mailto:engel.willem@gmail.com?subject=Notifikasi%20Paths%20Baru&body=Saya%20ingin%20diberitahu%20saat%20jalan%20spiritual%20baru%20tersedia."
+                                    aria-label="Beritahu saya saat jalan baru tersedia"
                                     className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-transparent px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-muted/60"
                                 >
                                     <RefreshCcw className="h-4 w-4" />
                                     Beritahu Saya
                                 </a>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

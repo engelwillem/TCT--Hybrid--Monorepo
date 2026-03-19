@@ -1,40 +1,61 @@
 # Community Module UI/UX Audit
 
 ## 1. Ringkasan Surface
-Modul **Community** (`src/features/community/pages/CommunityPage.tsx`) adalah ruang publik utama untuk berbagi refleksi, doa, dan kesaksian. Halaman ini memiliki logika *fallback* unik di mana jika tidak ada postingan aktif dalam 24 jam terakhir, sistem secara otomatis menarik konten terbaik dari arsip agar halaman tidak terlihat mati. Fokus iterasi ini adalah memastikan pengalaman transisi dan visual terasa premium, bukan sekadar "tambal sulam" logika.
+Surface Community yang diaudit berada di:
+- `src/features/community/pages/CommunityPage.tsx`
+- `src/features/community/components/MemberPostCard.tsx`
+- `src/features/community/components/PostComposer.tsx`
+- `src/features/community/components/VerseHubFeaturedCard.tsx`
+
+Fokus audit ini hanya UX/presentasi frontend Community. Parity backend tidak diubah.
 
 ## 2. Masalah UI/UX Saat Ini
-Fokus utama audit menemukan beberapa poin kelemahan visual:
-1. **Fallback Message Terasa Kesalahan Sistem:** Pesan *"Menampilkan arsip terbaru sebagai fallback parity"* mengesankan ada fitur yang rusak, bukan kurasi konten lama yang berharga.
-2. **Skeleton Loading Belum Matang:** Penggunaan *spinner* standar atau skeleton yang tidak presisi menyebabkan *Layout Shift* yang mengganggu saat feed muncul.
-3. **Hierarchy Tab & Action Bar:** Tab "Diskusi", "Arsip", dan "Simpanan" memiliki kontras yang lemah saat aktif, kurang memberikan kesan kedalaman (*depth*).
-4. **Empty State Kaku:** Status jika data benar-benar kosong (Arsip/Simpanan) menggunakan kotak abu-abu kaku yang tidak seirama dengan desain *Today* yang sudah diperbaiki.
-5. **Toast & Feedback:** Notifikasi "Berhasil" atau "Gagal" muncul di atas (menutupi header) dan memiliki desain standar yang kurang berkarakter *premium*.
+Temuan paling terasa user-facing sebelum patch:
+1. Import icon di `CommunityPage.tsx` memakai `lucide-center` sehingga berisiko mematahkan halaman.
+2. Saat `posts` kosong dan fallback arsip aktif, status halaman belum cukup eksplisit untuk menjelaskan konteks “kurasi”, sehingga bisa terasa seperti feed bermasalah.
+3. Tab Simpanan hanya membaca `posts`, bukan gabungan `posts + archivePosts`, membuat pengalaman simpanan terasa tidak konsisten ketika feed aktif kosong.
+4. Metadata waktu di kartu post statis (`Baru Saja`) sehingga hierarchy konten terasa datar dan kurang premium.
+5. Copy empty-state Arsip/Simpanan masih generik dan kurang mengarahkan aksi user.
 
 ## 3. Dampak ke User
-- **User Confusion:** Pengguna mungkin mengira aplikasi sedang *error* saat melihat pesan "fallback parity".
-- **Unpolished Feel:** Lonjakan konten saat loading (*Layout Shift*) membuat aplikasi terasa "berat" dan kurang responsif.
-- **Low Engagement:** Tanpa CTA yang jelas pada *empty state*, pengguna baru mungkin bingung harus melakukan apa jika komunitas sedang sepi.
+- Persepsi kualitas turun karena state fallback tampak ambigu.
+- User bisa salah paham bahwa post tersimpan hilang saat tab Simpanan tidak menampilkan item dari arsip.
+- Feed terasa kurang “hidup” karena semua post terlihat dipublikasikan pada waktu yang sama.
+- Empty-state tidak cukup membantu user mengambil langkah berikutnya.
 
 ## 4. Rekomendasi Prioritas
-1. **Humanizing Fallback:** Mengubah peringatan teknis menjadi sapaan hangat "Inspirasi Pilihan" dengan ikon *Sparkles*.
-2. **Standardisasi Roundness:** Mengadopsi `rounded-[32px]` dan `rounded-[40px]` secara konsisten di seluruh kartu feed agar terasa seperti aplikasi seluler modern kelas atas.
-3. **Full-Block Skeleton:** Membuat kerangka pemuatan yang meniru persis dimensi `MemberPostCard` (foto profil, teks, media) untuk stabilitas visual total.
-4. **Enhanced Tab Navigation:** Menggunakan skema kontras tinggi (*Black on White*) untuk tab aktif guna memperjelas lokasi pengguna.
+1. Stabilkan surface dulu (fix import blocker).
+2. Buat status feed lebih eksplisit: bedakan “Feed Aktif Hari Ini” vs “Mode Kurasi Arsip”.
+3. Samakan sumber data tab Simpanan agar konsisten lintas state feed.
+4. Tampilkan waktu relatif per post untuk memperkuat hierarchy.
+5. Rapikan copy empty-state agar lebih hangat dan actionable.
 
-## 5. Perubahan yang Dilakukan
-Modul `CommunityPage.tsx` telah diperbarui dengan perubahan berikut:
-- **Refined Fallback Notification:** Mengganti banner kuning "amber" yang kaku dengan notifikasi transparan berpendar (*glow*) bertajuk "Inspirasi Pilihan". Menggunakan ikon *Sparkles* untuk memberi kesan konten yang dikurasi.
-- **Premium Skeleton Feed:** Mengimplementasikan blok skeleton yang meniru tata letak *MemberPostCard* secara detail (Avatar, Metadata, Content, Media Block).
-- **Modern Tab UI:** Merombak `TabsList` dengan radius `[24px]` dan `TabsTrigger` yang menggunakan animasi transisi halus ke mode gelap (*background-foreground*) saat aktif.
-- **Standardized Empty States:** Status kosong kini menggunakan kartu gaya *Dashed* melingkar `rounded-[40px]` dengan ikon besar terpusat dan tombol CTA (Call to Action) yang jelas untuk memicu interaksi awal.
-- **Repositioned Toasts:** Memindahkan notifikasi (*toast*) ke bagian bawah (`bottom-24`) dengan gaya *Premium Dark* agar tidak menutupi navigasi atas dan lebih mudah dijangkau jempol di perangkat mobile.
-- **Archive Groups Styling:** Menambahkan garis gradien (*gradient dividers*) di antara kelompok tanggal arsip untuk mempertegas pemisahan waktu tanpa menambah beban visual.
+## 5. Perubahan yang Diusulkan / Dilakukan
+Perubahan yang sudah diterapkan:
+1. Perbaikan import icon di `CommunityPage.tsx` dari `lucide-center` ke `lucide-react`.
+2. Penambahan status card kontekstual di atas feed Diskusi:
+   - “Feed Aktif Hari Ini” saat post aktif tersedia.
+   - “Mode Kurasi Arsip” saat fallback arsip berjalan.
+3. Penyempurnaan copy fallback agar intentional:
+   - Menjelaskan bahwa arsip adalah kurasi, bukan error.
+4. Tab Simpanan kini memakai daftar gabungan `posts + archivePosts` (dedupe by `id`) agar bookmark tetap muncul konsisten.
+5. `MemberPostCard` kini menerima `createdAt` dan menampilkan waktu relatif (`x menit lalu`, `x jam lalu`, dst) dengan fallback tanggal lokal Indonesia.
+6. Copy empty-state Arsip/Simpanan diperjelas agar user tahu tindakan berikutnya.
 
 ## 6. Status Akhir
-- **Modul**: Community
-- **Status Audit**: ✅ **DONE & POLISHED**
-- **Kesehatan UX**: Halaman terasa hidup dan stabil. Transisi dari loading ke konten kini mulus tanpa lompatan layout. Nuansa "Arsip" kini terasa seperti "Mesin Waktu Inspiratif", bukan sekadar data cadangan.
+- Status iterasi: **In progress, major polish shipped**.
+- Hasil saat ini:
+  - Fallback archive terasa jauh lebih intentional.
+  - Hierarchy feed lebih jelas.
+  - Tab Simpanan lebih konsisten.
+  - Kartu post lebih hidup dengan metadata waktu nyata.
+- Risiko tersisa:
+  - Perlu QA visual lintas device untuk memastikan tidak ada regressions spacing.
 
 ## 7. Langkah Iterasi Berikutnya
-Target berikutnya adalah modul **Paths** (Perjalanan Spiritual). Kita perlu memastikan daftar perjalanan rohani memiliki visual progress yang menggugah dan interaksi klik yang setara dengan kemewahan *Today* dan *Community*. 
+1. QA mobile real-device untuk densitas komposer dan ritme antar card.
+2. Fine-tuning tipografi caption/meta di card agar kontras tetap nyaman pada layar kecil.
+3. Uji skenario low-activity 3 kondisi:
+   - no `posts`, ada `archivePosts`
+   - no `posts`, no `archivePosts`
+   - `posts` aktif + bookmark dari arsip

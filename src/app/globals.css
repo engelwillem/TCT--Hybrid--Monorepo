@@ -145,6 +145,35 @@ body {
       radial-gradient(at 100% 0%, hsla(210, 90%, 50%, 0.1) 0px, transparent 50%);
   }
 
+  .tct-global-background {
+    background-color: #eaf1f9;
+    background-image:
+      radial-gradient(120% 95% at 8% 4%, rgb(243 248 255 / 0.92) 0%, rgb(243 248 255 / 0) 68%),
+      radial-gradient(90% 70% at 92% 12%, rgb(214 229 246 / 0.55) 0%, rgb(214 229 246 / 0) 72%),
+      linear-gradient(180deg, #edf4fb 0%, #e7eff8 42%, #e5edf7 100%);
+    isolation: isolate;
+  }
+
+  .tct-global-background::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(circle at 16% 16%, rgb(255 255 255 / 0.4) 0 2px, transparent 2.2px),
+      radial-gradient(circle at 82% 8%, rgb(166 198 226 / 0.16) 0 1.8px, transparent 2px),
+      radial-gradient(circle at 66% 42%, rgb(255 255 255 / 0.26) 0 1.6px, transparent 1.9px);
+    background-size: 26px 26px, 42px 42px, 36px 36px;
+    background-position: 0 0, 8px 12px, 4px 16px;
+    opacity: 0.55;
+  }
+
+  .tct-global-background > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .bg-surface {
     background: hsl(var(--surface));
     color: hsl(var(--surface-foreground));

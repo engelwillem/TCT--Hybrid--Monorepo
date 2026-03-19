@@ -1,4 +1,22 @@
 # Current Status
+
+## Update 2026-03-19 (Frontend CI Fix Incoming / Verification Phase)
+Akar masalah kegagalan **Frontend Monorepo Checks** telah ditemukan: import invalid `lucide-center` (seharusnya `lucide-react`).
+- **Status:** Perbaikan *source code* sedang/baru dipush oleh Codex.
+- **Verification:** Tahap verifikasi otomatis dijalankan pada GitHub Actions (CI).
+- **Blocker Status:** Status beralih dari *Investigating* ke *Verifying Fixing*. Deployment production terus dipantau hingga status CI kembali Hijau (Passing).
+- Dokumentasi pemulihan: `docs/01-audits/overall/frontend-ci-recovery-verification.md`
+
+## Update 2026-03-19 (Deployment Hygiene)
+- **Tencent Edge:** Terdeteksi isu *duplicate deployment target*. Satu commit memicu dua build paralel (Git Auto-deploy vs Webhook).
+- **Audit Case:** `docs/01-audits/overall/tencent-edge-duplicate-deploy-trigger-audit.md` telah dibuat untuk merekomendasikan penonaktifan auto-deploy di sisi Tencent Console agar alur rilis hanya dikendalikan satu pintu via GitHub Actions.
+
+- Dokumentasi pemulihan: `docs/01-audits/overall/frontend-ci-recovery-verification.md`
+
+## Update 2026-03-19 (VerseHub Final Polish)
+- **VerseHub:** Masalah "double sidebar" pada desktop secara resmi **CLOSED**. Redundant local nav shell telah dihapus dan *Dark Hero Card* sudah dipulihkan sebagai *anchor* utama.
+- **Audit Sync:** `docs/02-uiux/versehub-final-status-sync.md` telah dibuat untuk menandai status final modul ini.
+
 ## Update 2026-03-19 (Final Recovery Admin Login Production)
 
 Recovery login admin Filament di production telah selesai dan dinyatakan **SUCCESS**.

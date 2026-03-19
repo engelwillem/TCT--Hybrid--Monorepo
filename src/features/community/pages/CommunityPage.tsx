@@ -54,6 +54,16 @@ export function CommunityPage() {
   const hasActivePosts = posts.length > 0;
   const isArchiveFallbackInDiscussion = !hasActivePosts && !isLoading && archivePosts.length > 0;
   const discussionPosts = hasActivePosts ? posts : archivePosts.slice(0, 6);
+  const bookmarkedPosts = useMemo(() => {
+    const merged = [...posts, ...archivePosts];
+    const seen = new Set<string>();
+    return merged.filter((post) => {
+      if (!post.isBookmarked) return false;
+      if (seen.has(post.id)) return false;
+      seen.add(post.id);
+      return true;
+    });
+  }, [posts, archivePosts]);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'error') => {
     setToast({ message, type });
@@ -265,9 +275,11 @@ export function CommunityPage() {
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-700 md:py-6">
       <header className="px-6 md:px-0 mx-auto w-full max-w-[640px] space-y-2 pb-6">
-        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-foreground"><span className="text-brand">Komunitas</span></h2>
+        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">
+          <span className="text-brand">Komunitas</span>
+        </h2>
         <p className="text-sm font-medium tracking-wide leading-relaxed text-muted-foreground/80">
-          Tempat berbagi inspirasi, doa, dan pertumbuhan bersama.
+          Ruang hangat untuk berbagi inspirasi, doa, dan pertumbuhan bersama.
         </p>
       </header>
 
@@ -305,6 +317,27 @@ export function CommunityPage() {
             <Suspense fallback={<div className="h-32 w-full bg-surface-muted animate-pulse rounded-[32px]" />}>
               <SmartPostComposer onPost={handlePost} />
             </Suspense>
+
+            {!isLoading && !fetchError && (
+              <Card className="rounded-[28px] border border-border/50 bg-background/70 shadow-none">
+                <CardContent className="px-5 py-4 flex items-start gap-3">
+                  <div className={cn(
+                    "mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                    isArchiveFallbackInDiscussion ? "bg-amber-400" : "bg-emerald-400"
+                  )} />
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/90">
+                      {isArchiveFallbackInDiscussion ? "Mode Kurasi Arsip" : "Feed Aktif Hari Ini"}
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {isArchiveFallbackInDiscussion
+                        ? "Percakapan baru belum muncul. Kami menampilkan pilihan arsip terbaik agar ritme komunitas tetap hidup."
+                        : "Diskusi terbaru dari komunitas tampil real-time di sini."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {isLoading ? (
                 <div className="space-y-6 mt-6">
@@ -351,7 +384,7 @@ export function CommunityPage() {
                     <div className="space-y-2">
                       <p className="text-[17px] font-black tracking-tight text-foreground">Inspirasi Pilihan</p>
                       <p className="text-[11px] uppercase font-bold tracking-[0.2em] text-muted-foreground/60 leading-relaxed max-w-[280px] mx-auto">
-                        Belum ada percakapan baru hari ini. Lihat kembali mutiara dari arsip kita.
+                        Belum ada percakapan baru hari ini. Nikmati kurasi arsip terbaik sambil menunggu diskusi berikutnya.
                       </p>
                     </div>
                   </div>
@@ -366,6 +399,7 @@ export function CommunityPage() {
                     text={p.text}
                     imgSrc={p.imageUrl || undefined}
                     mediaSrcList={p.mediaPaths || undefined}
+                    createdAt={p.createdAt}
                     prayLabel={String(p.counts.likes || 0)}
                     prayed={p.isLiked}
                     commentsCount={p.counts.comments || 0}
@@ -447,6 +481,7 @@ export function CommunityPage() {
                         type={p.type}
                         text={p.text}
                         imgSrc={p.imageUrl}
+                        createdAt={p.createdAt}
                         prayLabel={String(p.counts.likes || 0)}
                         prayed={p.isLiked}
                         commentsCount={p.counts.comments || 0}
@@ -465,22 +500,22 @@ export function CommunityPage() {
             ) : (
                 <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden">
                     <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
-                        <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
-                            <Inbox size={32} />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-foreground/80 font-black text-sm">Arsip Kosong</p>
-                            <p className="text-[11px] text-muted-foreground font-medium">Belum ada jejak tersimpan untuk kategori ini.</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                            <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
+                                <Inbox size={32} />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-foreground/80 font-black text-sm">Arsip Kosong</p>
+                                <p className="text-[11px] text-muted-foreground font-medium">Belum ada jejak tersimpan untuk kategori ini. Coba kategori lain atau kembali ke Diskusi.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
             )}
           </TabsContent>
 
           <TabsContent value="bookmarks" className="mt-6 outline-none">
             <div className="space-y-6">
-                {posts.filter(p => p.isBookmarked).length > 0 ? (
-                    posts.filter(p => p.isBookmarked).map(p => (
+                {bookmarkedPosts.length > 0 ? (
+                    bookmarkedPosts.map(p => (
                         <MemberPostCard
                             key={p.id}
                             authorName={p.author.name}
@@ -488,6 +523,8 @@ export function CommunityPage() {
                             type={p.type}
                             text={p.text}
                             imgSrc={p.imageUrl}
+                            mediaSrcList={p.mediaPaths || undefined}
+                            createdAt={p.createdAt}
                             prayLabel={String(p.counts.likes || 0)}
                             prayed={p.isLiked}
                             commentsCount={p.counts.comments || 0}
@@ -507,7 +544,7 @@ export function CommunityPage() {
                             </div>
                             <div className="space-y-1">
                                 <p className="text-foreground/80 font-black text-sm">Belum Ada Simpanan</p>
-                                <p className="text-[11px] text-muted-foreground font-medium">Post yang Anda tandai akan muncul secara rapi di sini.</p>
+                                <p className="text-[11px] text-muted-foreground font-medium">Simpan ayat atau refleksi yang menguatkan untuk membangun perpustakaan rohani pribadi.</p>
                             </div>
                         </CardContent>
                     </Card>

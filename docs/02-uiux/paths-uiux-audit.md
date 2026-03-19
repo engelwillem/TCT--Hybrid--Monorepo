@@ -5,6 +5,7 @@ Surface Paths yang diaudit:
 - `src/app/paths/page.tsx`
 - `src/app/paths/[slug]/page.tsx` (ditinjau untuk konsistensi visual, tanpa perubahan)
 - `src/services/journeys.service.ts` (ditinjau untuk memahami state presentasi)
+- `docs/02-uiux/paths-ux-direction.md` (dipakai sebagai acuan strategi desain/copy)
 
 Fokus audit ini hanya UX/presentasi frontend Paths, khususnya kondisi data production `{"lang":"id","paths":[]}`.
 
@@ -30,24 +31,31 @@ Temuan utama sebelum patch:
 
 ## 5. Perubahan yang Diusulkan / Dilakukan
 Perubahan yang sudah diterapkan di `src/app/paths/page.tsx`:
-1. Menambah badge + intro header agar first impression lebih premium dan terarah.
+1. Menyelaraskan Hero dengan UX direction:
+   - Headline: `Langkah Kecil, Pertumbuhan Besar.`
+   - Subheadline: penjelasan pertumbuhan sistematis harian.
 2. Menambah status card:
    - `Journey Siap Dipilih` saat data tersedia.
    - `Ruang Sedang Disiapkan` saat data kosong.
-3. Mengganti loading text tunggal menjadi skeleton cards yang menyerupai bentuk konten akhir.
-4. Merombak empty state menjadi hero card:
-   - Copy yang spiritual dan menenangkan.
-   - Preview chips agar halaman tetap terasa hidup.
-   - CTA jelas ke `Community`, `Today`, dan `Muat Ulang`.
-5. Menambah informasi `steps_count` (jika tersedia) pada card journey agar hierarchy informasi lebih kuat saat data ada.
-6. Merapikan typing lokal (`StudyPath`) untuk menjaga stabilitas presentasi.
+3. Menambah section `Mengapa Paths?` sebagai value proposition agar user paham fungsi Paths (bukan sekadar list ayat).
+4. Mengganti loading text tunggal menjadi skeleton cards yang menyerupai bentuk konten akhir.
+5. Merombak empty state menjadi hero card:
+   - Copy antisipatif: `Kami Sedang Merangkai Langkah Anda`.
+   - Blok reflektif berfont serif untuk tone kontemplatif.
+   - `Coming Soon Preview` untuk menjaga visual weight saat data kosong.
+   - CTA bridge sesuai direction: `Jelajahi VerseHub Dulu`, `Cari Inspirasi di Komunitas`, `Beritahu Saya`.
+   - Menambahkan label section `Lanjutkan Langkah Hari Ini` agar alur bridge lebih eksplisit.
+6. Menambah informasi `steps_count` (jika tersedia) pada card journey agar hierarchy informasi lebih kuat saat data ada.
+7. Menjaga ritme interaksi tenang dengan `framer-motion` fade-in-up 800ms di section kunci.
+8. Merapikan typing lokal (`StudyPath`) untuk menjaga stabilitas presentasi.
 
 ## 6. Status Akhir
 - Status iterasi: **In progress, major UX polish shipped**.
 - Hasil:
   - Paths tetap terasa intentional walau `paths=[]`.
-  - Empty state sekarang premium, hangat, dan actionable.
+  - Empty state sekarang premium, hangat, dan berkarakter “ruang antisipasi”.
   - Mobile readability tetap ringan dengan hierarchy lebih jelas.
+  - Copy dan struktur sudah mengikuti `paths-ux-direction.md` (aspiration -> why -> graceful wait -> bridge CTA).
 - Risiko tersisa:
   - Perlu QA visual real-device untuk memastikan spacing CTA tetap optimal di layar kecil.
 
