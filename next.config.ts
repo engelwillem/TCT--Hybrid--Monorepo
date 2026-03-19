@@ -35,11 +35,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/',
-        destination: '/today',
-        permanent: true,
-      },
-      {
         source: '/library',
         destination: '/versehub/id',
         permanent: true,
