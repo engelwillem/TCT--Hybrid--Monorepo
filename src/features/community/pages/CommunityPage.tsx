@@ -8,14 +8,11 @@ import { MemberPostCard } from "../components/MemberPostCard";
 import { CommentsSheet } from "../components/CommentsSheet";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityPost } from "../types";
-import { ChevronDown, Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-center"; /* Note: Typo in lucide-react if I'm not careful, but I checked the original imports */
+import { Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-react";
 import { CommunityService } from "@/services/community.service";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-/* Fix imports from previous version which had lucide-center typo potential */
-import { Loader2 } from "lucide-react";
 
 type ArchiveCategory = "all" | "quotes" | "reflections" | "prayer_requests" | "testimonies";
 
