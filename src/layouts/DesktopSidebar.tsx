@@ -66,7 +66,7 @@ export default function DesktopSidebarNav({
                     
                     const routeMap: Record<string, string> = {
                         today: '/today',
-                        versehub: '/versehub',
+                        versehub: '/versehub/id',
                         paths: '/paths',
                         community: '/community',
                         profile: '/profile',

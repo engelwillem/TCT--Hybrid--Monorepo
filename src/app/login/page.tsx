@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { setAppAccessToken } from "@/services/app-auth-token";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,20 +34,31 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, remember }),
       });
-
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+      const data = isJson ? await res.json() : null;
 
       if (!res.ok) {
-        // Laravel Validation Exception throws 422
-        if (data.errors && data.errors.email) {
+        if (data?.errors?.email) {
             setErrorMessage(data.errors.email[0]);
-        } else if (data.message) {
+        } else if (data?.message) {
             setErrorMessage(data.message);
         } else {
-            setErrorMessage("Kredensial yang diberikan salah atau terjadi kendala server.");
+            setErrorMessage("Server mengembalikan respons tidak valid. Periksa konfigurasi backend.");
         }
         setIsLoading(false);
         return;
+      }
+
+      if (!data) {
+        setErrorMessage("Login gagal diproses karena respons backend bukan JSON.");
+        setIsLoading(false);
+        return;
+      }
+
+      const apiToken = data?.data?.token;
+      if (typeof apiToken === "string" && apiToken.length > 0) {
+        setAppAccessToken(apiToken);
       }
 
       // Success

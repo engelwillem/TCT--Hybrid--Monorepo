@@ -61,7 +61,7 @@ export function VerseHubFeaturedCard({
   
   const ogImageUrl = useMemo(() => {
     if (!verse?.ref) return null;
-    return `/versehub/id/${verse.ref}/og.png`;
+    return `/api/versehub/og/${verse.ref}.png`;
   }, [verse?.ref]);
 
   const verseHref = verse?.href?.trim() || (verse?.ref ? `/versehub/id/${verse.ref}` : "/versehub/id");
@@ -143,10 +143,13 @@ export function VerseHubFeaturedCard({
       <Card className="rounded-[32px] md:rounded-[40px] border-0 glass-card p-5 transition-all hover:shadow-card">
         <a href={verseHref} className="mt-1 block overflow-hidden rounded-[24px] md:rounded-[32px] ring-1 ring-black/[0.04] shadow-sm transform transition-transform duration-500 hover:scale-[1.01]" aria-label={`Buka OG ayat ${verse.reference}`}>
           <img
-            src={ogImageUrl ?? `/versehub/id/${verse.ref}/og.png`}
+            src={ogImageUrl ?? `/api/versehub/og/${verse.ref}.png`}
             alt={`OG image ${verse.reference}`}
             className="aspect-[1200/630] w-full object-cover"
             loading="lazy"
+            onError={(event) => {
+              event.currentTarget.src = "/og/versehub-bg.png";
+            }}
           />
         </a>
       </Card>

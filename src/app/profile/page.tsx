@@ -193,9 +193,24 @@ export default function ProfilePage() {
         return () => { isActive = false; };
     }, []);
 
-    const logout = () => {
+    const logout = async () => {
+        const token = getAppAccessToken();
+        if (token) {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json',
+                    },
+                });
+            } catch {
+                // ignore backend logout failure, still clear local session
+            }
+        }
+
         clearAppAccessToken();
-        router.push('/');
+        router.push('/login');
     };
 
     const handleAvatarUpload = async (file: File) => {

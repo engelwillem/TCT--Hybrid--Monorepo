@@ -1,21 +1,26 @@
 # Next Actions
 
-## Prioritas Eksekusi Frontend (V1)
+## Eksekusi Prioritas (Production Recovery)
+- [ ] Deploy backend patch `AuthController@login` (token-based login contract).
+- [ ] Deploy frontend patch (VerseHub route/nav, OG card source, login parser, profile logout).
+- [ ] Smoke test login admin di production:
+  - [ ] `/login` tidak error parse.
+  - [ ] redirect ke `/today` sukses.
+  - [ ] `/profile` menampilkan user authenticated (bukan Guest User).
+- [ ] Smoke test VerseHub:
+  - [ ] klik nav `VerseHub` tidak 404.
+  - [ ] `/versehub/id/<slug>` tidak client-side exception.
+  - [ ] hash `#comments` tidak memicu crash.
+- [ ] Smoke test Community:
+  - [ ] OG card termuat.
+  - [ ] fallback image tidak terpicu untuk kasus normal.
 
-1. Stabilisasi route inti agar tidak ada CTA yang kembali ke route legacy.
-2. Perkuat alur `Today -> Paths -> Community` dengan copy yang konsisten di semua surface aktif.
-3. Audit komponen reusable yang masih membawa label/navigation lama lalu samakan dengan IA inti.
-4. Rapikan empty/loading/error state untuk halaman inti agar UX lebih tenang dan jelas.
-5. Finalisasi acceptance checklist parity local vs production untuk route inti.
+## Verifikasi Admin Credential (Production DB)
+- [ ] Validasi user `engel.willem@gmail.com` ada di tabel `users` production.
+- [ ] Pastikan `is_admin=1` (+ `is_it=1` bila policy admin panel mensyaratkan).
+- [ ] Reset hash password production jika diperlukan.
 
-## Definisi Selesai Batch Ini
-
-- Tidak ada CTA aktif yang mendorong user ke `library`, `visitors`, `gate-updates`, atau `reflections` lama.
-- Semua shortcut primer pada surface aktif selaras ke pilar inti: Today, VerseHub, Paths, Community.
-- Dokumentasi status dan changelog harian mencerminkan perubahan aktual yang sudah live di codebase.
-
-## Risiko yang Perlu Dijaga
-
-- Drift copy pada komponen lama yang masih dipakai lintas halaman.
-- Redirect berlapis (route config + page redirect) yang bisa menambah kompleksitas bila tidak dipantau.
-- QA visual mobile jika ada surface lawas yang belum disentuh tetapi masih bisa diakses dari deep link.
+## Dokumentasi
+- [x] Audit report screenshot-based tersedia.
+- [x] Roadmap eksekusi checklist tersedia.
+- [ ] Catat hasil re-test production final ke changelog harian.

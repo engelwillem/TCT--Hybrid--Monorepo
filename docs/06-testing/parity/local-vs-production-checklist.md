@@ -8,6 +8,9 @@ Memastikan parity perilaku antara:
 
 Dokumen ini adalah checklist release gate, bukan catatan opini.
 
+## Latest Audit Reference
+- [x] Audit screenshot produksi terbaru tersedia di `docs/01-audits/overall/2026-03-19-production-surface-audit.md`.
+
 ## Status Legend
 - PASS
 - BLOCKED
@@ -88,7 +91,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - [ ] Sanctum stateful domains sesuai
 - [ ] Cookie domain/path/secure flags sesuai environment
 - [ ] CSRF cookie bisa diterbitkan dan dibaca dengan benar
-- [x] Login/logout behavior sama di local dan production
+- [ ] Login/logout behavior sama di local dan production
 - [x] 401/403 behavior tidak disamarkan
 - [ ] Authorization header tidak terpotong di cPanel/Apache
 - [x] Route proxy Next meneruskan auth data dengan benar
@@ -97,7 +100,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 ### Notes
 - Local: Token JWT Firebase diselaraskan mulus ke API Proxy Next.js dan diterima Sanctum lokal.
 - Production: Risiko Apache menghapus header `Authorization: Bearer`.
-- Risks: Patch `CGIPassAuth On` di `.htaccess` sudah siap, dan bootstrap Laravel kini juga mengaktifkan `statefulApi()` untuk flow SPA Sanctum. Validasi server nyata tetap dibutuhkan.
+- Risks: Audit 2026-03-19 membuktikan login produksi dapat gagal parse (response HTML/non-JSON) dan terjadi drift session-vs-token. Perlu deploy patch auth terbaru + verifikasi nyata.
 - Status: NEEDS SERVER VALIDATION
 
 ---
@@ -164,7 +167,7 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 ### Notes
 - Local: Disk storage local merespons avatar update.
 - Production: Storage path di shared hosting acap kali melenceng dari root `/public`.
-- Risks: Gambar rusak jika symlink `public_html/storage` tidak dibentuk manual.
+- Risks: Audit screenshot 2026-03-19 menunjukkan OG image pada Community sempat broken; source route sudah diperbaiki di codebase namun butuh validasi setelah deploy.
 - Status: NEEDS SERVER VALIDATION
 
 ---
@@ -177,14 +180,16 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
 - [ ] cPanel rewrite/redirect rules tidak bertabrakan dengan hybrid routes
 - [x] SSR/CSR behavior tidak bergantung pada local-only assumptions
 - [x] Proxy path dan rewrite path sama
-- [ ] **CI/CD Pipeline cPanel SSH Access tidak diblokir**
+- [ ] **CI/CD Pipeline cPanel SSH Access** (BLOCKED - SSH connection timeout from GHA runners)
+- [x] **Manual Backend Deploy Success** (Vervalidasi ulang 19 Mar 2026: `20260319051316` dan `20260319051447` PASS)
 
 ### Notes
 - Local: CSR & Next.js proxying API tervalidasi `npm run dev`.
 - Production: Deployment #21 via GitHub Actions `backend-cpanel-deploy.yml` secara inheren dilarang (TCP Drop) akibat mitigasi proaktif pada *runner*. Status repositori sudah mendapat perlindungan kebersihan memori (`concurrency` mitigasi ganda/tabrakan deploy & pembatalan gantung). 
-- Action Plan cPanel: Eksekusi *Server Validation Checklist* (Buka Blokade CSF Port 22/2121 via VPN / Whitelist) agar IP Github *runner* sah menembus tembok api.
-- Re-Test Deploy (2026-03-17): GAGAL. Menghapus job *Preflight TCP Reachability Check* dari berkas `backend-cpanel-deploy.yml` ternyata **tidak memecahkan masalah**. Eksekusi log terbaru masih mogok persis pada langkah `scp` di urutan `Upload artifact and deploy scripts` (`ssh: connect to host *** port ***: Connection timed out`).
-- Kesimpulan Lanjutan: Penolakan TCP *timeout* murni berasal dari aturan tembok api *cPanel (CSF/mod_security)* blokir IP default, BUKAN akibat sekadar *false positive rate-limit port scan*. Server secara absolut tidak mengizinkan satupun *IP range* Github Runner untuk melakukan koneksi SSH ke nomor IP/Port tersebut.
+- Action Plan cPanel: Memperbaiki GitHub Actions connectivity atau mengadopsi manual deploy asinkron via terminal server sebagai standar rilis saat ini.
+- Re-Test Deploy (2026-03-17/18/19): SSH/SCP timeout dari GitHub runner IP ke server port 2121 tetap terjadi. Gagal menembus firewall CSF/LFD.
+- Kesimpulan Lanjutan: Deployment manual via `deploy.sh` server-side terbukti 100% stabil (Sukses beruntun pada rilis Mar 19).
+- **Klarifikasi Frontend**: Proyek Next.js tidak berada di server cPanel karena deployment platform dipisah (cPanel khusus backend). Kode frontend Next.js tersedia lengkap dan aktif di dalam monorepo project.
 - Action Plan cPanel: Mempertahankan arsitektur *Push Deploy* memaksakan admin VPS memelihara *whitelist* IP Github Action yang terus berubah secara konstan. Disarankan beralih ke arsitektur **Pull-Based Deploy** yang di-*harden* secara keamanan: Endpoint *webhook* dienkripsi dengan *unguessable hash path* (`deploy-[hash].php`), metode respons minimal, tidak ada `git stash` acak (harus `reset --hard`), serta secret token murni lokal tanpa ada di *repository*.
 - Action Taken (2026-03-18): Repo sudah resmi memiliki aset *Pull Deploy Redesign*. Berkas `backend-api/deploy.sh` menggunakan arsitektur aman `reset --hard` (tanpa `stash`) dengan eksekusi `cache` konservatif. `backend-cpanel-deploy.yml` diubah 100% menjadi trigger webhook JSON via POST HTTP. Berkas pendamping manual server (`backend-api/webhook-template.php`) telah diregistrasi BUKAN sebagai rilis otomatis.
 - Implementasi Mandatory cPanel (Path B1 Execution): Administrator SERVER wajib mengubahsuaikan `deploy.sh` beralgoritma tar konvensional menjadi varian *Staging Sparse Checkout* yang telah kita desain di `backend-api/deploy.sh`, meregistrasi SSH Key di cPanel agar diizinkan berbicara dengan Github secara nirsandi, lalu merangkai webhook.
@@ -212,7 +217,8 @@ Dokumen ini adalah checklist release gate, bukan catatan opini.
      - *Git Sparse Checkout Issue:* Peladen tak kuasa menghisap repositori (Akses Ditolak). Semburan kesalahan `git archive`/`git config` nampak. *Solusi: Uji autentikasi Deploy Key mandiri cPanel (`ssh -T git@github.com`).*
      - *Bad Shared Link Path:* `.env` dan `storage` melayang buta (Warning 404 pada log `deploy_pull`). *Solusi: Pastikan lintasan `SHARED_DIR` pada konfigurasi tidak patah.*
      - *Current Symlink Failure:* Situs tiba-tiba 403 / *No Input File Specified*. Terjadi ketika eksekusi hak tulis pada `/current` dilarang.
-- **BLOCKER RESOLVED (2026-03-18)**: Skrip rilis peladen (`backend-api/deploy.sh`) telah diredesain ulang mengikuti "Path B1". Bukti logik sparse checkout tertanam utuh pada peladen maya. Eksekusi ini merampungkan mandat desain repositori *Redesign Pull Gate* (tanpa campur tangan otomatisasi Push eksternal yang dibuang paksa karena regulasi Firewall ketat LFD).
+- **BLOCKER RESOLVED (2026-03-18/19)**: Skrip rilis peladen (`backend-api/deploy.sh`) telah diredesain ulang mengikuti "Path B1" dan dieksekusi sukses secara manual berkali-kali (Rilis Aktif Terakhir: `20260319051447`). Arsitektur *zero-downtime* dengan logik *sparse clone* Git terbukti sehat. Status rilis saat ini PASS untuk eksekusi manual server-side.
+- Status: PASS (Manual Deploy Verified 19 Mar 2026) | BLOCKED (GitHub Actions Trigger Automation)
 - Status: READY FOR SERVER ACTION
 
 ---

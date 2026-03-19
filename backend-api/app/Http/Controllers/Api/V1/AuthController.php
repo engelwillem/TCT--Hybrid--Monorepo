@@ -4,15 +4,14 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -21,18 +20,21 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $request->authenticate();
+        $credentials = $request->validated();
+        $email = strtolower(trim((string) ($credentials['email'] ?? '')));
+        $password = (string) ($credentials['password'] ?? '');
 
-        $request->session()->regenerate();
+        /** @var User|null $user */
+        $user = User::query()->where('email', $email)->first();
 
-        $user = $request->user();
+        if (! $user || ! Hash::check($password, (string) $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => [trans('auth.failed')],
+            ]);
+        }
 
-        // Let app_authentication_secret pass for now or handle two-factor
-        if ($user && filled($user->app_authentication_secret)) {
-            $request->session()->put('auth.2fa.user_id', $user->id);
-            $request->session()->put('auth.2fa.remember', $request->boolean('remember'));
-            Auth::logout();
-
+        // Existing 2FA gate is still honored by API contract.
+        if (filled($user->app_authentication_secret)) {
             return response()->json([
                 'status' => 'success',
                 'two_factor_required' => true,
@@ -40,8 +42,15 @@ class AuthController extends Controller
             ]);
         }
 
+        // Decoupled Next.js frontend uses Sanctum bearer token across API routes.
+        $user->tokens()->where('name', 'next-web')->delete();
+        $token = $user->createToken('next-web')->plainTextToken;
+
         return response()->json([
             'status' => 'success',
+            'data' => [
+                'token' => $token,
+            ],
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,

@@ -12,7 +12,7 @@ export type UiNavItem = {
 
 export const uiNavItems: UiNavItem[] = [
     { id: 'today', label: 'Today', icon: House, href: '/today' },
-    { id: 'versehub', label: 'VerseHub', icon: BookOpenText, href: '/versehub' },
+    { id: 'versehub', label: 'VerseHub', icon: BookOpenText, href: '/versehub/id' },
     { id: 'paths', label: 'Paths', icon: Route, href: '/paths' },
     { id: 'community', label: 'Community', icon: Users, href: '/community' },
     { id: 'profile', label: 'Profile', icon: Settings, href: '/profile' },

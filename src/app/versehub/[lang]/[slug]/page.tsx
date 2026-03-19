@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageSquare, Send, Bookmark, X, ChevronLeft, ArrowLeft } from 'lucide-react';
@@ -19,8 +19,8 @@ type VerseData = {
     canonical_url: string;
 };
 
-export default function UnifiedVerseHubPage({ params }: { params: Promise<{ lang: string; slug: string }> }) {
-    const { lang, slug } = use(params);
+export default function UnifiedVerseHubPage({ params }: { params: { lang: string; slug: string } }) {
+    const { lang, slug } = params;
     const router = useRouter();
     
     // Intelligent Route Differentiation:
