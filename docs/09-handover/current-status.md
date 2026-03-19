@@ -41,3 +41,12 @@ Status surface aktif production sudah bergerak ke **stabil operasional** untuk f
 
 ## Residual Notes
 - Masih ada warning ringan non-blocking pada transisi RSC tertentu (fallback browser navigation), namun tidak memblokir flow user dan tidak memunculkan halaman error putih.
+
+## Update 2026-03-19 (Edge Artifact Drift)
+- Temuan baru dari audit screenshot + verifikasi teknis:
+  - Console warning Firebase `app/no-options` masih muncul di production.
+  - `/api/versehub/id/actions/summary?limit=1` masih dipanggil di bundle live sehingga memicu 401/422 pada kondisi tertentu.
+  - URL avatar lama masih diminta sehingga memunculkan 404.
+- Status codebase: fix sudah ada di source `main` (commit `05cc9d3`) dan workflow deploy juga sudah mengirim payload valid ke Tencent Edge (`deploymentId: 52a5kt242d`).
+- Status domain live `www.thechoosentalks.org`: masih menyajikan chunk lama (`/_next/static/chunks/app/profile/page-22fcb8e65a977678.js`) yang belum memuat fix terbaru.
+- Kesimpulan: blocker saat ini berada pada layer **artifact propagation/cache invalidation di Edge**, bukan di implementasi fix code.

@@ -1,6 +1,9 @@
 # Next Actions
 
 ## Eksekusi Prioritas (Production Recovery)
+- [ ] Selesaikan blocker Edge artifact drift: pastikan domain live memuat bundle terbaru (bukan chunk lama `page-22fcb8e65a977678.js`).
+- [ ] Lakukan cache purge/invalidation pada Tencent Edge untuk path `/_next/static/*` dan HTML route aktif.
+- [ ] Verifikasi ulang bahwa chunk live sudah memuat fix (`limit=3`, sanitasi token, fallback avatar, tanpa warning firebase init).
 - [ ] Stabilisasi Data: Mengisi konten utama (Daily Verse, Rituals, Study Paths) di database production via Filament.
 - [ ] UI Parity Check lanjutan: validasi state `posts=[]` + `archivePosts!=[]` tetap komunikatif untuk user.
 - [ ] Hardening observability: tambah smoke script otomatis (login, today, community, versehub) pasca deploy.
