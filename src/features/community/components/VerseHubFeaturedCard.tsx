@@ -64,7 +64,30 @@ export function VerseHubFeaturedCard({
     return `/api/versehub/og/${verse.ref}.png`;
   }, [verse?.ref]);
 
-  const verseHref = verse?.href?.trim() || (verse?.ref ? `/versehub/id/${verse.ref}` : "/versehub/id");
+  const toStaticVersehubHref = (href?: string, ref?: string) => {
+    const raw = String(href || '').trim();
+    if (raw) {
+      const chapterFixed = raw.replace('/chapter/', '/');
+      const withOrigin = chapterFixed.startsWith('http')
+        ? chapterFixed
+        : `https://www.thechoosentalks.org${chapterFixed.startsWith('/') ? '' : '/'}${chapterFixed}`;
+      try {
+        const url = new URL(withOrigin);
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (parts[0] === 'versehub' && parts[1] && parts[2]) {
+          return `/versehub/${parts[1]}?ref=${encodeURIComponent(parts.slice(2).join('/'))}`;
+        }
+        if (parts[0] === 'versehub' && parts[1]) {
+          return `/versehub/${parts[1]}`;
+        }
+      } catch {
+        // ignore and fallback below
+      }
+    }
+    return ref ? `/versehub/id?ref=${encodeURIComponent(ref)}` : "/versehub/id";
+  };
+
+  const verseHref = toStaticVersehubHref(verse?.href, verse?.ref);
   
   const reactionKey = useMemo(
     () => (verse?.ref ? `tct:versehub:featured:reactions:${verse.ref}` : "tct:versehub:featured:reactions:default"),

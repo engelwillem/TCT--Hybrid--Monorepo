@@ -185,7 +185,11 @@ export default function TodayPage() {
             verse: Number(ritualVerse?.verse ?? dailyVerse?.verse ?? 0),
             quote: String(ritualVerse?.quote ?? ritualVerse?.text ?? dailyVerse?.quote ?? ''),
             cta_label: String(ritualVerse?.cta_label ?? dailyVerse?.cta_label ?? 'Baca Alkitab'),
-            cta_href: String(ritualVerse?.cta_href ?? (ritualVerse?.ref ? `/versehub/id/${ritualVerse?.ref}` : dailyVerse?.cta_href) ?? '/versehub/id'),
+            cta_href: String(
+                ritualVerse?.cta_href ??
+                (ritualVerse?.ref ? `/versehub/id?ref=${slugifyRef(String(ritualVerse?.ref))}` : dailyVerse?.cta_href) ??
+                '/versehub/id'
+            ),
             source_post_id: Number(ritualVerse?.source_post_id ?? dailyVerse?.source_post_id ?? 0) || undefined,
             reference: String(ritualVerse?.reference ?? dailyVerse?.reference ?? ''),
             title: String(ritualVerse?.title ?? dailyVerse?.title ?? ''),

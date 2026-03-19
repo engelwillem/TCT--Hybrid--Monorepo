@@ -62,10 +62,31 @@ export default function VerseHubFeaturedCard({
 
     const ogImageUrl = useMemo(() => {
         if (!verse?.ref) return null;
-        return `/versehub/id/${verse.ref}/og.png`;
+        return `/api/versehub/og/${verse.ref}.png`;
     }, [verse?.ref]);
 
-    const verseHref = verse?.href?.trim() || (verse?.ref ? `/versehub/id/${verse.ref}` : '/versehub/id');
+    const verseHref = useMemo(() => {
+        const raw = String(verse?.href || '').trim();
+        if (raw) {
+            const chapterFixed = raw.replace('/chapter/', '/');
+            const withOrigin = chapterFixed.startsWith('http')
+                ? chapterFixed
+                : `https://www.thechoosentalks.org${chapterFixed.startsWith('/') ? '' : '/'}${chapterFixed}`;
+            try {
+                const url = new URL(withOrigin);
+                const parts = url.pathname.split('/').filter(Boolean);
+                if (parts[0] === 'versehub' && parts[1] && parts[2]) {
+                    return `/versehub/${parts[1]}?ref=${encodeURIComponent(parts.slice(2).join('/'))}`;
+                }
+                if (parts[0] === 'versehub' && parts[1]) {
+                    return `/versehub/${parts[1]}`;
+                }
+            } catch {
+                // ignore and fallback below
+            }
+        }
+        return verse?.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
+    }, [verse?.href, verse?.ref]);
     const reactionKey = useMemo(
         () => (verse?.ref ? `tct:versehub:featured:reactions:${verse.ref}` : 'tct:versehub:featured:reactions:default'),
         [verse?.ref],
@@ -143,7 +164,7 @@ export default function VerseHubFeaturedCard({
                     <div className="aspect-[1200/630] w-full bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center p-8 text-center relative z-0">
                         <span className="text-3xl font-bold opacity-30 tracking-widest uppercase">{verse.reference}</span>
                         <img
-                            src={ogImageUrl ?? `/versehub/id/${verse.ref}/og.png`}
+                            src={ogImageUrl ?? `/api/versehub/og/${verse.ref}.png`}
                             alt={`OG image ${verse.reference}`}
                             className="absolute inset-0 h-full w-full object-cover z-10 transition-opacity duration-300"
                             loading="lazy"

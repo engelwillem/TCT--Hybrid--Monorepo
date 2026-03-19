@@ -71,7 +71,7 @@ export default function QuoteCard({
                         </p>
                         {payload?.ref?.trim() ? (
                             <Link
-                                href={`/versehub/id/${payload.ref}`}
+                                href={`/versehub/id?ref=${encodeURIComponent(payload.ref)}`}
                                 className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground transition-colors hover:text-brand"
                             >
                                 Buka dalam Alkitab

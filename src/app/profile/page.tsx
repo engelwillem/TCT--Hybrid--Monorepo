@@ -606,7 +606,7 @@ export default function ProfilePage() {
                     )}
 
                     <AccordionCard title="Your Spiritual Journey">
-                        <button onClick={() => router.push('/versehub/id/my-spiritual-journey')} className="flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft">
+                        <button onClick={() => router.push('/profile?section=journey')} className="flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft">
                             <div className="text-left space-y-1">
                                 <p className="text-lg font-black text-foreground tracking-tight">Growth Monitoring</p>
                                 <p className="text-xs text-brand/80 font-bold uppercase tracking-widest">Riwayat hafalan & catatan batin</p>

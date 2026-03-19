@@ -185,7 +185,7 @@ export function CommunityPage() {
     if (ritualVerse?.quote) {
         return {
             ref: slugifyRef(ritualVerse.reference || 'mzm-23-1'),
-            href: ritualVerse.cta_href || `/versehub/id/${slugifyRef(ritualVerse.reference || '')}`,
+            href: ritualVerse.cta_href || `/versehub/id?ref=${slugifyRef(ritualVerse.reference || '')}`,
             text: ritualVerse.text || ritualVerse.quote,
             reference: ritualVerse.reference || "Ayat Hari Ini",
         };
@@ -195,7 +195,7 @@ export function CommunityPage() {
     if (meta.ref || meta.reference) {
       return {
         ref: meta.ref || slugifyRef(meta.reference || ''),
-        href: `/versehub/id/${meta.ref || slugifyRef(meta.reference || '')}`,
+        href: `/versehub/id?ref=${meta.ref || slugifyRef(meta.reference || '')}`,
         text: meta.quote || featuredPost?.text || "",
         reference: meta.reference || "Featured Reflection",
       };
@@ -203,7 +203,7 @@ export function CommunityPage() {
 
     return {
       ref: "mzm-23-1",
-      href: "/versehub/id/mzm-23-1",
+      href: "/versehub/id?ref=mzm-23-1",
       text: "TUHAN adalah gembalaku, takkan kekurangan aku.",
       reference: "Mazmur 23:1",
     };

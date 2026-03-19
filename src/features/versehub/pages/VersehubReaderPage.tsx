@@ -107,6 +107,34 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
     const suppressClickRef = useRef(false);
 
+    const toVersehubRefHref = useCallback((ref: string) => {
+        const safeRef = String(ref || '').trim().replace(/^chapter\//, '');
+        if (!safeRef) return `/versehub/${lang}`;
+        return `/versehub/${lang}?ref=${encodeURIComponent(safeRef)}`;
+    }, [lang]);
+
+    const normalizeVersehubHref = useCallback((href: string) => {
+        const raw = String(href || '').trim();
+        if (!raw) return `/versehub/${lang}`;
+
+        const chapterFixed = raw.replace('/chapter/', '/');
+        const withOrigin = chapterFixed.startsWith('http')
+            ? chapterFixed
+            : `https://www.thechoosentalks.org${chapterFixed.startsWith('/') ? '' : '/'}${chapterFixed}`;
+
+        try {
+            const url = new URL(withOrigin);
+            const parts = url.pathname.split('/').filter(Boolean);
+            if (parts[0] === 'versehub' && parts[1]) {
+                if (!parts[2]) return `/versehub/${parts[1]}`;
+                return `/versehub/${parts[1]}?ref=${encodeURIComponent(parts.slice(2).join('/'))}`;
+            }
+            return chapterFixed;
+        } catch {
+            return chapterFixed;
+        }
+    }, [lang]);
+
     const fetchBooks = useCallback(async () => {
         try {
             const res = await fetch(`/api/versehub/${lang}/books`);
@@ -176,6 +204,29 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
         }
     }, [lang, mode, initialChapterRef, fetchBooks, loadChapter]);
 
+    useEffect(() => {
+        if (mode !== 'landing') return;
+        const rawRef = searchParams.get('ref');
+        if (!rawRef) return;
+
+        const normalized = rawRef.trim().toLowerCase();
+        if (!normalized) return;
+
+        const parts = normalized.split('-');
+        const chapterRef = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : normalized;
+
+        loadChapter(chapterRef).then(() => {
+            if (parts.length < 3) return;
+            window.setTimeout(() => {
+                const verseNumber = Number(parts[2]);
+                if (Number.isNaN(verseNumber)) return;
+                const el = document.getElementById(`vh-v-${verseNumber}`);
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        });
+    }, [mode, searchParams, loadChapter]);
+
     // Suggestion logic
     useEffect(() => {
         if (!query || query.length < 2) {
@@ -206,9 +257,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
         // If there's a direct suggestion, follow it
         const direct = suggestions.find(s => s.type === 'direct' || s.type === 'chapter' || s.type === 'book');
         if (direct && direct.href) {
-            // Ensure flat path
-            const targetPath = direct.href.replace('/chapter/', '/');
-            router.push(targetPath);
+            router.push(normalizeVersehubHref(direct.href));
             setSuggestOpen(false);
             setQuery('');
             return;
@@ -216,7 +265,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
 
         // Fallback: search for whatever is in the query box
         if (query) {
-            router.push(`/versehub/${lang}/${query.toLowerCase().replace(/[\s:]/g, '-')}`);
+            router.push(toVersehubRefHref(query.toLowerCase().replace(/[\s:]/g, '-')));
             setSuggestOpen(false);
             setQuery('');
         }
@@ -296,7 +345,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
             if (label) {
                 setToast({ 
                     message: label, 
-                    ctaHref: '/versehub/id/my-spiritual-journey', 
+                    ctaHref: '/profile', 
                     ctaLabel: 'View Journey →' 
                 });
                 setTimeout(() => setToast(null), 3000);
@@ -311,8 +360,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
 
     const handlePickChapter = (bookCode: string, chapter: number) => {
         setPickerOpen(false);
-        // CRITICAL FIX: Use flat routing schema. No /chapter/ subsegment.
-        router.push(`/versehub/${lang}/${bookCode}-${chapter}`);
+        router.push(toVersehubRefHref(`${bookCode}-${chapter}`));
     };
 
     const navItems = getUiNavItems(isAuthenticated);
@@ -320,8 +368,8 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     
     const fallback_reflection_question = 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
 
-    const handlePathSelect = (path: { slug: string }) => {
-        router.push(`/versehub/${lang}/study/${path.slug}`);
+    const handlePathSelect = (_path: { slug: string }) => {
+        router.push('/paths');
     };
 
     if (loading) {
@@ -420,9 +468,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                             <button 
                                                                 key={idx}
                                                                 onClick={() => {
-                                                                    // Final safety: ensure flat path
-                                                                    const targetPath = item.href.replace('/chapter/', '/');
-                                                                    router.push(targetPath);
+                                                                    router.push(normalizeVersehubHref(item.href));
                                                                     setSuggestOpen(false);
                                                                     setQuery('');
                                                                 }}

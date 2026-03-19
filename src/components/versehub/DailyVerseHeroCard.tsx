@@ -16,7 +16,29 @@ export default function DailyVerseHeroCard({
 }) {
     const verse = fallbackVerse ?? welcomeVerse ?? null;
 
-    const heroRefHref = verse?.cta_href?.trim() || (verse?.ref ? `/versehub/id/${verse.ref}` : '/versehub/id');
+    const heroRefHref = useMemo(() => {
+        const raw = String(verse?.cta_href || '').trim();
+        if (!raw) {
+            return verse?.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
+        }
+        const chapterFixed = raw.replace('/chapter/', '/');
+        const withOrigin = chapterFixed.startsWith('http')
+            ? chapterFixed
+            : `https://www.thechoosentalks.org${chapterFixed.startsWith('/') ? '' : '/'}${chapterFixed}`;
+        try {
+            const url = new URL(withOrigin);
+            const parts = url.pathname.split('/').filter(Boolean);
+            if (parts[0] === 'versehub' && parts[1] && parts[2]) {
+                return `/versehub/${parts[1]}?ref=${encodeURIComponent(parts.slice(2).join('/'))}`;
+            }
+            if (parts[0] === 'versehub' && parts[1]) {
+                return `/versehub/${parts[1]}`;
+            }
+            return chapterFixed;
+        } catch {
+            return chapterFixed;
+        }
+    }, [verse?.cta_href, verse?.ref]);
     const heroRefLabel = verse?.reference ?? 'Ayat Hari Ini';
     const heroQuote = verse?.quote?.trim() || 'Firman hari ini sedang disiapkan.';
     const heroCtaLabel = verse?.cta_label?.trim() || 'Baca Alkitab';

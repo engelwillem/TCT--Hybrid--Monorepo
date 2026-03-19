@@ -19,7 +19,7 @@ const FALLBACK_VERSE: DailyVersePayload = {
   reference: "Mazmur 23:1",
   quote: "TUHAN adalah gembalaku, takkan kekurangan aku.",
   cta_label: "Baca Alkitab",
-  cta_href: "/versehub/id/mzm-23-1",
+  cta_href: "/versehub/id?ref=mzm-23-1",
 };
 
 export function DailyVerseHeroCard() {
@@ -143,7 +143,29 @@ export function DailyVerseHeroCard() {
   const heroRefLabel = verse.reference ?? 'Ayat Hari Ini';
   const heroQuote = verse.quote ?? 'Firman hari ini sedang disiapkan.';
   const heroCtaLabel = verse.cta_label ?? 'Baca Alkitab';
-  const heroRefHref = verse.cta_href ?? (verse.ref ? `/versehub/id/${verse.ref}` : '/versehub/id');
+  const heroRefHref = useMemo(() => {
+    const raw = String(verse.cta_href || '').trim();
+    if (!raw) {
+      return verse.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
+    }
+    const chapterFixed = raw.replace('/chapter/', '/');
+    const withOrigin = chapterFixed.startsWith('http')
+      ? chapterFixed
+      : `https://www.thechoosentalks.org${chapterFixed.startsWith('/') ? '' : '/'}${chapterFixed}`;
+    try {
+      const url = new URL(withOrigin);
+      const parts = url.pathname.split('/').filter(Boolean);
+      if (parts[0] === 'versehub' && parts[1] && parts[2]) {
+        return `/versehub/${parts[1]}?ref=${encodeURIComponent(parts.slice(2).join('/'))}`;
+      }
+      if (parts[0] === 'versehub' && parts[1]) {
+        return `/versehub/${parts[1]}`;
+      }
+      return chapterFixed;
+    } catch {
+      return chapterFixed;
+    }
+  }, [verse.cta_href, verse.ref]);
   const quoteSubline = 'Tetap kuat, tetap berharap, dan terus berjalan bersama Tuhan.';
   const refLine = `${heroRefLabel} • Ayat hari ini`;
 
