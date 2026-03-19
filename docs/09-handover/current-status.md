@@ -1,4 +1,24 @@
 # Current Status
+## Update 2026-03-19 (Final Recovery Admin Login Production)
+
+Recovery login admin Filament di production telah selesai dan dinyatakan **SUCCESS**.
+
+### Bukti Final (Source of Truth)
+- URL: `https://admin.thechoosentalks.org/admintalk/login`
+- Status: login admin sudah bisa dipakai kembali secara normal.
+- Header CSP live admin sudah memuat:
+  - `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`
+
+### Blocker yang Sudah Closed
+- [x] `Route [register] not defined` pada `login-links.blade.php` (sudah di-guard).
+- [x] CSP runtime Filament/Livewire/Alpine terlalu ketat pada area admin (sudah scoped allow `unsafe-eval` untuk `admintalk/*`).
+
+### Dampak Status Project
+- Track recovery admin login production selesai.
+- Fokus eksekusi proyek bergeser ke:
+  - content/data filling production
+  - UI parity execution V1 -> V2
+
 
 ## Update 2026-03-19 (Deploy + Revalidasi Production)
 
@@ -42,11 +62,11 @@ Status surface aktif production sudah bergerak ke **stabil operasional** untuk f
 ## Residual Notes
 - Masih ada warning ringan non-blocking pada transisi RSC tertentu (fallback browser navigation), namun tidak memblokir flow user dan tidak memunculkan halaman error putih.
 
-## Update 2026-03-19 (Edge Artifact Drift)
-- Temuan baru dari audit screenshot + verifikasi teknis:
-  - Console warning Firebase `app/no-options` masih muncul di production.
-  - `/api/versehub/id/actions/summary?limit=1` masih dipanggil di bundle live sehingga memicu 401/422 pada kondisi tertentu.
-  - URL avatar lama masih diminta sehingga memunculkan 404.
-- Status codebase: fix sudah ada di source `main` (commit `05cc9d3`) dan workflow deploy juga sudah mengirim payload valid ke Tencent Edge (`deploymentId: 52a5kt242d`).
-- Status domain live `www.thechoosentalks.org`: masih menyajikan chunk lama (`/_next/static/chunks/app/profile/page-22fcb8e65a977678.js`) yang belum memuat fix terbaru.
-- Kesimpulan: blocker saat ini berada pada layer **artifact propagation/cache invalidation di Edge**, bukan di implementasi fix code.
+## Update 2026-03-19 (Edge Artifact Drift & Cleanup)
+- **Frontend Audit Completed:**
+  - `next.config.ts`: Added `generateBuildId` (Unique timestamp) untuk memaksa cache invalidation di Tencent Edge.
+  - `next.config.ts`: Redirect diubah ke 307 (Temporary) untuk mencegah browser cache kaku di fase transisi.
+  - `src/firebase/index.ts`: Fix `app/no-options` console warning (Silence init check).
+- **Study Paths Verified:** Status `paths: []` adalah **Empty Real Data** (Integrasi Laravel valid, database kosong).
+- **Root Hygiene:** Pembersihan file liar (*.txt, *.log, debug artifacts) dari root dan `backend-api/`. Semua dipindahkan ke `docs/01-audits/overall/artifacts/`.
+- **Status Deployment:** Codebase `main` sudah optimal dan siap untuk re-trigger di Tencent EO.

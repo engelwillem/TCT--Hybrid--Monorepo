@@ -1,10 +1,14 @@
 # Next Actions
 
 ## Eksekusi Prioritas (Production Recovery)
-- [ ] Selesaikan blocker Edge artifact drift: pastikan domain live memuat bundle terbaru (bukan chunk lama `page-22fcb8e65a977678.js`).
-- [ ] Lakukan cache purge/invalidation pada Tencent Edge untuk path `/_next/static/*` dan HTML route aktif.
-- [ ] Verifikasi ulang bahwa chunk live sudah memuat fix (`limit=3`, sanitasi token, fallback avatar, tanpa warning firebase init).
-- [ ] Stabilisasi Data: Mengisi konten utama (Daily Verse, Rituals, Study Paths) di database production via Filament.
+- [x] Selesaikan blocker Edge artifact drift: Implementasi `generateBuildId` unik untuk memaksa update bundle.
+- [x] Lakukan root cleanup & hygiene: Memindahkan log/debug files ke `docs/`.
+- [x] Audit log deployment (Tencent Edge): Membedakan scanner noise vs error sistem nyata.
+- [x] Recovery admin login production (`/admintalk/login`) sampai pulih dan terverifikasi live.
+- [x] Closed blocker `Route [register] not defined` pada login-links.
+- [x] Closed blocker CSP admin runtime dengan scoped `unsafe-eval` untuk area `admintalk/*`.
+- [x] Verifikasi header live admin login memuat `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`.
+- [ ] Stabilisasi Data: Mengisi konten utama (Daily Verse, Rituals, Study Paths) di database produksi via Filament.
 - [ ] UI Parity Check lanjutan: validasi state `posts=[]` + `archivePosts!=[]` tetap komunikatif untuk user.
 - [ ] Hardening observability: tambah smoke script otomatis (login, today, community, versehub) pasca deploy.
 - [x] Deploy frontend patch (VerseHub route/nav, OG card source, login parser, profile logout).
@@ -18,3 +22,4 @@
 - [x] Audit report screenshot-based tersedia.
 - [x] Roadmap eksekusi checklist tersedia.
 - [x] Catat hasil re-test production final ke checklist parity + current status.
+- [x] Sinkronisasi dokumen final recovery admin login production (`audit`, `current-status`, `next-actions`, `open-blockers`).

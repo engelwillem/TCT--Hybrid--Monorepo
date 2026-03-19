@@ -31,6 +31,12 @@ auth.json
 # Logs and temporary debug artifacts
 *.log
 *.tmp
+run_temp*.txt
+run_temp*.json
+temp_line.txt
+deploy_log*.txt
+failed_log*.txt
+full_git_diff*.txt
 response.html
 migrate_output*.txt
 push_error.txt
@@ -42,6 +48,10 @@ backend-api/storage/logs/*.log
 backend-api/serve.err.log
 backend-api/serve.out.log
 backend-api/bootstrap/cache/*.php
+backend-api/auth_test_output.txt
+backend-api/full_test_output.txt
+backend-api/step_failures.txt
+backend-api/test_output.txt
 
 # Release bundles and local installers
 build.tar.gz
