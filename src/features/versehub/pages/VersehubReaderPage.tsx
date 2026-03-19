@@ -102,6 +102,9 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [toast, setToast] = useState<{message: string, ctaHref?: string, ctaLabel?: string} | null>(null);
+    const hasBooks = books.length > 0;
+    const otBooksCount = useMemo(() => books.filter((book) => book.testament === 'ot').length, [books]);
+    const ntBooksCount = useMemo(() => books.filter((book) => book.testament === 'nt').length, [books]);
 
     const searchInputRef = useRef<HTMLInputElement>(null);
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -377,9 +380,26 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     };
 
     if (loading) {
-        return <div className="min-h-screen bg-background flex items-center justify-center">
-            <Loader2 className="h-10 w-10 text-brand animate-spin" />
-        </div>;
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center px-4">
+                <div className="w-full max-w-md rounded-[32px] border border-border/50 bg-background/80 p-7 shadow-sm">
+                    <div className="mb-5 flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-brand/10 flex items-center justify-center">
+                            <Loader2 className="h-5 w-5 text-brand animate-spin" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black tracking-tight text-foreground">Menyiapkan ruang baca</p>
+                            <p className="text-xs text-muted-foreground">Memuat kitab dan titik masuk VerseHub...</p>
+                        </div>
+                    </div>
+                    <div className="space-y-3 animate-pulse">
+                        <div className="h-10 rounded-2xl bg-surface-muted/70" />
+                        <div className="h-24 rounded-3xl bg-surface-muted/60" />
+                        <div className="h-10 rounded-2xl bg-surface-muted/70" />
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -445,8 +465,25 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                 </div>
                             ) : !isChapter ? (
                                 <section className="space-y-10">
+                                    <div className="rounded-[28px] border border-border/50 bg-background/70 p-4">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/90">
+                                            Gerbang VerseHub
+                                        </p>
+                                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                                            Temukan ayat dengan cepat, lalu masuk ke mode baca yang tenang dan fokus.
+                                        </p>
+                                    </div>
+
                                     {/* Search Anchor */}
                                     <div className="relative group">
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">
+                                                Cari Cepat
+                                            </p>
+                                            <p className="text-[10px] font-semibold text-muted-foreground/80">
+                                                Contoh: mazmur 23, yoh 3:16
+                                            </p>
+                                        </div>
                                         <form onSubmit={handleSearch} className="relative w-full">
                                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                                             <input 
@@ -476,7 +513,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                                     setSuggestOpen(false);
                                                                     setQuery('');
                                                                 }}
-                                                                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
+                                                                className="group w-full flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     <div className={cn(
@@ -499,13 +536,37 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                         </AnimatePresence>
                                     </div>
 
+                                    <div className="rounded-[24px] border border-border/50 bg-background/70 p-4">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground mb-3">
+                                            Akses Cepat Reader
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                            {[
+                                                { label: "Mazmur 23", ref: "mzm-23" },
+                                                { label: "Yohanes 3", ref: "yoh-3" },
+                                                { label: "Matius 5", ref: "mat-5" },
+                                            ].map((quick) => (
+                                                <button
+                                                    key={quick.ref}
+                                                    onClick={() => router.push(toVersehubRefHref(quick.ref))}
+                                                    className="rounded-2xl border border-border/60 bg-background px-4 py-3 text-left hover:bg-surface-muted transition-colors"
+                                                >
+                                                    <p className="text-sm font-bold text-foreground">{quick.label}</p>
+                                                    <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">Buka Pasal</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     {/* Landing Hero */}
-                                    <div className="rounded-[3rem] p-10 bg-slate-900 border border-white/5 shadow-2xl relative overflow-hidden text-white">
+                                    <div className="rounded-[3rem] p-7 md:p-10 bg-slate-900 border border-white/5 shadow-2xl relative overflow-hidden text-white">
                                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 rounded-full blur-3xl -mr-32 -mt-32" />
                                         <div className="relative z-10">
                                             <Badge className="bg-brand/20 text-brand border-none mb-4">Daily Rhythm</Badge>
-                                            <h2 className="text-3xl font-bold mb-4 tracking-tight">Mulai baca Alkitab hari ini.</h2>
-                                            <p className="text-white/50 mb-8 max-w-sm font-medium">Pilih salah satu kitab di bawah untuk memulai perjalanan rohanimu yang tenang.</p>
+                                            <h2 className="text-3xl font-bold mb-4 tracking-tight">Masuk ke ruang baca firman yang tenang.</h2>
+                                            <p className="text-white/60 mb-8 max-w-lg font-medium leading-relaxed">
+                                                Mulai dari Perjanjian Lama atau Baru, lalu lanjutkan satu pasal demi satu pasal dengan ritme yang lebih hening dan intentional.
+                                            </p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <button onClick={() => {setTab('ot'); setPickerOpen(true);}} className="p-6 rounded-3xl bg-white/5 border border-white/5 text-left hover:bg-white/10 transition-all group">
                                                     <div className="flex items-center justify-between mb-2">
@@ -513,6 +574,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                         <Scroll className="h-4 w-4 text-amber-500/50 group-hover:rotate-12 transition-transform" />
                                                     </div>
                                                     <p className="font-bold text-lg">Kejadian 1</p>
+                                                    <p className="mt-1 text-[11px] text-white/60">{otBooksCount} kitab tersedia</p>
                                                 </button>
                                                 <button onClick={() => {setTab('nt'); setPickerOpen(true);}} className="p-6 rounded-3xl bg-white/5 border border-white/5 text-left hover:bg-white/10 transition-all group">
                                                     <div className="flex items-center justify-between mb-2">
@@ -520,10 +582,30 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                         <ArrowRightCircle className="h-4 w-4 text-sky-400/50 group-hover:translate-x-1 transition-transform" />
                                                     </div>
                                                     <p className="font-bold text-lg">Matius 1</p>
+                                                    <p className="mt-1 text-[11px] text-white/60">{ntBooksCount} kitab tersedia</p>
                                                 </button>
+                                            </div>
+                                            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+                                                Arah cepat untuk pengguna baru: ketuk <span className="font-bold text-white">Pilih Kitab</span>, pilih pasal, lalu ketuk ayat untuk membuka tools refleksi.
                                             </div>
                                         </div>
                                     </div>
+
+                                    {!hasBooks && (
+                                        <div className="rounded-[2rem] border border-amber-500/20 bg-amber-500/5 p-6 text-center">
+                                            <p className="text-sm font-black tracking-tight text-foreground">Katalog Kitab Belum Tersedia</p>
+                                            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                                                Daftar kitab sedang disiapkan. Anda tetap bisa memakai pencarian cepat atau muat ulang beberapa saat lagi.
+                                            </p>
+                                            <button
+                                                onClick={() => { setError(null); fetchBooks(); }}
+                                                className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-5 py-2 text-xs font-black uppercase tracking-[0.12em] text-foreground hover:bg-surface-muted"
+                                            >
+                                                <RefreshCcw className="h-3.5 w-3.5" />
+                                                Muat Ulang Kitab
+                                            </button>
+                                        </div>
+                                    )}
                                 </section>
                             ) : (
                                 <div className="space-y-8">
@@ -658,6 +740,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                             <div className="col-span-full flex flex-col items-center justify-center h-full text-slate-300">
                                                 <Compass size={48} strokeWidth={1} className="mb-4" />
                                                 <p className="text-sm font-bold uppercase tracking-widest">Pilih Kitab Dulu</p>
+                                                <p className="mt-1 text-[11px] text-slate-400 text-center">Setelah kitab dipilih, daftar pasal akan muncul di sini.</p>
                                             </div>
                                         )}
                                     </div>
