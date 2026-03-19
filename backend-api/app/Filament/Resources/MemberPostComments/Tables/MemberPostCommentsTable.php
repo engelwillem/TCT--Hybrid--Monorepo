@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\MemberPostComments\Tables;
 
 use App\Models\MemberPostComment;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -105,6 +105,7 @@ class MemberPostCommentsTable
                                     ->title('Tidak ada komentar dipilih')
                                     ->warning()
                                     ->send();
+
                                 return null;
                             }
 
@@ -114,7 +115,7 @@ class MemberPostCommentsTable
                                 }
                             }
 
-                            $filename = 'member-post-comments-moderation-' . Carbon::now('Asia/Jakarta')->format('Ymd-His') . '.csv';
+                            $filename = 'member-post-comments-moderation-'.Carbon::now('Asia/Jakarta')->format('Ymd-His').'.csv';
 
                             return response()->streamDownload(function () use ($rows): void {
                                 $handle = fopen('php://output', 'w');

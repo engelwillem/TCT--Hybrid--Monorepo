@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands\Community;
 
-use Illuminate\Console\Command;
+use App\Enums\ReviewStatus;
 use App\Models\DailyContent;
 use App\Services\Engagement\DailyAutomationService;
-use App\Enums\ReviewStatus;
+use Illuminate\Console\Command;
 
 class BridgeDailyContentCommand extends Command
 {
@@ -29,6 +29,7 @@ class BridgeDailyContentCommand extends Command
 
         if ($contents->isEmpty()) {
             $this->warn('No approved content found for today.');
+
             return 0;
         }
 
@@ -48,6 +49,7 @@ class BridgeDailyContentCommand extends Command
         }
 
         $this->info('Daily Content Bridge complete.');
+
         return 0;
     }
 }

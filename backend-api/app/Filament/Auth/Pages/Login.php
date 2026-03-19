@@ -2,12 +2,12 @@
 
 namespace App\Filament\Auth\Pages;
 
-use Filament\Auth\Pages\Login as BaseLogin;
-use Filament\Schemas\Components\Component;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Checkbox;
 use Filament\Actions\Action;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Auth\Pages\Login as BaseLogin;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
 use Illuminate\Contracts\Support\Htmlable;
 
 class Login extends BaseLogin

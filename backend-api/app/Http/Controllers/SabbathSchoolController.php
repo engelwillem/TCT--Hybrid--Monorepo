@@ -52,7 +52,7 @@ class SabbathSchoolController extends Controller
             ->first();
 
         // Fallback: if today's day is not published, use latest published day.
-        if (!$todayDay) {
+        if (! $todayDay) {
             $todayDay = SsDay::query()
                 ->where('status', 'published')
                 ->orderByDesc('date')

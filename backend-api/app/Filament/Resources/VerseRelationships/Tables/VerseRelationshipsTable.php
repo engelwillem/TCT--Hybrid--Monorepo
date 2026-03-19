@@ -19,7 +19,7 @@ class VerseRelationshipsTable
                     ->sortable(),
                 TextColumn::make('relation_type')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'parallel' => 'info',
                         'prophecy' => 'success',
                         'clarification' => 'warning',

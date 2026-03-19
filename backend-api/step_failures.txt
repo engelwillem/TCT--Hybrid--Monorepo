@@ -1,0 +1,29 @@
+
+   PASS  Tests\Unit\ExampleTest
+  Γ£ô that true is tΓÇª 0.03s  
+
+   FAIL  Tests\Feature\Auth\AuthenticationTest
+  Γ£ô login screenΓÇª  16.96s  
+  Γ£ô users can authΓÇª 1.02s  
+  Γ£ô users can notΓÇª  1.17s  
+  Γ¿» users can logoΓÇª 2.19s  
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  The user is authenticated
+Failed asserting that true is false.
+
+  at tests\Feature\Auth\AuthenticationTest.php:52
+     48Γûò         $user = User::factory()->create();
+     49Γûò 
+     50Γûò         $response = $this->actingAs($user)->post('/logout');
+     51Γûò 
+  Γ₧£  52Γûò         $this->assertGuest();
+     53Γûò         $response->assertRedirect('/');
+     54Γûò     }
+     55Γûò }
+     56Γûò
+
+
+  Tests:    1 failed, 4 passed, [2m46 pending[22m (10 assertions)
+  Duration: 22.62s
+

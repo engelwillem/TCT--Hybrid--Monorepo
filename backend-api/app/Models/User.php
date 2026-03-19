@@ -2,20 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
-use Laravel\Sanctum\HasApiTokens;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements MustVerifyEmail, FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -113,10 +114,18 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser, Has
 
     public function getFilamentAvatarUrl(): ?string
     {
+        $path = trim((string) ($this->avatar_path ?? ''));
+        if ($path === '') {
+            return null;
+        }
+
+        // Prevent broken image URLs when DB path exists but file was removed from disk.
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
         // Keep URL relative so it doesn't depend on APP_URL host.
-        return $this->avatar_path
-            ? '/storage/' . $this->avatar_path
-            : null;
+        return '/storage/'.ltrim($path, '/');
     }
 
     public function isSystemAccount(): bool

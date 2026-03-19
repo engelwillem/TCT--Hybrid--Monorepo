@@ -97,7 +97,7 @@ class DatabaseSeeder extends Seeder
             $lesson = SsLesson::query()->updateOrCreate(
                 ['quarter_id' => $q1->id, 'lesson_number' => $lessonNumber],
                 [
-                    'title' => 'Lesson ' . $lessonNumber,
+                    'title' => 'Lesson '.$lessonNumber,
                     'start_date' => $lessonStart->toDateString(),
                     'end_date' => $lessonEnd->toDateString(),
                 ],

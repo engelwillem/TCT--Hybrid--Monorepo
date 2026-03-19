@@ -25,7 +25,7 @@ class SeedDemoCommunity extends Command
      */
     public function handle()
     {
-        if (!$this->confirm('This will seed the database with demo users and community content. Do you wish to continue?')) {
+        if (! $this->confirm('This will seed the database with demo users and community content. Do you wish to continue?')) {
             return;
         }
 

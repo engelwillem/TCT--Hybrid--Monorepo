@@ -24,26 +24,30 @@ class BenchmarkMode extends Command
         $state = Str::lower((string) $this->argument('state'));
         if (! in_array($state, ['on', 'off', 'status'], true)) {
             $this->error('Invalid state. Use: on | off | status');
+
             return self::FAILURE;
         }
 
         $envPath = base_path('.env');
         if (! is_file($envPath)) {
-            $this->error('No .env file found at: ' . $envPath);
+            $this->error('No .env file found at: '.$envPath);
+
             return self::FAILURE;
         }
 
         $contents = file_get_contents($envPath);
         if ($contents === false) {
             $this->error('Unable to read .env file.');
+
             return self::FAILURE;
         }
 
         if ($state === 'status') {
-            $this->line('Benchmark mode flag: ' . (config('app.benchmark_mode') ? 'ON' : 'OFF'));
-            $this->line('APP_DEBUG: ' . (config('app.debug') ? 'true' : 'false'));
-            $this->line('Config cached: ' . (app()->configurationIsCached() ? 'yes' : 'no'));
-            $this->line('Routes cached: ' . (app()->routesAreCached() ? 'yes' : 'no'));
+            $this->line('Benchmark mode flag: '.(config('app.benchmark_mode') ? 'ON' : 'OFF'));
+            $this->line('APP_DEBUG: '.(config('app.debug') ? 'true' : 'false'));
+            $this->line('Config cached: '.(app()->configurationIsCached() ? 'yes' : 'no'));
+            $this->line('Routes cached: '.(app()->routesAreCached() ? 'yes' : 'no'));
+
             return self::SUCCESS;
         }
 
@@ -55,6 +59,7 @@ class BenchmarkMode extends Command
 
         if (file_put_contents($envPath, $contents) === false) {
             $this->error('Unable to write .env file.');
+
             return self::FAILURE;
         }
 
@@ -80,14 +85,14 @@ class BenchmarkMode extends Command
 
     private function setEnvValue(string $contents, string $key, string $value): string
     {
-        $pattern = "/^" . preg_quote($key, '/') . "=.*/m";
+        $pattern = '/^'.preg_quote($key, '/').'=.*/m';
 
         if (preg_match($pattern, $contents) === 1) {
-            return preg_replace($pattern, $key . '=' . $value, $contents) ?? $contents;
+            return preg_replace($pattern, $key.'='.$value, $contents) ?? $contents;
         }
 
         $suffix = str_ends_with($contents, "\n") ? '' : "\n";
 
-        return $contents . $suffix . $key . '=' . $value . "\n";
+        return $contents.$suffix.$key.'='.$value."\n";
     }
 }

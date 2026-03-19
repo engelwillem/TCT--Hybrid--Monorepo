@@ -45,7 +45,7 @@ class StudyPathController extends Controller
             $lastStepOrder = (int) ($progress?->last_step_order ?? 0);
             if ($lastStepOrder > 0) {
                 $userProgress = $path->steps
-                    ->filter(fn($step) => (int) $step->step_order <= $lastStepOrder)
+                    ->filter(fn ($step) => (int) $step->step_order <= $lastStepOrder)
                     ->pluck('id')
                     ->values()
                     ->all();
@@ -125,7 +125,7 @@ class StudyPathController extends Controller
         $progress->save();
 
         $completedStepIds = $path->steps
-            ->filter(fn($item) => (int) $item->step_order <= (int) $progress->last_step_order)
+            ->filter(fn ($item) => (int) $item->step_order <= (int) $progress->last_step_order)
             ->pluck('id')
             ->values()
             ->all();
@@ -152,7 +152,7 @@ class StudyPathController extends Controller
         $title = $lang === 'id' ? $path->title_id : $path->title_en;
         $description = $lang === 'id' ? $path->description_id : $path->description_en;
 
-        $controller = new VerseHubController();
+        $controller = new VerseHubController;
         $png = $controller->renderStudyPathOg($title, $description, $path->cover_color);
 
         return response($png, 200, [

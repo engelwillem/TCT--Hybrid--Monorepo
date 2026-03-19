@@ -9,4 +9,3 @@ class CreateMemberPost extends CreateRecord
 {
     protected static string $resource = MemberPostResource::class;
 }
-

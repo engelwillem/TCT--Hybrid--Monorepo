@@ -3,7 +3,6 @@
 namespace App\Services\Interaction;
 
 use App\Models\MemberPost;
-use App\Enums\PostType;
 
 class PostInteractionPolicyService
 {

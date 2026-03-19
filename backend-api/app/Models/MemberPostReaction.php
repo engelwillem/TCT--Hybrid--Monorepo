@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ReactionType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Enums\ReactionType; // Added for enum casting and scope
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // Added for enum casting and scope
 
 class MemberPostReaction extends Model
 {

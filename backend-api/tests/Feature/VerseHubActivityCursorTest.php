@@ -10,6 +10,7 @@ use Tests\TestCase;
 class VerseHubActivityCursorTest extends TestCase
 {
     use RefreshDatabase;
+
     private const ACTIVITY_URL = '/versehub/id/my-spiritual-journey';
 
     public function test_recent_cursor_loads_next_page_without_duplicates(): void
@@ -25,14 +26,14 @@ class VerseHubActivityCursorTest extends TestCase
             ]);
         }
 
-        $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&sort=recent&per_page=20');
+        $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=all&sort=recent&per_page=20');
         $first->assertOk();
         $items1 = $first->json('items');
         $this->assertCount(20, $items1);
         $cursor = (string) $first->json('page.next_cursor');
         $this->assertNotSame('', $cursor);
 
-        $second = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&sort=recent&per_page=20&cursor='.urlencode($cursor));
+        $second = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=all&sort=recent&per_page=20&cursor='.urlencode($cursor));
         $second->assertOk();
         $items2 = $this->flattenGrouped($second->json('grouped_rows'));
         $this->assertCount(5, $items2);
@@ -55,13 +56,13 @@ class VerseHubActivityCursorTest extends TestCase
             ]);
         }
 
-        $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&sort=oldest&per_page=20');
+        $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=all&sort=oldest&per_page=20');
         $first->assertOk();
         $items1 = $first->json('items');
         $this->assertCount(20, $items1);
         $cursor = (string) $first->json('page.next_cursor');
 
-        $second = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&sort=oldest&per_page=20&cursor='.urlencode($cursor));
+        $second = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=all&sort=oldest&per_page=20&cursor='.urlencode($cursor));
         $second->assertOk();
         $items2 = $this->flattenGrouped($second->json('grouped_rows'));
         $this->assertCount(5, $items2);
@@ -93,7 +94,7 @@ class VerseHubActivityCursorTest extends TestCase
             ]);
         }
 
-        $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=favorites&sort=recent&per_page=20');
+        $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=favorites&sort=recent&per_page=20');
         $first->assertOk();
         $items1 = $first->json('items');
         $this->assertCount(20, $items1);
@@ -102,7 +103,7 @@ class VerseHubActivityCursorTest extends TestCase
         }
 
         $cursor = (string) $first->json('page.next_cursor');
-        $second = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=favorites&sort=recent&per_page=20&cursor='.urlencode($cursor));
+        $second = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=favorites&sort=recent&per_page=20&cursor='.urlencode($cursor));
         $second->assertOk();
         foreach ($this->flattenGrouped($second->json('grouped_rows')) as $item) {
             $this->assertTrue((bool) ($item['is_favorite'] ?? false));
@@ -127,7 +128,7 @@ class VerseHubActivityCursorTest extends TestCase
             'updated_at' => now()->subMinutes(2),
         ]);
 
-        $res = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&q=kej&sort=recent&per_page=20&cursor=invalid-cursor');
+        $res = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=all&q=kej&sort=recent&per_page=20&cursor=invalid-cursor');
         $res->assertOk();
         $items = $res->json('items');
         $this->assertCount(1, $items);
@@ -146,7 +147,7 @@ class VerseHubActivityCursorTest extends TestCase
             'updated_at' => now()->subMinutes(1),
         ]);
 
-        $res = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=notes&sort=recent&per_page=20');
+        $res = $this->actingAs($user)->getJson(self::ACTIVITY_URL.'?tab=notes&sort=recent&per_page=20');
         $res->assertOk();
         $quote = (string) $res->json('activity_stats.quote_of_week');
         $this->assertTrue(strlen($quote) <= 183);
@@ -155,7 +156,7 @@ class VerseHubActivityCursorTest extends TestCase
 
     private function makeAction(User $user, array $attrs): void
     {
-        $row = new UserVerseAction();
+        $row = new UserVerseAction;
         $row->user_id = $user->id;
         $row->lang = 'id';
         $row->book_code = (string) ($attrs['book_code'] ?? 'kej');
@@ -173,16 +174,25 @@ class VerseHubActivityCursorTest extends TestCase
 
     private function flattenGrouped(mixed $groups): array
     {
-        if (!is_array($groups)) return [];
+        if (! is_array($groups)) {
+            return [];
+        }
         $flat = [];
         foreach ($groups as $group) {
-            if (!is_array($group)) continue;
+            if (! is_array($group)) {
+                continue;
+            }
             $items = $group['items'] ?? null;
-            if (!is_array($items)) continue;
+            if (! is_array($items)) {
+                continue;
+            }
             foreach ($items as $item) {
-                if (is_array($item)) $flat[] = $item;
+                if (is_array($item)) {
+                    $flat[] = $item;
+                }
             }
         }
+
         return $flat;
     }
 }

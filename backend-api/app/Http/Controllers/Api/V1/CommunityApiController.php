@@ -20,16 +20,15 @@ class CommunityApiController extends Controller
 {
     public function __construct(
         private readonly SpiritualInteractionService $interactionService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request, \App\Services\TodayFeedService $feedService): JsonResponse
     {
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
-        
+
         $feedData = $feedService->getTodayData($user);
-        
+
         $now = \Illuminate\Support\Carbon::now();
         $archivePosts = MemberPost::query()
             ->whereNull('hidden_at')
@@ -39,20 +38,20 @@ class CommunityApiController extends Controller
             ->withCount([
                 'comments',
                 'bookmarks',
-                'reactions as pray_count' => fn($q) => $q->where('type', 'pray'),
+                'reactions as pray_count' => fn ($q) => $q->where('type', 'pray'),
             ])
             ->withExists([
-                'reactions as is_prayed_by_me' => fn($q) => $q
+                'reactions as is_prayed_by_me' => fn ($q) => $q
                     ->where('type', 'pray')
                     ->where('user_id', $user?->id ?? 0),
-                'bookmarks as is_bookmarked_by_me' => fn($q) => $q
+                'bookmarks as is_bookmarked_by_me' => fn ($q) => $q
                     ->where('user_id', $user?->id ?? 0),
             ])
             ->orderByDesc('expires_at')
             ->orderByDesc('created_at')
             ->limit(120)
             ->get()
-            ->map(fn(MemberPost $post) => $this->serializePost($post))
+            ->map(fn (MemberPost $post) => $this->serializePost($post))
             ->values();
 
         return response()->json([
@@ -62,7 +61,6 @@ class CommunityApiController extends Controller
             ],
         ]);
     }
-
 
     public function store(Request $request): JsonResponse
     {
@@ -96,7 +94,7 @@ class CommunityApiController extends Controller
             'type' => $validated['type'] ?? 'user_post',
             'text' => trim((string) ($validated['text'] ?? '')),
             'image_path' => $mediaPaths[0] ?? null,
-            'media_paths' => !empty($mediaPaths) ? $mediaPaths : null,
+            'media_paths' => ! empty($mediaPaths) ? $mediaPaths : null,
             'expires_at' => Carbon::now()->addDays(7),
         ]);
 
@@ -167,7 +165,7 @@ class CommunityApiController extends Controller
             ->orderByDesc('created_at')
             ->limit(100)
             ->get()
-            ->map(fn(MemberPostComment $comment) => $this->serializeComment($comment))
+            ->map(fn (MemberPostComment $comment) => $this->serializeComment($comment))
             ->values();
 
         return response()->json([
@@ -232,13 +230,13 @@ class CommunityApiController extends Controller
             ->withCount([
                 'comments',
                 'bookmarks',
-                'reactions as pray_count' => fn($q) => $q->where('type', 'pray'),
+                'reactions as pray_count' => fn ($q) => $q->where('type', 'pray'),
             ])
             ->withExists([
-                'reactions as is_prayed_by_me' => fn($q) => $q
+                'reactions as is_prayed_by_me' => fn ($q) => $q
                     ->where('type', 'pray')
                     ->where('user_id', $userId),
-                'bookmarks as is_bookmarked_by_me' => fn($q) => $q
+                'bookmarks as is_bookmarked_by_me' => fn ($q) => $q
                     ->where('user_id', $userId),
             ])
             ->findOrFail($postId);

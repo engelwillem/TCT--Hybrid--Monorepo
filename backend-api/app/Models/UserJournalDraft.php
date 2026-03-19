@@ -26,4 +26,3 @@ class UserJournalDraft extends Model
         return $this->belongsTo(User::class);
     }
 }
-

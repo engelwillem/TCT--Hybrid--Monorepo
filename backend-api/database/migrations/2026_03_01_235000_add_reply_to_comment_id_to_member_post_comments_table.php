@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('member_post_comments', function (Blueprint $table) {
-            if (!Schema::hasColumn('member_post_comments', 'reply_to_comment_id')) {
+            if (! Schema::hasColumn('member_post_comments', 'reply_to_comment_id')) {
                 $table->foreignId('reply_to_comment_id')
                     ->nullable()
                     ->after('user_id')
@@ -30,4 +30,3 @@ return new class extends Migration
         });
     }
 };
-

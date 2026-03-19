@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\SsQuarters\Tables;
 
+use App\Models\SsDay;
+use App\Models\SsLesson;
+use App\Models\SsQuarter;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -13,10 +17,6 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Models\SsDay;
-use App\Models\SsLesson;
-use App\Models\SsQuarter;
-use Filament\Notifications\Notification;
 
 class SsQuartersTable
 {

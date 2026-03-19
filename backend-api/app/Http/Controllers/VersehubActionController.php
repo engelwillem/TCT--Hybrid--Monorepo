@@ -34,6 +34,7 @@ class VersehubActionController extends Controller
             }
 
             $compact = preg_replace('/\s+/', '', $queryText) ?? $queryText;
+
             return $query->where(function ($q) use ($compact) {
                 $q->where('book_code', 'like', '%'.$compact.'%');
             });
@@ -43,6 +44,7 @@ class VersehubActionController extends Controller
             if ($sort === 'oldest') {
                 return $query->orderBy('updated_at')->orderBy('id');
             }
+
             return $query->orderByDesc('updated_at')->orderByDesc('id');
         };
 

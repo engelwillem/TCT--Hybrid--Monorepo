@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\StudyPath;
 use App\Models\UserMentorSession;
 use App\Models\VerseRelationship;
-use App\Models\StudyPath;
-use App\Models\UserStudyPathProgress;
 use App\Models\VerseThemeMapping;
 use App\Services\Mentor\MentorDriverInterface;
 use App\Services\Mentor\TemplateMentorDriver;
@@ -29,7 +28,7 @@ class VerseHubMentorService
 
     public function __construct(?MentorDriverInterface $driver = null)
     {
-        $this->driver = $driver ?? new TemplateMentorDriver();
+        $this->driver = $driver ?? new TemplateMentorDriver;
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────
@@ -43,7 +42,7 @@ class VerseHubMentorService
         try {
             $insights = $this->driver->getInsights($bookCode, $chapter, $verse, $text);
         } catch (\Throwable $e) {
-            Log::warning("VerseHubMentorService: driver fallback triggered", ['error' => $e->getMessage()]);
+            Log::warning('VerseHubMentorService: driver fallback triggered', ['error' => $e->getMessage()]);
             $insights = $this->fallbackInsights();
         }
 
@@ -57,9 +56,7 @@ class VerseHubMentorService
      * Answer a free-text question about a verse.
      * Optionally records the session if a user is provided.
      *
-     * @param  string               $question
-     * @param  array                $verseContext  ['ref', 'text', 'book', 'chapter', 'verse', 'lang']
-     * @param  Authenticatable|null $user
+     * @param  array  $verseContext  ['ref', 'text', 'book', 'chapter', 'verse', 'lang']
      */
     public function askScriptureGuide(
         string $question,
@@ -69,7 +66,7 @@ class VerseHubMentorService
         try {
             $result = $this->driver->answerQuestion($question, $verseContext);
         } catch (\Throwable $e) {
-            Log::warning("VerseHubMentorService: ask fallback triggered", ['error' => $e->getMessage()]);
+            Log::warning('VerseHubMentorService: ask fallback triggered', ['error' => $e->getMessage()]);
             $result = $this->fallbackAnswer($question);
         }
 
@@ -90,7 +87,7 @@ class VerseHubMentorService
                     ],
                 ]);
             } catch (\Throwable $e) {
-                Log::error("VerseHubMentorService: failed to record session", ['error' => $e->getMessage()]);
+                Log::error('VerseHubMentorService: failed to record session', ['error' => $e->getMessage()]);
             }
         }
 
@@ -113,18 +110,18 @@ class VerseHubMentorService
             'yoh-6-53' => [
                 'summary' => "Ayat ini tentang 'makan daging dan minum darah' Kristus dipahami sangat berbeda antar tradisi.",
                 'traditions' => [
-                    ['name' => 'Katolik & Ortodoks', 'view' => "Kehadiran nyata (Real Presence) Kristus dalam Ekaristi — dipahami secara literal."],
+                    ['name' => 'Katolik & Ortodoks', 'view' => 'Kehadiran nyata (Real Presence) Kristus dalam Ekaristi — dipahami secara literal.'],
                     ['name' => 'Lutheran', 'view' => "Kehadiran sejati Kristus 'di dalam, bersama, dan di bawah' roti dan anggur (konsubstansiasi)."],
-                    ['name' => 'Reformed/Calvinis', 'view' => "Kehadiran spiritual — Kristus hadir secara rohani, bukan fisik, dalam Perjamuan."],
-                    ['name' => 'Baptist & Evangelikal', 'view' => "Simbol peringatan — roti dan anggur adalah lambang, bukan transformasi literal."],
+                    ['name' => 'Reformed/Calvinis', 'view' => 'Kehadiran spiritual — Kristus hadir secara rohani, bukan fisik, dalam Perjamuan.'],
+                    ['name' => 'Baptist & Evangelikal', 'view' => 'Simbol peringatan — roti dan anggur adalah lambang, bukan transformasi literal.'],
                 ],
             ],
             'rom-9-18' => [
-                'summary' => "Roma 9 adalah pusat perdebatan tentang predestinasi dan kehendak bebas manusia.",
+                'summary' => 'Roma 9 adalah pusat perdebatan tentang predestinasi dan kehendak bebas manusia.',
                 'traditions' => [
-                    ['name' => 'Calvinis/Reformed', 'view' => "Pemilihan tanpa syarat — Allah memilih siapa yang selamat berdasarkan kedaulatan-Nya semata."],
-                    ['name' => 'Arminian', 'view' => "Prapengetahuan Allah (foreknowledge) tentang iman manusia menjadi dasar pemilihan."],
-                    ['name' => 'Molinisme', 'view' => "Pengetahuan tengah (middle knowledge) — Allah memilih berdasarkan apa yang manusia akan pilih di conditionals."],
+                    ['name' => 'Calvinis/Reformed', 'view' => 'Pemilihan tanpa syarat — Allah memilih siapa yang selamat berdasarkan kedaulatan-Nya semata.'],
+                    ['name' => 'Arminian', 'view' => 'Prapengetahuan Allah (foreknowledge) tentang iman manusia menjadi dasar pemilihan.'],
+                    ['name' => 'Molinisme', 'view' => 'Pengetahuan tengah (middle knowledge) — Allah memilih berdasarkan apa yang manusia akan pilih di conditionals.'],
                 ],
             ],
         ];
@@ -134,9 +131,9 @@ class VerseHubMentorService
         }
 
         return [
-            'summary' => "Ayat ini umumnya dipahami serupa di berbagai tradisi Kristen.",
+            'summary' => 'Ayat ini umumnya dipahami serupa di berbagai tradisi Kristen.',
             'traditions' => [
-                ['name' => 'Tradisi Umum', 'view' => "Penekanan pada panggilan untuk hidup sesuai karakter Kristus yang terlihat dalam teks ini."],
+                ['name' => 'Tradisi Umum', 'view' => 'Penekanan pada panggilan untuk hidup sesuai karakter Kristus yang terlihat dalam teks ini.'],
             ],
         ];
     }
@@ -147,10 +144,10 @@ class VerseHubMentorService
     {
         return [
             'reflection_questions' => [
-                "Apa kata atau frasa yang paling menonjol bagimu dalam ayat ini?",
-                "Bagaimana ayat ini berkaitan dengan konteks di sekitarnya?",
+                'Apa kata atau frasa yang paling menonjol bagimu dalam ayat ini?',
+                'Bagaimana ayat ini berkaitan dengan konteks di sekitarnya?',
             ],
-            'theme_connections' => ["Kasih Allah", "Kesetiaan"],
+            'theme_connections' => ['Kasih Allah', 'Kesetiaan'],
             'historical_context' => null,
         ];
     }
@@ -158,7 +155,7 @@ class VerseHubMentorService
     private function fallbackAnswer(string $question): array
     {
         return [
-            'answer' => "Cobalah membaca ayat ini dalam konteks penuh pasalnya — konteks sering memberikan jawaban yang lebih kaya dari interpretasi yang berdiri sendiri.",
+            'answer' => 'Cobalah membaca ayat ini dalam konteks penuh pasalnya — konteks sering memberikan jawaban yang lebih kaya dari interpretasi yang berdiri sendiri.',
             'related_refs' => [],
             'confidence' => 'uncertain',
         ];
@@ -214,6 +211,7 @@ class VerseHubMentorService
             ->get()
             ->map(function ($rel) use ($verseRef) {
                 $isSource = $rel->from_ref === $verseRef;
+
                 return [
                     'ref' => $isSource ? $rel->to_ref : $rel->from_ref,
                     'type' => $rel->relation_type,
@@ -255,8 +253,9 @@ class VerseHubMentorService
      */
     public function getActiveStudyPaths(?Authenticatable $user, string $verseRef): array
     {
-        if (!$user)
+        if (! $user) {
             return [];
+        }
 
         return StudyPath::whereHas('steps', function ($query) use ($verseRef) {
             $query->where('verse_ref', $verseRef);

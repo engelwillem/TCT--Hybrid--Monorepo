@@ -108,4 +108,3 @@ class VerseHubStudyAndMentorGuardrailsTest extends TestCase
         $this->assertNotNull($progress->completed_at);
     }
 }
-

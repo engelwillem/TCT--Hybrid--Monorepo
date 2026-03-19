@@ -3,13 +3,13 @@
 namespace App\Filament\Auth\Pages\PasswordReset;
 
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use Filament\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Filament\Auth\Pages\PasswordReset\RequestPasswordReset as BaseRequestPasswordReset;
 use Filament\Facades\Filament;
-use Filament\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Notifications\Notification;
-use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Auth\Events\PasswordResetLinkSent;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use LogicException;

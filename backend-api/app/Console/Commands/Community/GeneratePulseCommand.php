@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Community;
 
-use Illuminate\Console\Command;
 use App\Services\Engagement\CommunityPulseService;
+use Illuminate\Console\Command;
 
 class GeneratePulseCommand extends Command
 {

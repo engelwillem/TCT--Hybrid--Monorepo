@@ -14,11 +14,12 @@ class ChannelFactory extends Factory
     public function definition(): array
     {
         $title = $this->faker->unique()->words(2, true);
+
         return [
             'slug' => Str::slug($title),
             'title' => ucfirst($title),
             'description' => $this->faker->sentence(),
-            'type' => ChannelType::PUBLIC ,
+            'type' => ChannelType::PUBLIC,
             'cover_image_url' => $this->faker->imageUrl(),
         ];
     }

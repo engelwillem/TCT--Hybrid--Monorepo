@@ -33,7 +33,7 @@ class ChannelMembershipController extends Controller
             return response()->json([
                 'ok' => true,
                 'status' => $alreadyJoined ? 'left-channel' : 'joined-channel',
-                'is_joined' => !$alreadyJoined,
+                'is_joined' => ! $alreadyJoined,
                 'members_count' => $channel->members()->count(),
             ]);
         }

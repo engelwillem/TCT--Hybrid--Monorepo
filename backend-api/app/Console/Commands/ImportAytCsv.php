@@ -38,6 +38,7 @@ class ImportAytCsv extends Command
         if (! file_exists($path)) {
             $this->error("File not found: {$path}");
             $this->line('Tip: download it into storage/app/ayt/ayt.csv');
+
             return self::FAILURE;
         }
 
@@ -62,6 +63,7 @@ class ImportAytCsv extends Command
         $fh = fopen($path, 'rb');
         if (! $fh) {
             $this->error('Unable to open file.');
+
             return self::FAILURE;
         }
 
@@ -70,6 +72,7 @@ class ImportAytCsv extends Command
         if (! is_array($header) || count($header) < 6) {
             fclose($fh);
             $this->error('Invalid CSV header.');
+
             return self::FAILURE;
         }
 
@@ -84,6 +87,7 @@ class ImportAytCsv extends Command
         while (($row = fgetcsv($fh)) !== false) {
             if (! is_array($row) || count($row) < 6) {
                 $skipped++;
+
                 continue;
             }
 
@@ -96,6 +100,7 @@ class ImportAytCsv extends Command
 
             if ($abbr === '' || $chapter <= 0 || $verse <= 0 || trim($text) === '') {
                 $skipped++;
+
                 continue;
             }
 
@@ -103,15 +108,19 @@ class ImportAytCsv extends Command
             // AYT uses title-cased Indonesian book code (e.g. Kej, Mzm, Yoh, Flm).
             // We store VerseHub's slug book codes (e.g. 1kor/2kor instead of 1ko/2ko)
             $bookCode = Str::lower($abbr);
-            if ($bookCode === '1ko') $bookCode = '1kor';
-            if ($bookCode === '2ko') $bookCode = '2kor';
+            if ($bookCode === '1ko') {
+                $bookCode = '1kor';
+            }
+            if ($bookCode === '2ko') {
+                $bookCode = '2kor';
+            }
 
             // Clean text: remove <t /> marker and other simple tags.
             $text = preg_replace('/<\s*t\s*\/>/i', '', $text) ?? $text;
             $text = strip_tags($text);
             $text = trim(html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
-            $reference = strtoupper($abbr) . " {$chapter}:{$verse}";
+            $reference = strtoupper($abbr)." {$chapter}:{$verse}";
             // We keep reference minimal for now; VerseHub UI will show it anyway.
 
             $now = now();

@@ -23,6 +23,7 @@ return new class extends Migration
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
             return;
         }
 
@@ -34,6 +35,7 @@ return new class extends Migration
                     'title' => $legacy->title ?: 'VerseHub Daily',
                     'updated_at' => now(),
                 ]);
+
             return;
         }
 
@@ -57,4 +59,3 @@ return new class extends Migration
         // Irreversible safely: this migration consolidates legacy channel data into versehub-daily.
     }
 };
-

@@ -3,23 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\BibleVerse;
-use App\Models\MemberPost;
-use App\Models\ReflectionResponse;
-use App\Models\UserMetric;
-use App\Models\UserVerseAction;
-use App\Services\UserMetricsService;
-use App\Services\VerseHubActivityService;
 use App\Services\VerseHubMentorService;
-use App\Support\VerseHubHomeVerse;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Http\JsonResponse;
 
 class VerseHubReaderController extends Controller
 {
     private const ACTIVITY_QUOTE_POST_TYPE = 'versehub_activity_quote';
+
     private const ID_BOOK_ORDER = [
         'kej', 'kel', 'ima', 'bil', 'uli', 'yos', 'hak', 'rut', '1sam', '2sam', '1raj', '2raj', '1taw', '2taw', 'ezr', 'neh', 'est', 'ayb', 'mzm', 'ams', 'pkh', 'kid', 'yes', 'yer', 'rat', 'yeh', 'dan', 'hos', 'yoe', 'amo', 'oba', 'yun', 'mik', 'nah', 'hab', 'zef', 'hag', 'zak', 'mal', 'mat', 'mrk', 'luk', 'yoh', 'kis', 'rom', '1kor', '2kor', 'gal', 'ef', 'flp', 'kol', '1tes', '2tes', '1tim', '2tim', 'tit', 'flm', 'ibr', 'yak', '1ptr', '2ptr', '1yoh', '2yoh', '3yoh', 'yud', 'why',
     ];
@@ -37,6 +30,7 @@ class VerseHubReaderController extends Controller
     {
         $codes = $this->availableBookCodesCanonical($lang);
         $books = $this->buildBooks($codes);
+
         return response()->json(['books' => $books]);
     }
 
@@ -44,7 +38,9 @@ class VerseHubReaderController extends Controller
     {
         $bookCodes = $this->availableBookCodesCanonical($lang);
         $parsedRef = $this->parseChapterRef($ref);
-        if (!$parsedRef) return response()->json(['message' => 'Invalid reference'], 400);
+        if (! $parsedRef) {
+            return response()->json(['message' => 'Invalid reference'], 400);
+        }
 
         $book = $this->resolveIdBookCode($parsedRef['book']) ?? $parsedRef['book'];
         $chapter = $parsedRef['chapter'];
@@ -52,7 +48,9 @@ class VerseHubReaderController extends Controller
         $books = $this->buildBooks($bookCodes);
         $data = $this->buildChapterViewData($lang, $book, $chapter, $books, $bookCodes);
 
-        if (!$data) return response()->json(['message' => 'Chapter not found'], 404);
+        if (! $data) {
+            return response()->json(['message' => 'Chapter not found'], 404);
+        }
 
         return response()->json($data);
     }
@@ -60,10 +58,13 @@ class VerseHubReaderController extends Controller
     public function index(Request $request, string $lang)
     {
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
-        if ($lang === 'en') return redirect()->to('/versehub/id');
+        if ($lang === 'en') {
+            return redirect()->to('/versehub/id');
+        }
 
         $bookCodes = $this->availableBookCodesCanonical($lang);
         $books = $this->buildBooks($bookCodes);
+
         return response()->json(['books' => $books]);
     }
 
@@ -90,7 +91,9 @@ class VerseHubReaderController extends Controller
     {
         $book = Str::lower(trim((string) $request->query('book', '')));
         $book = $this->resolveIdBookCode($book) ?? $book;
-        if ($book === '') return response()->json(['book' => null, 'chapters' => []]);
+        if ($book === '') {
+            return response()->json(['book' => null, 'chapters' => []]);
+        }
 
         $chapters = BibleVerse::query()
             ->where('provider', 'ayt')
@@ -99,7 +102,7 @@ class VerseHubReaderController extends Controller
             ->distinct()
             ->orderBy('chapter')
             ->pluck('chapter')
-            ->map(fn($c) => (int) $c)
+            ->map(fn ($c) => (int) $c)
             ->all();
         $chapters = $this->normalizeChapterList($book, $chapters);
 
@@ -108,7 +111,9 @@ class VerseHubReaderController extends Controller
 
     private function buildChapterViewData(string $lang, string $book, int $chapter, array $books, array $bookCodes, array $verseFilter = []): ?array
     {
-        if ($chapter < 1 || !in_array($book, $bookCodes, true)) return null;
+        if ($chapter < 1 || ! in_array($book, $bookCodes, true)) {
+            return null;
+        }
 
         $queryCodes = $this->idBookQueryCodes($book);
         $chapters = BibleVerse::query()
@@ -118,14 +123,16 @@ class VerseHubReaderController extends Controller
             ->distinct()
             ->orderBy('chapter')
             ->pluck('chapter')
-            ->map(fn($c) => (int) $c)
+            ->map(fn ($c) => (int) $c)
             ->all();
         $chapters = $this->normalizeChapterList($book, $chapters);
 
-        if (!in_array($chapter, $chapters, true)) return null;
+        if (! in_array($chapter, $chapters, true)) {
+            return null;
+        }
 
-        $bookLabel = Arr::first($books, fn($b) => $b['code'] === $book)['label'] ?? Str::upper($book);
-        $chapterLabel = $bookLabel . ' ' . $chapter;
+        $bookLabel = Arr::first($books, fn ($b) => $b['code'] === $book)['label'] ?? Str::upper($book);
+        $chapterLabel = $bookLabel.' '.$chapter;
 
         $verses = BibleVerse::query()
             ->select(['verse', 'text'])
@@ -138,10 +145,11 @@ class VerseHubReaderController extends Controller
             ->map(function (BibleVerse $v) use ($book, $chapter) {
                 $verseNumber = (int) $v->verse;
                 $ref = sprintf('%s-%d-%d', $book, $chapter, $verseNumber);
+
                 return [
                     'verse' => $verseNumber,
                     'text' => (string) $v->text,
-                    'href' => url('/versehub/id/' . $ref),
+                    'href' => url('/versehub/id/'.$ref),
                     'key' => $ref,
                 ];
             })
@@ -163,9 +171,10 @@ class VerseHubReaderController extends Controller
         return \Illuminate\Support\Facades\Cache::remember(
             "vh:chapter_reflect:{$book}:{$chapter}",
             now()->addDay(),
-            function() use ($book, $chapter) {
+            function () use ($book, $chapter) {
                 $mentor = app(VerseHubMentorService::class);
                 $insights = $mentor->getGuidedInsights($book, $chapter, 1);
+
                 return $insights['reflection_questions'][0] ?? 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
             }
         );
@@ -176,12 +185,21 @@ class VerseHubReaderController extends Controller
         $book = Str::lower(trim($book));
         $map = config('versehub_books.id');
         $aliases = config('versehub_books.aliases');
-        if (is_array($map) && array_key_exists($book, $map)) return $book;
-        if (!is_array($aliases)) return null;
+        if (is_array($map) && array_key_exists($book, $map)) {
+            return $book;
+        }
+        if (! is_array($aliases)) {
+            return null;
+        }
         $alias = $aliases[$book] ?? null;
-        if (!is_string($alias)) return null;
+        if (! is_string($alias)) {
+            return null;
+        }
         $alias = Str::lower(trim($alias));
-        if (is_array($map) && array_key_exists($alias, $map)) return $alias;
+        if (is_array($map) && array_key_exists($alias, $map)) {
+            return $alias;
+        }
+
         return null;
     }
 
@@ -192,7 +210,7 @@ class VerseHubReaderController extends Controller
             ->where('lang', $lang)
             ->distinct()
             ->pluck('book_code')
-            ->map(fn($x) => Str::lower((string) $x))
+            ->map(fn ($x) => Str::lower((string) $x))
             ->all();
 
         $canonicalSet = [];
@@ -206,6 +224,7 @@ class VerseHubReaderController extends Controller
         usort($codes, function (string $a, string $b) use ($orderIdx) {
             $ai = $orderIdx[$a] ?? 999;
             $bi = $orderIdx[$b] ?? 999;
+
             return $ai <=> $bi;
         });
 
@@ -229,23 +248,32 @@ class VerseHubReaderController extends Controller
         $aliases = config('versehub_books.aliases', []);
         $codes = [$canonicalBook];
         foreach ($aliases as $alias => $target) {
-            if (Str::lower(trim($target)) === $canonicalBook) $codes[] = Str::lower(trim($alias));
+            if (Str::lower(trim($target)) === $canonicalBook) {
+                $codes[] = Str::lower(trim($alias));
+            }
         }
+
         return array_values(array_unique($codes));
     }
 
     private function parseChapterRef(string $raw): ?array
     {
         $s = Str::lower(trim($raw));
-        if (preg_match('/^(?<book>[a-z0-9]+)[\-_.](?<ch>\d+)$/', $s, $m)) return ['book' => (string) $m['book'], 'chapter' => (int) $m['ch']];
-        if (preg_match('/^(?<book>[a-z0-9]*[a-z])(?<ch>\d+)$/', $s, $m)) return ['book' => (string) $m['book'], 'chapter' => (int) $m['ch']];
+        if (preg_match('/^(?<book>[a-z0-9]+)[\-_.](?<ch>\d+)$/', $s, $m)) {
+            return ['book' => (string) $m['book'], 'chapter' => (int) $m['ch']];
+        }
+        if (preg_match('/^(?<book>[a-z0-9]*[a-z])(?<ch>\d+)$/', $s, $m)) {
+            return ['book' => (string) $m['book'], 'chapter' => (int) $m['ch']];
+        }
+
         return null;
     }
 
     private function normalizeChapterList(string $book, array $chapters): array
     {
-        $normalized = array_values(array_unique(array_filter(array_map('intval', $chapters), fn(int $chapter) => $chapter > 0)));
+        $normalized = array_values(array_unique(array_filter(array_map('intval', $chapters), fn (int $chapter) => $chapter > 0)));
         sort($normalized);
+
         return $normalized;
     }
 }

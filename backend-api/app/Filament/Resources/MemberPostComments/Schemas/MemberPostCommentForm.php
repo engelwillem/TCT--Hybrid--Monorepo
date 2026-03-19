@@ -38,4 +38,3 @@ class MemberPostCommentForm
             ->columns(2);
     }
 }
-

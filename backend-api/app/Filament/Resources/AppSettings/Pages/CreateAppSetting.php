@@ -9,4 +9,3 @@ class CreateAppSetting extends CreateRecord
 {
     protected static string $resource = AppSettingResource::class;
 }
-

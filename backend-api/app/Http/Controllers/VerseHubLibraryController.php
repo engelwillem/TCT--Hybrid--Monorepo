@@ -281,14 +281,18 @@ class VerseHubLibraryController extends Controller
                 $match = Str::startsWith($code, $needle)
                     || Str::startsWith($labelNorm, $needle)
                     || Str::contains($labelNorm, $needle);
-                if (! $match) continue;
+                if (! $match) {
+                    continue;
+                }
                 $richItems[] = [
                     'type' => 'book',
                     'label' => $label,
                     'value' => $code,
                     'href' => '/versehub/id?q='.urlencode($code.' 1'),
                 ];
-                if (count($richItems) >= 12) break;
+                if (count($richItems) >= 12) {
+                    break;
+                }
             }
         }
 
@@ -308,7 +312,9 @@ class VerseHubLibraryController extends Controller
                     ->all();
                 foreach ($chapterRows as $ch) {
                     $chText = (string) $ch;
-                    if ($chapterPrefix !== '' && ! Str::startsWith($chText, $chapterPrefix)) continue;
+                    if ($chapterPrefix !== '' && ! Str::startsWith($chText, $chapterPrefix)) {
+                        continue;
+                    }
                     $label = ($books[$bookCode] ?? Str::upper($bookCode)).' '.$chText;
                     $richItems[] = [
                         'type' => 'chapter',
@@ -316,7 +322,9 @@ class VerseHubLibraryController extends Controller
                         'value' => $bookCode.' '.$chText,
                         'href' => '/versehub/id/'.urlencode($bookCode).'-'.urlencode($chText),
                     ];
-                    if (count($richItems) >= 12) break;
+                    if (count($richItems) >= 12) {
+                        break;
+                    }
                 }
             }
         }
@@ -325,10 +333,14 @@ class VerseHubLibraryController extends Controller
         $deduped = [];
         foreach ($richItems as $item) {
             $key = ($item['href'] ?? '').'|'.($item['value'] ?? '');
-            if (isset($seen[$key])) continue;
+            if (isset($seen[$key])) {
+                continue;
+            }
             $seen[$key] = true;
             $deduped[] = $item;
-            if (count($deduped) >= 12) break;
+            if (count($deduped) >= 12) {
+                break;
+            }
         }
         $richItems = $deduped;
         $items = array_values(array_map(fn (array $it) => (string) ($it['value'] ?? ''), $richItems));
@@ -343,7 +355,9 @@ class VerseHubLibraryController extends Controller
     private function parseRefInput(string $q): ?array
     {
         $q = Str::lower(trim($q));
-        if ($q === '') return null;
+        if ($q === '') {
+            return null;
+        }
 
         // Accept: "kej-1-1" or "kej 1:1" or "kej 1 1"
         $q = str_replace([':', '.'], [' ', ' '], $q);
@@ -365,13 +379,16 @@ class VerseHubLibraryController extends Controller
         $s = Str::lower(trim($q));
         $s = str_replace(['–', '—', '_', '.'], ['-', '-', '-', '-'], $s);
         $s = preg_replace('/\s+/', ' ', $s) ?? $s;
+
         return trim($s);
     }
 
     private function parseFlexibleRef(string $raw): ?array
     {
         $s = $this->normalizeRefInput($raw);
-        if ($s === '') return null;
+        if ($s === '') {
+            return null;
+        }
 
         if (preg_match('/^(?<book>[a-z0-9 ]+)\s+(?<ch>\d+)\s*:\s*(?<verses>[\d,\-\s]+)$/', $s, $m)) {
             return ['book' => (string) $m['book'], 'chapter' => (int) $m['ch'], 'verses' => preg_replace('/\s+/', '', (string) $m['verses'])];
@@ -391,9 +408,11 @@ class VerseHubLibraryController extends Controller
     private function parseCrossChapterRef(string $raw): ?array
     {
         $s = $this->normalizeRefInput($raw);
-        if ($s === '') return null;
+        if ($s === '') {
+            return null;
+        }
 
-        if (!preg_match('/^(?<book>[a-z0-9 ]+)\s+(?<ch1>\d+)\s*:\s*(?<v1>\d+)\s*-\s*(?<ch2>\d+)\s*:\s*(?<v2>\d+)$/', $s, $m)) {
+        if (! preg_match('/^(?<book>[a-z0-9 ]+)\s+(?<ch1>\d+)\s*:\s*(?<v1>\d+)\s*-\s*(?<ch2>\d+)\s*:\s*(?<v2>\d+)$/', $s, $m)) {
             return null;
         }
 
@@ -414,7 +433,9 @@ class VerseHubLibraryController extends Controller
     private function resolveReaderBookCode(string $rawBook): ?string
     {
         $token = Str::lower(trim($rawBook));
-        if ($token === '') return null;
+        if ($token === '') {
+            return null;
+        }
         $books = $this->readerBookDictionary();
         if (array_key_exists($token, $books)) {
             return $token;

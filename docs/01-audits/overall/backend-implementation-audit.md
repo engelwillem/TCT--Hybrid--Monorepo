@@ -48,6 +48,9 @@ Meskipun terdapat beberapa variasi gaya penamaan (namespace Api\V1 vs root), con
 - **Study Paths**: Bergabung ke jalur studi (`join`), progres langkah demi langkah (`complete`), dan filter bahasa.
 - **VerseHub**: Sistem mentor AI (ask/insight), library, refleksi, dan pemetaan hubungan ayat (`VerseRelationship`).
 
+### Status Verifikasi Live
+Audit pada 19 Maret 2026 mengonfirmasi bahwa seluruh endpoint domain utama (Today, Community, Study Paths, dan VerseHub) telah merespons dengan data nyata dari database production, membuktikan integrasi *end-to-end* yang fungsional di seluruh lini.
+
 ## 5. Analisis Risiko dan Gap
 
 ### Inkonsistensi Penamaan (Observed)

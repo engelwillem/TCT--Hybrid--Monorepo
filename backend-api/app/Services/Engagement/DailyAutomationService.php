@@ -2,22 +2,19 @@
 
 namespace App\Services\Engagement;
 
+use App\Enums\PostType;
+use App\Enums\SourceType;
 use App\Models\DailyContent;
 use App\Models\MemberPost;
 use App\Models\MemberPostComment;
 use App\Services\AI\AIContentAssistant;
-use App\Services\Engagement\SystemAccountService;
-use App\Enums\PostType;
-use App\Enums\SourceType;
-use Illuminate\Support\Facades\Log;
 
 class DailyAutomationService
 {
     public function __construct(
         protected SystemAccountService $accounts,
         protected AIContentAssistant $ai
-    ) {
-    }
+    ) {}
 
     /**
      * Bridge a specific DailyContent to the Community feed.
@@ -95,10 +92,10 @@ class DailyAutomationService
         $payload = $content->payload;
 
         return match ($content->content_type->value) {
-            'today_verse' => "📖 **Ayat Hari Ini:**\n\n_" . ($payload['text'] ?? '') . "_\n\n— " . ($payload['reference'] ?? ''),
-            'quote_of_day' => "✍️ **Kutipan Rohani:**\n\n\"" . ($payload['text'] ?? '') . "\"\n\n— " . ($payload['author'] ?? ''),
-            'reflection_prompt' => "🤔 **Mari Berefleksi:**\n\n" . ($payload['question'] ?? ''),
-            'prayer_prompt' => "🙏 **Mari Berdoa:**\n\n" . ($payload['theme'] ?? '') . "\n\n" . ($payload['target'] ?? ''),
+            'today_verse' => "📖 **Ayat Hari Ini:**\n\n_".($payload['text'] ?? '')."_\n\n— ".($payload['reference'] ?? ''),
+            'quote_of_day' => "✍️ **Kutipan Rohani:**\n\n\"".($payload['text'] ?? '')."\"\n\n— ".($payload['author'] ?? ''),
+            'reflection_prompt' => "🤔 **Mari Berefleksi:**\n\n".($payload['question'] ?? ''),
+            'prayer_prompt' => "🙏 **Mari Berdoa:**\n\n".($payload['theme'] ?? '')."\n\n".($payload['target'] ?? ''),
             default => $payload['title'] ?? 'Pengumuman Komunitas',
         };
     }

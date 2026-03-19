@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\ReflectionResponse;
+use Illuminate\Http\Request;
 
 class VerseHubReflectionController extends Controller
 {

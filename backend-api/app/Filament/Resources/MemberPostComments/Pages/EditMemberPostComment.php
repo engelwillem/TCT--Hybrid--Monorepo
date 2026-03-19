@@ -17,4 +17,3 @@ class EditMemberPostComment extends EditRecord
         ];
     }
 }
-

@@ -27,10 +27,10 @@ class MemberPostFactory extends Factory
      */
     public function reflection(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'type' => PostType::REFLECTION,
-            'title' => 'Renungan: ' . $this->faker->word(),
-            'text' => 'Hari ini saya merenungkan ayat ' . $this->faker->randomElement(['Mazmur 23', 'Filipi 4:13', 'Yohanes 3:16']) . '. ' . $this->faker->paragraph(),
+            'title' => 'Renungan: '.$this->faker->word(),
+            'text' => 'Hari ini saya merenungkan ayat '.$this->faker->randomElement(['Mazmur 23', 'Filipi 4:13', 'Yohanes 3:16']).'. '.$this->faker->paragraph(),
         ]);
     }
 
@@ -39,7 +39,7 @@ class MemberPostFactory extends Factory
      */
     public function prayerRequest(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'type' => PostType::PRAYER_REQUEST,
             'title' => 'Mohon Dukungan Doa',
             'text' => $this->faker->randomElement([
@@ -56,13 +56,13 @@ class MemberPostFactory extends Factory
      */
     public function quote(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'type' => PostType::QUOTE,
-            'text' => '"' . $this->faker->randomElement([
+            'text' => '"'.$this->faker->randomElement([
                 'Tuhan tidak pernah menjanjikan jalan yang rata, tapi Dia menjanjikan kekuatan.',
                 'Iman adalah percaya pada apa yang belum kita lihat.',
                 'Tetaplah berdoa, karena doa mengubah segalanya.',
-            ]) . '"',
+            ]).'"',
         ]);
     }
 
@@ -71,9 +71,9 @@ class MemberPostFactory extends Factory
      */
     public function discussion(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'type' => PostType::DISCUSSION_PROMPT,
-            'title' => 'Diskusi: ' . $this->faker->sentence(),
+            'title' => 'Diskusi: '.$this->faker->sentence(),
             'text' => 'Menurut teman-teman, bagaimana cara kita tetap setia di tengah kesibukan dunia?',
         ]);
     }

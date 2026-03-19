@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 class SystemAccountService
 {
     const EMAIL_SHEPHERD = 'editor@thechoosentalks.com';
+
     const EMAIL_ENCOURAGER = 'encourager@thechoosentalks.com';
 
     /**

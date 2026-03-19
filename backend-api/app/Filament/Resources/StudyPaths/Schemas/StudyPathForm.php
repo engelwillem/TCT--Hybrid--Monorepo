@@ -19,7 +19,7 @@ class StudyPathForm
                     ->label('Title (ID)')
                     ->required()
                     ->live(onBlur: true)
-                    ->afterStateUpdated(fn(string $operation, $state, $set) => $operation === 'create' ? $set('slug', Str::slug($state)) : null),
+                    ->afterStateUpdated(fn (string $operation, $state, $set) => $operation === 'create' ? $set('slug', Str::slug($state)) : null),
                 TextInput::make('title_en')
                     ->label('Title (EN)')
                     ->required(),

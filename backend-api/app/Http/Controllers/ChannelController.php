@@ -19,7 +19,7 @@ class ChannelController extends Controller
             ->whereIn('slug', $allowedSlugs)
             ->withCount('members')
             ->withExists([
-                'members as is_joined' => fn($q) => $q->where('users.id', $user?->id ?? 0),
+                'members as is_joined' => fn ($q) => $q->where('users.id', $user?->id ?? 0),
             ])
             ->orderByRaw("CASE slug
                 WHEN 'sabbath-school' THEN 1
@@ -32,7 +32,7 @@ class ChannelController extends Controller
 
         $sabbathChannel = $channels->firstWhere('slug', 'sabbath-school');
         $nonSabbathChannels = $channels
-            ->filter(fn(Channel $channel) => $channel->slug !== 'sabbath-school')
+            ->filter(fn (Channel $channel) => $channel->slug !== 'sabbath-school')
             ->values();
 
         $quarters = SsQuarter::query()
@@ -42,7 +42,7 @@ class ChannelController extends Controller
 
         $today = Carbon::today();
         $activeQuarter = $quarters->first(function (SsQuarter $quarter) use ($today): bool {
-            if (!$quarter->start_date || !$quarter->end_date) {
+            if (! $quarter->start_date || ! $quarter->end_date) {
                 return false;
             }
 
@@ -92,7 +92,7 @@ class ChannelController extends Controller
             ->with('lesson.quarter')
             ->first();
 
-        if (!$todayDay && $todayLesson) {
+        if (! $todayDay && $todayLesson) {
             $todayDay = SsDay::query()
                 ->where('lesson_id', $todayLesson->id)
                 ->where('status', 'published')
@@ -102,7 +102,7 @@ class ChannelController extends Controller
                 ->first();
         }
 
-        if (!$todayDay && $todayLesson) {
+        if (! $todayDay && $todayLesson) {
             $todayDay = SsDay::query()
                 ->where('lesson_id', $todayLesson->id)
                 ->where('status', 'published')
@@ -111,7 +111,7 @@ class ChannelController extends Controller
                 ->first();
         }
 
-        if (!$todayDay) {
+        if (! $todayDay) {
             $todayDay = SsDay::query()
                 ->where('status', 'published')
                 ->orderByDesc('date')

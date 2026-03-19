@@ -17,4 +17,3 @@ class ListAppSettings extends ListRecords
         ];
     }
 }
-

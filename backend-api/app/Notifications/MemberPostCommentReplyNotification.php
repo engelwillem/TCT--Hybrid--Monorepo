@@ -13,8 +13,7 @@ class MemberPostCommentReplyNotification extends Notification
         private readonly string $actorName,
         private readonly int $postId,
         private readonly string $snippet,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -31,4 +30,3 @@ class MemberPostCommentReplyNotification extends Notification
         ];
     }
 }
-

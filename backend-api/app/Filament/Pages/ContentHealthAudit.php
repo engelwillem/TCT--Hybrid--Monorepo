@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\AdminAuditLog;
 use App\Filament\Resources\Channels\ChannelResource;
 use App\Filament\Resources\MemberPostComments\MemberPostCommentResource;
 use App\Filament\Resources\MemberPosts\MemberPostResource;
@@ -10,6 +9,7 @@ use App\Filament\Resources\Posts\PostResource;
 use App\Filament\Resources\SsDays\SsDayResource;
 use App\Filament\Resources\SsLessons\SsLessonResource;
 use App\Filament\Resources\SsQuarters\SsQuarterResource;
+use App\Models\AdminAuditLog;
 use App\Models\Channel;
 use App\Models\MemberPost;
 use App\Models\MemberPostComment;
@@ -155,7 +155,7 @@ class ContentHealthAudit extends Page
         Notification::make()
             ->title('Core channel check selesai')
             ->body($result['created'] > 0
-                ? "{$result['created']} channel dibuat oleh ".($this->actorLabel())."."
+                ? "{$result['created']} channel dibuat oleh ".($this->actorLabel()).'.'
                 : 'Tidak ada channel baru. Semua sudah tersedia. Actor: '.($this->actorLabel()).'.')
             ->success()
             ->send();
@@ -328,7 +328,7 @@ class ContentHealthAudit extends Page
             return null;
         }
 
-        $filename = 'admin-audit-trail-' . Carbon::now('Asia/Jakarta')->format('Ymd-His') . '.csv';
+        $filename = 'admin-audit-trail-'.Carbon::now('Asia/Jakarta')->format('Ymd-His').'.csv';
 
         $callback = function () use ($rows): void {
             $handle = fopen('php://output', 'w');
@@ -425,7 +425,7 @@ class ContentHealthAudit extends Page
     {
         $nowJkt = Carbon::now('Asia/Jakarta');
         $todayJkt = $nowJkt->toDateString();
-        $this->generatedAt = $nowJkt->translatedFormat('d M Y H:i') . ' WIB';
+        $this->generatedAt = $nowJkt->translatedFormat('d M Y H:i').' WIB';
 
         $requiredWeeklySlugs = ['faith-journey', 'family', 'god-first'];
         $requiredCoreSlugs = [...$requiredWeeklySlugs, 'versehub-daily'];
@@ -534,19 +534,19 @@ class ContentHealthAudit extends Page
                         empty($missingCoreSlugs) ? 'ok' : 'danger',
                         empty($missingCoreSlugs)
                             ? 'Semua slug wajib tersedia.'
-                            : 'Missing: ' . implode(', ', $missingCoreSlugs),
+                            : 'Missing: '.implode(', ', $missingCoreSlugs),
                     ),
                     $this->checkStatus(
                         'Weekly published posts',
                         $weeklyPublishedCount > 0 ? 'ok' : 'warn',
-                        $weeklyPublishedCount . ' post published (weekly channels).',
+                        $weeklyPublishedCount.' post published (weekly channels).',
                     ),
                     $this->checkStatus(
                         'Daily verse for today',
                         $dailyVerseTodayCount === 1 ? 'ok' : ($dailyVerseTodayCount > 1 ? 'warn' : 'danger'),
                         $dailyVerseTodayCount === 1
                             ? '1 post daily verse untuk hari ini.'
-                            : 'Jumlah hari ini: ' . $dailyVerseTodayCount . ' (target: 1).',
+                            : 'Jumlah hari ini: '.$dailyVerseTodayCount.' (target: 1).',
                     ),
                 ],
                 'links' => [
@@ -561,19 +561,19 @@ class ContentHealthAudit extends Page
                         'Sabbath School active quarter',
                         $activeSsQuarter ? 'ok' : 'danger',
                         $activeSsQuarter
-                            ? 'Q' . $activeSsQuarter->quarter . ' ' . $activeSsQuarter->year . ' aktif.'
+                            ? 'Q'.$activeSsQuarter->quarter.' '.$activeSsQuarter->year.' aktif.'
                             : 'Belum ada ss_quarters.is_active = true.',
                     ),
                     $this->checkStatus(
                         'Published SS days in active quarter',
                         $ssPublishedDaysInActiveQuarter > 0 ? 'ok' : 'warn',
-                        $ssPublishedDaysInActiveQuarter . ' published day(s), '
-                            . $ssLessonsInActiveQuarter . ' lesson(s).',
+                        $ssPublishedDaysInActiveQuarter.' published day(s), '
+                            .$ssLessonsInActiveQuarter.' lesson(s).',
                     ),
                     $this->checkStatus(
                         'Published SS days without content',
                         $ssPublishedDaysWithoutContent === 0 ? 'ok' : 'warn',
-                        $ssPublishedDaysWithoutContent . ' day(s) kosong.',
+                        $ssPublishedDaysWithoutContent.' day(s) kosong.',
                     ),
                 ],
                 'links' => [
@@ -588,22 +588,22 @@ class ContentHealthAudit extends Page
                     $this->checkStatus(
                         'Active member posts',
                         $activeMemberPosts > 0 ? 'ok' : 'warn',
-                        $activeMemberPosts . ' active post(s).',
+                        $activeMemberPosts.' active post(s).',
                     ),
                     $this->checkStatus(
                         'Archived member posts',
                         'ok',
-                        $archivedMemberPosts . ' archived post(s).',
+                        $archivedMemberPosts.' archived post(s).',
                     ),
                     $this->checkStatus(
                         'Member post comments',
                         'ok',
-                        MemberPostComment::query()->count() . ' comment(s).',
+                        MemberPostComment::query()->count().' comment(s).',
                     ),
                     $this->checkStatus(
                         'Sabbath School discussion comments',
                         'ok',
-                        SsDayComment::query()->count() . ' comment(s).',
+                        SsDayComment::query()->count().' comment(s).',
                     ),
                 ],
                 'links' => [
@@ -617,17 +617,17 @@ class ContentHealthAudit extends Page
                     $this->checkStatus(
                         'Saved verse actions',
                         $savedVerseActionsCount > 0 ? 'ok' : 'warn',
-                        $savedVerseActionsCount . ' action(s) tersimpan.',
+                        $savedVerseActionsCount.' action(s) tersimpan.',
                     ),
                     $this->checkStatus(
                         'Verse notes',
                         'ok',
-                        $savedVerseNotesCount . ' note(s).',
+                        $savedVerseNotesCount.' note(s).',
                     ),
                     $this->checkStatus(
                         'User metrics rows',
                         $userMetricsCount > 0 ? 'ok' : 'warn',
-                        $userMetricsCount . ' metric row(s).',
+                        $userMetricsCount.' metric row(s).',
                     ),
                 ],
                 'links' => [
@@ -988,6 +988,7 @@ class ContentHealthAudit extends Page
                     'method' => 'createTodayDailyVerse',
                     'priority' => 'high',
                 ];
+
                 continue;
             }
 
@@ -998,6 +999,7 @@ class ContentHealthAudit extends Page
                     'method' => 'ensureCoreChannels',
                     'priority' => 'high',
                 ];
+
                 continue;
             }
 
@@ -1156,7 +1158,7 @@ class ContentHealthAudit extends Page
 
         $action = trim((string) ($this->logFilters['action'] ?? ''));
         if ($action !== '') {
-            $query->where('action', 'like', '%' . $action . '%');
+            $query->where('action', 'like', '%'.$action.'%');
         }
 
         $userId = trim((string) ($this->logFilters['user_id'] ?? ''));
@@ -1199,4 +1201,3 @@ class ContentHealthAudit extends Page
         return [$start, $end];
     }
 }
-

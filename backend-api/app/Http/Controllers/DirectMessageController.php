@@ -98,8 +98,7 @@ class DirectMessageController extends Controller
         int $partnerId,
         ?int $beforeId = null,
         int $limit = 30
-    ): array
-    {
+    ): array {
         $base = DirectMessage::query()
             ->where(function ($q) use ($authUserId, $partnerId) {
                 $q->where('sender_id', $authUserId)->where('recipient_id', $partnerId);

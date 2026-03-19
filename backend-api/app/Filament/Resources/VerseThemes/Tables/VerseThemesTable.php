@@ -21,7 +21,7 @@ class VerseThemesTable
                     ->sortable(),
                 TextColumn::make('color_key')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'amber' => 'warning',
                         'sky' => 'info',
                         'rose' => 'danger',

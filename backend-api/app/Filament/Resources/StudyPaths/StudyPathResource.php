@@ -8,11 +8,11 @@ use App\Filament\Resources\StudyPaths\Pages\ListStudyPaths;
 use App\Filament\Resources\StudyPaths\Schemas\StudyPathForm;
 use App\Filament\Resources\StudyPaths\Tables\StudyPathsTable;
 use App\Models\StudyPath;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use BackedEnum;
 use UnitEnum;
 
 class StudyPathResource extends Resource

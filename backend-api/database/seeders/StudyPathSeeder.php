@@ -74,7 +74,7 @@ class StudyPathSeeder extends Seeder
                 StudyPathStep::updateOrCreate(
                     [
                         'path_id' => $path->id,
-                        'verse_ref' => $stepData['verse_ref']
+                        'verse_ref' => $stepData['verse_ref'],
                     ],
                     [
                         'step_order' => $index + 1,

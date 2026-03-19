@@ -45,7 +45,7 @@ class PublishDuePosts extends Command
             $count++;
         }
 
-        $this->info("Published {$count} due post(s). Now=" . $now->toDateTimeString());
+        $this->info("Published {$count} due post(s). Now=".$now->toDateTimeString());
 
         return self::SUCCESS;
     }

@@ -25,4 +25,3 @@ return new class extends Migration
         Schema::dropIfExists('ss_day_comments');
     }
 };
-

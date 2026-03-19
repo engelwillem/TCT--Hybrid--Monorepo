@@ -31,7 +31,7 @@ class VerseHubOgAndStudyRoutingTest extends TestCase
 
         $this->get('/versehub/id/study')
             ->assertOk()
-            ->assertInertia(fn(Assert $page) => $page->component('VerseHub/StudyPaths/Index'));
+            ->assertInertia(fn (Assert $page) => $page->component('VerseHub/StudyPaths/Index'));
     }
 
     public function test_guest_can_access_study_og_png(): void
@@ -71,7 +71,7 @@ class VerseHubOgAndStudyRoutingTest extends TestCase
 
         $this->get('/versehub/id/yoh-3')
             ->assertOk()
-            ->assertInertia(fn(Assert $page) => $page
+            ->assertInertia(fn (Assert $page) => $page
                 ->component('VerseHub/Reader')
                 ->where('og_image_url', url('/versehub/id/yoh-3/og.png')));
     }
@@ -93,4 +93,3 @@ class VerseHubOgAndStudyRoutingTest extends TestCase
             ->assertRedirect('/versehub/id/1ptr-3/og.png');
     }
 }
-

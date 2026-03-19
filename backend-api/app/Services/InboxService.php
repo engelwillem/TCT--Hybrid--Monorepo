@@ -58,6 +58,7 @@ class InboxService
             ->get(['id', 'name', 'last_seen_at'])
             ->mapWithKeys(function (User $u) use ($now): array {
                 $lastSeen = $u->last_seen_at;
+
                 return [
                     (int) $u->id => [
                         'name' => (string) $u->name,

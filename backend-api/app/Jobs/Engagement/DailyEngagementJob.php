@@ -26,7 +26,8 @@ class DailyEngagementJob implements ShouldQueue
             ->get();
 
         if ($contents->isEmpty()) {
-            Log::info("DailyEngagementJob: No published content for today.");
+            Log::info('DailyEngagementJob: No published content for today.');
+
             return;
         }
 

@@ -13,13 +13,13 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SabbathSchoolController;
 use App\Http\Controllers\SsDayCommentController;
 use App\Http\Controllers\StudyPathController;
-use App\Http\Controllers\VerseHubController;
-use App\Http\Controllers\VerseHubReflectionController;
-use App\Http\Controllers\VersehubActionController;
-use App\Http\Controllers\VerseHubReaderController;
-use App\Http\Controllers\VerseHubLibraryController;
-use App\Http\Controllers\WeeklyController;
 use App\Http\Controllers\UserFollowController;
+use App\Http\Controllers\VersehubActionController;
+use App\Http\Controllers\VerseHubController;
+use App\Http\Controllers\VerseHubLibraryController;
+use App\Http\Controllers\VerseHubReaderController;
+use App\Http\Controllers\VerseHubReflectionController;
+use App\Http\Controllers\WeeklyController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -66,7 +66,7 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [FirebaseAuthSyncController::class, 'logout']);
         Route::post('/today/state', [TodayApiController::class, 'updateState']);
-        
+
         Route::post('/community/posts', [CommunityApiController::class, 'store']);
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
@@ -94,14 +94,16 @@ Route::prefix('v1')->group(function (): void {
             ->whereIn('lang', ['id', 'en'])
             ->whereNumber('stepId');
 
-        Route::get('/inbox', [InboxController::class, 'index']);
-        Route::post('/inbox/read-all', [InboxController::class, 'markAllRead']);
+        Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+        Route::post('/inbox/read-all', [InboxController::class, 'markAllRead'])->name('inbox.readAll');
         Route::post('/inbox/messages', [DirectMessageController::class, 'store']);
         Route::post('/inbox/messages/{directMessage}/approve', [DirectMessageController::class, 'approve']);
         Route::get('/inbox/{user}/messages', [DirectMessageController::class, 'thread'])
-            ->whereNumber('user');
+            ->whereNumber('user')
+            ->name('inbox.messages.thread');
         Route::get('/inbox/{user}', [InboxThreadController::class, 'show'])
-            ->whereNumber('user');
+            ->whereNumber('user')
+            ->name('inbox.show');
 
         Route::post('/users/{user}/follow-toggle', [UserFollowController::class, 'toggle']);
 

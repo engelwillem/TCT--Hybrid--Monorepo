@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SERVER-LOCAL DEPLOYMENT WEBHOOK (TEMPLATE ONLY)
  * ===============================================
@@ -20,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // 2. Locate and Load Secret Token Safely
 // Example: The main Laravel .env is usually one level above public/
-$secretFilePath = dirname(__DIR__) . '/.env'; 
+$secretFilePath = dirname(__DIR__).'/.env';
 $expectedToken = '';
 
 if (file_exists($secretFilePath)) {
@@ -39,7 +40,7 @@ if (empty($expectedToken)) {
 // 3. Verify Authorization Header (e.g., X-Deploy-Token)
 $receivedToken = $_SERVER['HTTP_X_DEPLOY_TOKEN'] ?? '';
 
-if (empty($receivedToken) || !hash_equals($expectedToken, $receivedToken)) {
+if (empty($receivedToken) || ! hash_equals($expectedToken, $receivedToken)) {
     http_response_code(403);
     echo json_encode(['status' => 'forbidden']);
     exit;
@@ -48,10 +49,10 @@ if (empty($receivedToken) || !hash_equals($expectedToken, $receivedToken)) {
 // 4. Set Execution Paths
 // Use absolute paths configured specifically for your server
 $projectRoot = dirname(__DIR__); // Assuming this script sits in <project_root>/public initially
-$deployScript = $projectRoot . '/backend-api/deploy.sh';
+$deployScript = $projectRoot.'/backend-api/deploy.sh';
 
 // Verify the bash script exists
-if (!is_file($deployScript)) {
+if (! is_file($deployScript)) {
     http_response_code(500);
     echo json_encode(['status' => 'deploy script missing']);
     exit;
@@ -60,7 +61,7 @@ if (!is_file($deployScript)) {
 // 5. Asynchronous Background Execution
 // We pipe stdout and stderr to /dev/null and run in the background (&)
 // Action logging happens inside deploy.sh, avoiding terminal output in this HTTP response.
-$command = "cd " . escapeshellarg($projectRoot) . " && bash " . escapeshellarg($deployScript) . " > /dev/null 2>&1 &";
+$command = 'cd '.escapeshellarg($projectRoot).' && bash '.escapeshellarg($deployScript).' > /dev/null 2>&1 &';
 shell_exec($command);
 
 // 6. Minimal Safe JSON Response

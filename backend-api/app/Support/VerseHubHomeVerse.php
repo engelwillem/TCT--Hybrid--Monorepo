@@ -19,14 +19,16 @@ class VerseHubHomeVerse
      */
     public static function get(string $lang, array $bookLabels = []): ?array
     {
-        if ($lang !== 'id') return null;
+        if ($lang !== 'id') {
+            return null;
+        }
 
         $cacheKey = 'versehub:home_verse:'.$lang.':'.now()->format('Y-m-d');
         $ttl = now()->endOfDay();
 
         return Cache::remember($cacheKey, $ttl, function () use ($lang, $bookLabels) {
             $refs = config('versehub_home_verses.'.$lang, []);
-            if (!is_array($refs) || count($refs) === 0) {
+            if (! is_array($refs) || count($refs) === 0) {
                 $refs = ['mzm-119-105'];
             }
 
@@ -35,7 +37,7 @@ class VerseHubHomeVerse
             $idx = $seed % count($refs);
             $ref = Str::lower(trim((string) ($refs[$idx] ?? 'mzm-119-105')));
 
-            if (!preg_match('/^(?<book>[a-z0-9]+)-(?<chapter>\d+)-(?<verse>\d+)$/', $ref, $m)) {
+            if (! preg_match('/^(?<book>[a-z0-9]+)-(?<chapter>\d+)-(?<verse>\d+)$/', $ref, $m)) {
                 $ref = 'mzm-119-105';
                 $m = ['book' => 'mzm', 'chapter' => 119, 'verse' => 105];
             }
@@ -54,7 +56,7 @@ class VerseHubHomeVerse
                 ->first();
 
             // Fallback to known-good verse if missing from dataset.
-            if (!$row) {
+            if (! $row) {
                 $book = 'mzm';
                 $chapter = 119;
                 $verse = 105;

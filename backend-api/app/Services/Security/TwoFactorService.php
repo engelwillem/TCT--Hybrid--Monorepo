@@ -39,7 +39,7 @@ class TwoFactorService
             class_exists(ImageRenderer::class) &&
             (! extension_loaded('imagick'))
         ) {
-            return 'data:image/svg+xml;base64,' . base64_encode($inlineQrCode);
+            return 'data:image/svg+xml;base64,'.base64_encode($inlineQrCode);
         }
 
         return $inlineQrCode;
@@ -50,7 +50,7 @@ class TwoFactorService
      */
     public function generateRecoveryCodes(int $count = 8): array
     {
-        return collect()->times($count, fn (): string => Str::random(10) . '-' . Str::random(10))->all();
+        return collect()->times($count, fn (): string => Str::random(10).'-'.Str::random(10))->all();
     }
 
     public function verifyCode(string $secret, string $code): bool
@@ -106,6 +106,7 @@ class TwoFactorService
         foreach ($stored as $hashedCode) {
             if (! $matched && Hash::check($recoveryCode, (string) $hashedCode)) {
                 $matched = true;
+
                 continue;
             }
 
@@ -121,4 +122,3 @@ class TwoFactorService
         return $matched;
     }
 }
-

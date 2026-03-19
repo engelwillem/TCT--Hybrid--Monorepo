@@ -11,7 +11,9 @@ use Illuminate\Support\Str;
 class VerseHubDailyService
 {
     private const CHANNEL_SLUG = 'versehub-daily';
+
     private const DAILY_KIND = 'versehub_daily';
+
     private const DAILY_TIMEZONE = 'Asia/Jakarta';
 
     public function getTodayDailyVerse(?Carbon $today = null, string $lang = 'id'): ?array
@@ -193,7 +195,9 @@ class VerseHubDailyService
             ->orderByDesc('id')
             ->first();
 
-        if (! $post) return null;
+        if (! $post) {
+            return null;
+        }
 
         $meta = is_array($post->meta) ? $post->meta : [];
         $bookCode = $this->normalizeBookCode((string) ($meta['book_code'] ?? ''));

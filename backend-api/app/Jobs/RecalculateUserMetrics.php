@@ -14,14 +14,12 @@ class RecalculateUserMetrics implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $userId)
-    {
-    }
+    public function __construct(public int $userId) {}
 
     public function handle(UserMetricsService $service): void
     {
         $user = User::query()->find($this->userId);
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\SecurityHeaders;
+use App\Support\AppSettings;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -14,8 +16,6 @@ use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
-use App\Support\AppSettings;
-use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admintalk')
-            ->favicon(fn() => AppSettings::get('site.favicon_url', '/favicon.svg'))
+            ->favicon(fn () => AppSettings::get('site.favicon_url', '/favicon.svg'))
             ->login(\App\Filament\Auth\Pages\Login::class)
             ->passwordReset(
                 \App\Filament\Auth\Pages\PasswordReset\RequestPasswordReset::class,
@@ -39,7 +39,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
-                fn(): string => '<style>
+                fn (): string => '<style>
                     .fi-simple-layout {
                         background: radial-gradient(circle at top left, #e0f2fe 0%, #f0f9ff 40%, #ffffff 100%) !important;
                     }
@@ -125,15 +125,15 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
-                fn(): string => view('filament.auth.login-links')->render(),
+                fn (): string => view('filament.auth.login-links')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_FOOTER,
-                fn(): string => view('filament.panel.main-app-sidebar-links')->render(),
+                fn (): string => view('filament.panel.main-app-sidebar-links')->render(),
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn(): string => view('filament.panel.main-app-bottom-nav')->render(),
+                fn (): string => view('filament.panel.main-app-bottom-nav')->render(),
             )
             ->colors([
                 'primary' => Color::Cyan,
@@ -165,4 +165,3 @@ class AdminPanelProvider extends PanelProvider
             ]);
     }
 }
-

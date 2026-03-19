@@ -10,9 +10,13 @@ class DailyContent extends Model
     use HasFactory;
 
     const TYPE_VERSE = 'today_verse';
+
     const TYPE_QUOTE = 'quote_of_day';
+
     const TYPE_REFLECTION = 'reflection_prompt';
+
     const TYPE_PRAYER = 'prayer_prompt';
+
     const TYPE_HIGHLIGHT = 'community_highlight';
 
     protected $fillable = [

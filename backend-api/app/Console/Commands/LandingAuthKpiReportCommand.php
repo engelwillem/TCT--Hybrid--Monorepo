@@ -19,7 +19,7 @@ class LandingAuthKpiReportCommand extends Command
     {
         $days = max(1, (int) $this->option('days'));
         $variantOpt = strtolower((string) $this->option('variant'));
-        if (!in_array($variantOpt, ['a', 'b', 'all'], true)) {
+        if (! in_array($variantOpt, ['a', 'b', 'all'], true)) {
             $variantOpt = 'all';
         }
         $json = (bool) $this->option('json');
@@ -49,7 +49,7 @@ class LandingAuthKpiReportCommand extends Command
             $session = (string) $row->session_id;
             $eventName = (string) $row->event_name;
 
-            if (!isset($byVariant[$variant])) {
+            if (! isset($byVariant[$variant])) {
                 $byVariant[$variant] = [
                     'variant' => $variant,
                     'sessions' => [],
@@ -107,6 +107,7 @@ class LandingAuthKpiReportCommand extends Command
                 'summary' => $summary,
                 'detail' => $detail,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
             return self::SUCCESS;
         }
 
@@ -124,6 +125,7 @@ class LandingAuthKpiReportCommand extends Command
 
         if ($detail === []) {
             $this->warn('No landing auth click events for selected filter.');
+
             return self::SUCCESS;
         }
 
@@ -158,13 +160,19 @@ class LandingAuthKpiReportCommand extends Command
 
     private function pct(int $num, int $den): string
     {
-        if ($den <= 0) return '0.00';
+        if ($den <= 0) {
+            return '0.00';
+        }
+
         return number_format(($num / $den) * 100, 2, '.', '');
     }
 
     private function ratio(int $num, int $den): string
     {
-        if ($den <= 0) return '0.00';
+        if ($den <= 0) {
+            return '0.00';
+        }
+
         return number_format($num / $den, 2, '.', '');
     }
 }

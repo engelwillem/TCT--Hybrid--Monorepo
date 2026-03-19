@@ -61,7 +61,7 @@ class OpsTriage extends Page
         $now = now();
         $last24h = $now->copy()->subDay();
 
-        $this->generatedAt = Carbon::now('Asia/Jakarta')->translatedFormat('d M Y H:i') . ' WIB';
+        $this->generatedAt = Carbon::now('Asia/Jakarta')->translatedFormat('d M Y H:i').' WIB';
 
         $this->overdueScheduledCount = (int) Post::query()
             ->where('status', 'scheduled')

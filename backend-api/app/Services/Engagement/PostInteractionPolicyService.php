@@ -2,9 +2,8 @@
 
 namespace App\Services\Engagement;
 
-use App\Models\Post;
-use App\Models\MemberPost;
 use App\Enums\PostType;
+use App\Models\Post;
 
 class PostInteractionPolicyService
 {
@@ -15,7 +14,7 @@ class PostInteractionPolicyService
     {
         $postType = $type instanceof PostType ? $type : PostType::tryFrom($type);
 
-        if (!$postType) {
+        if (! $postType) {
             return ['amin', 'comment', 'share'];
         }
 
@@ -36,6 +35,7 @@ class PostInteractionPolicyService
     public function isActionAllowed(string|PostType $type, string $action): bool
     {
         $allowed = $this->getAllowedInteractions($type);
+
         return in_array(strtolower($action), $allowed);
     }
 
@@ -45,6 +45,6 @@ class PostInteractionPolicyService
      */
     public function getCalmStats(array $stats): array
     {
-        return array_filter($stats, fn($count) => $count > 0);
+        return array_filter($stats, fn ($count) => $count > 0);
     }
 }

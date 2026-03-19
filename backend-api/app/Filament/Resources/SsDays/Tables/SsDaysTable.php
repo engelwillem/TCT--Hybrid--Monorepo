@@ -9,9 +9,9 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class SsDaysTable
@@ -110,6 +110,7 @@ class SsDaysTable
                         if (! $lesson || ! $quarter) {
                             return '#';
                         }
+
                         return "/channels/sabbath-school/{$quarter->year}/q{$quarter->quarter}/lesson/{$lesson->lesson_number}/{$record->day_key}";
                     }, shouldOpenInNewTab: true),
             ])

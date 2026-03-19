@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 class VerseHubActivityService
 {
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param  array<int, array<string, mixed>>  $rows
      * @return array<int, array{label: string, items: array<int, array<string,mixed>>}>
      */
     public function groupByTimeline(array $rows, ?Carbon $now = null): array

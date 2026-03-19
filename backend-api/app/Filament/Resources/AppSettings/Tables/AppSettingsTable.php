@@ -37,6 +37,7 @@ class AppSettingsTable
                         if ($value === 'site') {
                             return $query->where('key', 'like', 'site.%');
                         }
+
                         return $query;
                     }),
             ])

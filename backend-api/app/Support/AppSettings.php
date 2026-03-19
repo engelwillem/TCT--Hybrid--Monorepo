@@ -3,9 +3,9 @@
 namespace App\Support;
 
 use App\Models\AppSetting;
-use Throwable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class AppSettings
 {

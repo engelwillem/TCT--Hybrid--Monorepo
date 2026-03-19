@@ -3,6 +3,7 @@
 @endphp
 
 <div class="tct-auth-links-row">
+    {{-- 
     @if (Route::has('register'))
         <a
             href="{{ route('register') }}"
@@ -11,6 +12,7 @@
             Buat akun
         </a>
     @endif
+    --}}
 
     @if ($forgotUrl)
         <a

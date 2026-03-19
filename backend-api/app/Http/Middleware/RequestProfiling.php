@@ -27,7 +27,7 @@ class RequestProfiling
     public function handle(Request $request, Closure $next): Response
     {
         // Keep this strictly dev-only.
-        if (!config('app.debug')) {
+        if (! config('app.debug')) {
             return $next($request);
         }
 

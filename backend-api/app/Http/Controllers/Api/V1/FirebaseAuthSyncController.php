@@ -30,14 +30,14 @@ class FirebaseAuthSyncController extends Controller
                 'idToken' => $validated['idToken'],
             ]);
 
-        if (!$lookup->ok()) {
+        if (! $lookup->ok()) {
             return response()->json([
                 'message' => 'Invalid Firebase ID token.',
             ], 401);
         }
 
         $remoteUser = $lookup->json('users.0');
-        if (!is_array($remoteUser)) {
+        if (! is_array($remoteUser)) {
             return response()->json([
                 'message' => 'Unable to read Firebase user payload.',
             ], 422);
@@ -57,7 +57,7 @@ class FirebaseAuthSyncController extends Controller
 
         $user = User::query()
             ->where('firebase_uid', $firebaseUid)
-            ->when($email !== '', fn($query) => $query->orWhere('email', $email))
+            ->when($email !== '', fn ($query) => $query->orWhere('email', $email))
             ->first();
 
         $generatedEmail = false;
@@ -66,7 +66,7 @@ class FirebaseAuthSyncController extends Controller
             $generatedEmail = true;
         }
 
-        if (!$user) {
+        if (! $user) {
             $user = User::query()->create([
                 'name' => $displayName !== '' ? $displayName : 'Chosen User',
                 'email' => $email,
@@ -78,7 +78,7 @@ class FirebaseAuthSyncController extends Controller
         } else {
             $dirty = false;
 
-            if (!$user->firebase_uid) {
+            if (! $user->firebase_uid) {
                 $user->firebase_uid = $firebaseUid;
                 $dirty = true;
             }
@@ -88,19 +88,19 @@ class FirebaseAuthSyncController extends Controller
                 $dirty = true;
             }
 
-            if (!$generatedEmail && $email !== '' && $email !== $user->email) {
+            if (! $generatedEmail && $email !== '' && $email !== $user->email) {
                 $emailTaken = User::query()
                     ->where('email', $email)
                     ->where('id', '!=', $user->id)
                     ->exists();
 
-                if (!$emailTaken) {
+                if (! $emailTaken) {
                     $user->email = $email;
                     $dirty = true;
                 }
             }
 
-            if ($emailVerified && !$user->email_verified_at) {
+            if ($emailVerified && ! $user->email_verified_at) {
                 $user->email_verified_at = now();
                 $dirty = true;
             }

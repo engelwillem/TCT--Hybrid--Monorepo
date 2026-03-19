@@ -20,6 +20,7 @@ class SpiritualInteractionService
 
         if ($existing) {
             $existing->delete();
+
             return false; // Removed
         }
 

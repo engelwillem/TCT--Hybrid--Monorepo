@@ -49,6 +49,7 @@ class AppSettingForm
                             $raw = is_string($value) ? trim($value) : '';
                             if ($raw === '') {
                                 $fail('Value wajib diisi.');
+
                                 return;
                             }
 

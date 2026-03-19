@@ -11,7 +11,9 @@ use Illuminate\Validation\ValidationException;
 class VerseHubDailyPostData
 {
     private const CHANNEL_SLUG = 'versehub-daily';
+
     private const DAILY_KIND = 'versehub_daily';
+
     private const DAILY_TIMEZONE = 'Asia/Jakarta';
 
     public static function mutate(array $data, ?int $ignorePostId = null): array

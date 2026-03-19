@@ -14,7 +14,7 @@ use Throwable;
 
 class AdminLoginResponse implements LoginResponseContract
 {
-    public function toResponse($request): RedirectResponse | Redirector
+    public function toResponse($request): RedirectResponse|Redirector
     {
         $user = Filament::auth()->user();
 

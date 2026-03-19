@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\MemberPosts\Tables;
 
 use App\Models\MemberPost;
-use Filament\Actions\BulkActionGroup;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
-use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -28,7 +28,7 @@ class MemberPostsTable
                     ->sortable(),
                 TextColumn::make('type')
                     ->badge()
-                    ->color(fn(\App\Enums\PostType $state): string => $state->color())
+                    ->color(fn (\App\Enums\PostType $state): string => $state->color())
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('source_type')
@@ -44,9 +44,8 @@ class MemberPostsTable
                 TextColumn::make('interactions')
                     ->label('Interactions')
                     ->state(
-                        fn($record) =>
-                        ($record->metadata['pray_count'] ?? 0) . ' 🙏 | ' .
-                        ($record->metadata['encouraged_count'] ?? 0) . ' ❤️'
+                        fn ($record) => ($record->metadata['pray_count'] ?? 0).' 🙏 | '.
+                        ($record->metadata['encouraged_count'] ?? 0).' ❤️'
                     ),
                 TextColumn::make('comments_count')
                     ->counts('comments')
@@ -98,15 +97,16 @@ class MemberPostsTable
                         if ($value === 'expired') {
                             return $query->whereNotNull('expires_at')->where('expires_at', '<=', now());
                         }
+
                         return $query;
                     }),
                 TernaryFilter::make('is_hidden')
                     ->label('Hidden state')
                     ->nullable()
                     ->queries(
-                        true: fn($query) => $query->whereNotNull('hidden_at'),
-                        false: fn($query) => $query->whereNull('hidden_at'),
-                        blank: fn($query) => $query,
+                        true: fn ($query) => $query->whereNotNull('hidden_at'),
+                        false: fn ($query) => $query->whereNull('hidden_at'),
+                        blank: fn ($query) => $query,
                     ),
             ])
             ->defaultSort('created_at', 'desc')
@@ -134,8 +134,8 @@ class MemberPostsTable
                     })
                     ->requiresConfirmation(),
                 Action::make('toggleHidden')
-                    ->label(fn(MemberPost $record) => $record->hidden_at ? 'Unhide' : 'Hide')
-                    ->icon(fn(MemberPost $record) => $record->hidden_at ? 'heroicon-o-eye' : 'heroicon-o-eye-slash')
+                    ->label(fn (MemberPost $record) => $record->hidden_at ? 'Unhide' : 'Hide')
+                    ->icon(fn (MemberPost $record) => $record->hidden_at ? 'heroicon-o-eye' : 'heroicon-o-eye-slash')
                     ->requiresConfirmation()
                     ->action(function (MemberPost $record): void {
                         if ($record->hidden_at) {
@@ -144,6 +144,7 @@ class MemberPostsTable
                                 'hidden_by' => null,
                             ])->save();
                             Notification::make()->title('Post restored')->success()->send();
+
                             return;
                         }
 
@@ -173,7 +174,7 @@ class MemberPostsTable
                         ->action(function ($records): void {
                             $count = 0;
                             foreach ($records as $record) {
-                                if (!$record instanceof MemberPost) {
+                                if (! $record instanceof MemberPost) {
                                     continue;
                                 }
                                 if ($record->hidden_at) {
@@ -199,10 +200,10 @@ class MemberPostsTable
                         ->action(function ($records): void {
                             $count = 0;
                             foreach ($records as $record) {
-                                if (!$record instanceof MemberPost) {
+                                if (! $record instanceof MemberPost) {
                                     continue;
                                 }
-                                if (!$record->hidden_at) {
+                                if (! $record->hidden_at) {
                                     continue;
                                 }
                                 $record->forceFill([

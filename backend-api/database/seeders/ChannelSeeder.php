@@ -15,22 +15,22 @@ class ChannelSeeder extends Seeder
             [
                 'title' => 'Sekolah Sabat Harian',
                 'description' => 'Diskusi harian mengenai pelajaran sekolah sabat kita.',
-                'type' => ChannelType::PUBLIC ,
+                'type' => ChannelType::PUBLIC,
             ],
             [
                 'title' => 'Youth Community',
                 'description' => 'Grup khusus untuk pemuda dan remaja TheChosenTalks.',
-                'type' => ChannelType::PUBLIC ,
+                'type' => ChannelType::PUBLIC,
             ],
             [
                 'title' => 'Warta Jemaat',
                 'description' => 'Update dan informasi seputar kegiatan jemaat kita.',
-                'type' => ChannelType::PUBLIC ,
+                'type' => ChannelType::PUBLIC,
             ],
             [
                 'title' => 'Doa & Syafaat',
                 'description' => 'Fokus khusus untuk saling mendoakan setiap saat.',
-                'type' => ChannelType::PUBLIC ,
+                'type' => ChannelType::PUBLIC,
             ],
         ];
 

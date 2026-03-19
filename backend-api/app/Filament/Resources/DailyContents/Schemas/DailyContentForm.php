@@ -7,11 +7,10 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Schemas\Schema;
 
 class DailyContentForm
@@ -56,7 +55,7 @@ class DailyContentForm
 
                 // 1. Today's Verse Payload
                 Section::make('Verse Details')
-                    ->visible(fn(Get $get) => $get('content_type') === 'today_verse')
+                    ->visible(fn (Get $get) => $get('content_type') === 'today_verse')
                     ->schema([
                         TextInput::make('payload.reference')
                             ->label('Bible Reference')
@@ -90,7 +89,7 @@ class DailyContentForm
 
                 // 2. Quote Payload
                 Section::make('Quote Details')
-                    ->visible(fn(Get $get) => $get('content_type') === 'quote_of_day')
+                    ->visible(fn (Get $get) => $get('content_type') === 'quote_of_day')
                     ->schema([
                         Textarea::make('payload.text')
                             ->label('Quote Text')
@@ -104,7 +103,7 @@ class DailyContentForm
 
                 // 3. Reflection Prompt Payload
                 Section::make('Reflection Details')
-                    ->visible(fn(Get $get) => $get('content_type') === 'reflection_prompt')
+                    ->visible(fn (Get $get) => $get('content_type') === 'reflection_prompt')
                     ->schema([
                         Textarea::make('payload.question')
                             ->label('Reflection Question')
@@ -128,7 +127,7 @@ class DailyContentForm
 
                 // 4. Prayer Prompt Payload
                 Section::make('Prayer Details')
-                    ->visible(fn(Get $get) => $get('content_type') === 'prayer_prompt')
+                    ->visible(fn (Get $get) => $get('content_type') === 'prayer_prompt')
                     ->schema([
                         TextInput::make('payload.target')
                             ->label('Prayer Target')
@@ -155,7 +154,7 @@ class DailyContentForm
 
                 // 5. Community Highlight Payload
                 Section::make('Highlight Details')
-                    ->visible(fn(Get $get) => $get('content_type') === 'community_highlight')
+                    ->visible(fn (Get $get) => $get('content_type') === 'community_highlight')
                     ->schema([
                         TextInput::make('payload.title')
                             ->label('Highlight Title')
@@ -172,4 +171,3 @@ class DailyContentForm
             ]);
     }
 }
-

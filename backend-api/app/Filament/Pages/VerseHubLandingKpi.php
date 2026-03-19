@@ -33,12 +33,14 @@ class VerseHubLandingKpi extends Page
     public static function shouldRegisterNavigation(): bool
     {
         $user = Filament::auth()->user();
+
         return (bool) ($user?->is_admin ?? false);
     }
 
     public static function canAccess(): bool
     {
         $user = Filament::auth()->user();
+
         return (bool) ($user?->is_admin ?? false);
     }
 
@@ -67,7 +69,7 @@ class VerseHubLandingKpi extends Page
         foreach ($events as $event) {
             $bucket = $event->persona.'|'.$event->variant;
             $session = (string) $event->session_id;
-            if (!isset($buckets[$bucket])) {
+            if (! isset($buckets[$bucket])) {
                 $buckets[$bucket] = [
                     'persona' => $event->persona,
                     'variant' => strtoupper((string) $event->variant),
@@ -83,26 +85,31 @@ class VerseHubLandingKpi extends Page
             if ($event->event_name === 'landing_view') {
                 $buckets[$bucket]['views'][$session] = true;
                 $viewSessions[$session] = true;
+
                 continue;
             }
             if ($event->event_name === 'cta_start_here_click') {
                 $buckets[$bucket]['start'][$session] = true;
                 $actionSessions[$session] = true;
+
                 continue;
             }
             if ($event->event_name === 'cta_continue_click') {
                 $buckets[$bucket]['continue'][$session] = true;
                 $actionSessions[$session] = true;
+
                 continue;
             }
             if ($event->event_name === 'cta_explore_open') {
                 $buckets[$bucket]['explore'][$session] = true;
                 $actionSessions[$session] = true;
+
                 continue;
             }
             if ($event->event_name === 'cta_path_click') {
                 $buckets[$bucket]['path'][$session] = true;
                 $actionSessions[$session] = true;
+
                 continue;
             }
             if ($event->event_name === 'search_submit') {
@@ -152,7 +159,7 @@ class VerseHubLandingKpi extends Page
         if ($den <= 0) {
             return '0.00';
         }
+
         return number_format(($num / $den) * 100, 2, '.', '');
     }
 }
-

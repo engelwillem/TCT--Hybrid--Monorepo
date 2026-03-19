@@ -47,7 +47,7 @@ class VerseHubLandingKpiReportCommand extends Command
             $event = (string) $row->event_name;
             $meta = is_array($row->meta) ? $row->meta : [];
 
-            if (!isset($byBucket[$bucketKey])) {
+            if (! isset($byBucket[$bucketKey])) {
                 $byBucket[$bucketKey] = [
                     'persona' => $persona,
                     'variant' => $variant,
@@ -71,27 +71,32 @@ class VerseHubLandingKpiReportCommand extends Command
                     $byBucket[$bucketKey]['first_session_views']++;
                     $allFirstSessionView++;
                 }
+
                 continue;
             }
 
             if ($event === 'cta_start_here_click') {
                 $byBucket[$bucketKey]['start_sessions'][$session] = true;
                 $allActionSessions[$session] = true;
+
                 continue;
             }
             if ($event === 'cta_continue_click') {
                 $byBucket[$bucketKey]['continue_sessions'][$session] = true;
                 $allActionSessions[$session] = true;
+
                 continue;
             }
             if ($event === 'cta_explore_open') {
                 $byBucket[$bucketKey]['explore_sessions'][$session] = true;
                 $allActionSessions[$session] = true;
+
                 continue;
             }
             if ($event === 'cta_path_click') {
                 $byBucket[$bucketKey]['path_sessions'][$session] = true;
                 $allActionSessions[$session] = true;
+
                 continue;
             }
             if ($event === 'search_submit') {
@@ -142,6 +147,7 @@ class VerseHubLandingKpiReportCommand extends Command
                 'summary' => $summary,
                 'details' => $details,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
             return self::SUCCESS;
         }
 
@@ -161,6 +167,7 @@ class VerseHubLandingKpiReportCommand extends Command
 
         if ($details === []) {
             $this->warn('No landing KPI rows for the selected filter.');
+
             return self::SUCCESS;
         }
 
@@ -204,4 +211,3 @@ class VerseHubLandingKpiReportCommand extends Command
         return number_format(($num / $den) * 100, 2, '.', '');
     }
 }
-

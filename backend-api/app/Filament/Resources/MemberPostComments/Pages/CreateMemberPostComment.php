@@ -9,4 +9,3 @@ class CreateMemberPostComment extends CreateRecord
 {
     protected static string $resource = MemberPostCommentResource::class;
 }
-

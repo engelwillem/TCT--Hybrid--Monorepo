@@ -76,18 +76,20 @@ class VerseHubController extends Controller
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
         $normalized = $this->normalizeRef($lang, $ref);
-        if (!is_array($normalized))
+        if (! is_array($normalized)) {
             abort(404);
+        }
 
         if ($normalized['redirect_to']) {
             return response()->json(['redirect_to' => $normalized['redirect_to']], 302);
         }
 
         $query = $this->refToProviderQuery($lang, $normalized['ref']);
-        if (!is_string($query))
+        if (! is_string($query)) {
             abort(404);
+        }
 
-        if (!preg_match('/^([a-z0-9]+)-(\d+)-(\d+)$/', $normalized['ref'], $m)) {
+        if (! preg_match('/^([a-z0-9]+)-(\d+)-(\d+)$/', $normalized['ref'], $m)) {
             return response()->json(['error' => 'Invalid reference.'], 400);
         }
 
@@ -102,14 +104,14 @@ class VerseHubController extends Controller
         $insights = Cache::remember(
             "versehub:mentor:{$lang}:{$normalized['ref']}",
             now()->addHours(24),
-            fn() => $mentor->getGuidedInsights($bookCode, $chapter, $verse, $verseText)
+            fn () => $mentor->getGuidedInsights($bookCode, $chapter, $verse, $verseText)
         );
 
         // Fetch additional structural data.
         $relationships = $mentor->getRelationships($normalized['ref']);
         $themes = $mentor->getThemes($normalized['ref']);
         $studyPaths = $mentor->getActiveStudyPaths($request->user(), $normalized['ref']);
-        
+
         // HARDENING: Add denominational context for deeper theological parity
         $denominationalContext = $mentor->getDenominationalContext($bookCode, $chapter, $verse);
 
@@ -138,14 +140,15 @@ class VerseHubController extends Controller
         ]);
 
         $normalized = $this->normalizeRef($lang, $ref);
-        if (!is_array($normalized))
+        if (! is_array($normalized)) {
             abort(404);
+        }
 
         if ($normalized['redirect_to']) {
             return response()->json(['redirect_to' => $normalized['redirect_to']], 302);
         }
 
-        if (!preg_match('/^([a-z0-9]+)-(\d+)-(\d+)$/', $normalized['ref'], $m)) {
+        if (! preg_match('/^([a-z0-9]+)-(\d+)-(\d+)$/', $normalized['ref'], $m)) {
             return response()->json(['error' => 'Invalid reference.'], 400);
         }
 
@@ -180,17 +183,18 @@ class VerseHubController extends Controller
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
         $normalized = $this->normalizeRef($lang, $ref);
-        if (!is_array($normalized)) {
+        if (! is_array($normalized)) {
             abort(404);
         }
 
         if ($normalized['redirect_to']) {
-            $redirectTo = rtrim((string) $normalized['redirect_to'], '/') . '/mentor/og.png';
+            $redirectTo = rtrim((string) $normalized['redirect_to'], '/').'/mentor/og.png';
+
             return redirect()->to($redirectTo, $this->canonicalRedirectCode());
         }
 
         $query = $this->refToProviderQuery($lang, $normalized['ref']);
-        if (!is_string($query)) {
+        if (! is_string($query)) {
             abort(404);
         }
 
@@ -221,16 +225,18 @@ class VerseHubController extends Controller
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
         $normalized = $this->normalizeRef($lang, $ref);
-        if (!is_array($normalized))
+        if (! is_array($normalized)) {
             abort(404);
+        }
 
         if ($normalized['redirect_to']) {
             return redirect()->to($normalized['redirect_to'], $this->canonicalRedirectCode());
         }
 
         $query = $this->refToProviderQuery($lang, $normalized['ref']);
-        if (!is_string($query))
+        if (! is_string($query)) {
             abort(404);
+        }
 
         $verse = $this->fetchVerseForLang($lang, $query);
 
@@ -264,16 +270,18 @@ class VerseHubController extends Controller
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
         $normalized = $this->normalizeRef($lang, $ref);
-        if (!is_array($normalized))
+        if (! is_array($normalized)) {
             abort(404);
+        }
 
         if ($normalized['redirect_to']) {
             return redirect()->to($normalized['redirect_to'], $this->canonicalRedirectCode());
         }
 
         $query = $this->refToProviderQuery($lang, $normalized['ref']);
-        if (!is_string($query))
+        if (! is_string($query)) {
             abort(404);
+        }
 
         $verse = $this->fetchVerseForLang($lang, $query);
         $reference = (string) ($verse['reference'] ?? Str::upper($normalized['ref']));
@@ -316,34 +324,38 @@ class VerseHubController extends Controller
         $isOg = Str::contains(request()->route()?->getName() ?? '', '.og') || Str::endsWith(request()->path(), '/og.png');
 
         // If only chapter is provided (example: 1ptr-3), redirect safely to verse 1.
-        if (!$parsed['has_verse']) {
+        if (! $parsed['has_verse']) {
             $path = "/versehub/{$lang}/{$canonical}";
-            if ($isOg)
-                $path .= "/og.png";
+            if ($isOg) {
+                $path .= '/og.png';
+            }
             $redirectTo = url($path);
         }
 
         // If original ref had range, redirect to verse1.
         if ($v2 !== null) {
             $path = "/versehub/{$lang}/{$canonical}";
-            if ($isOg)
-                $path .= "/og.png";
+            if ($isOg) {
+                $path .= '/og.png';
+            }
             $redirectTo = url($path);
         }
 
         // If we normalized a legacy alias (book code changed), redirect to canonical.
         if ($redirectTo === null && $originalBook !== $book) {
             $path = "/versehub/{$lang}/{$canonical}";
-            if ($isOg)
-                $path .= "/og.png";
+            if ($isOg) {
+                $path .= '/og.png';
+            }
             $redirectTo = url($path);
         }
 
         // If formatting is non-canonical (underscore, dot, no separator), redirect to canonical.
         if ($redirectTo === null && $rawRef !== $canonical) {
             $path = "/versehub/{$lang}/{$canonical}";
-            if ($isOg)
-                $path .= "/og.png";
+            if ($isOg) {
+                $path .= '/og.png';
+            }
             $redirectTo = url($path);
         }
 
@@ -364,7 +376,7 @@ class VerseHubController extends Controller
     private function refToProviderQuery(string $lang, string $ref): ?string
     {
         $ref = Str::lower(trim($ref));
-        if (!preg_match('/^([a-z0-9]+)-(\d+)-(\d+)$/', $ref, $m)) {
+        if (! preg_match('/^([a-z0-9]+)-(\d+)-(\d+)$/', $ref, $m)) {
             return null;
         }
 
@@ -402,18 +414,18 @@ class VerseHubController extends Controller
     /**
      * Fetch a single verse from local DB.
      *
-     * @param string $provider Example: ayt
-     * @param string $lang Example: id
-     * @param string $query Normalized query: "genesis 1:1" etc.
+     * @param  string  $provider  Example: ayt
+     * @param  string  $lang  Example: id
+     * @param  string  $query  Normalized query: "genesis 1:1" etc.
      */
     private function fetchVerseFromDb(string $provider, string $lang, string $query): ?array
     {
-        if (!Schema::hasTable('bible_verses')) {
+        if (! Schema::hasTable('bible_verses')) {
             return null;
         }
 
         $query = Str::lower(trim($query));
-        if (!preg_match('/^(?<book>.+)\s+(?<chapter>\d+):(?<verse>\d+)$/', $query, $m)) {
+        if (! preg_match('/^(?<book>.+)\s+(?<chapter>\d+):(?<verse>\d+)$/', $query, $m)) {
             return null;
         }
 
@@ -428,7 +440,7 @@ class VerseHubController extends Controller
             $bookCode = $this->bookCodeFromProviderName('en', $bookName);
         }
 
-        if (!$bookCode) {
+        if (! $bookCode) {
             return null;
         }
 
@@ -440,12 +452,12 @@ class VerseHubController extends Controller
             ->where('verse', $verse)
             ->first();
 
-        if (!$row) {
+        if (! $row) {
             return null;
         }
 
         return [
-            'reference' => $row->reference ?: Str::upper($bookCode) . " {$chapter}:{$verse}",
+            'reference' => $row->reference ?: Str::upper($bookCode)." {$chapter}:{$verse}",
             'text' => $row->text,
             'translation_name' => $row->translation_name,
             'provider' => $row->provider,
@@ -455,13 +467,14 @@ class VerseHubController extends Controller
     private function fetchVerseIndonesian(string $query): array
     {
         $alkitabPath = $this->bibleApiQueryToAlkitabMobiPath($query);
-        if (!is_string($alkitabPath))
+        if (! is_string($alkitabPath)) {
             abort(404);
+        }
 
-        $url = 'https://alkitab.mobi' . $alkitabPath;
+        $url = 'https://alkitab.mobi'.$alkitabPath;
 
         return Cache::remember(
-            'versehub:alkitab-mobi:' . md5($url),
+            'versehub:alkitab-mobi:'.md5($url),
             now()->addHours(6),
             function () use ($url) {
                 $http = Http::timeout(12);
@@ -471,6 +484,7 @@ class VerseHubController extends Controller
                 $resp = $http->get($url);
                 abort_unless($resp->ok(), 502);
                 $html = (string) $resp->body();
+
                 return $this->parseAlkitabMobiTbHtml($html);
             }
         );
@@ -479,10 +493,10 @@ class VerseHubController extends Controller
     private function fetchVerseEnglish(string $query): array
     {
         // Use bible-api.com (WEB / English).
-        $url = 'https://bible-api.com/' . rawurlencode($query);
+        $url = 'https://bible-api.com/'.rawurlencode($query);
 
         return Cache::remember(
-            'versehub:bible-api:' . md5($url),
+            'versehub:bible-api:'.md5($url),
             now()->addHours(6),
             function () use ($url) {
                 $http = Http::timeout(12);
@@ -494,12 +508,13 @@ class VerseHubController extends Controller
                 /** @var array $data */
                 $data = $resp->json();
 
-                if (!is_array($data)) {
+                if (! is_array($data)) {
                     return [];
                 }
 
                 // Add provider label for UI.
                 $data['provider'] = 'bible-api.com';
+
                 return $data;
             }
         );
@@ -511,7 +526,7 @@ class VerseHubController extends Controller
     private function refToBibleApiQuery(string $ref): ?string
     {
         $ref = Str::lower(trim($ref));
-        if (!preg_match('/^([a-z0-9]+)[-\.](\d+)[-\.](\d+)(?:[-\.](\d+))?$/', $ref, $m)) {
+        if (! preg_match('/^([a-z0-9]+)[-\.](\d+)[-\.](\d+)(?:[-\.](\d+))?$/', $ref, $m)) {
             return null;
         }
 
@@ -569,8 +584,9 @@ class VerseHubController extends Controller
         ];
 
         $bookName = $bookMap[$book] ?? null;
-        if (!$bookName)
+        if (! $bookName) {
             return null;
+        }
 
         $versePart = $v2 ? "{$v1}-{$v2}" : $v1;
 
@@ -588,7 +604,7 @@ class VerseHubController extends Controller
         $query = Str::lower(trim($query));
 
         // Extract last "chapter:verses" and everything before it as book name.
-        if (!preg_match('/^(?<book>.+)\s+(?<chapter>\d+):(?<verses>\d+(?:-\d+)?)$/', $query, $m)) {
+        if (! preg_match('/^(?<book>.+)\s+(?<chapter>\d+):(?<verses>\d+(?:-\d+)?)$/', $query, $m)) {
             return null;
         }
 
@@ -597,7 +613,7 @@ class VerseHubController extends Controller
         $verses = (string) $m['verses'];
 
         $code = $this->providerNameToAlkitabMobiCode($book);
-        if (!$code) {
+        if (! $code) {
             return null;
         }
 
@@ -655,17 +671,19 @@ class VerseHubController extends Controller
     private function bookMap(string $lang): array
     {
         $map = config("versehub_books.{$lang}");
+
         return is_array($map) ? $map : [];
     }
 
     private function bookAlias(string $book): ?string
     {
         $aliases = config('versehub_books.aliases');
-        if (!is_array($aliases)) {
+        if (! is_array($aliases)) {
             return null;
         }
         $book = Str::lower(trim($book));
         $target = $aliases[$book] ?? null;
+
         return is_string($target) ? Str::lower(trim($target)) : null;
     }
 
@@ -693,6 +711,7 @@ class VerseHubController extends Controller
                 return (string) $code;
             }
         }
+
         return null;
     }
 
@@ -767,6 +786,7 @@ class VerseHubController extends Controller
             'jude' => 'Yud',
             'revelation' => 'Why',
         ];
+
         return $map[$providerName] ?? null;
     }
 
@@ -866,7 +886,7 @@ class VerseHubController extends Controller
             ? $this->applyStaticBackground($img, $w, $h)
             : false;
 
-        if (!$bgApplied) {
+        if (! $bgApplied) {
             // Gradient background based on theme.
             [$br, $bg, $bb] = $theme['bg'];
             for ($y = 0; $y < $h; $y++) {
@@ -1000,25 +1020,30 @@ class VerseHubController extends Controller
 
         $bg = null;
         foreach ($candidates as $path) {
-            if (!file_exists($path))
+            if (! file_exists($path)) {
                 continue;
+            }
 
             $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
             try {
-                if ($ext === 'png')
+                if ($ext === 'png') {
                     $bg = @imagecreatefrompng($path);
-                if ($ext === 'jpg' || $ext === 'jpeg')
+                }
+                if ($ext === 'jpg' || $ext === 'jpeg') {
                     $bg = @imagecreatefromjpeg($path);
+                }
             } catch (\Throwable) {
                 $bg = null;
             }
 
-            if ($bg)
+            if ($bg) {
                 break;
+            }
         }
 
-        if (!$bg)
+        if (! $bg) {
             return false;
+        }
 
         $srcW = imagesx($bg);
         $srcH = imagesy($bg);
@@ -1066,7 +1091,7 @@ class VerseHubController extends Controller
         }
 
         $dir = dirname($path);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             @mkdir($dir, 0777, true);
         }
 
@@ -1130,9 +1155,11 @@ class VerseHubController extends Controller
             'C:\\Windows\\Fonts\\arial.ttf',
         ];
         foreach ($candidates as $p) {
-            if (file_exists($p))
+            if (file_exists($p)) {
                 return $p;
+            }
         }
+
         return null;
     }
 
@@ -1223,6 +1250,7 @@ class VerseHubController extends Controller
     private function normalizeOgText(string $text): string
     {
         $normalized = preg_replace('/\s+/u', ' ', trim($text)) ?? trim($text);
+
         return html_entity_decode($normalized, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
@@ -1238,7 +1266,8 @@ class VerseHubController extends Controller
 
         $slice = mb_substr($text, 0, max(1, $maxChars - 1), 'UTF-8');
         $slice = rtrim($slice, " \t\n\r\0\x0B.,;:!?");
-        return $slice . '…';
+
+        return $slice.'…';
     }
 
     /**
@@ -1278,7 +1307,7 @@ class VerseHubController extends Controller
         $line = '';
 
         foreach ($words as $word) {
-            $candidate = $line === '' ? $word : $line . ' ' . $word;
+            $candidate = $line === '' ? $word : $line.' '.$word;
             if (mb_strlen($candidate, 'UTF-8') > $maxCharsPerLine && $line !== '') {
                 $lines[] = $line;
                 $line = $word;
@@ -1297,8 +1326,8 @@ class VerseHubController extends Controller
     /**
      * Centralized OG theme presets to keep premium visual language consistent.
      *
-     * @param string $type verse|chapter|study|ask
-     * @param string|null $variant Optional variant for study (amber/sky/green/rose).
+     * @param  string  $type  verse|chapter|study|ask
+     * @param  string|null  $variant  Optional variant for study (amber/sky/green/rose).
      */
     private function ogThemeByType(string $type, ?string $variant = null): array
     {
@@ -1335,9 +1364,9 @@ class VerseHubController extends Controller
         if ($official !== '') {
             $normalized = preg_match('/^https?:\/\//i', $official)
                 ? $official
-                : 'https://' . $official;
+                : 'https://'.$official;
 
-            return rtrim($normalized, '/') . '/' . ltrim($path, '/');
+            return rtrim($normalized, '/').'/'.ltrim($path, '/');
         }
 
         return url($path);
@@ -1353,7 +1382,7 @@ class VerseHubController extends Controller
         $line = '';
 
         foreach ($words as $word) {
-            $candidate = $line === '' ? $word : $line . ' ' . $word;
+            $candidate = $line === '' ? $word : $line.' '.$word;
             $box = imagettfbbox($fontSize, 0, $font, $candidate);
             $w = $box ? abs($box[2] - $box[0]) : 0;
             if ($w > $maxWidth && $line !== '') {
@@ -1363,8 +1392,9 @@ class VerseHubController extends Controller
                 $line = $candidate;
             }
         }
-        if ($line !== '')
+        if ($line !== '') {
             $lines[] = $line;
+        }
 
         return $lines;
     }

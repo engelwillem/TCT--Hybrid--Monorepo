@@ -46,7 +46,7 @@ class VerseHubWelcomeVerse
                 ],
                 'courage' => [
                     '2tim-1-7', 'yos-1-9', 'mzm-23-4', 'mzm-112-7', 'yes-41-13',
-                'uli-31-6', 'ibr-13-6', 'flp-4-13', '2kor-12-9', 'mzm-18-3',
+                    'uli-31-6', 'ibr-13-6', 'flp-4-13', '2kor-12-9', 'mzm-18-3',
                 ],
                 'comfort' => [
                     'mzm-55-23', 'mzm-121-1', 'mzm-121-2', 'mzm-73-26', 'yoh-14-27',
@@ -74,6 +74,7 @@ class VerseHubWelcomeVerse
             usort($ordered, function (string $a, string $b) use ($seed): int {
                 $ha = crc32($seed.':'.$a);
                 $hb = crc32($seed.':'.$b);
+
                 return $ha <=> $hb;
             });
 

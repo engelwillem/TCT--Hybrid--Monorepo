@@ -24,6 +24,7 @@ class CleanupDummyData extends Command
             $ok = $this->confirm('Aksi ini akan menghapus data dummy/demo. Lanjutkan?', false);
             if (! $ok) {
                 $this->warn('Dibatalkan.');
+
                 return self::SUCCESS;
             }
         }
@@ -39,10 +40,12 @@ class CleanupDummyData extends Command
         } catch (\Throwable $e) {
             DB::rollBack();
             $this->error('Gagal membersihkan dummy data: '.$e->getMessage());
+
             return self::FAILURE;
         }
 
         $this->info('Dummy content dan dummy users sudah dibersihkan.');
+
         return self::SUCCESS;
     }
 
@@ -60,10 +63,15 @@ class CleanupDummyData extends Command
             ->get()
             ->filter(function (FeedItem $item) use ($patterns): bool {
                 $payload = json_encode($item->payload ?? []);
-                if (! is_string($payload)) return false;
-                foreach ($patterns as $pattern) {
-                    if (str_contains($payload, $pattern)) return true;
+                if (! is_string($payload)) {
+                    return false;
                 }
+                foreach ($patterns as $pattern) {
+                    if (str_contains($payload, $pattern)) {
+                        return true;
+                    }
+                }
+
                 return false;
             })
             ->each(fn (FeedItem $item) => $item->delete())
@@ -87,10 +95,15 @@ class CleanupDummyData extends Command
             ->get()
             ->filter(function (DailyContent $item) use ($patterns): bool {
                 $payload = json_encode($item->payload ?? []);
-                if (! is_string($payload)) return false;
-                foreach ($patterns as $pattern) {
-                    if (str_contains($payload, $pattern)) return true;
+                if (! is_string($payload)) {
+                    return false;
                 }
+                foreach ($patterns as $pattern) {
+                    if (str_contains($payload, $pattern)) {
+                        return true;
+                    }
+                }
+
                 return false;
             })
             ->each(fn (DailyContent $item) => $item->delete())
@@ -190,8 +203,12 @@ class CleanupDummyData extends Command
         ];
 
         foreach ($tables as $target) {
-            if (! Schema::hasTable($target['table'])) continue;
-            if (! Schema::hasColumn($target['table'], $target['column'])) continue;
+            if (! Schema::hasTable($target['table'])) {
+                continue;
+            }
+            if (! Schema::hasColumn($target['table'], $target['column'])) {
+                continue;
+            }
             DB::table($target['table'])->whereIn($target['column'], $dummyUserIds)->delete();
         }
 
@@ -199,4 +216,3 @@ class CleanupDummyData extends Command
         $this->line("User dummy dihapus: {$deletedUsers}");
     }
 }
-

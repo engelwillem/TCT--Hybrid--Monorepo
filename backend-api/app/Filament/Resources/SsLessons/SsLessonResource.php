@@ -9,11 +9,11 @@ use App\Filament\Resources\SsLessons\Schemas\SsLessonForm;
 use App\Filament\Resources\SsLessons\Tables\SsLessonsTable;
 use App\Models\SsLesson;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class SsLessonResource extends Resource
 {

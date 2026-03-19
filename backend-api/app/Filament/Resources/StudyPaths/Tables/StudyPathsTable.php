@@ -18,7 +18,7 @@ class StudyPathsTable
                     ->sortable(),
                 TextColumn::make('difficulty')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'beginner' => 'success',
                         'intermediate' => 'warning',
                         'advanced' => 'danger',

@@ -20,8 +20,9 @@ class RecalculateUserMetricsCommand extends Command
 
         if (is_numeric($userId)) {
             $user = User::query()->find((int) $userId);
-            if (!$user) {
+            if (! $user) {
                 $this->error('User not found.');
+
                 return self::FAILURE;
             }
 

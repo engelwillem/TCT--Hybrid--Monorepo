@@ -2,7 +2,6 @@
 
 namespace App\Services\Engagement;
 
-use App\Models\MemberPost;
 use Illuminate\Support\Collection;
 
 class FeedComposerService
@@ -15,11 +14,12 @@ class FeedComposerService
         // 1. Scoring Phase
         $scoredItems = $rawItems->map(function ($item) {
             $item->calculation_score = $this->calculateScore($item);
+
             return $item;
         })->sortByDesc('calculation_score');
 
         // 2. Variety Guard Phase (Interleaving & Content Deduplication)
-        $finalItems = new Collection();
+        $finalItems = new Collection;
         $seenText = [];
         $seenVerseRefs = $excludedVerseRefs;
         $pool = $scoredItems->values(); // Reset keys for easy filtering
@@ -63,12 +63,14 @@ class FeedComposerService
                 // Track selected content
                 $content = trim($item->text ?? '');
                 $norm = mb_strtolower(mb_substr($content, 0, 100));
-                if ($norm !== '')
+                if ($norm !== '') {
                     $seenText[] = $norm;
+                }
 
                 $verseRef = $item->metadata['verse_ref'] ?? $item->metadata['ref'] ?? null;
-                if ($verseRef)
+                if ($verseRef) {
                     $seenVerseRefs[] = $verseRef;
+                }
 
                 $finalItems->push($item);
             } else {

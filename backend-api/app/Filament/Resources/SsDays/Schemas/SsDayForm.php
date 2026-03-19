@@ -4,9 +4,9 @@ namespace App\Filament\Resources\SsDays\Schemas;
 
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Schema;
 

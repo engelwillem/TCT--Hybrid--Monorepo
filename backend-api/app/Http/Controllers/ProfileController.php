@@ -327,10 +327,10 @@ class ProfileController extends Controller
 
         if ($isAdminViewer) {
             $statusHref = match (true) {
-                $overdueScheduled > 0 => route('filament.admin.pages.ops-triage') . '#scheduled-overdue',
-                $ssCoveragePercent < 70 => route('filament.admin.pages.ops-triage') . '#ss-needs-publish',
-                $failedJobs24h > 0 => route('filament.admin.pages.ops-triage') . '#backend-queue',
-                $securitySignals > 0 => route('filament.admin.pages.ops-triage') . '#security',
+                $overdueScheduled > 0 => route('filament.admin.pages.ops-triage').'#scheduled-overdue',
+                $ssCoveragePercent < 70 => route('filament.admin.pages.ops-triage').'#ss-needs-publish',
+                $failedJobs24h > 0 => route('filament.admin.pages.ops-triage').'#backend-queue',
+                $securitySignals > 0 => route('filament.admin.pages.ops-triage').'#security',
                 default => route('filament.admin.pages.ops-triage'),
             };
         }
@@ -357,8 +357,8 @@ class ProfileController extends Controller
                 return;
             }
 
-            $source = storage_path('app/public/' . ltrim($relativePath, '/'));
-            $target = $publicStorageRoot . DIRECTORY_SEPARATOR . ltrim($relativePath, '/');
+            $source = storage_path('app/public/'.ltrim($relativePath, '/'));
+            $target = $publicStorageRoot.DIRECTORY_SEPARATOR.ltrim($relativePath, '/');
 
             if (! is_file($source)) {
                 return;
@@ -379,7 +379,7 @@ class ProfileController extends Controller
                 return;
             }
 
-            $target = $publicStorageRoot . DIRECTORY_SEPARATOR . ltrim($relativePath, '/');
+            $target = $publicStorageRoot.DIRECTORY_SEPARATOR.ltrim($relativePath, '/');
             if (is_file($target)) {
                 File::delete($target);
             }

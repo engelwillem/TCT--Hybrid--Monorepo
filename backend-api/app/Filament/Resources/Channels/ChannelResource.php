@@ -9,11 +9,11 @@ use App\Filament\Resources\Channels\Schemas\ChannelForm;
 use App\Filament\Resources\Channels\Tables\ChannelsTable;
 use App\Models\Channel;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class ChannelResource extends Resource
 {

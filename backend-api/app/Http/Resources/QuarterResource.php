@@ -22,7 +22,7 @@ class QuarterResource extends JsonResource
             'cover_image_url' => $this->cover_image_url,
             // Pre-formatted for UI (avoid raw ISO rendering).
             'date_range_human' => ($this->start_date && $this->end_date)
-                ? ($this->start_date->format('d M Y') . ' – ' . $this->end_date->format('d M Y'))
+                ? ($this->start_date->format('d M Y').' – '.$this->end_date->format('d M Y'))
                 : null,
         ];
     }

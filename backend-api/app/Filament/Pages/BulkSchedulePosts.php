@@ -81,7 +81,7 @@ class BulkSchedulePosts extends Page
         $relativePath = $state['csv'];
         $dryRun = (bool) ($state['dry_run'] ?? true);
 
-        $fullPath = storage_path('app/' . $relativePath);
+        $fullPath = storage_path('app/'.$relativePath);
 
         $reader = Reader::createFromPath($fullPath);
         $reader->setHeaderOffset(0);
@@ -103,6 +103,7 @@ class BulkSchedulePosts extends Page
 
             if ($title === '' || $publishAtRaw === '') {
                 $errors[] = "Row {$rowNumber}: title/publish_at wajib.";
+
                 continue;
             }
 
@@ -110,6 +111,7 @@ class BulkSchedulePosts extends Page
                 $publishAt = Carbon::parse($publishAtRaw);
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNumber}: publish_at invalid ({$publishAtRaw}).";
+
                 continue;
             }
 
@@ -119,6 +121,7 @@ class BulkSchedulePosts extends Page
             if (isset($seenDates[$publishDateKey])) {
                 $prevRow = $seenDates[$publishDateKey];
                 $errors[] = "Row {$rowNumber}: tanggal {$publishDateKey} dobel di CSV (sudah dipakai di row {$prevRow}).";
+
                 continue;
             }
             $seenDates[$publishDateKey] = $rowNumber;
@@ -131,6 +134,7 @@ class BulkSchedulePosts extends Page
 
             if ($exists) {
                 $errors[] = "Row {$rowNumber}: sudah ada post di channel ini pada tanggal {$publishDateKey}.";
+
                 continue;
             }
 
@@ -151,7 +155,7 @@ class BulkSchedulePosts extends Page
         if ($errors) {
             Notification::make()
                 ->title('Import selesai dengan error')
-                ->body("Created/parsed: {$created}. Errors: " . implode(' | ', array_slice($errors, 0, 5)) . (count($errors) > 5 ? ' ...' : ''))
+                ->body("Created/parsed: {$created}. Errors: ".implode(' | ', array_slice($errors, 0, 5)).(count($errors) > 5 ? ' ...' : ''))
                 ->danger()
                 ->send();
 
@@ -166,5 +170,4 @@ class BulkSchedulePosts extends Page
             ->success()
             ->send();
     }
-
 }

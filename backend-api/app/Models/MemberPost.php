@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany; // Added this import for BelongsToMany
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany; // Added this import for BelongsToMany
 
 class MemberPost extends Model
 {
@@ -42,13 +42,13 @@ class MemberPost extends Model
     {
         // Relaxed from 24h to 7 days to ensure feed continuity in slower communities
         return $query->whereNull('hidden_at')
-            ->where(fn($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()->subDays(7)));
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()->subDays(7)));
     }
 
     public function scopeUrgentPrayer($query)
     {
         return $query->whereIn('type', [\App\Enums\PostType::PRAYER_REQUEST, \App\Enums\PostType::VERSE_REFLECTION])
-            ->whereDoesntHave('reactions', fn($q) => $q->where('type', \App\Enums\ReactionType::PRAY));
+            ->whereDoesntHave('reactions', fn ($q) => $q->where('type', \App\Enums\ReactionType::PRAY));
     }
 
     public function scopeByType($query, \App\Enums\PostType $type)
@@ -69,7 +69,7 @@ class MemberPost extends Model
 
     public function isUrgent(): bool
     {
-        return $this->type === \App\Enums\PostType::PRAYER_REQUEST && !$this->reactions()->where('type', \App\Enums\ReactionType::PRAY)->exists();
+        return $this->type === \App\Enums\PostType::PRAYER_REQUEST && ! $this->reactions()->where('type', \App\Enums\ReactionType::PRAY)->exists();
     }
 
     public function user(): BelongsTo
@@ -115,4 +115,3 @@ class MemberPost extends Model
         return $this->hasMany(MemberPostMeta::class, 'member_post_id');
     }
 }
-

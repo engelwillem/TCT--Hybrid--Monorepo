@@ -2,21 +2,17 @@
 
 namespace App\Services\Engagement;
 
-use App\Models\MemberPost;
-use App\Models\MemberPostReaction;
 use App\Enums\PostType;
+use App\Models\MemberPost;
 use App\Services\AI\AIContentAssistant;
-use App\Services\Engagement\SystemAccountService;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class CommunityPulseService
 {
     public function __construct(
         protected AIContentAssistant $ai,
         protected SystemAccountService $accounts
-    ) {
-    }
+    ) {}
 
     /**
      * Generate and save a pulse post to the community feed.
@@ -25,7 +21,7 @@ class CommunityPulseService
     {
         $data = $this->generateDailyPulse();
 
-        if (!$data) {
+        if (! $data) {
             return null;
         }
 
@@ -70,7 +66,7 @@ class CommunityPulseService
             ->count();
 
         // 2. Draft summary using AI (Placeholder logic)
-        $summaryTitle = "⚡ Community Pulse";
+        $summaryTitle = '⚡ Community Pulse';
         $summaryText = $this->composeVibeSummary($topPost, $prayerCount);
 
         return [
@@ -82,23 +78,23 @@ class CommunityPulseService
                 'highlights' => [
                     'popular_post_id' => $topPost?->id,
                     'prayers_requested' => $prayerCount,
-                ]
-            ]
+                ],
+            ],
         ];
     }
 
     protected function composeVibeSummary(?MemberPost $topPost, int $prayerCount): string
     {
-        $text = "Hari ini komunitas kita sangat aktif! ";
+        $text = 'Hari ini komunitas kita sangat aktif! ';
 
         if ($topPost) {
-            $text .= "Refleksi dari " . ($topPost->user->name ?? 'seorang jemaat') . " menarik banyak perhatian. ";
+            $text .= 'Refleksi dari '.($topPost->user->name ?? 'seorang jemaat').' menarik banyak perhatian. ';
         }
 
         if ($prayerCount > 0) {
             $text .= "Ada {$prayerCount} pokok doa baru yang masuk. Mari terus saling menguatkan dalam doa.";
         } else {
-            $text .= "Teruslah berbagi refleksi dan berkat Anda di sini.";
+            $text .= 'Teruslah berbagi refleksi dan berkat Anda di sini.';
         }
 
         return $text;

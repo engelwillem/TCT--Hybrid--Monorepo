@@ -35,7 +35,7 @@ class DailyMaintenanceCommand extends Command
 
         // 1. Run Daily Engagement Bridge
         $this->info('Running Daily Engagement Bridge...');
-        dispatch_sync(new DailyEngagementJob());
+        dispatch_sync(new DailyEngagementJob);
 
         // 2. Generate Community Pulse
         $this->info('Generating Community Pulse...');
@@ -49,7 +49,7 @@ class DailyMaintenanceCommand extends Command
                 ->whereDate('created_at', now())
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 MemberPost::create([
                     'user_id' => $shepherd->id,
                     'type' => PostType::COMMUNITY_HIGHLIGHT,

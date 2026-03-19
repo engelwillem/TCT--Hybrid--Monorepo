@@ -41,7 +41,9 @@ class PostForm
                     ->visible(function (callable $get) {
                         $channelId = $get('channel_id');
 
-                        if (!$channelId) return false;
+                        if (! $channelId) {
+                            return false;
+                        }
 
                         return Channel::query()
                             ->whereKey($channelId)
