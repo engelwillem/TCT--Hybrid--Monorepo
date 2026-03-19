@@ -8,12 +8,11 @@ import { MemberPostCard } from "../components/MemberPostCard";
 import { CommentsSheet } from "../components/CommentsSheet";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityPost } from "../types";
-import { Loader2, ChevronDown, Inbox } from "lucide-react";
+import { ChevronDown, Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-react";
 import { CommunityService } from "@/services/community.service";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ArchiveCategory = "all" | "quotes" | "reflections" | "prayer_requests" | "testimonies";
 
@@ -266,15 +265,15 @@ export function CommunityPage() {
   }, [archivePosts, archiveCategory]);
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-1000">
-      <header className="p-8 pb-4 space-y-2">
-        <h2 className="text-3xl font-black tracking-tight text-brand">Komunitas</h2>
-        <p className="text-sm font-bold tracking-wide leading-relaxed text-muted-foreground">
+    <div className="flex flex-col h-full animate-in fade-in duration-700 md:py-6">
+      <header className="px-6 md:px-0 mx-auto w-full max-w-[640px] space-y-2 pb-6">
+        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-foreground"><span className="text-brand">Komunitas</span></h2>
+        <p className="text-sm font-medium tracking-wide leading-relaxed text-muted-foreground/80">
           Tempat berbagi inspirasi, doa, dan pertumbuhan bersama.
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-[640px] space-y-4 px-6 pb-28">
+      <div className="mx-auto w-full max-w-[640px] space-y-6 px-6 md:px-0 pb-28">
         <VerseHubFeaturedCard 
             verse={effectiveFeaturedVerse} 
             postId={featuredPost?.id}
@@ -282,7 +281,7 @@ export function CommunityPage() {
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
           <div className="sticky top-0 z-40 py-2 -mx-1 px-1">
-            <TabsList className="relative flex h-[52px] w-full items-center justify-between rounded-[20px] bg-surface-muted/70 p-1.5 backdrop-blur-2xl shadow-inner ring-1 ring-border/70 overflow-hidden text-foreground">
+            <TabsList className="relative flex h-[52px] w-full items-center justify-between rounded-[20px] bg-surface/70 backdrop-blur-xl shadow-sm ring-1 ring-border/50 overflow-hidden text-foreground">
               {[
                 { id: "discussions", label: "Diskusi" },
                 { id: "archive", label: "Arsip" },
@@ -292,9 +291,9 @@ export function CommunityPage() {
                   key={tab.id}
                   value={tab.id}
                   className={cn(
-                    "relative flex-1 h-full rounded-[14px] text-[13px] font-black uppercase tracking-widest transition-all duration-300 z-10",
-                    "data-[state=active]:bg-surface data-[state=active]:text-foreground",
-                    "data-[state=inactive]:text-muted-foreground hover:text-foreground"
+                    "relative flex-1 h-full rounded-[14px] text-[12px] font-black uppercase tracking-widest transition-all duration-300 z-10",
+                    "data-[state=active]:bg-surface-elevated data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/50",
+                    "data-[state=inactive]:text-muted-foreground/70 hover:text-foreground"
                   )}
                 >
                   {tab.label}
@@ -309,34 +308,49 @@ export function CommunityPage() {
             </Suspense>
 
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <Loader2 className="animate-spin mb-4 text-brand" size={32} />
-                <p className="text-xs font-bold uppercase tracking-widest opacity-50">Memperbarui Feed...</p>
-              </div>
+                <div className="space-y-4 pt-4">
+                    {[1, 2, 3].map(i => (
+                        <Card key={i} className="border-none bg-surface-muted/30 shadow-sm rounded-[24px]">
+                            <CardContent className="p-5 flex gap-4">
+                                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                                <div className="flex-1 space-y-3 pt-1">
+                                    <Skeleton className="h-4 w-32 rounded-full" />
+                                    <Skeleton className="h-3 w-full rounded-full" />
+                                    <Skeleton className="h-3 w-4/5 rounded-full" />
+                                    <Skeleton className="h-24 w-full rounded-[16px] mt-4" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             ) : fetchError ? (
-              <Card className="rounded-[32px] bg-red-50/50 border-red-100 shadow-sm">
+              <Card className="rounded-[32px] bg-red-50/50 border-red-100 shadow-sm mt-4">
                 <CardContent className="p-12 text-center space-y-4">
-                  <p className="text-lg font-bold text-red-600">{fetchError === "Unauthorized" ? "Silakan Masuk Kembali" : "Gagal Memperbarui Feed"}</p>
-                  <p className="text-xs text-red-400 font-medium uppercase tracking-widest">{fetchError}</p>
+                  <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-2">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <p className="text-lg font-black text-red-600 tracking-tight">{fetchError === "Unauthorized" ? "Silakan Masuk Kembali" : "Gagal Memperbarui Feed"}</p>
+                  <p className="text-xs text-red-400 font-bold uppercase tracking-widest">{fetchError}</p>
                   <button 
                     onClick={() => fetchData()}
-                    className="px-6 py-2 bg-red-600 text-white rounded-full text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-colors"
+                    className="mt-4 px-8 py-2.5 bg-red-600 text-white rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm active:scale-95"
                   >
                     Coba Lagi
                   </button>
                 </CardContent>
               </Card>
             ) : discussionPosts.length ? (
-              <>
+              <div className="space-y-5">
                 {isArchiveFallbackInDiscussion && (
-                  <Card className="rounded-[24px] bg-amber-50/60 border-amber-100 shadow-sm">
-                    <CardContent className="p-4 text-center space-y-1">
-                      <p className="text-sm font-bold text-amber-700">Diskusi aktif sedang kosong</p>
-                      <p className="text-[10px] text-amber-600 uppercase tracking-widest font-black">
-                        Menampilkan arsip terbaru sebagai fallback parity
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-3 animate-in fade-in">
+                    <div className="h-14 w-14 rounded-full bg-surface-muted border border-border/50 flex items-center justify-center shadow-inner">
+                      <Sparkles className="h-6 w-6 text-brand opacity-80" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[14px] font-black tracking-wide text-foreground/80">Belum ada percakapan baru</p>
+                      <p className="text-[10px] uppercase font-bold tracking-[0.15em] text-muted-foreground">Menampilkan inspirasi dari arsip komunitas</p>
+                    </div>
+                  </div>
                 )}
                 {discussionPosts.map((p) => (
                 <MemberPostCard
@@ -359,21 +373,24 @@ export function CommunityPage() {
                   onShare={() => handleShare(p.id, p.text)}
                 />
                 ))}
-              </>
+              </div>
             ) : (
-              <Card className="rounded-[32px] bg-surface/80 border-none shadow-card">
-                <CardContent className="p-12 text-center space-y-2">
-                  <p className="text-xl font-bold text-muted-foreground">Belum ada diskusi aktif.</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">
-                    Mulai percakapan hari ini
-                  </p>
-                </CardContent>
-              </Card>
+                <Card className="border-dashed border-2 border-border/50 bg-surface/30 shadow-none rounded-[32px] overflow-hidden mt-4">
+                    <CardContent className="p-12 text-center flex flex-col items-center justify-center gap-4">
+                        <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
+                            <MessageCircle size={24} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-foreground/80 font-black text-sm">Belum ada percakapan aktif</p>
+                            <p className="text-[11px] text-muted-foreground font-medium">Jadilah yang pertama berbagi cerita Anda hari ini.</p>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="archive" className="space-y-6">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide text-foreground">
+          <TabsContent value="archive" className="space-y-6 mt-6">
+            <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide text-foreground px-1 -mx-1">
               {[
                 { key: "all", label: "Semua" },
                 { key: "quotes", label: "Quotes" },
@@ -388,10 +405,10 @@ export function CommunityPage() {
                     type="button"
                     onClick={() => setArchiveCategory(item.key as ArchiveCategory)}
                     className={cn(
-                      "whitespace-nowrap rounded-full px-5 py-2 text-[11px] font-black uppercase tracking-wider transition-all",
+                      "whitespace-nowrap rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all",
                       active
-                        ? "bg-brand text-brand-foreground shadow-lg"
-                        : "bg-surface-muted text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+                        ? "bg-foreground text-background shadow-md border border-foreground"
+                        : "bg-surface text-muted-foreground hover:bg-surface-elevated hover:text-foreground border border-border/50 shadow-sm"
                     )}
                   >
                     {item.label}
@@ -401,15 +418,16 @@ export function CommunityPage() {
             </div>
 
             {archiveGroups.length ? (
-              archiveGroups.map((group) => (
+              <div className="space-y-8">
+              {archiveGroups.map((group) => (
                 <section key={group.key} className="space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
                       {group.label}
                     </p>
-                    <ChevronDown size={14} className="text-muted-foreground" />
+                    <ChevronDown size={14} className="text-muted-foreground/30" />
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {group.items.map((p) => (
                       <MemberPostCard
                         key={p.id}
@@ -419,7 +437,7 @@ export function CommunityPage() {
                         text={p.text}
                         imgSrc={p.imageUrl}
                         compact
-                        className="opacity-90"
+                        className="opacity-95"
                         prayLabel={String(p.counts.likes)}
                         prayed={p.isLiked}
                         commentsCount={p.counts.comments}
@@ -433,22 +451,25 @@ export function CommunityPage() {
                     ))}
                   </div>
                 </section>
-              ))
+              ))}
+              </div>
             ) : (
-              <Card className="rounded-[32px] bg-surface/80 border border-dashed border-border/70 py-20 text-center flex flex-col items-center gap-6">
-                <div className="w-20 h-20 rounded-3xl bg-surface-muted border border-border/70 flex items-center justify-center text-muted-foreground shadow-inner">
-                  <Inbox size={36} />
-                </div>
-                <div className="space-y-2">
-                  <CardTitle className="text-xl font-black">Arsip Kosong</CardTitle>
-                  <CardDescription className="text-xs uppercase tracking-widest font-bold opacity-50">Mulai berbagi untuk membangun arsip Anda.</CardDescription>
-                </div>
-              </Card>
+                <Card className="border-dashed border-2 border-border/50 bg-surface/30 shadow-none rounded-[32px] overflow-hidden mt-4">
+                    <CardContent className="p-12 text-center flex flex-col items-center justify-center gap-4">
+                        <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
+                            <Inbox size={24} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-foreground/80 font-black text-sm">Arsip Kosong</p>
+                            <p className="text-[11px] text-muted-foreground font-medium">Belum ada percakapan yang masuk ke arsip untuk kategori ini.</p>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="bookmarks">
-            <div className="space-y-4">
+          <TabsContent value="bookmarks" className="mt-6">
+            <div className="space-y-5">
                 {posts.filter(p => p.isBookmarked).length > 0 ? (
                     posts.filter(p => p.isBookmarked).map(p => (
                         <MemberPostCard
@@ -470,13 +491,16 @@ export function CommunityPage() {
                         />
                     ))
                 ) : (
-                    <Card className="rounded-[32px] bg-surface/80 border border-dashed border-border/70 py-20 text-center flex flex-col items-center gap-6">
-                        <div className="w-20 h-20 rounded-3xl bg-surface-muted border border-border/70 flex items-center justify-center text-muted-foreground shadow-inner">
-                        <Inbox size={36} />
-                        </div>
-                        <div className="space-y-2">
-                        <CardTitle className="text-xl font-black text-muted-foreground">Belum ada post tersimpan.</CardTitle>
-                        </div>
+                    <Card className="border-dashed border-2 border-border/50 bg-surface/30 shadow-none rounded-[32px] overflow-hidden mt-4">
+                        <CardContent className="p-12 text-center flex flex-col items-center justify-center gap-4">
+                            <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
+                                <Bookmark size={24} />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-foreground/80 font-black text-sm">Belum ada post tersimpan</p>
+                                <p className="text-[11px] text-muted-foreground font-medium">Beri markah pada pos untuk membukanya kembali di sini.</p>
+                            </div>
+                        </CardContent>
                     </Card>
                 )}
             </div>
