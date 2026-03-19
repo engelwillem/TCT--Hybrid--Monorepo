@@ -15,7 +15,7 @@ class VersehubActionController extends Controller
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
         $validated = $request->validate([
-            'limit' => ['nullable', 'integer', 'min:3', 'max:200'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:200'],
             'q' => ['nullable', 'string', 'max:100'],
             'sort' => ['nullable', 'in:recent,oldest'],
         ]);
@@ -23,9 +23,23 @@ class VersehubActionController extends Controller
         $limit = max(3, min((int) ($validated['limit'] ?? 8), 200));
         $queryText = Str::lower(trim((string) ($validated['q'] ?? '')));
         $sort = (string) ($validated['sort'] ?? 'recent');
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'favorites' => [],
+                'bookmarks' => [],
+                'notes' => [],
+                'counts' => [
+                    'favorites' => 0,
+                    'bookmarks' => 0,
+                    'notes' => 0,
+                ],
+            ]);
+        }
 
         $base = UserVerseAction::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('lang', $lang);
 
         $applySearch = function ($query) use ($queryText) {
@@ -113,9 +127,18 @@ class VersehubActionController extends Controller
 
         $book = Str::lower(trim((string) $validated['book']));
         $chapter = (int) $validated['chapter'];
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'book' => $book,
+                'chapter' => $chapter,
+                'actions' => [],
+            ]);
+        }
 
         $rows = UserVerseAction::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('lang', $lang)
             ->where('book_code', $book)
             ->where('chapter', $chapter)

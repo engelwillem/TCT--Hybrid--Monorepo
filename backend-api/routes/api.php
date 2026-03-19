@@ -63,6 +63,12 @@ Route::prefix('v1')->group(function (): void {
         ->whereIn('lang', ['id', 'en'])
         ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
 
+    // Read-only reader actions are guest-safe to prevent noisy 401s on public surfaces.
+    Route::get('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'index'])
+        ->whereIn('lang', ['id', 'en']);
+    Route::get('/versehub/{lang}/actions/summary', [VersehubActionController::class, 'summary'])
+        ->whereIn('lang', ['id', 'en']);
+
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [FirebaseAuthSyncController::class, 'logout']);
         Route::post('/today/state', [TodayApiController::class, 'updateState']);
@@ -72,11 +78,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
         Route::post('/community/posts/{memberPost}/bookmark', [CommunityApiController::class, 'toggleBookmark']);
 
-        Route::get('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'index'])
-            ->whereIn('lang', ['id', 'en']);
         Route::post('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'upsert'])
-            ->whereIn('lang', ['id', 'en']);
-        Route::get('/versehub/{lang}/actions/summary', [VersehubActionController::class, 'summary'])
             ->whereIn('lang', ['id', 'en']);
 
         Route::get('/versehub/{lang}/reflections', [VerseHubReflectionController::class, 'index'])
