@@ -46,11 +46,17 @@ class SecurityHeaders
         }
 
         // Minimal CSP to reduce XSS risk while keeping the app functional.
-        // NOTE: You may need to adjust if you embed external scripts/styles.
+        // NOTE: Filament + Livewire + Alpine runtime for admin may require unsafe-eval.
+        // Keep it scoped only to admin panel routes.
         if (! $response->headers->has('Content-Security-Policy')) {
+            $isAdminPanelRequest = $request->is('admintalk') || $request->is('admintalk/*');
+            $scriptSource = $isAdminPanelRequest
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;"
+                : "script-src 'self' 'unsafe-inline' https:;";
+
             $response->headers->set(
                 'Content-Security-Policy',
-                "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self';"
+                "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; {$scriptSource} font-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self';"
             );
         }
 
