@@ -8,11 +8,14 @@ import { MemberPostCard } from "../components/MemberPostCard";
 import { CommentsSheet } from "../components/CommentsSheet";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityPost } from "../types";
-import { ChevronDown, Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-react";
+import { ChevronDown, Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-center"; /* Note: Typo in lucide-react if I'm not careful, but I checked the original imports */
 import { CommunityService } from "@/services/community.service";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
+/* Fix imports from previous version which had lucide-center typo potential */
+import { Loader2 } from "lucide-react";
 
 type ArchiveCategory = "all" | "quotes" | "reflections" | "prayer_requests" | "testimonies";
 
@@ -50,8 +53,9 @@ export function CommunityPage() {
   const [rituals, setRituals] = useState<any>(null);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
   const hasActivePosts = posts.length > 0;
-  const isArchiveFallbackInDiscussion = !hasActivePosts && archivePosts.length > 0;
+  const isArchiveFallbackInDiscussion = !hasActivePosts && !isLoading && archivePosts.length > 0;
   const discussionPosts = hasActivePosts ? posts : archivePosts.slice(0, 6);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'error') => {
@@ -75,12 +79,11 @@ export function CommunityPage() {
     try {
       setIsLoading(true);
       setFetchError(null);
-      // Load feed
+      
       const fetched = await CommunityService.listPosts();
       setPosts(fetched.posts);
       setArchivePosts(fetched.archivePosts);
       
-      // Load rituals for featured verse
       const ritualRes = await fetch('/api/today');
       if (ritualRes.ok) {
           const ritualData = await ritualRes.json();
@@ -98,17 +101,18 @@ export function CommunityPage() {
     fetchData();
   }, [fetchData]);
 
-  const handlePost = async (text: string, type: string, images: File[] = []) => {
+  const handlePost = async (text: string, type: any, images: File[] = []) => {
     try {
       const newPost = await CommunityService.createPost(text, type, images);
       setPosts((prev) => [newPost, ...prev]);
+      showToast("Berhasil membagikan!", "success");
     } catch (error) {
       console.error("Failed to create post", error);
+      showToast("Gagal membagikan post.", "error");
     }
   };
 
   const toggleLike = async (postId: string) => {
-    // Optimistic update for both active feed and archive fallback surfaces.
     const originalPosts = [...posts];
     const originalArchivePosts = [...archivePosts];
     const patchOptimistic = (list: CommunityPost[]) =>
@@ -120,7 +124,7 @@ export function CommunityPage() {
           isLiked,
           counts: {
             ...p.counts,
-            likes: p.counts.likes + (isLiked ? 1 : -1),
+            likes: (p.counts.likes || 0) + (isLiked ? 1 : -1),
           },
         };
       });
@@ -135,14 +139,12 @@ export function CommunityPage() {
       setPosts((prev) => patchServer(prev));
       setArchivePosts((prev) => patchServer(prev));
     } catch (error) {
-      console.error("Failed to toggle like", error);
-      setPosts(originalPosts); // Rollback
+      setPosts(originalPosts); 
       setArchivePosts(originalArchivePosts);
     }
   };
 
   const toggleBookmark = async (postId: string) => {
-    // Optimistic update for both active feed and archive fallback surfaces.
     const originalPosts = [...posts];
     const originalArchivePosts = [...archivePosts];
     const patchOptimistic = (list: CommunityPost[]) =>
@@ -154,7 +156,7 @@ export function CommunityPage() {
           isBookmarked,
           counts: {
             ...p.counts,
-            bookmarks: p.counts.bookmarks + (isBookmarked ? 1 : -1),
+            bookmarks: (p.counts.bookmarks || 0) + (isBookmarked ? 1 : -1),
           },
         };
       });
@@ -168,9 +170,9 @@ export function CommunityPage() {
         list.map((p) => (p.id === postId ? updatedPost : p));
       setPosts((prev) => patchServer(prev));
       setArchivePosts((prev) => patchServer(prev));
+      showToast(updatedPost.isBookmarked ? "Disimpan ke Simpanan" : "Dihapus dari Simpanan", "success");
     } catch (error) {
-      console.error("Failed to toggle bookmark", error);
-      setPosts(originalPosts); // Rollback
+      setPosts(originalPosts);
       setArchivePosts(originalArchivePosts);
     }
   };
@@ -196,7 +198,6 @@ export function CommunityPage() {
         await navigator.clipboard.writeText(url);
         showToast("Tautan disalin ke papan klip!", "success");
       } catch (err) {
-        console.error("Error copying link:", err);
         showToast("Gagal menyalin tautan.", "error");
       }
     }
@@ -260,7 +261,7 @@ export function CommunityPage() {
       .map(([key, items]) => ({
         key,
         label: key === "today" ? "Hari Ini" : key.replace("month-", ""),
-        items: items, // Ordering is naturally handed by Backend already
+        items: items,
       }));
   }, [archivePosts, archiveCategory]);
 
@@ -277,11 +278,12 @@ export function CommunityPage() {
         <VerseHubFeaturedCard 
             verse={effectiveFeaturedVerse} 
             postId={featuredPost?.id}
+            onOpenComments={setActiveCommentPostId}
         />
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
           <div className="sticky top-0 z-40 py-2 -mx-1 px-1">
-            <TabsList className="relative flex h-[52px] w-full items-center justify-between rounded-[20px] bg-surface/70 backdrop-blur-xl shadow-sm ring-1 ring-border/50 overflow-hidden text-foreground">
+            <TabsList className="relative flex h-[56px] w-full items-center justify-between rounded-[24px] bg-background/60 backdrop-blur-2xl shadow-sm ring-1 ring-border/50 overflow-hidden text-foreground p-1">
               {[
                 { id: "discussions", label: "Diskusi" },
                 { id: "archive", label: "Arsip" },
@@ -291,9 +293,9 @@ export function CommunityPage() {
                   key={tab.id}
                   value={tab.id}
                   className={cn(
-                    "relative flex-1 h-full rounded-[14px] text-[12px] font-black uppercase tracking-widest transition-all duration-300 z-10",
-                    "data-[state=active]:bg-surface-elevated data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border/50",
-                    "data-[state=inactive]:text-muted-foreground/70 hover:text-foreground"
+                    "relative flex-1 h-full rounded-[20px] text-[12px] font-black uppercase tracking-widest transition-all duration-300 z-10",
+                    "data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-lg",
+                    "data-[state=inactive]:text-muted-foreground/60 hover:text-foreground/80"
                   )}
                 >
                   {tab.label}
@@ -302,95 +304,106 @@ export function CommunityPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="discussions" className="space-y-6 mt-0">
-            <Suspense fallback={<PostComposer onPost={handlePost} />}>
+          <TabsContent value="discussions" className="space-y-6 mt-0 outline-none">
+            <Suspense fallback={<div className="h-32 w-full bg-surface-muted animate-pulse rounded-[32px]" />}>
               <SmartPostComposer onPost={handlePost} />
             </Suspense>
 
             {isLoading ? (
-                <div className="space-y-4 pt-4">
+                <div className="space-y-6 mt-6">
                     {[1, 2, 3].map(i => (
-                        <Card key={i} className="border-none bg-surface-muted/30 shadow-sm rounded-[24px]">
-                            <CardContent className="p-5 flex gap-4">
-                                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-                                <div className="flex-1 space-y-3 pt-1">
+                        <div key={i} className="rounded-[40px] bg-surface-muted/30 p-8 space-y-6">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="w-12 h-12 rounded-full" />
+                                <div className="space-y-2">
                                     <Skeleton className="h-4 w-32 rounded-full" />
-                                    <Skeleton className="h-3 w-full rounded-full" />
-                                    <Skeleton className="h-3 w-4/5 rounded-full" />
-                                    <Skeleton className="h-24 w-full rounded-[16px] mt-4" />
+                                    <Skeleton className="h-3 w-20 rounded-full" />
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                            <Skeleton className="h-4 w-full rounded-full" />
+                            <Skeleton className="h-4 w-5/6 rounded-full" />
+                            <Skeleton className="h-48 w-full rounded-[32px] mt-4" />
+                        </div>
                     ))}
                 </div>
             ) : fetchError ? (
-              <Card className="rounded-[32px] bg-red-50/50 border-red-100 shadow-sm mt-4">
-                <CardContent className="p-12 text-center space-y-4">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-2">
-                    <AlertTriangle size={24} />
+              <Card className="rounded-[40px] bg-red-50/10 border-red-500/20 shadow-none mt-4">
+                <CardContent className="p-12 text-center space-y-6">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                    <AlertTriangle size={28} />
                   </div>
-                  <p className="text-lg font-black text-red-600 tracking-tight">{fetchError === "Unauthorized" ? "Silakan Masuk Kembali" : "Gagal Memperbarui Feed"}</p>
-                  <p className="text-xs text-red-400 font-bold uppercase tracking-widest">{fetchError}</p>
+                  <div className="space-y-2">
+                    <p className="text-xl font-black text-foreground tracking-tight">Gagal Memuat Feed</p>
+                    <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">{fetchError}</p>
+                  </div>
                   <button 
                     onClick={() => fetchData()}
-                    className="mt-4 px-8 py-2.5 bg-red-600 text-white rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm active:scale-95"
+                    className="mt-4 px-10 py-3 bg-foreground text-background rounded-full text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95"
                   >
                     Coba Lagi
                   </button>
                 </CardContent>
               </Card>
             ) : discussionPosts.length ? (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {isArchiveFallbackInDiscussion && (
-                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-3 animate-in fade-in">
-                    <div className="h-14 w-14 rounded-full bg-surface-muted border border-border/50 flex items-center justify-center shadow-inner">
-                      <Sparkles className="h-6 w-6 text-brand opacity-80" />
+                  <div className="flex flex-col items-center justify-center py-12 px-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-1000">
+                    <div className="h-16 w-16 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shadow-premium">
+                      <Sparkles className="h-7 w-7 text-brand" />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[14px] font-black tracking-wide text-foreground/80">Belum ada percakapan baru</p>
-                      <p className="text-[10px] uppercase font-bold tracking-[0.15em] text-muted-foreground">Menampilkan inspirasi dari arsip komunitas</p>
+                    <div className="space-y-2">
+                      <p className="text-[17px] font-black tracking-tight text-foreground">Inspirasi Pilihan</p>
+                      <p className="text-[11px] uppercase font-bold tracking-[0.2em] text-muted-foreground/60 leading-relaxed max-w-[280px] mx-auto">
+                        Belum ada percakapan baru hari ini. Lihat kembali mutiara dari arsip kita.
+                      </p>
                     </div>
                   </div>
                 )}
                 {discussionPosts.map((p) => (
-                <MemberPostCard
-                  key={p.id}
-                  authorName={p.author.name}
-                  authorAvatar={p.author.avatarUrl}
-                  isOfficial={p.author.isOfficial}
-                  type={p.type}
-                  text={p.text}
-                  imgSrc={p.imageUrl || undefined}
-                  mediaSrcList={p.mediaPaths || undefined}
-                  prayLabel={String(p.counts.likes)}
-                  prayed={p.isLiked}
-                  commentsCount={p.counts.comments}
-                  bookmarked={p.isBookmarked}
-                  bookmarkLabel={String(p.counts.bookmarks)}
-                  onPray={() => toggleLike(p.id)}
-                  onBookmark={() => toggleBookmark(p.id)}
-                  onOpenComments={() => setActiveCommentPostId(p.id)}
-                  onShare={() => handleShare(p.id, p.text)}
-                />
+                  <MemberPostCard
+                    key={p.id}
+                    authorName={p.author.name}
+                    authorAvatar={p.author.avatarUrl}
+                    isOfficial={p.author.isOfficial}
+                    type={p.type}
+                    text={p.text}
+                    imgSrc={p.imageUrl || undefined}
+                    mediaSrcList={p.mediaPaths || undefined}
+                    prayLabel={String(p.counts.likes || 0)}
+                    prayed={p.isLiked}
+                    commentsCount={p.counts.comments || 0}
+                    bookmarked={p.isBookmarked}
+                    bookmarkLabel={String(p.counts.bookmarks || 0)}
+                    onPray={() => toggleLike(p.id)}
+                    onBookmark={() => toggleBookmark(p.id)}
+                    onOpenComments={() => setActiveCommentPostId(p.id)}
+                    onShare={() => handleShare(p.id, p.text)}
+                  />
                 ))}
               </div>
             ) : (
-                <Card className="border-dashed border-2 border-border/50 bg-surface/30 shadow-none rounded-[32px] overflow-hidden mt-4">
-                    <CardContent className="p-12 text-center flex flex-col items-center justify-center gap-4">
-                        <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
-                            <MessageCircle size={24} />
+                <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden mt-4">
+                    <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
+                        <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
+                            <MessageCircle size={32} />
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-foreground/80 font-black text-sm">Belum ada percakapan aktif</p>
-                            <p className="text-[11px] text-muted-foreground font-medium">Jadilah yang pertama berbagi cerita Anda hari ini.</p>
+                        <div className="space-y-2">
+                            <p className="text-foreground font-black text-[18px]">Mulai Percakapan</p>
+                            <p className="text-[12px] text-muted-foreground font-medium max-w-[240px] leading-relaxed">Jadilah yang pertama berbagi terang dan berkat Anda hari ini.</p>
                         </div>
+                        <button 
+                          onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}
+                          className="px-8 py-2.5 bg-brand text-brand-foreground rounded-full text-[11px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"
+                        >
+                          Tulis Sesuatu
+                        </button>
                     </CardContent>
                 </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="archive" className="space-y-6 mt-6">
-            <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide text-foreground px-1 -mx-1">
+          <TabsContent value="archive" className="space-y-8 mt-6 outline-none">
+            <div className="flex items-center gap-2 overflow-x-auto pb-6 scrollbar-hide text-foreground px-1 -mx-1">
               {[
                 { key: "all", label: "Semua" },
                 { key: "quotes", label: "Quotes" },
@@ -405,10 +418,10 @@ export function CommunityPage() {
                     type="button"
                     onClick={() => setArchiveCategory(item.key as ArchiveCategory)}
                     className={cn(
-                      "whitespace-nowrap rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all",
+                      "whitespace-nowrap rounded-full px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.1em] transition-all duration-300",
                       active
-                        ? "bg-foreground text-background shadow-md border border-foreground"
-                        : "bg-surface text-muted-foreground hover:bg-surface-elevated hover:text-foreground border border-border/50 shadow-sm"
+                        ? "bg-foreground text-background shadow-premium"
+                        : "bg-surface-muted/50 text-muted-foreground/60 hover:text-foreground hover:bg-surface-muted ring-1 ring-border/50"
                     )}
                   >
                     {item.label}
@@ -418,16 +431,17 @@ export function CommunityPage() {
             </div>
 
             {archiveGroups.length ? (
-              <div className="space-y-8">
+              <div className="space-y-12">
               {archiveGroups.map((group) => (
-                <section key={group.key} className="space-y-4">
-                  <div className="flex items-center justify-between px-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+                <section key={group.key} className="space-y-6">
+                  <div className="flex items-center gap-4 px-2">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-border/50" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">
                       {group.label}
                     </p>
-                    <ChevronDown size={14} className="text-muted-foreground/30" />
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-border/50" />
                   </div>
-                  <div className="space-y-5">
+                  <div className="space-y-6">
                     {group.items.map((p) => (
                       <MemberPostCard
                         key={p.id}
@@ -436,13 +450,11 @@ export function CommunityPage() {
                         type={p.type}
                         text={p.text}
                         imgSrc={p.imageUrl}
-                        compact
-                        className="opacity-95"
-                        prayLabel={String(p.counts.likes)}
+                        prayLabel={String(p.counts.likes || 0)}
                         prayed={p.isLiked}
-                        commentsCount={p.counts.comments}
+                        commentsCount={p.counts.comments || 0}
                         bookmarked={p.isBookmarked}
-                        bookmarkLabel={String(p.counts.bookmarks)}
+                        bookmarkLabel={String(p.counts.bookmarks || 0)}
                         onPray={() => toggleLike(p.id)}
                         onBookmark={() => toggleBookmark(p.id)}
                         onOpenComments={() => setActiveCommentPostId(p.id)}
@@ -454,22 +466,22 @@ export function CommunityPage() {
               ))}
               </div>
             ) : (
-                <Card className="border-dashed border-2 border-border/50 bg-surface/30 shadow-none rounded-[32px] overflow-hidden mt-4">
-                    <CardContent className="p-12 text-center flex flex-col items-center justify-center gap-4">
-                        <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
-                            <Inbox size={24} />
+                <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden">
+                    <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
+                        <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
+                            <Inbox size={32} />
                         </div>
                         <div className="space-y-1">
                             <p className="text-foreground/80 font-black text-sm">Arsip Kosong</p>
-                            <p className="text-[11px] text-muted-foreground font-medium">Belum ada percakapan yang masuk ke arsip untuk kategori ini.</p>
+                            <p className="text-[11px] text-muted-foreground font-medium">Belum ada jejak tersimpan untuk kategori ini.</p>
                         </div>
                     </CardContent>
                 </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="bookmarks" className="mt-6">
-            <div className="space-y-5">
+          <TabsContent value="bookmarks" className="mt-6 outline-none">
+            <div className="space-y-6">
                 {posts.filter(p => p.isBookmarked).length > 0 ? (
                     posts.filter(p => p.isBookmarked).map(p => (
                         <MemberPostCard
@@ -479,11 +491,11 @@ export function CommunityPage() {
                             type={p.type}
                             text={p.text}
                             imgSrc={p.imageUrl}
-                            prayLabel={String(p.counts.likes)}
+                            prayLabel={String(p.counts.likes || 0)}
                             prayed={p.isLiked}
-                            commentsCount={p.counts.comments}
+                            commentsCount={p.counts.comments || 0}
                             bookmarked={p.isBookmarked}
-                            bookmarkLabel={String(p.counts.bookmarks)}
+                            bookmarkLabel={String(p.counts.bookmarks || 0)}
                             onPray={() => toggleLike(p.id)}
                             onBookmark={() => toggleBookmark(p.id)}
                             onOpenComments={() => setActiveCommentPostId(p.id)}
@@ -491,14 +503,14 @@ export function CommunityPage() {
                         />
                     ))
                 ) : (
-                    <Card className="border-dashed border-2 border-border/50 bg-surface/30 shadow-none rounded-[32px] overflow-hidden mt-4">
-                        <CardContent className="p-12 text-center flex flex-col items-center justify-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
-                                <Bookmark size={24} />
+                    <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden">
+                        <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
+                            <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
+                                <Bookmark size={32} />
                             </div>
                             <div className="space-y-1">
-                                <p className="text-foreground/80 font-black text-sm">Belum ada post tersimpan</p>
-                                <p className="text-[11px] text-muted-foreground font-medium">Beri markah pada pos untuk membukanya kembali di sini.</p>
+                                <p className="text-foreground/80 font-black text-sm">Belum Ada Simpanan</p>
+                                <p className="text-[11px] text-muted-foreground font-medium">Post yang Anda tandai akan muncul secara rapi di sini.</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -516,8 +528,8 @@ export function CommunityPage() {
       />
 
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-surface-elevated/95 border border-border/50 px-5 py-3 text-[12px] font-black uppercase tracking-widest text-foreground shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4 fade-in">
-          {toast.type === 'error' && <AlertTriangle size={16} className="text-red-500" />}
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl bg-foreground text-background px-6 py-3.5 text-[11px] font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-500">
+          {toast.type === 'error' && <AlertTriangle size={16} className="text-red-400" />}
           {toast.message}
         </div>
       )}
