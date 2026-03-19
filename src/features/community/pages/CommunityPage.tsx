@@ -51,6 +51,9 @@ export function CommunityPage() {
   const [rituals, setRituals] = useState<any>(null);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const hasActivePosts = posts.length > 0;
+  const isArchiveFallbackInDiscussion = !hasActivePosts && archivePosts.length > 0;
+  const discussionPosts = hasActivePosts ? posts : archivePosts.slice(0, 6);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'error') => {
     setToast({ message, type });
@@ -58,11 +61,15 @@ export function CommunityPage() {
   }, []);
 
   const handleCommentsUpdated = useCallback((postId: string, count: number) => {
-    setPosts(prev => prev.map(p => 
-      p.id === postId 
-        ? { ...p, counts: { ...p.counts, comments: count } } 
-        : p
-    ));
+    const patchComments = (list: CommunityPost[]) =>
+      list.map((p) =>
+        p.id === postId
+          ? { ...p, counts: { ...p.counts, comments: count } }
+          : p
+      );
+
+    setPosts((prev) => patchComments(prev));
+    setArchivePosts((prev) => patchComments(prev));
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -102,52 +109,70 @@ export function CommunityPage() {
   };
 
   const toggleLike = async (postId: string) => {
-    // Optimistic Update
+    // Optimistic update for both active feed and archive fallback surfaces.
     const originalPosts = [...posts];
-    setPosts((prev) => prev.map((p) => {
+    const originalArchivePosts = [...archivePosts];
+    const patchOptimistic = (list: CommunityPost[]) =>
+      list.map((p) => {
         if (p.id !== postId) return p;
         const isLiked = !p.isLiked;
         return {
-            ...p,
-            isLiked,
-            counts: {
-                ...p.counts,
-                likes: p.counts.likes + (isLiked ? 1 : -1)
-            }
+          ...p,
+          isLiked,
+          counts: {
+            ...p.counts,
+            likes: p.counts.likes + (isLiked ? 1 : -1),
+          },
         };
-    }));
+      });
+
+    setPosts((prev) => patchOptimistic(prev));
+    setArchivePosts((prev) => patchOptimistic(prev));
 
     try {
       const updatedPost = await CommunityService.toggleLike(postId);
-      setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
+      const patchServer = (list: CommunityPost[]) =>
+        list.map((p) => (p.id === postId ? updatedPost : p));
+      setPosts((prev) => patchServer(prev));
+      setArchivePosts((prev) => patchServer(prev));
     } catch (error) {
       console.error("Failed to toggle like", error);
       setPosts(originalPosts); // Rollback
+      setArchivePosts(originalArchivePosts);
     }
   };
 
   const toggleBookmark = async (postId: string) => {
-    // Optimistic Update
+    // Optimistic update for both active feed and archive fallback surfaces.
     const originalPosts = [...posts];
-    setPosts((prev) => prev.map((p) => {
+    const originalArchivePosts = [...archivePosts];
+    const patchOptimistic = (list: CommunityPost[]) =>
+      list.map((p) => {
         if (p.id !== postId) return p;
         const isBookmarked = !p.isBookmarked;
         return {
-            ...p,
-            isBookmarked,
-            counts: {
-                ...p.counts,
-                bookmarks: p.counts.bookmarks + (isBookmarked ? 1 : -1)
-            }
+          ...p,
+          isBookmarked,
+          counts: {
+            ...p.counts,
+            bookmarks: p.counts.bookmarks + (isBookmarked ? 1 : -1),
+          },
         };
-    }));
+      });
+
+    setPosts((prev) => patchOptimistic(prev));
+    setArchivePosts((prev) => patchOptimistic(prev));
 
     try {
       const updatedPost = await CommunityService.toggleBookmark(postId);
-      setPosts((prev) => prev.map((p) => (p.id === postId ? updatedPost : p)));
+      const patchServer = (list: CommunityPost[]) =>
+        list.map((p) => (p.id === postId ? updatedPost : p));
+      setPosts((prev) => patchServer(prev));
+      setArchivePosts((prev) => patchServer(prev));
     } catch (error) {
       console.error("Failed to toggle bookmark", error);
       setPosts(originalPosts); // Rollback
+      setArchivePosts(originalArchivePosts);
     }
   };
 
@@ -301,8 +326,19 @@ export function CommunityPage() {
                   </button>
                 </CardContent>
               </Card>
-            ) : posts.length ? (
-              posts.map((p) => (
+            ) : discussionPosts.length ? (
+              <>
+                {isArchiveFallbackInDiscussion && (
+                  <Card className="rounded-[24px] bg-amber-50/60 border-amber-100 shadow-sm">
+                    <CardContent className="p-4 text-center space-y-1">
+                      <p className="text-sm font-bold text-amber-700">Diskusi aktif sedang kosong</p>
+                      <p className="text-[10px] text-amber-600 uppercase tracking-widest font-black">
+                        Menampilkan arsip terbaru sebagai fallback parity
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                {discussionPosts.map((p) => (
                 <MemberPostCard
                   key={p.id}
                   authorName={p.author.name}
@@ -322,7 +358,8 @@ export function CommunityPage() {
                   onOpenComments={() => setActiveCommentPostId(p.id)}
                   onShare={() => handleShare(p.id, p.text)}
                 />
-              ))
+                ))}
+              </>
             ) : (
               <Card className="rounded-[32px] bg-surface/80 border-none shadow-card">
                 <CardContent className="p-12 text-center space-y-2">
