@@ -52,8 +52,11 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           test -n "$TENCENT_EDGE_DEPLOY_HOOK_URL"
-          curl --fail --show-error --silent \
+          payload=$(printf '{"ref":"main","sha":"%s","source":"github-actions"}' "$GITHUB_SHA")
+          echo "Deploy payload: $payload"
+          response=$(curl --fail --show-error \
             -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"ref\":\"${GITHUB_SHA}\"}" \
-            "$TENCENT_EDGE_DEPLOY_HOOK_URL"
+            -d "$payload" \
+            "$TENCENT_EDGE_DEPLOY_HOOK_URL")
+          echo "Deploy response: $response"
