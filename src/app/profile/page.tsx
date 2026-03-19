@@ -56,6 +56,18 @@ type ApiProfilePayload = {
     };
 };
 
+async function resolveSafeAvatarUrl(rawUrl: string | null | undefined): Promise<string | null> {
+    const candidate = String(rawUrl || '').trim();
+    if (!candidate) return null;
+
+    try {
+        const response = await fetch(candidate, { method: 'HEAD', cache: 'no-store' });
+        return response.ok ? candidate : null;
+    } catch {
+        return null;
+    }
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const { user: authUser } = useUser();
@@ -70,7 +82,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState({
         name: authUser?.displayName || 'Guest User',
         email: authUser?.email || 'guest@example.com',
-        avatarUrl: authUser?.photoURL || null,
+        avatarUrl: null as string | null,
         is_admin: false,
         email_verified_at: authUser?.emailVerified ? 'verified' : null,
     });
@@ -140,11 +152,13 @@ export default function ProfilePage() {
                 const payload = (await response.json()) as ApiProfilePayload;
                 const apiUser = payload?.data?.user;
                 if (!isActive || !apiUser) return;
+                const safeAvatarUrl = await resolveSafeAvatarUrl(apiUser.avatar_url || authUser?.photoURL || null);
+                if (!isActive) return;
 
                 const nextUser = {
                     name: apiUser.name || 'Guest User',
                     email: apiUser.email || 'guest@example.com',
-                    avatarUrl: apiUser.avatar_url || authUser?.photoURL || null,
+                    avatarUrl: safeAvatarUrl,
                     is_admin: Boolean(apiUser.is_admin),
                     email_verified_at: apiUser.email_verified_at || null,
                 };
@@ -175,11 +189,16 @@ export default function ProfilePage() {
     useEffect(() => {
         let isActive = true;
         const fetchSummary = async () => {
+            const token = getAppAccessToken();
+            if (!token) {
+                if (isActive) setJourneyBadge(0);
+                return;
+            }
             try {
-                const res = await fetch('/api/versehub/id/actions/summary?limit=1', {
+                const res = await fetch('/api/versehub/id/actions/summary?limit=3&sort=recent', {
                     headers: { 
                         Accept: 'application/json',
-                        Authorization: `Bearer ${getAppAccessToken()}`
+                        Authorization: `Bearer ${token}`
                     },
                 });
                 if (!res.ok) return;
@@ -236,7 +255,8 @@ export default function ProfilePage() {
 
             if (response.ok) {
                 if (payload?.data?.avatar_url) {
-                    setUser(prev => ({ ...prev, avatarUrl: payload.data.avatar_url }));
+                    const safeAvatarUrl = await resolveSafeAvatarUrl(payload.data.avatar_url);
+                    setUser(prev => ({ ...prev, avatarUrl: safeAvatarUrl }));
                     showToast('Foto profil diperbarui');
                 }
             } else {
@@ -542,7 +562,12 @@ export default function ProfilePage() {
                                     </div>
                                 )}
                                 {user.avatarUrl ? (
-                                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                                    <img
+                                        src={user.avatarUrl}
+                                        alt={user.name}
+                                        className="h-full w-full object-cover"
+                                        onError={() => setUser(prev => ({ ...prev, avatarUrl: null }))}
+                                    />
                                 ) : (
                                     <span className="text-4xl font-black text-brand tracking-tighter">
                                         {user.name.slice(0, 1).toUpperCase()}

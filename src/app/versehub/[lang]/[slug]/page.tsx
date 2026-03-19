@@ -40,7 +40,8 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
     const [bookmarkCount, setBookmarkCount] = useState(37);
     const [ogOpen, setOgOpen] = useState(false);
     
-    const isAuthenticated = typeof window !== 'undefined' && Boolean(getAppAccessToken());
+    const accessToken = typeof window !== 'undefined' ? getAppAccessToken() : null;
+    const isAuthenticated = Boolean(accessToken);
 
     // 1. Fetch Verse Content (Real API)
     useEffect(() => {
@@ -79,6 +80,7 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
     // 2. Fetch User Interaction State (Real Persistence)
     useEffect(() => {
         if (!isAuthenticated || !slug || isChapter) return;
+        if (!accessToken) return;
         
         const segments = slug.split('-');
         if (segments.length < 3) return;
@@ -86,10 +88,14 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
         fetch(`/api/versehub/${lang}/actions?book=${segments[0]}&chapter=${segments[1]}`, {
             headers: { 
                 Accept: 'application/json',
-                Authorization: `Bearer ${getAppAccessToken()}`
+                Authorization: `Bearer ${accessToken}`
             },
         })
-        .then(r => r.ok ? r.json() : null)
+        .then(r => {
+            // Avoid noisy console errors when token has expired.
+            if (r.status === 401 || r.status === 403) return null;
+            return r.ok ? r.json() : null;
+        })
         .then(json => {
             const verseActions = json?.actions?.[slug];
             if (verseActions) {
@@ -98,7 +104,7 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
             }
         })
         .catch(() => undefined);
-    }, [isAuthenticated, slug, isChapter, lang]);
+    }, [isAuthenticated, accessToken, slug, isChapter, lang]);
 
     const handleLike = async () => {
         if (!isAuthenticated) {
@@ -106,6 +112,10 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
             return;
         }
         const token = getAppAccessToken();
+        if (!token) {
+            router.push('/login');
+            return;
+        }
         const nextLiked = !liked;
         const prevLiked = liked;
         
@@ -140,6 +150,10 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
             return;
         }
         const token = getAppAccessToken();
+        if (!token) {
+            router.push('/login');
+            return;
+        }
         const nextBookmarked = !bookmarked;
         const prevBookmarked = bookmarked;
 
