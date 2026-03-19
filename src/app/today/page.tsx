@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import MobileAppLayout from '@/layouts/MobileAppLayout';
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
@@ -61,6 +62,12 @@ type TodayApiResponse = {
     };
 };
 
+const normalizeRituals = (raw: unknown): Record<string, any> => {
+    if (!raw) return {};
+    if (Array.isArray(raw)) return {};
+    return typeof raw === 'object' ? (raw as Record<string, any>) : {};
+};
+
 const fallbackDailyVerse: DailyVerse = {
     ref: 'mzm-23-1',
     reference: 'Mazmur 23:1',
@@ -106,7 +113,8 @@ export default function TodayPage() {
 
     const dailyVerse = apiDailyVerse ?? fallbackDailyVerse;
     const welcomeVerse = apiWelcomeVerse ?? undefined;
-    const rituals = apiRituals ?? {};
+    const rituals = normalizeRituals(apiRituals);
+    const hasMinimalTodayData = !apiDailyVerse && Object.keys(rituals).length === 0 && apiHighlights.length === 0;
 
     useEffect(() => {
         let isActive = true;
@@ -130,7 +138,7 @@ export default function TodayPage() {
                 setApiDailyVerse(payload?.data?.dailyVerse ?? null);
                 setApiHighlights(Array.isArray(payload?.data?.highlights) ? payload.data.highlights : []);
                 setApiPinnedLesson(payload?.data?.pinnedLesson ?? null);
-                setApiRituals(payload?.data?.rituals ?? null);
+                setApiRituals(normalizeRituals(payload?.data?.rituals));
                 setApiWelcomeVerse(payload?.data?.welcomeVerse ?? null);
                 
                 if (payload?.data?.spiritual_state) {
@@ -222,6 +230,30 @@ export default function TodayPage() {
                     <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px] rounded-[44px] bg-gradient-to-b from-brand/10 to-transparent blur-3xl opacity-50" />
 
                     <StateChips activeState={activeState} onChange={handleStateChange} />
+
+                    {hasMinimalTodayData && !loading && (
+                        <section className="rounded-[28px] border border-amber-200/70 bg-amber-50/70 p-5 shadow-sm">
+                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-700">Mode Tenang</p>
+                            <h3 className="mt-2 text-lg font-black text-amber-900">Konten hari ini sedang disiapkan</h3>
+                            <p className="mt-2 text-sm font-medium leading-relaxed text-amber-800/90">
+                                Halaman ini tetap aktif. Sambil menunggu ritual harian terbit, kamu bisa lanjut baca firman atau menyalakan percakapan doa di komunitas.
+                            </p>
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                                <Link
+                                    href="/versehub/id"
+                                    className="inline-flex items-center rounded-full bg-amber-900 px-4 py-2 text-xs font-bold uppercase tracking-widest text-amber-50 transition hover:bg-amber-950"
+                                >
+                                    Baca VerseHub
+                                </Link>
+                                <Link
+                                    href="/community"
+                                    className="inline-flex items-center rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-amber-800 transition hover:bg-amber-100"
+                                >
+                                    Buka Community
+                                </Link>
+                            </div>
+                        </section>
+                    )}
 
                     <section className="relative overflow-hidden rounded-[32px] border border-border/50 bg-surface-elevated p-6 shadow-card md:rounded-[40px] md:p-8">
                         <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-brand/5 to-transparent" />
