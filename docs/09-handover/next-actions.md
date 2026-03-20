@@ -15,15 +15,27 @@
 - [x] Closed blocker CSP admin runtime dengan scoped `unsafe-eval` untuk area `admintalk/*`.
 - [x] Verifikasi header live admin login memuat `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`.
 - [ ] Stabilisasi Data: Mengisi konten utama (Daily Verse, Rituals, Study Paths) di database produksi via Filament.
-- [/] Sedang berjalan: Audit & Patch `/profile` (Readability & Avatar issue).
+- [x] Audit & Patch `/profile` (Readability & Avatar issue) - **PATCHED IN SOURCE**.
+- [ ] Validasi live profile readability & avatar resolution (Awaiting CI Green).
+- [ ] Implementasi *Reflections API* (Status saat ini: MOCK).
+- [ ] Refactor Community Types: standarisasi *ApiPost* interface (Backend Contract Cleanup).
 - [ ] Hardening observability: tambah smoke script otomatis (login, today, community, versehub) pasca deploy.
 - [x] Deploy frontend patch (VerseHub route/nav, OG card source, login parser, profile logout).
 - [x] Verifikasi perbaikan VerseHub Desktop pasca CI Hijau (Staging Pass).
+- [x] Global Background System Foundation - UI foundation done.
+- [ ] QA visual lintas halaman untuk background global.
 
 ## Verifikasi Admin Credential (Production DB)
 - [x] Validasi user `engel.willem@gmail.com` bisa login di production.
 - [x] Konfirmasi status admin via `/api/profile` (`is_admin=True`).
 - [x] Logout API untuk sesi admin tervalidasi.
+
+## Reality Matrix & Contract Gap Resolution
+- [ ] **Priority 1**: Implement real API integration for Reflections and My Spiritual Journey
+- [ ] **Priority 2**: Reduce fallback dependency in Today dashboard
+- [ ] **Priority 3**: Standardize field naming conventions between frontend and backend
+- [ ] **Priority 4**: Implement real API integration for Reflections (`src/app/reflections/[slug]/page.tsx`)
+- [ ] **Priority 5**: Implement real API integration for My Spiritual Journey (`src/app/versehub/[lang]/my-spiritual-journey/page.tsx`)
 
 ## Operasional Deploy
 - [ ] Nonaktifkan "Automatic Deployment" di Tencent Console untuk project Edge Pages (Penerapan Opsi B - One-Way Webhook).
@@ -34,3 +46,7 @@
 - [x] Roadmap eksekusi checklist tersedia.
 - [x] Catat hasil re-test production final ke checklist parity + current status.
 - [x] Sinkronisasi dokumen final recovery admin login production (`audit`, `current-status`, `next-actions`, `open-blockers`).
+- [x] Reality Matrix Audit: `docs/01-audits/overall/frontend-backend-reality-matrix-audit.md`
+- [x] Contract Gap Audit: `docs/03-architecture/technical/frontend-backend-contract-gap-audit.md`
+- [x] Profile Fix Status Sync: `docs/09-handover/profile-fix-status-sync.md`
+- [x] Global Background Status Sync: `docs/02-uiux/global-background-status-sync.md`

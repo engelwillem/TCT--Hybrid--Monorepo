@@ -1,59 +1,65 @@
 # Web Progress Master Status
 
 ## 1. Ringkasan Status Global
-Status proyek **TCT Hybrid** saat ini berada pada fase **Stabilisasi Infrastruktur & Polishing UI/UX**. Seluruh jalur integrasi frontend (Next.js) ke backend (Laravel API) sudah terverifikasi "Tembus" secara teknis. Fokus saat ini adalah memastikan kualitas visual (*premium feel*) dan pembersihan isu-isu residual pasca-migrasi.
+Status proyek **TCT Hybrid** saat ini berada pada fase **Stabilisasi Infrastruktur & Polishing UI/UX**. Berdasarkan *Reality Matrix Audit*, integrasi inti (Auth, Profile, VerseHub) sudah berstatus **REAL** dan terkoneksi ke backend.
 
 - **Frontend:** Live (Tencent Edge), integrasi API OK, sedang perbaikan CI & Profile UI.
 - **Backend:** Live (cPanel), Admin Filament OK, integrasi 2FA & Profile API OK.
-- **Data:** Integrasi OK, populasi konten produksi sedang berlangsung.
 
 ---
 
-## 2. Area yang Sudah Stabil (Done)
-Area berikut telah melewati tahap audit fungsional dan dianggap stabil:
-- **Admin Login Production:** `https://admin.thechoosentalks.org/admintalk/login` sudah pulih (CSP & Route Fix).
-- **Today Integration:** Dashboard harian terhubung ke real API.
-- **Community Backend:** Populasi data `archivePosts` sukses, API mengembalikan data nyata.
-- **VerseHub Core:** Reader & Search terhubung ke database kitab suci.
-- **Authentication Flow:** Login (Bearer Token), Register, Logout, dan Session Persistence terverifikasi.
-- **Production Domain:** Apex & WWW HTTPS sudah valid dengan sertifikat yang benar.
+## 2. Area yang Sudah Stabil (Production Verified)
+- **Admin Login:** ✅ Sukses login di production (CSP & Route Fix).
+- **Domain & SSL:** ✅ Apex & WWW HTTPS valid di Cloudflare + Tencent.
+- **Authentication:** ✅ Firebase + Laravel sync tuntas secara *End-to-End*.
 
 ---
 
-## 3. Area yang Sudah Diperbaiki (Needs QA)
-Area yang baru saja menerima patch dan membutuhkan validasi ulang di production:
-- **VerseHub Desktop Layout:** Masalah "double sidebar" telah diperbaiki dengan menghapus redundant branding (Menunggu build CI terbaru).
-- **Community UI Polish:** Penambahan skeleton loader, perbaikan tab active state, dan fallback message (Menunggu build CI terbaru).
-- **Tencent Edge Artifact Drift:** Implementasi `generateBuildId` unik untuk memaksa update bundle pada CDN.
+## 3. Area Patched in Source (Awaiting Live Validation)
+Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI terbaru untuk verifikasi di server produksi:
+- **Profile UI/UX:** ✅ **PATCHED**. Perbaikan kontras teks dan resolusi URL avatar (`/storage/...`).
+- **VerseHub Layout:** ✅ **PATCHED**. Penghapusan *double sidebar* dan restorasi *Dark Hero Card*.
+- **Global Background:** ✅ **PATCHED**. Penerapan landasan visual biru muda lembut di seluruh modul user-facing.
+
+## 4. Reality Matrix Status (2026-03-20)
+**Status:** Mixed Reality - Core flows are real, but significant fallbacks and mock data remain.
+
+| Domain | Integrasi | Sifat Data | Status |
+|---|---|---|---|
+| Auth/Login | e2e Real | DB Backend | ✅ REAL |
+| Profile | e2e Real | DB Backend | ✅ REAL |
+| Community | e2e Real | Legacy Parity | ✅ REAL |
+| Today | Partial | Partial Fallback | ⚠️ FRAGILE |
+| VerseHub | e2e Real | DB Backend | ✅ REAL |
+| Reflections | Template Only | MOCK | ❌ NOT STARTED |
+| My Spiritual Journey | Template Only | MOCK | ❌ NOT STARTED |
 
 ---
 
-## 4. Active Issues (In Progress)
-Masalah yang sedang aktif ditangani oleh tim:
-- **Frontend CI Failure (Blocked):** Masalah `lucide-center` import typo sedang diproses oleh Codex untuk memulihkan alur rilis otomatis.
-- **Profile UI/UX:** Teks pudar (low contrast) dan avatar tidak tampil pada halaman `/profile` (Sedang diaudit Codex & Gemini).
-- **Paths Empty State:** Konten Paths di production masih kosong (`paths: []`), membutuhkan desain komunikasi yang lebih baik agar tidak terlihat "rusak".
+## 5. Active Issues & Needs QA
+- **Frontend CI Failure (Blocked):** 🔴 Perbaikan `lucide-react` sedang diverifikasi. Menahahan rilis otomatis.
+- **Today Dashboard:** ⚠️ **REAL+FALLBACK**. Terhubung API namun masih sering jatuh ke "Mode Tenang" jika data backend kosong.
+- **Tencent Edge:** ⚠️ **DUPLICATE TRIGGER**. Masalah pemicu ganda (Auto-deploy vs Webhook) sedang diinvestigasi di konsol.
+- **Reflections & My Spiritual Journey:** ❌ **MOCK ONLY**. Template pages exist but no real API integration implemented.
 
 ---
 
-## 5. Blockers Operasional
-- **GitHub Actions Firewall:** SSH/SCP access ke cPanel masih terblokir (TCP Timeout). 
-  - *Workaround:* Deploy manual via server terminal masih dilakukan.
-- **Frontend CI Pipeline:** Menahan rilis fitur baru ke production sampai status kembali Hijau.
+## 6. Blockers Operasional
+- **GitHub Actions Firewall:** SSH/SCP access ke cPanel masih terblokir (TCP Timeout). Manual deploy tetap aktif.
+- **Frontend CI Recovery:** Paling kritikal untuk rilis patch Profile & VerseHub yang sudah siap di source.
+- **Reality Matrix Gaps:** Reflections and My Spiritual Journey remain mock-only, requiring real API implementation.
 
 ---
 
-## 6. Prioritas Langkah Berikutnya
-1. **Restore CI Stability:** Memastikan fix `lucide-react` masuk dan GitHub Actions kembali Hijau.
-2. **Profile Readability Fix:** Melakukan patch pada `/profile` untuk mempertegas kontras dan memperbaiki URL avatar.
-3. **Data Filling:** Melakukan input data harian (Verse, Rituals, Paths) secara masif melalui CMS Filament.
-4. **VerseHub Mentor UI:** Memperhalus interaksi percakapan dengan AI Mentor di sisi frontend.
+## 7. Realitas Integrasi (Matrix Summary)
+| Domain | Integrasi | Sifat Data | Status |
+|---|---|---|---|
+| Auth/Login | e2e Real | DB Backend | ✅ REAL |
+| VerseHub Reader | e2e Real | DB Backend | ✅ REAL |
+| Today | Partial | Partial Fallback | ⚠️ FRAGILE |
+| Community | Partial | Legacy Parity | ⚠️ FRAGILE |
+| Reflections | Template Only | MOCK | ❌ NOT STARTED |
+| My Spiritual Journey | Template Only | MOCK | ❌ NOT STARTED |
 
 ---
-
-## 7. Kesimpulan Status Web Saat Ini
-Web saat ini **Functional & Integrated** namun **UI-Polish Sensitive**. Struktur tulang punggung (Auth, API, Domain, Admin) sudah sehat. Isu yang tersisa bersifat kosmetik (kontras, spacing) dan operasional CI. Sistem siap untuk melangkah ke tahap rilis beta publik setelah isu profil dan data filling diselesaikan.
-
----
-**Status Audit:** ✅ **SYNCHRONIZED (2026-03-19)**
-*Dokumen ini merupakan Source of Truth tunggal untuk progress lintas modul.*
+**Status Audit:** ✅ **FINALLY SYNCHRONIZED (2026-03-20)**

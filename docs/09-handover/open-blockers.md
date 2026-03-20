@@ -9,7 +9,7 @@
 Akar masalah (`lucide-center` typo) telah dikonfirmasi dan diperbaiki. Kami saat ini menunggu hasil build otomatis dari GitHub Actions untuk memastikan tidak ada regresi tambahan sebelum secara resmi menutup blocker ini.
 
 ### Impact
-Rilis update frontend terbaru, termasuk pengerjaan visual parity dan perbaikan UI/UX pada modul Community dan Profile, tidak bisa dilanjutkan ke production (Tencent Edge). (VerseHub Fix sudah siap dalam antrean CI).
+Rilis update frontend terbaru, termasuk pengerjaan visual parity dan perbaikan UI/UX pada modul Community dan Profile, tidak bisa dilanjutkan secara otomatis ke production (Tencent Edge). (Patch Profile & VerseHub sudah siap "mengantre" di branch).
 
 ### Path to Resolution
 Codex sedang melacak output `lint` dan `build` untuk memperbaiki *type errors*, *missing imports*, atau *syntax errors*. Setelah diperbaiki, verifikasi harus berurut: `lint` -> `typecheck` -> `build`.
@@ -48,6 +48,14 @@ HEALTHCHECK_BASE_URL="https://api.thechoosentalks.org" bash /home/thechoosentalk
 ### Current state
 Frontend shell/foundation reset sudah PASS, namun pembedahan visual pada pilar inti (Today, VerseHub, Community, Paths) dipause sementara untuk menstabilkan integrasi API dan infrastruktur backend. Saat ini fokus kembali ke perbaikan visual (VerseHub Desktop & Profile Readability).
 
+## 3. Profile UI/UX (Readability & Avatar)
+**Status:** PATCHED IN SOURCE (needs production validation)  
+**Type:** UI/UX polish  
+**Owner:** frontend
+
+### Current state
+Issue profile readability (kontras teks) dan avatar resolution (URL storage) telah diperbaiki di source code. Patch sudah diterapkan namun belum diverifikasi di production. Issue ini bukan lagi "sedang diaudit awal", tetapi menunggu validasi live.
+
 ---
 
 ## RESOLVED BLOCKERS (2026-03-19)
@@ -56,7 +64,32 @@ Frontend shell/foundation reset sudah PASS, namun pembedahan visual pada pilar i
 - [x] **Webhook Strategy Alignment**: Keputusan teknis pemicu asinkron sudah diambil; implementasi webhook tidak lagi menghambat rilis harian (karena manual deploy sudah stabil).
 - [x] **Admin Login Recovery (Filament Production)**: `https://admin.thechoosentalks.org/admintalk/login` sudah pulih; blocker `Route [register] not defined` dan blocker CSP runtime admin telah ditutup. Header live admin sudah memuat `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`.
 
-## 3. Tencent Edge Duplicate Deployment Trigger
+## 3. Frontend-Backend Reality Matrix Gaps
+**Status:** OPEN (Reality Matrix Audit Completed)  
+**Type:** Architecture / Data Contract  
+**Owner:** Architecture/Backend
+
+### Reality Matrix Findings (2026-03-20)
+- **Auth/Login**: ✅ REAL - End-to-end integration complete
+- **Profile**: ✅ REAL - Backend with fallback handling
+- **Community**: ✅ REAL - API with fallback to archive data
+- **Today**: ⚠️ REAL+FALLBACK - Heavy fallback logic for missing data
+- **VerseHub**: ⚠️ REAL - API but some components use mock data
+- **Reflections**: ❌ MOCK - Template pages only, no real API integration
+- **My Spiritual Journey**: ❌ MOCK - Template pages only, no real API integration
+
+### Key Issues Identified
+- **Today Dashboard**: Heavy reliance on fallback mode when API returns empty data
+- **Reflections**: Currently using `DUMMY_REFLECTION` object instead of real API calls
+- **My Spiritual Journey**: Using mock data with `setTimeout` instead of real activity tracking
+- **Contract Gaps**: Dualitas field (camelCase vs snake_case) causing potential data mismatches
+
+### Path to Resolution
+1. **Priority 1**: Implement real API integration for Reflections and My Spiritual Journey
+2. **Priority 2**: Reduce fallback dependency in Today dashboard
+3. **Priority 3**: Standardize field naming conventions between frontend and backend
+
+## 4. Tencent Edge Duplicate Deployment Trigger
 **Status:** OPEN (Pending Console adjustment)  
 **Type:** DevOps / Deployment hygiene  
 **Owner:** DevOps/Admin

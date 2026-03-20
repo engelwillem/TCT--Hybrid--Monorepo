@@ -64,7 +64,7 @@ Halaman `/profile` memiliki dua bug aktif yang terlihat di live:
 - Fallback huruf hanya muncul saat URL benar-benar tidak valid atau image gagal load.
 
 ## 10. Status Akhir
-`IN PROGRESS (code fixed, menunggu verifikasi live)`  
+`PATCHED IN SOURCE (needs production validation)`  
 Patch source sudah meng-address dua akar bug utama (kontras + avatar URL resolution). Langkah berikutnya wajib cek live browser untuk memastikan data/avatar production memang tersedia dan URL storage benar-benar bisa diakses publik.
 
 ## 11. Langkah Verifikasi Live
