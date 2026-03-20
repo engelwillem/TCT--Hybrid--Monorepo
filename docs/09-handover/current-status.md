@@ -112,4 +112,10 @@ Status surface aktif production sudah bergerak ke **stabil operasional** untuk f
   - `src/firebase/index.ts`: Fix `app/no-options` console warning (Silence init check).
 - **Study Paths Verified:** Status `paths: []` adalah **Empty Real Data** (Integrasi Laravel valid, database kosong).
 - **Root Hygiene:** Pembersihan file liar (*.txt, *.log, debug artifacts) dari root dan `backend-api/`. Semua dipindahkan ke `docs/01-audits/overall/artifacts/`.
-- **Status Deployment:** Codebase `main` sudah optimal dan siap untuk re-trigger di Tencent EO.
+- **Status Deployment:** Code
+-
+- ## Update 2026-03-20 (Post-Push Rerun Verification)
+- - [x] **Source Build (GitHub Actions):** PASS. Build success in 59s (Run 23339123819). Fixes for font dependency are verified.
+  - [ ] - [ ] **Automated Deploy Trigger:** BLOCKED. Missing TENCENT_EDGE_DEPLOY_HOOK_URL secret.
+  - [ ] - **Verification Report:** [2026-03-20-rerun-verification-report.md](../01-audits/deploy/2026-03-20-rerun-verification-report.md)
+  - [ ] base `main` sudah optimal dan siap untuk re-trigger di Tencent EO.
