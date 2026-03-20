@@ -27,27 +27,28 @@ Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI 
 | Domain | Integrasi | Sifat Data | Status |
 |---|---|---|---|
 | Auth/Login | e2e Real | DB Backend | ✅ REAL |
-| Profile | e2e Real | DB Backend | ✅ REAL |
+| Profile | e2e Real | DB Backend | ✅ PATCHED IN SOURCE |
 | Community | e2e Real | Legacy Parity | ✅ REAL |
-| Today | Partial | Partial Fallback | ⚠️ FRAGILE |
+| Today | Partial | Contract Mismatch | ⚠️ FRAGILE |
 | VerseHub | e2e Real | DB Backend | ✅ REAL |
-| Reflections | Template Only | MOCK | ❌ NOT STARTED |
-| My Spiritual Journey | Template Only | MOCK | ❌ NOT STARTED |
+| Reflections | Backend Ready | FRONTEND MOCK | ⚠️ IN PROGRESS |
+| My Spiritual Journey | Summary Real | PAGE MOCK | ⚠️ IN PROGRESS |
 
 ---
 
 ## 5. Active Issues & Needs QA
-- **Frontend CI Failure (Blocked):** 🔴 Perbaikan `lucide-react` sedang diverifikasi. Menahahan rilis otomatis.
-- **Today Dashboard:** ⚠️ **REAL+FALLBACK**. Terhubung API namun masih sering jatuh ke "Mode Tenang" jika data backend kosong.
-- **Tencent Edge:** ⚠️ **DUPLICATE TRIGGER**. Masalah pemicu ganda (Auto-deploy vs Webhook) sedang diinvestigasi di konsol.
-- **Reflections & My Spiritual Journey:** ❌ **MOCK ONLY**. Template pages exist but no real API integration implemented.
+- **SECURITY BLOCKER:** `src/lib/proxy-laravel.ts:30` logging authorization tokens. CRITICAL FIX REQUIRED.
+- **Frontend CI Failure (Blocked):** 🔴 Perbaikan `lucide-react` sedang diverifikasi. Menahan rilis otomatis.
+- **Today Dashboard:** ⚠️ **CONTRACT MISMATCH**. Backend tidak mengirim `pinnedLesson` dan `welcomeVerse`.
+- **Journey CTA:** ⚠️ **BROKEN LINK**. Profile page tidak merespons `?section=journey`.
+- **Tencent Edge:** ⚠️ **DUPLICATE TRIGGER**. Masalah pemicu ganda (Auto-deploy vs Webhook).
 
 ---
 
 ## 6. Blockers Operasional
-- **GitHub Actions Firewall:** SSH/SCP access ke cPanel masih terblokir (TCP Timeout). Manual deploy tetap aktif.
-- **Frontend CI Recovery:** Paling kritikal untuk rilis patch Profile & VerseHub yang sudah siap di source.
-- **Reality Matrix Gaps:** Reflections and My Spiritual Journey remain mock-only, requiring real API implementation.
+- **Proxy Token Logging:** Security risk di BFF layer.
+- **Today API Contract:** Inconsistency between frontend expectations and backend response.
+- **Reflections wiring:** UI disconnect from ready backend routes.
 
 ---
 
@@ -56,10 +57,12 @@ Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI 
 |---|---|---|---|
 | Auth/Login | e2e Real | DB Backend | ✅ REAL |
 | VerseHub Reader | e2e Real | DB Backend | ✅ REAL |
-| Today | Partial | Partial Fallback | ⚠️ FRAGILE |
+| Today | Partial | Contract Gap | ⚠️ FRAGILE |
 | Community | Partial | Legacy Parity | ⚠️ FRAGILE |
-| Reflections | Template Only | MOCK | ❌ NOT STARTED |
-| My Spiritual Journey | Template Only | MOCK | ❌ NOT STARTED |
+| Reflections | Backend Ready | MOCK FRONTEND | ⚠️ NOT END-TO-END |
+| My Spiritual Journey | Summary Real | MOCK PAGE | ⚠️ NOT END-TO-END |
 
 ---
-**Status Audit:** ✅ **FINALLY SYNCHRONIZED (2026-03-20)**
+**Status Audit:** ✅ **AUDIT COMPLETE & VERIFIED (2026-03-20)**
+- Semua temuan berbasis bukti file (`src/app/today/page.tsx`, `proxy-laravel.ts`, dll).
+- Tidak ada overclaim persentase atau status "finally synchronized".

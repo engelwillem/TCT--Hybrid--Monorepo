@@ -5,14 +5,14 @@
 - **Audit Case:** `docs/01-audits/overall/frontend-backend-reality-matrix-audit.md`
 - **Status:** Mixed Reality - Core flows are real, but significant fallbacks and mock data remain.
 - **Reality Matrix Summary:**
-  - ✅ Auth/Login: Real end-to-end integration
-  - ✅ Profile: Real backend with fallback handling
-  - ✅ Community: Real API with fallback to archive data
-  - ⚠️ Today: Real API but heavy fallback logic for missing data
-  - ⚠️ VerseHub: Real API but some components use mock data
-  - ❌ Reflections: Currently mock-only (template pages)
+  - ✅ Auth/Login: Real end-to-end integration (`src/app/login/page.tsx`, `backend-api/routes/api.php:26`)
+  - ✅ Profile: Real backend with patched source for avatar resolution (`src/app/profile/page.tsx:182`)
+  - ⚠️ Today: REAL + FALLBACK + CONTRACT GAP (`src/app/today/page.tsx:140-142` vs `backend-api/app/Http/Controllers/Api/V1/TodayApiController.php:24-30`)
+  - ✅ VerseHub Core: Real end-to-end with populated data (`src/app/versehub/[lang]/chapter/[ref]/page.tsx`)
+  - ⚠️ Reflections: BACKEND READY + FRONTEND MOCK (`backend-api/routes/api.php:84-86` vs `src/app/versehub/[lang]/reflections/page.tsx:28-30`)
+  - ⚠️ My Spiritual Journey: SUMMARY REAL + PAGE MOCK (`src/app/profile/page.tsx:225` vs `src/app/versehub/[lang]/my-spiritual-journey/page.tsx:180-183`)
 - **Contract Gap Audit:** `docs/03-architecture/technical/frontend-backend-contract-gap-audit.md`
-- **Status:** ⚠️ **75% SYNCHRONIZED**. Integrasi sudah fungsional, namun ditemukan kerentanan pada dualitas field (*camelCase* vs *snake_case*) dan penggunaan tipe data lokal di service.
+- **Status:** **REALITY SYNCHRONIZATION PHASE**. Integrasi fungsional sudah terverifikasi, namun ditemukan kerentanan keamanan pada logging proxy diskret dan ketidakcocokan data di Today module.
 
 ## Update 2026-03-19 (Profile & VerseHub Final Status)
 - **Profile:** ✅ **PATCHED IN SOURCE**. Menunggu validasi live untuk kontras teks dan resolusi URL avatar relatif.

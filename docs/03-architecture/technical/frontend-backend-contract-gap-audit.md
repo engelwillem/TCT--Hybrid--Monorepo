@@ -1,6 +1,6 @@
 # Frontend-Backend Contract Gap Audit
 
-## 1. Arsitektur Call Flow
+## 1. Arsitektur Call Flow (BFF Pattern)
 Alur komunikasi data pada TCT Hybrid mengikuti pola **BFF (Backend-for-Frontend)** menggunakan Next.js Route Handlers sebagai proxy:
 
 ```mermaid
@@ -19,52 +19,43 @@ sequenceDiagram
 - **Next.js Proxy:** Terletak di `src/lib/proxy-laravel.ts`. Bertugas meneruskan header `Authorization` (Bearer), `Cookie`, dan `Content-Type`.
 - **Laravel API:** Menyediakan endpoint RESTful di bawah prefix `/api/v1/`.
 
-## 2. Daftar Endpoint Utama (Status: CLEAN)
-Endpoint berikut telah terverifikasi memiliki integrasi yang stabil dan kontrak yang dipahami dengan baik antara frontend dan backend.
+## 2. Status Kontrak Utama (Verified Status)
 
-| Domain | Next.js API Path | Laravel API Path | Status Kontrak |
-|---|---|---|---|
-| **Auth** | `/api/auth/login` | `/api/v1/login` | ✅ Clean |
-| **Profile** | `/api/profile` | `/api/v1/profile` | ✅ Clean (Patched) |
-| **Today** | `/api/today` | `/api/v1/today` | ⚠️ Available (Heavy Fallback) |
-| **Community** | `/api/community/posts` | `/api/v1/community/posts` | ✅ Clean (Legacy Parity) |
-| **Versehub** | `/api/versehub/*` | `/api/v1/versehub/*` | ✅ Clean |
-| **Study Paths**| `/api/study-paths/*` | `/api/v1/study-paths/*` | ✅ Clean |
+| Domain | Next.js API Path | Laravel API Path | Status Kontrak | Bukti Source |
+|---|---|---|---|---|
+| **Auth** | `/api/auth/login` | `/api/v1/login` | ✅ Clean | `backend-api/routes/api.php:26` |
+| **Profile** | `/api/profile` | `/api/v1/profile` | ✅ Patched (Avatar) | `src/app/profile/page.tsx:182` |
+| **Today** | `/api/today` | `/api/v1/today` | ⚠️ Available (Heavy Fallback) | `src/app/today/page.tsx:140-142` |
+| **Community** | `/api/community/posts` | `/api/v1/community/posts` | ✅ Clean (Legacy Parity) | `src/features/community/pages/CommunityPage.tsx` |
+| **Versehub** | `/api/versehub/*` | `/api/v1/versehub/*` | ✅ Clean | `src/app/versehub/[lang]/chapter/[ref]/page.tsx` |
+| **Study Paths**| `/api/study-paths/*` | `/api/v1/study-paths/*` | ✅ Clean | `src/app/versehub/[lang]/study-paths/[slug]/page.tsx` |
 
-## 3. Mismatch & Risk per Domain
+## 3. High-Priority Mismatch (Contract Gaps)
 
-### A. Domain Today (High Risk)
-- **Problem:** Struktur data `Today` seringkali mengembalikan array kosong atau null pada beberapa key (missal: `verse`, `rituals`), yang memicu `.tct-fallback` di frontend.
-- **Risk:** User melihat tampilan "Mode Tenang" (fallback) secara terus-menerus meskipun data di database admin sebenarnya sudah diisi, akibat ketidakcocokan identifikasi index harian.
+### A. Today API Contract Mismatch
+- **Issue:** Frontend mengharapkan `pinnedLesson` dan `welcomeVerse` (`src/app/today/page.tsx:140-142`).
+- **Reality:** Backend Controller (`backend-api/app/Http/Controllers/Api/V1/TodayApiController.php:24-30`) tidak menyertakan kedua field tersebut dalam payload respons.
+- **Risk:** Pengguna melihat state "fallback/mock" untuk lesson dan verse harian meskipun data sebenarnya tersedia di database.
 
-### B. Domain Community (Medium Risk)
-- **Problem:** Terdapat dualitas field antara `camelCase` (frontend type) dan `snake_case` (backend/legacy). 
-- **Contoh:** `author.avatarUrl` vs `author.avatar_url`. 
-- **Risk:** Jika mapper di `CommunityService.ts` tidak lengkap, avatar atau status *official* member mungkin tidak muncul (Fallback `mapApiPost` sudah mencoba menangani ini).
+### B. Journey CTA Not End-to-End
+- **Issue:** `src/app/profile/page.tsx:661` menggunakan `router.push('/profile?section=journey')`.
+- **Reality:** Halaman `ProfilePage` tidak membaca param `section` (`useSearchParams` tidak diimpor/dipakai di `src/app/profile/page.tsx`). Hal ini menyebabkan tombol Growth Monitoring tidak berfungsi sebagaimana mestinya.
 
-### C. Domain Profile (Solved Risk)
-- **Problem:** Resolusi URL Avatar untuk path relatif (`/storage/...`).
-- **Status:** Sudah diperbaiki via `resolveSafeAvatarUrl`, namun tetap berisiko jika konfigurasi `APP_URL` di Laravel tidak sinkron dengan `NEXT_PUBLIC_API_BASE_URL`.
+### C. Backend Ready, Frontend Sync Lag (Reflections & Journey)
+- **Reflections:** Backend API tersedia (`backend-api/routes/api.php:84-86`), namun frontend tetap menggunakan data statis/mock (`src/app/versehub/[lang]/reflections/page.tsx:28-30`, `src/app/reflections/[slug]/page.tsx:22`).
+- **Journey:** Summary API aktif digunakan di Profile (`src/app/profile/page.tsx:225`), namun halaman detail perjalanan rohani tetap mock (`src/app/versehub/[lang]/my-spiritual-journey/page.tsx:180-183`).
 
-## 4. Area Inline Type (Technical Debt)
-Terdapat beberapa area di mana tipe data didefinisikan secara lokal (*inline*) di dalam service, bukan di file `.d.ts` atau `types.ts` bersama:
+## 4. Security Blocker: Proxy Token Logging
+- **Critical Risk:** `src/lib/proxy-laravel.ts:30` mengandung `console.log("PROXY_DEBUG_TOKEN:", JSON.stringify(authorization));`.
+- **Impact:** Mengekspos `Authorization/Bearer` token user secara langsung ke server environment logs. **Wajib dihapus segera sebelum rilis berikutnya.**
 
-- **`src/services/community.service.ts`:** Mendefinisikan `interface ApiPost` secara internal (Baris 25-57).
-- **`src/app/profile/page.tsx`:** Memiliki interface lokal untuk payload profile.
-- **`src/app/today/components/...`:** Beberapa tipe data seksi hari ini tersebar di komponen individual.
+## 5. Technical Debt (Inline Types & Dead Code)
+- **Inline Interfaces:** `src/app/profile/page.tsx:41` dan `src/services/community.service.ts:25-57` masih menggunakan interface lokal alih-alih tipe data terpusat.
+- **Dead Code:** `src/components/core/GreetingHeader.tsx` tidak digunakan aktif di source code runtime manapun (digantikan oleh versi lokal di today module).
+- **Mock Cleanup:** `src/features/community/mock.ts` tidak memiliki import aktif dan dapat dihapus.
 
-## 5. Area yang Perlu Schema Contract Bersama
-Codex disarankan membuat repositori tipe data atau file `contract.types.ts` untuk area berikut:
-1. **`ApiResponseEnvelope<T>`**: Standarisasi pembungkus `{ data: T, message?: string }`.
-2. **`GlobalProfile`**: Memastikan field `avatar_url`, `is_admin`, dan `preferences` memiliki nama field yang sama di kedua sisi.
-3. **`CommunityModels`**: Menyatukan skema Post, Comment, dan Author.
-
-## 6. Rekomendasi Prioritas untuk Codex
-1. **Refactor Community Types:** Pindahkan `interface ApiPost` dari `community.service.ts` ke `@/features/community/types.ts` dan gunakan untuk validasi Zod jika memungkinkan.
-2. **Standardize API Proxy Handlers:** Pastikan semua Route Handler di `src/app/api/` konsisten menggunakan `proxyLaravel`.
-3. **Fix Today Data Reliability:** Masuk ke Controller Laravel untuk memastikan `/api/v1/today` selalu mengirimkan objek minimal (tidak null) agar tidak memicu fallback frontend secara prematur.
-4. **Clean up Local Interfaces:** Audit `src/app/profile/page.tsx` dan ekstrak interface data ke file terpisah.
-
----
-**Status Akhir Audit:** ⚠️ **75% SYNCHRONIZED**
-Integrasi sudah "tembus" secara fungsional, namun kerapuhan kontrak (mismatch field & inline types) masih menjadi sumber bug UI minor seperti avatar hilang atau teks pudar.
+## Rekomendasi Prioritas (Action Plan)
+1. **Security Patch:** Hapus baris logging token di `proxy-laravel.ts:30`.
+2. **Standardize Today Response:** Update backend untuk menyertakan `pinnedLesson` dan `welcomeVerse`.
+3. **Fix Journey CTA:** Tambahkan `useSearchParams` di `ProfilePage` untuk navigasi section journey.
+4. **Wiring Reflections & Journey:** Hubungkan frontend yang masih mock ke API backend yang sudah tersedia.

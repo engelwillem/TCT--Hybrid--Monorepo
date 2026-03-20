@@ -14,6 +14,10 @@
 - [x] Closed blocker `Route [register] not defined` pada login-links.
 - [x] Closed blocker CSP admin runtime dengan scoped `unsafe-eval` untuk area `admintalk/*`.
 - [x] Verifikasi header live admin login memuat `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`.
+- [ ] **SECURITY HOTFIX**: Hapus logging token di `src/lib/proxy-laravel.ts:30`.
+- [ ] **Contract Sync (Today API)**: Integrasikan `pinnedLesson` dan `welcomeVerse` di `TodayApiController.php`.
+- [ ] **Wiring Reflections (Frontend)**: Sambungkan `/api/versehub/[lang]/reflections` ke UI yang saat ini masih mock.
+- [ ] **Logic Fix (Profile Journey CTA)**: Implementasi `useSearchParams` di `ProfilePage` untuk membaca `?section=journey`.
 - [ ] Stabilisasi Data: Mengisi konten utama (Daily Verse, Rituals, Study Paths) di database produksi via Filament.
 - [x] Audit & Patch `/profile` (Readability & Avatar issue) - **PATCHED IN SOURCE**.
 - [ ] Validasi live profile readability & avatar resolution (Awaiting CI Green).
@@ -24,6 +28,7 @@
 - [x] Verifikasi perbaikan VerseHub Desktop pasca CI Hijau (Staging Pass).
 - [x] Global Background System Foundation - UI foundation done.
 - [ ] QA visual lintas halaman untuk background global.
+- [ ] Cleanup Dead Code: Hapus `src/components/core/GreetingHeader.tsx` dan `src/features/community/mock.ts`.
 
 ## Verifikasi Admin Credential (Production DB)
 - [x] Validasi user `engel.willem@gmail.com` bisa login di production.

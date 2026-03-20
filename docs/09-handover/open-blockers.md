@@ -64,30 +64,49 @@ Issue profile readability (kontras teks) dan avatar resolution (URL storage) tel
 - [x] **Webhook Strategy Alignment**: Keputusan teknis pemicu asinkron sudah diambil; implementasi webhook tidak lagi menghambat rilis harian (karena manual deploy sudah stabil).
 - [x] **Admin Login Recovery (Filament Production)**: `https://admin.thechoosentalks.org/admintalk/login` sudah pulih; blocker `Route [register] not defined` dan blocker CSP runtime admin telah ditutup. Header live admin sudah memuat `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`.
 
-## 3. Frontend-Backend Reality Matrix Gaps
-**Status:** OPEN (Reality Matrix Audit Completed)  
-**Type:** Architecture / Data Contract  
-**Owner:** Architecture/Backend
+## 3. Security Blocker: Proxy Token Logging
+**Status:** OPEN (CRITICAL SITE RELIABILITY RISK)
+**Type:** Security
+**Owner:** Backend/Security
 
-### Reality Matrix Findings (2026-03-20)
-- **Auth/Login**: ✅ REAL - End-to-end integration complete
-- **Profile**: ✅ REAL - Backend with fallback handling
-- **Community**: ✅ REAL - API with fallback to archive data
-- **Today**: ⚠️ REAL+FALLBACK - Heavy fallback logic for missing data
-- **VerseHub**: ⚠️ REAL - API but some components use mock data
-- **Reflections**: ❌ MOCK - Template pages only, no real API integration
-- **My Spiritual Journey**: ❌ MOCK - Template pages only, no real API integration
+### Why it is still open
+`src/lib/proxy-laravel.ts:30` contains explicit logging of authorization header: `console.log("PROXY_DEBUG_TOKEN:", JSON.stringify(authorization));`.
 
-### Key Issues Identified
-- **Today Dashboard**: Heavy reliance on fallback mode when API returns empty data
-- **Reflections**: Currently using `DUMMY_REFLECTION` object instead of real API calls
-- **My Spiritual Journey**: Using mock data with `setTimeout` instead of real activity tracking
-- **Contract Gaps**: Dualitas field (camelCase vs snake_case) causing potential data mismatches
+### Impact
+Exposing `Authorization/Bearer` user tokens directly in logs. High risk of sensitive data exposure.
 
-### Path to Resolution
-1. **Priority 1**: Implement real API integration for Reflections and My Spiritual Journey
-2. **Priority 2**: Reduce fallback dependency in Today dashboard
-3. **Priority 3**: Standardize field naming conventions between frontend and backend
+---
+
+## 4. Today Dashboard Contract Mismatch
+**Status:** OPEN
+**Type:** Data Contract
+**Owner:** Backend
+
+### Why it is still open
+Frontend expects `pinnedLesson` and `welcomeVerse` (`src/app/today/page.tsx:140-142`), but backend controller (`backend-api/app/Http/Controllers/Api/V1/TodayApiController.php:24-30`) did not include these keys in the response body.
+
+### Impact
+Sections for Daily Verse and Pinned Lessons remain in fallback/mock state despite database parity.
+
+---
+
+## 5. Reflections & Spiritual Journey (Frontend wiring lag)
+**Status:** OPEN
+**Type:** Implementation Delay
+**Owner:** Frontend
+
+### Current State
+Backend API for Reflections is ready (`backend-api/routes/api.php:84-86`), but frontend is still 100% mock in `src/app/versehub/[lang]/reflections/page.tsx:28-30`. Similarly, Spiritual Journey summary is used in Profile but the dedicated page remains mock.
+
+---
+
+## 6. Profile Journey CTA (Link Broken)
+**Status:** OPEN
+**Type:** Logic/Wiring Issue
+**Owner:** Frontend
+
+### Current State
+`src/app/profile/page.tsx:661` performs `router.push('/profile?section=journey')`, but `ProfilePage` does not use `useSearchParams` hook to read and navigate to that section.
 
 ## 4. Tencent Edge Duplicate Deployment Trigger
 **Status:** OPEN (Pending Console adjustment)  
