@@ -3,10 +3,9 @@
 ## Eksekusi Prioritas (CI/Build Pipeline Recovery)
 - [x] Identifikasi masalah source code pada `Frontend Monorepo Checks`: `Google Fonts Network Dependency` (DONE 2026-03-20).
 - [x] Implementasi Remediasi: System Fonts Fallback (DONE 2026-03-20).
-- [x] Verifikasi lokal: `npm run typecheck` & `npm run build` PASS.
-- [x] Verifikasi build production: FIXED. Source build lulus di GitHub CI (Run 23339123819).
-- [ ] - [ ] **Configure GitHub Secret:** `TENCENT_EDGE_DEPLOY_HOOK_URL` untuk memicu rerun otomatis Tencent Edge.
-- [ ] **Manual Rerun** atau GitHub Action trigger (PENDING).
+- [x] Verifikasi CI (GitHub Actions): **PASS** (Run 23339123819).
+- [ ] Konfigurasi `TENCENT_EDGE_DEPLOY_HOOK_URL` secret di GitHub Settings (PRIORITY).
+- [ ] Lanjutkan deploy ke production (Tencent Edge) via **Manual Rerun** (PENDING).
 
 ## Eksekusi Prioritas (Production Recovery)
 - [x] Selesaikan blocker Edge artifact drift: Implementasi `generateBuildId` unik untuk memaksa update bundle.

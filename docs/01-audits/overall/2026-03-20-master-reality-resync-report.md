@@ -46,48 +46,45 @@
 
 ## 4. Active Blockers & Gaps by Severity
 
-| Severity | Blocker Description | Evidence |
-| :--- | :--- | :--- |
 | **FIXED** | Build Network fonts dependency | `docs/01-audits/deploy/2026-03-20-build-font-network-remediation-report.md` |
 | **FIXED** | Reflections Page wiring to backend | `src/app/versehub/[lang]/reflections/page.tsx` |
 | **FIXED** | Spiritual Journey Page wiring to backend | `src/app/versehub/[lang]/my-spiritual-journey/page.tsx` |
 | **FIXED** | Profile Journey CTA (Deep-link Fixed) | `src/app/profile/page.tsx:661` |
-| **DRIFT** | Production deployment rerun verification | `HANDOVER_DRIVE` |
+| **FIXED** | Production build rerun verification (GitHub Actions) | `Run 23339123819` |
+| **BLOCKED**| Tencent Edge Deploy Trigger (Missing Secret) | `OPEN` |
 | **DRIFT** | Reflection Detail dedicated API endpoint | `src/app/reflections/[slug]/page.tsx` |
 | **LOW** | Dead Code Cleanup (`GreetingHeader.tsx`, `mock.ts`) | `src/components/core/GreetingHeader.tsx` |
 
 ---
 
-## 5. Docs Corrected in This Pass
-- `docs/core/architecture/laravel-decoupled-hybrid/MASTER_PARITY_AUDIT.md` -> Demoted Today to PARTIAL.
-- `docs/02-uiux/today-uiux-audit.md` -> Removed "DONE" claims for content population.
-- `docs/02-uiux/versehub-final-status-sync.md` -> Corrected functionality status to PARTIAL.
-- `docs/04-domains/today/audit.md` -> Added contract mismatch findings.
-- `docs/04-domains/versehub/audit.md` -> Added mock status for reflections/journey.
-- `docs/04-domains/profile-lifecycle/audit.md` -> Added Journey CTA broken link.
+## 5. CI/CD & Deploy Reality Sync (Update 2026-03-20)
+
+| Component | Status | Source Level | CI Rerun | CD Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Build Pipeline** | **LIVE** | FIXED | **PASS** (Run 23339123819) | N/A |
+| **Tencent Deploy** | **BLOCKED** | FIXED | N/A | **FAIL** (Secret Missing) |
+
+- **Verification Report:** `docs/01-audits/deploy/2026-03-20-rerun-verification-report.md`.
 
 ---
 
-## 6. Development Constraints
+## 6. Docs Corrected in This Pass
+- `docs/09-handover/current-status.md` -> Added CI/CD verification status.
+- `docs/09-handover/open-blockers.md` -> Added missing secret blocker.
+- `docs/09-handover/next-actions.md` -> Prioritized secret configuration.
+
+---
+
+## 7. Development Constraints
 - **DARE NOT Claim "LIVE" on Today for Legacy Parity:** Sangat berbahaya karena user tidak akan melihat lesson yang seharusnya dipinned meskipun sudah diatur di Admin (karena field dihapus dari kontrak).
 - **DARE NOT Claim "LIVE" on Reflection Detail:** Masih bersifat emulasi dari list data; membutuhkan API dedicated untuk status LIVE penuh.
 
 ---
 
-## 7. Next Highest-Leverage Fix
-1. **Database Content Population**: Memastikan konten production di Laravel (Paths, Lessons, Reflections) terisi data nyata untuk menghindari "Empty State" yang berkepanjangan.
-2. **Mobile Responsiveness Polish**: Audit detail untuk layout `Grid` pada Reflections Journal di perangkat mobile layar kecil.
+## 8. Next Highest-Leverage Fix
+1. **Configure Repository Secret**: Input `TENCENT_EDGE_DEPLOY_HOOK_URL` untuk memulihkan rilis otomatis.
+2. **Database Content Population**: Memastikan konten production di Laravel terisi data nyata.
 
 ---
-**Status Akhir Audit: PASS**Status Akhir Audit: PASS (with BLOCKED Deploy Trigger)**
-*Alasan: Blocker kritis (Security, Today Contract, VerseHub Integration, Build Font Dependency) telah ditutup (FIXED). Status build CI di GitHub PASSED (verified Run 23339123819); trigger deploy eksternal masih terblokir minor oleh konfigurasi secret (TENCENT_EDGE_DEPLOY_HOOK_URL).*
-
-## 8. CI/CD & Deploy Reality Sync (Update 2026-03-20)
-| Component | Status | Source Level | External Rerun | Verdict |
-| :--- | :--- | :--- | :--- | :--- |
-| Build Pipeline | LIVE | FIXED | PASS (Run 23339123819) | PASS |
-| Tencent Deploy | BLOCKED | READY | FAIL (Secret Missing) | BLOCKED |
-
-- **Verification Report:** [2026-03-20-rerun-verification-report.md](../deploy/2026-03-20-rerun-verification-report.md)
-- 
-*Alasan: Blocker kritis (Security, Today Contract, VerseHub Integration, Build Font Dependency) telah ditutup (FIXED). Status proyek stabil di level source; verifikasi sisa pada rerun pipeline eksternal.*
+**Status Akhir Audit: PASS (with BLOCKED CD Hook)**
+*Alasan: Blocker kritis (Security, Today Contract, VerseHub Integration, Build Font Dependency) telah ditutup (FIXED). Verifikasi CI PASS (Run 23339123819). Status rilis otomatis saat ini terhambat missing repository secret.*

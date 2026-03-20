@@ -1,10 +1,21 @@
 # Active & Resolved Blockers
 
 ## RESOLVED BLOCKERS (2026-03-20 - Build Stability)
-- [x] **Frontend Monorepo Checks (Source-level)**: **FIXED**. Akar masalah Google Fonts dependency (`next/font/google`) telah diputus dan diganti dengan system font fallback. local `npm run build` PASS.
-- [ ] **Production Deployment Rerun**: **DRIFT** (Not yet revalidated). Menunggu pemicuan ulang otomatis dari GitHub Actions untuk memvalidasi build di environment Tencent Edge.
+- [x] **Frontend Monorepo Checks (Source + CI)**: **FIXED**. Akar masalah Google Fonts dependency (`next/font/google`) telah diputus. Verifikasi CI (GitHub Actions Run 23339123819) PASS (0:59s).
+- [x] **Production Build Rerun**: **FIXED**. Build sukses di environment CI. Status deployment asinkron (CD) saat ini terhambat secret.
 
 ---
+
+## 1. Tencent Edge Deploy Hook Secret Missing
+**Status:** BLOCKED  
+**Type:** DevOps / Security configuration  
+**Owner:** DevOps/Admin
+
+### Why it is still open
+Langkah `Trigger Tencent Edge deploy` pada GitHub Actions gagal karena variabel rahasia `TENCENT_EDGE_DEPLOY_HOOK_URL` tidak ditemukan di repository secrets. Hal ini menyebabkan otomatisasi rilis ke Tencent EO terhenti.
+
+### Path to Resolution
+Konfigurasi ulang `TENCENT_EDGE_DEPLOY_HOOK_URL` pada menu **Settings > Secrets and variables > Actions** di GitHub.
 
 ## 2. GitHub Actions SSH/SCP Access Blocked (Firewall)
 **Status:** BLOCKED  
