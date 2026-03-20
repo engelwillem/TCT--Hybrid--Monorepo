@@ -4,7 +4,8 @@
 Akar masalah kegagalan build pada GitHub Actions dan Production Deploy (Tencent Edge) telah diperbaiki di tingkat source code. Ketergantungan jaringan build-time pada `next/font/google` telah diputus dan diganti dengan **System Font Fallback**.
 
 - **Source Level:** **FIXED**. `npm run build` berhasil dijalankan secara lokal tanpa dependency internet untuk font.
-- **Rerun Verification:** **DRIFT / PENDING**. Menunggu pemicuan ulang otomatis/manual dari GitHub Actions untuk memvalidasi build di environment produksi eksternal.
+- **Rerun Verification:** **PARTIAL (FIXED Source / BLOCKED Deploy)**. CI verified in Run [23339123819](https://github.com/engelwillem/TCT--Hybrid--Monorepo/actions/runs/23339123819). External trigger blocked by missing TENCENT_EDGE_DEPLOY_HOOK_URL secret. [Details](../deploy/2026-03-20-rerun-verification-report.md)
+- pemicuan ulang otomatis/manual dari GitHub Actions untuk memvalidasi build di environment produksi eksternal.
 
 ## 2. Affected Docs Reviewed
 - `docs/01-audits/deploy/2026-03-20-production-deploy-github-actions-failure-audit.md`
