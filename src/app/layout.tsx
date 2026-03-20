@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { FirebaseAuthSync } from '@/components/FirebaseAuthSync';
 
-const APP_NAME = 'TheChosenTalks';
+const APP_NAME = 'The Chosen Talks';
 const TAGLINE = 'The Chosen People';
 const DEFAULT_TITLE = `${APP_NAME} - ${TAGLINE}`;
 const DEFAULT_DESCRIPTION = 'Komunitas web app untuk Chosen People: ayat harian, komunitas iman, dan perjalanan rohani bertumbuh bersama.';
@@ -51,9 +51,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/brand/favicon-premium.svg', type: 'image/svg+xml' },
-      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
       { url: '/favicon.ico' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/brand/favicon-premium.svg', type: 'image/svg+xml' },
     ],
     shortcut: '/favicon.ico',
     apple: '/favicon.png',

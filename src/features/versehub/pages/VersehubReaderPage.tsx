@@ -50,6 +50,16 @@ interface VersehubReaderPageProps {
 
 const ACTION_KEY = 'versehub_actions_v2';
 
+const normalizeChapterRef = (rawRef: string): string => {
+    const raw = String(rawRef || '').trim().toLowerCase().replace(/^chapter\//, '');
+    if (!raw) return raw;
+    const parts = raw.split('-').filter(Boolean);
+    if (parts.length >= 2) {
+        return `${parts[0]}-${parts[1]}`;
+    }
+    return raw;
+};
+
 export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initialChapterRef = null }: VersehubReaderPageProps) {
     const router = useRouter();
     const params = useParams();
@@ -154,8 +164,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
         setLoading(true);
         setError(null);
         try {
-            // Clean the ref: remove /chapter/ if it somehow leaked in
-            const cleanRef = ref.replace(/^chapter\//, '');
+            const cleanRef = normalizeChapterRef(ref);
             const res = await fetch(`/api/versehub/${lang}/chapter/${cleanRef}`);
             
             if (!res.ok) {
@@ -213,9 +222,8 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
 
         const normalized = rawRef.trim().toLowerCase();
         if (!normalized) return;
-
-        const parts = normalized.split('-');
-        const chapterRef = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : normalized;
+        const chapterRef = normalizeChapterRef(normalized);
+        const parts = normalized.split('-').filter(Boolean);
 
         loadChapter(chapterRef).then(() => {
             if (parts.length < 3) return;

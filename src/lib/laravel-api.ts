@@ -6,29 +6,45 @@
  */
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
+const MISSING_BASE_PLACEHOLDER = "http://missing-laravel-api-base-url.local";
+const DEFAULT_PRODUCTION_API_BASE_URL = "https://api.thechoosentalks.org";
+
+function pickConfiguredBaseUrl(): string {
+  const candidates = [
+    process.env.LARAVEL_API_BASE_URL,
+    process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL,
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  if (candidates.length > 0) {
+    return trimTrailingSlash(candidates[0]);
+  }
+
+  // Tencent Edge runtime can miss non-public env injections.
+  // For production, fallback to the known Laravel API origin.
+  if (process.env.NODE_ENV === "production") {
+    return DEFAULT_PRODUCTION_API_BASE_URL;
+  }
+
+  return MISSING_BASE_PLACEHOLDER;
+}
 
 /**
  * Safely retrieves the Laravel API base URL.
  * Does not throw during module initialization to prevent SSR crashes.
  */
 export function getLaravelApiBaseUrl(): string {
-  const base = process.env.LARAVEL_API_BASE_URL || process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL;
-  
-  if (!base) {
-    // We return a predictable placeholder if the env is missing
-    // rather than throwing, allowing the proxy to handle the error gracefully.
-    return "http://missing-laravel-api-base-url.local";
-  }
-
-  return trimTrailingSlash(base);
+  return pickConfiguredBaseUrl();
 }
 
 /**
  * Internal helper to check if the base URL is valid.
  */
 export function isBaseUrlConfigured(): boolean {
-  const base = process.env.LARAVEL_API_BASE_URL || process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL;
-  return Boolean(base && base.length > 0 && !base.includes("missing-laravel-api-base-url"));
+  const base = pickConfiguredBaseUrl();
+  return Boolean(base && !base.includes("missing-laravel-api-base-url"));
 }
 
 /**

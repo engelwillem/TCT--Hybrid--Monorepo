@@ -105,9 +105,9 @@ function buildAvatarCandidates(rawUrl: string | null | undefined): string[] {
             return [url.toString()];
         }
         return dedupeCandidates([
-            url.toString(),
             new URL(path, apiBase).toString(),
             new URL(path, webBase).toString(),
+            url.toString(),
         ]);
     } catch {
         const path = candidate.startsWith('/') ? candidate : `/${candidate.replace(/^\/+/, '')}`;

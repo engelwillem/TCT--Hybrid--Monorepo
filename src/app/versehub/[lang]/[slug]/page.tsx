@@ -265,10 +265,6 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-20">
-            <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden bg-mesh">
-                {/* mesh bg handled by globals */}
-            </div>
-
             <main className="relative mx-auto max-w-3xl px-4 py-6 md:py-10">
                 <div className="space-y-8">
                     <header className="space-y-3">
