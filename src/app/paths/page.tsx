@@ -87,7 +87,7 @@ export default function PathsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="mb-6 rounded-[28px] border border-border/50 bg-gradient-to-br from-background via-background to-brand/5 p-5"
+                        className="mb-6 rounded-[28px] border border-border/50 bg-surface p-5 shadow-soft"
                     >
                         <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/90">
                             Mengapa Paths?
@@ -122,10 +122,9 @@ export default function PathsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
                     >
-                    <Card className="rounded-[32px] md:rounded-[40px] border-0 glass-card overflow-hidden">
+                    <Card className="rounded-[32px] md:rounded-[40px] border border-border/50 bg-surface overflow-hidden shadow-card">
                         <CardContent className="p-8 md:p-10">
-                            <div className="relative mb-8 rounded-[24px] bg-gradient-to-br from-brand/10 via-transparent to-emerald-300/10 p-6 ring-1 ring-border/50">
-                                <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-brand/10 blur-3xl" />
+                            <div className="relative mb-8 rounded-[24px] bg-surface-muted p-6 ring-1 ring-border/50">
                                 <div className="relative flex items-start gap-4">
                                     <div className="h-12 w-12 rounded-2xl bg-background/80 ring-1 ring-border/50 flex items-center justify-center">
                                         <Compass className="h-6 w-6 text-brand" />
@@ -158,7 +157,7 @@ export default function PathsPage() {
                             </div>
 
                             <div className="mb-8 rounded-[24px] border border-dashed border-border/60 bg-background/60 p-5">
-                                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">Coming Soon Preview</p>
+                                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">Preview Journey</p>
                                 <p className="mt-2 text-sm text-foreground font-semibold">Perjalanan: Memelihara Damai di Tengah Tekanan</p>
                                 <p className="mt-1 text-xs text-muted-foreground">7 langkah refleksi praktis untuk menjaga hati tetap teduh dan fokus.</p>
                             </div>
@@ -213,7 +212,7 @@ export default function PathsPage() {
                                 >
                                     <Link href={`/paths/${item.slug}`}>
                                         <Card className="group relative overflow-hidden rounded-[32px] md:rounded-[40px] border-0 glass-card transition-all hover:shadow-card">
-                                            <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-50" />
+                                            <div className="absolute inset-0 bg-gradient-to-br from-sky-100/50 to-transparent opacity-40" />
                                             
                                             <CardContent className="relative tct-card-pad">
                                                 <div className="mb-4 flex items-center justify-between">

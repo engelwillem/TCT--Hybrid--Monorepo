@@ -51,6 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!mounted) return <div className="tct-global-background min-h-screen" />;
 
   const isLanding = pathname === "/";
+  const isAuthSurface = pathname === "/login" || pathname === "/forgot-password" || pathname === "/reset-password";
   const isReader = pathname.includes('/versehub/'); // Equivalent to density='reader'
 
   return (
@@ -65,7 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex items-start gap-8">
           {/* Desktop Sidebar (Parity with MobileAppLayout.tsx) */}
-          {!isLanding && activeNavId && (
+          {!isLanding && !isAuthSurface && activeNavId && (
             <div className="hidden md:flex md:w-72 md:flex-col md:gap-4 sticky top-8 h-fit align-start">
               <DesktopSidebarNav
                 activeId={activeNavId}
@@ -82,13 +83,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div
             className={cn(
               "w-full md:flex-1 mx-auto",
-              isLanding || isReader ? "max-w-none" : "max-w-[420px] md:mx-0 md:max-w-none"
+              isLanding || isReader || isAuthSurface ? "max-w-none" : "max-w-[420px] md:mx-0 md:max-w-none"
             )}
             style={{
               paddingBottom: 'calc(120px + env(safe-area-inset-bottom))',
             }}
           >
-            <main className={cn(isReader ? "mt-4" : "mt-6")}>
+            <main className={cn(isReader ? "mt-4" : isAuthSurface ? "mt-0" : "mt-6")}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={pathname}
@@ -107,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Floating Mobile Nav (Parity with MobileAppLayout.tsx) */}
-      {!isLanding && activeNavId && (
+      {!isLanding && !isAuthSurface && activeNavId && (
         <div
           className="fixed inset-x-0 z-50 flex justify-center md:hidden"
           style={{ bottom: 'calc(24px + env(safe-area-inset-bottom))' }}

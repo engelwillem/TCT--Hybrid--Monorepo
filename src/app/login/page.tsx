@@ -75,96 +75,110 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-[100dvh] flex items-center justify-center p-6 bg-slate-950 text-white/90">
-      <div className="absolute inset-0 z-0 bg-gradient-to-tr from-cyan-950/20 via-slate-950 to-blue-950/20" />
+    <div className="min-h-[100dvh] bg-[linear-gradient(160deg,#eaf2fb_0%,#e3ecf8_45%,#e1ebf7_100%)] text-foreground">
+      <main className="mx-auto grid min-h-[100dvh] w-full max-w-6xl items-center gap-10 px-6 py-10 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="hidden rounded-[2.25rem] border border-white/70 bg-white/70 p-8 shadow-soft backdrop-blur-xl lg:block">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">TheChosenTalks</p>
+          <h2 className="mt-4 tct-serif text-4xl font-bold leading-[1.05] tracking-tight text-slate-900">
+            Ruang tenang untuk
+            <br />
+            melanjutkan ritme
+            <br />
+            rohanimu.
+          </h2>
+          <p className="mt-5 text-sm font-medium leading-relaxed text-slate-600">
+            Masuk untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh konsisten bersama komunitas.
+          </p>
+        </section>
 
-      <main className="relative z-10 w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="tct-serif text-4xl font-bold tracking-tight text-white mb-2">Welcome Back</h1>
-          <p className="text-white/50">Lanjutkan perjalanan rohani harianmu.</p>
-        </div>
+        <section className="w-full max-w-xl justify-self-center rounded-[2.25rem] border border-[#c7d5e6] bg-[#02113a] px-6 py-8 text-white shadow-[0_24px_80px_-24px_rgba(2,17,58,0.55)] sm:px-8 sm:py-10">
+          <div className="text-center space-y-2">
+            <h1 className="tct-serif text-4xl font-bold tracking-tight text-white">Welcome Back</h1>
+            <p className="text-sm font-medium text-cyan-100/75">Lanjutkan perjalanan rohani harianmu.</p>
+          </div>
 
-        {errorMessage && (
-          <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-500">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Gagal Masuk</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        )}
+          {errorMessage && (
+            <Alert variant="destructive" className="mt-6 border-rose-400/35 bg-rose-500/15 text-rose-100">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertTitle>Gagal Masuk</AlertTitle>
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
 
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-white/70">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                placeholder="nama@domain.com"
-                className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-white/70">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
-                  Lupa Sandi?
-                </Link>
+          <div className="mt-6 rounded-[1.75rem] border border-white/20 bg-[#03184f]/75 p-6 shadow-inner sm:p-7">
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-cyan-50/90">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  placeholder="nama@domain.com"
+                  className="h-12 rounded-2xl border-white/30 bg-slate-100/95 text-slate-900 placeholder:text-slate-500 focus-visible:ring-cyan-400/50"
+                />
               </div>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-cyan-500/50"
-              />
-            </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="rounded border-white/10 bg-white/5 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-950"
-              />
-              <Label htmlFor="remember" className="text-sm text-white/60 cursor-pointer">
-                Tetap Masuk (Remember Me)
-              </Label>
-            </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-cyan-50/90">Password</Label>
+                  <Link href="/forgot-password" className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 transition-colors">
+                    Lupa Sandi?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="h-12 rounded-2xl border-white/30 bg-slate-100/95 text-slate-900 placeholder:text-slate-500 focus-visible:ring-cyan-400/50"
+                />
+              </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading || !email || !password}
-              className="w-full h-12 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl active:scale-[0.98] transition-all"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Mengontentikasi...
-                </>
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-5 w-5" />
-                  Buka Blokir
-                </>
-              )}
-            </Button>
-          </form>
-        </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="rounded border-white/30 bg-white/10 text-cyan-400 focus:ring-cyan-400 focus:ring-offset-[#02113a]"
+                />
+                <Label htmlFor="remember" className="text-sm text-cyan-100/80 cursor-pointer">
+                  Tetap Masuk (Remember Me)
+                </Label>
+              </div>
 
-        <div className="text-center pt-4">
-          <Link href="/" className="inline-flex items-center text-sm font-medium text-white/50 hover:text-white transition-colors">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Depan
-          </Link>
-        </div>
+              <Button
+                type="submit"
+                disabled={isLoading || !email || !password}
+                className="h-12 w-full rounded-full bg-cyan-400 font-black text-[#03224c] transition-all hover:bg-cyan-300 active:scale-[0.98]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Mengontentikasi...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Buka Blokir
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+
+          <div className="pt-6 text-center">
+            <Link href="/" className="inline-flex items-center text-sm font-medium text-cyan-100/70 hover:text-cyan-100 transition-colors">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Depan
+            </Link>
+          </div>
+        </section>
       </main>
     </div>
   );

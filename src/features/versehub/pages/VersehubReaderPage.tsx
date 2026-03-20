@@ -441,7 +441,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                 <RefreshCcw size={32} />
                             </div>
                             <h3 className="text-xl font-bold mb-2">Gagal Memuat Daftar Kitab</h3>
-                            <p className="text-slate-500 text-sm mb-8">Maaf, terjadi kesalahan saat mengambil data dari server.</p>
+                            <p className="text-muted-foreground text-sm mb-8">Maaf, terjadi kesalahan saat mengambil data dari server.</p>
                             <button 
                                 onClick={() => { setError(null); fetchBooks(); }}
                                 className="px-8 py-3 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 transition-all shadow-sm"
@@ -471,13 +471,13 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     </p>
                                 </div>
                                 <form onSubmit={handleSearch} className="relative w-full">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <input 
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
                                         onFocus={() => query.length >= 2 && setSuggestOpen(true)}
                                         placeholder={isId ? "Cari kitab, pasal, atau ayat..." : "Search book, chapter, verse..."}
-                                        className="h-14 w-full rounded-3xl border border-border bg-white dark:bg-white/5 pl-12 pr-4 text-sm outline-none focus:ring-4 focus:ring-brand/10 transition-all shadow-sm"
+                                        className="h-14 w-full rounded-3xl border border-border bg-surface pl-12 pr-4 text-sm text-foreground outline-none focus:ring-4 focus:ring-brand/10 transition-all shadow-soft"
                                     />
                                 </form>
 
@@ -488,7 +488,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: 10 }}
-                                                    className="absolute top-16 inset-x-0 z-50 bg-white dark:bg-slate-900 rounded-3xl border border-border shadow-2xl overflow-hidden"
+                                                    className="absolute top-16 inset-x-0 z-50 bg-surface rounded-3xl border border-border shadow-premium overflow-hidden"
                                                 >
                                                     <div className="p-2">
                                                         {suggestions.map((item, idx) => (
@@ -499,12 +499,12 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                                     setSuggestOpen(false);
                                                                     setQuery('');
                                                                 }}
-                                                                className="group w-full flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
+                                                                className="group w-full flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-surface-muted transition-colors text-left"
                                                             >
                                                                 <div className="flex items-center gap-3">
                                                                     <div className={cn(
                                                                         "h-8 w-8 rounded-full flex items-center justify-center",
-                                                                        item.type === 'direct' ? "bg-brand/10 text-brand" : "bg-slate-100 dark:bg-white/10 text-slate-500"
+                                                                        item.type === 'direct' ? "bg-brand/10 text-brand" : "bg-surface-muted text-muted-foreground"
                                                                     )}>
                                                                         {item.type === 'direct' ? <Zap size={14} /> : <BookOpenText size={14} />}
                                                                     </div>
@@ -522,7 +522,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                         </AnimatePresence>
                                     </div>
 
-                                    <div className="rounded-[24px] border border-border/50 bg-background/70 p-4">
+                                    <div className="rounded-[24px] border border-border/50 bg-surface p-4 shadow-soft">
                                         <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground mb-3">
                                             Akses Cepat Reader
                                         </p>
@@ -535,7 +535,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                                 <button
                                                     key={quick.ref}
                                                     onClick={() => router.push(toVersehubRefHref(quick.ref))}
-                                                    className="rounded-2xl border border-border/60 bg-background px-4 py-3 text-left hover:bg-surface-muted transition-colors"
+                                                    className="rounded-2xl border border-border/60 bg-surface px-4 py-3 text-left hover:bg-surface-muted transition-colors"
                                                 >
                                                     <p className="text-sm font-bold text-foreground">{quick.label}</p>
                                                     <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">Buka Pasal</p>
@@ -545,8 +545,8 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     </div>
 
                                     {/* Landing Hero (restored) */}
-                                    <div className="rounded-[3rem] p-10 bg-slate-900 border border-white/5 shadow-2xl relative overflow-hidden text-white">
-                                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                                    <div className="rounded-[3rem] p-10 bg-[#02133d] border border-[#12315f] shadow-premium relative overflow-hidden text-white">
+                                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/40 to-transparent" />
                                         <div className="relative z-10">
                                             <Badge className="bg-brand/20 text-brand border-none mb-4">Daily Rhythm</Badge>
                                             <h2 className="text-3xl font-bold mb-4 tracking-tight">Mulai baca Alkitab hari ini.</h2>

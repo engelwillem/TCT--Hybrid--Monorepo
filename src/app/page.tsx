@@ -14,8 +14,8 @@ const pillars = [
     description: "Masuk dari kondisi hatimu hari ini, bukan dari menu yang membingungkan.",
     href: "/today",
     cta: "Buka Today",
-    accent: "from-amber-300 via-orange-200 to-white",
-    iconTone: "bg-amber-100 text-amber-600",
+    accent: "from-cyan-100/70 via-sky-100/35 to-transparent",
+    iconTone: "bg-cyan-100/80 text-cyan-700",
   },
   {
     id: "versehub",
@@ -24,7 +24,7 @@ const pillars = [
     description: "Baca firman dengan pengalaman reader yang tenang, dalam, dan siap menuntun ke refleksi.",
     href: "/versehub/id",
     cta: "Masuk VerseHub",
-    accent: "from-cyan-300 via-sky-200 to-white",
+    accent: "from-cyan-100/75 via-sky-100/40 to-transparent",
     iconTone: "bg-cyan-100 text-cyan-700",
   },
   {
@@ -34,8 +34,8 @@ const pillars = [
     description: "Bangun ritme pertumbuhan lewat perjalanan bertahap yang bisa kamu lanjutkan setiap hari.",
     href: "/paths",
     cta: "Lihat Paths",
-    accent: "from-emerald-300 via-teal-200 to-white",
-    iconTone: "bg-emerald-100 text-emerald-700",
+    accent: "from-cyan-100/65 via-slate-100/40 to-transparent",
+    iconTone: "bg-cyan-100/80 text-cyan-700",
   },
   {
     id: "community",
@@ -44,8 +44,8 @@ const pillars = [
     description: "Ubah apa yang kamu baca dan rasakan menjadi doa, kesaksian, atau dukungan yang nyata.",
     href: "/community",
     cta: "Masuk Community",
-    accent: "from-rose-300 via-pink-200 to-white",
-    iconTone: "bg-rose-100 text-rose-700",
+    accent: "from-cyan-100/70 via-slate-100/35 to-transparent",
+    iconTone: "bg-cyan-100/80 text-cyan-700",
   },
 ];
 
@@ -105,12 +105,11 @@ function PillarCard({
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="relative min-h-screen overflow-x-hidden bg-[linear-gradient(165deg,#ebf3fb_0%,#e3ecf8_48%,#e1ebf7_100%)] text-foreground">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.10),transparent_26%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(255,255,255,0.75),transparent_35%),radial-gradient(circle_at_88%_12%,rgba(187,218,245,0.35),transparent_40%)]"
       />
-      <div aria-hidden className="bg-grain pointer-events-none absolute inset-0 opacity-60" />
 
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 md:px-8 md:py-8">
         <div className="space-y-1">
@@ -180,7 +179,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6 }}
               className="relative"
             >
-              <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-cyan-100 via-white to-amber-50 blur-3xl" />
+              <div className="absolute -inset-6 rounded-[40px] bg-gradient-to-br from-sky-100/70 via-white/70 to-cyan-100/45 blur-3xl" />
               <div className="relative overflow-hidden rounded-[36px] border border-white/70 bg-white/80 p-6 shadow-premium backdrop-blur-2xl md:p-8">
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -237,7 +236,7 @@ export default function LandingPage() {
         <section className="border-y border-white/70 bg-white/55 backdrop-blur-xl">
           <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-5 py-16 text-center md:px-8 md:py-20">
             <Badge className="text-slate-400">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <ShieldCheck className="h-3.5 w-3.5 text-cyan-600" />
               Calm, Guided, Scripture-Centered
             </Badge>
             <h2 className="tct-serif text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">
