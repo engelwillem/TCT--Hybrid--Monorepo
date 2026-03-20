@@ -58,6 +58,7 @@ type ApiProfilePayload = {
 
 const API_BASE_FALLBACK = 'https://api.thechoosentalks.org';
 const WEB_BASE_FALLBACK = 'https://www.thechoosentalks.org';
+const ADMIN_BASE_FALLBACK = 'https://admin.thechoosentalks.org';
 
 function resolveBaseUrl(
     raw: string | undefined,
@@ -97,6 +98,7 @@ function buildAvatarCandidates(rawUrl: string | null | undefined): string[] {
         API_BASE_FALLBACK,
     );
     const webBase = resolveBaseUrl(process.env.NEXT_PUBLIC_APP_URL, WEB_BASE_FALLBACK);
+    const adminBase = resolveBaseUrl(process.env.NEXT_PUBLIC_ADMIN_BASE_URL, ADMIN_BASE_FALLBACK);
 
     try {
         const url = new URL(candidate);
@@ -107,6 +109,7 @@ function buildAvatarCandidates(rawUrl: string | null | undefined): string[] {
         return dedupeCandidates([
             new URL(path, apiBase).toString(),
             new URL(path, webBase).toString(),
+            new URL(path, adminBase).toString(),
             url.toString(),
         ]);
     } catch {
@@ -125,7 +128,14 @@ function buildAvatarCandidates(rawUrl: string | null | undefined): string[] {
                 return null;
             }
         })();
-        return dedupeCandidates([withApi, withWeb, path]);
+        const withAdmin = (() => {
+            try {
+                return new URL(path, adminBase).toString();
+            } catch {
+                return null;
+            }
+        })();
+        return dedupeCandidates([withApi, withWeb, withAdmin, path]);
     }
 }
 
@@ -148,6 +158,7 @@ export default function ProfilePage() {
     const [submittingAvatar, setSubmittingAvatar] = useState(false);
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
+    const avatarPreviewBlobRef = useRef<string | null>(null);
 
     // Profile States
     const [user, setUser] = useState({
@@ -233,7 +244,10 @@ export default function ProfilePage() {
                 const payload = (await response.json()) as ApiProfilePayload;
                 const apiUser = payload?.data?.user;
                 if (!isActive || !apiUser) return;
-                const avatarCandidates = buildAvatarCandidates(apiUser.avatar_url || authUser?.photoURL || null);
+                const avatarCandidates = dedupeCandidates([
+                    ...buildAvatarCandidates(authUser?.photoURL || null),
+                    ...buildAvatarCandidates(apiUser.avatar_url || null),
+                ]);
                 if (!isActive) return;
 
                 const nextUser = {
@@ -267,6 +281,14 @@ export default function ProfilePage() {
         loadProfile();
         return () => { isActive = false; };
     }, [authUser?.photoURL]);
+
+    useEffect(() => {
+        return () => {
+            if (avatarPreviewBlobRef.current) {
+                URL.revokeObjectURL(avatarPreviewBlobRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         let isActive = true;
@@ -319,6 +341,18 @@ export default function ProfilePage() {
         if (!token) return;
 
         setSubmittingAvatar(true);
+        if (avatarPreviewBlobRef.current) {
+            URL.revokeObjectURL(avatarPreviewBlobRef.current);
+            avatarPreviewBlobRef.current = null;
+        }
+        const localPreview = URL.createObjectURL(file);
+        avatarPreviewBlobRef.current = localPreview;
+        setUser((prev) => ({
+            ...prev,
+            avatarCandidates: dedupeCandidates([localPreview, ...prev.avatarCandidates]),
+            avatarUrl: localPreview,
+        }));
+
         const formData = new FormData();
         formData.append('avatar', file);
         formData.append('_method', 'PATCH');
@@ -338,7 +372,8 @@ export default function ProfilePage() {
             if (response.ok) {
                 if (payload?.data?.avatar_url) {
                     const avatarCandidates = buildAvatarCandidates(payload.data.avatar_url);
-                    setUser(prev => ({ ...prev, avatarUrl: avatarCandidates[0] || null, avatarCandidates }));
+                    const mergedCandidates = dedupeCandidates([localPreview, ...avatarCandidates]);
+                    setUser(prev => ({ ...prev, avatarUrl: mergedCandidates[0] || null, avatarCandidates: mergedCandidates }));
                     showToast('Foto profil diperbarui');
                 }
             } else {

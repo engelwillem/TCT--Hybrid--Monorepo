@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {!isLanding && !isAuthSurface && activeNavId && (
         <div
           className="fixed inset-x-0 z-50 flex justify-center md:hidden"
-          style={{ bottom: 'calc(10px + env(safe-area-inset-bottom))' }}
+          style={{ bottom: 'calc(2px + env(safe-area-inset-bottom))' }}
         >
           <FloatingBottomNav
             items={navItems}

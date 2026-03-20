@@ -47,14 +47,14 @@ export default function PathsPage() {
             className="md:max-w-none bg-background text-foreground min-h-screen"
             header={
                 <div className="px-4 py-4 md:px-0 space-y-2">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-brand ring-1 ring-brand/20">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand ring-1 ring-brand/20">
                         <Sparkles className="h-3.5 w-3.5" />
                         Paths Experience
                     </div>
                     <h1 className="tct-h1 text-foreground tracking-tight">
                         Langkah Kecil, Pertumbuhan Besar.
                     </h1>
-                    <p className="mt-1 text-sm font-medium text-muted-foreground">
+                    <p className="mt-1 text-sm font-medium text-muted-foreground leading-relaxed">
                         Rangkaian perjalanan spiritual terarah yang dirancang untuk membantu Anda bertumbuh secara sistematis setiap hari.
                     </p>
                 </div>
@@ -62,14 +62,14 @@ export default function PathsPage() {
         >
             <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-2">
                 {!loading && (
-                    <Card className="mb-6 rounded-[28px] border border-border/50 bg-background/70 shadow-none">
+                    <Card className="mb-6 rounded-[28px] border border-border/60 bg-surface shadow-soft">
                         <CardContent className="px-5 py-4 flex items-start gap-3">
                             <div className={cn(
                                 "mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
                                 hasPaths ? "bg-emerald-400" : "bg-amber-400"
                             )} />
                             <div className="space-y-1.5">
-                                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/90">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/90">
                                     {hasPaths ? "Journey Siap Dipilih" : "Ruang Sedang Disiapkan"}
                                 </p>
                                 <p className="text-xs leading-relaxed text-muted-foreground">
@@ -87,9 +87,9 @@ export default function PathsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className="mb-6 rounded-[28px] border border-border/50 bg-surface p-5 shadow-soft"
+                        className="mb-6 rounded-[28px] border border-border/60 bg-surface p-5 shadow-soft"
                     >
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/90">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/90">
                             Mengapa Paths?
                         </p>
                         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -122,9 +122,9 @@ export default function PathsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: 'easeOut' }}
                     >
-                    <Card className="rounded-[32px] md:rounded-[40px] border border-border/50 bg-surface overflow-hidden shadow-card">
+                    <Card className="rounded-[32px] md:rounded-[40px] border border-border/60 bg-surface overflow-hidden shadow-card">
                         <CardContent className="p-8 md:p-10">
-                            <div className="relative mb-8 rounded-[24px] bg-surface-muted p-6 ring-1 ring-border/50">
+                            <div className="relative mb-8 rounded-[24px] bg-surface-muted p-6 ring-1 ring-border/60">
                                 <div className="relative flex items-start gap-4">
                                     <div className="h-12 w-12 rounded-2xl bg-background/80 ring-1 ring-border/50 flex items-center justify-center">
                                         <Compass className="h-6 w-6 text-brand" />
@@ -138,7 +138,7 @@ export default function PathsPage() {
                                 </div>
                             </div>
 
-                            <div className="mb-8 rounded-[24px] border border-border/50 bg-background/60 p-5">
+                            <div className="mb-8 rounded-[24px] border border-border/60 bg-surface p-5">
                                 <p className="font-serif text-lg leading-relaxed text-foreground/90">
                                     Hening sejenak. Sesuatu yang indah sedang dipersiapkan untuk menemani pertumbuhan iman Anda.
                                 </p>
@@ -150,27 +150,27 @@ export default function PathsPage() {
                                     "Refleksi terarah",
                                     "Aksi kecil yang konsisten",
                                 ].map((label) => (
-                                    <div key={label} className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-xs font-semibold text-muted-foreground">
+                                    <div key={label} className="rounded-2xl border border-border/60 bg-surface-muted/50 px-4 py-3 text-xs font-semibold text-muted-foreground">
                                         {label}
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="mb-8 rounded-[24px] border border-dashed border-border/60 bg-background/60 p-5">
-                                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">Preview Journey</p>
+                            <div className="mb-8 rounded-[24px] border border-dashed border-border/60 bg-surface p-5">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Preview Journey</p>
                                 <p className="mt-2 text-sm text-foreground font-semibold">Perjalanan: Memelihara Damai di Tengah Tekanan</p>
                                 <p className="mt-1 text-xs text-muted-foreground">7 langkah refleksi praktis untuk menjaga hati tetap teduh dan fokus.</p>
                             </div>
 
                             <div className="space-y-3">
-                                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                                     Lanjutkan Langkah Hari Ini
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                 <Link
                                     href="/versehub/id"
                                     aria-label="Jelajahi VerseHub dulu"
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-background transition-all hover:scale-[1.01]"
+                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-background transition-all hover:scale-[1.01]"
                                 >
                                     Jelajahi VerseHub Dulu
                                     <ArrowRight className="h-4 w-4" />
@@ -178,7 +178,7 @@ export default function PathsPage() {
                                 <Link
                                     href="/community"
                                     aria-label="Cari inspirasi di komunitas"
-                                    className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-background px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-foreground transition-colors hover:bg-surface-muted"
+                                    className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-surface px-5 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-foreground transition-colors hover:bg-surface-muted"
                                 >
                                     <BookOpen className="h-4 w-4" />
                                     Cari Inspirasi di Komunitas
@@ -186,7 +186,7 @@ export default function PathsPage() {
                                 <a
                                     href="mailto:engel.willem@gmail.com?subject=Notifikasi%20Paths%20Baru&body=Saya%20ingin%20diberitahu%20saat%20jalan%20spiritual%20baru%20tersedia."
                                     aria-label="Beritahu saya saat jalan baru tersedia"
-                                    className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-transparent px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-muted/60"
+                                    className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-transparent px-5 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-muted/60"
                                 >
                                     <RefreshCcw className="h-4 w-4" />
                                     Beritahu Saya

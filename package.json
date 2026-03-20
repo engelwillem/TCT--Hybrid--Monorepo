@@ -11,7 +11,8 @@
     "build:with-encoded-chunk-mirror": "next build && node scripts/mirror-encoded-next-chunks.mjs",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke:prod": "powershell -ExecutionPolicy Bypass -File scripts/smoke-production.ps1"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.16.1",

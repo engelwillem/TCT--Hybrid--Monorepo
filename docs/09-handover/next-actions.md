@@ -14,7 +14,7 @@
 - [x] Revalidate production `/api/community/posts` after base URL fallback patch — Status: LIVE — Next action: add scripted monitor to detect regression quickly — Evidence: live endpoint returns `200` with `posts/archivePosts`.
 - [x] Revalidate production `/api/versehub/id/books` after base URL fallback patch — Status: LIVE — Next action: keep in smoke test suite — Evidence: live endpoint returns `200` with books list.
 - [x] Revalidate production `/api/versehub/id/chapter/*` with normalized chapter ref flow — Status: LIVE — Next action: preserve slug normalizer path in regression tests — Evidence: live `mzm-23` and `mzm-23-1` both return `200`.
-- [ ] Add post-deploy API smoke automation (`today`, `community`, `versehub books/chapter`) — Status: DRIFT — Next action: create lightweight scripted checks and attach output to release notes — Evidence: repeated runtime drift despite successful CI/build.
+- [x] Add post-deploy API smoke automation (`today`, `community`, `versehub books/chapter`) — Status: FIXED — Next action: run `npm run smoke:prod` after each push-to-main and attach output to release notes — Evidence: `scripts/smoke-production.ps1` created and live smoke pass `200` on all monitored routes.
 
 ## C. UI / Brand Regression Fixes
 - [x] Force browser tab icon to T-based TCT mark across clients — Status: LIVE — Next action: preserve favicon order (`ico/png/svg`) and recheck after cache purge windows — Evidence: live `/favicon.png` serves T-mark icon.
@@ -22,11 +22,11 @@
 - [x] Remove remaining background noise/pattern from global shell surfaces — Status: LIVE — Next action: continue per-page cleanup where local overlays still exist — Evidence: live CSS no longer contains `.tct-global-background::before` pattern rule.
 - [x] Fix Community OG brand casing to `The Chosen Talks` — Status: LIVE — Next action: validate share preview cache refresh on external platforms — Evidence: live OG title/alt now `The Chosen Talks - The Chosen People`.
 - [x] Recover `/community` feed reliability end-to-end (UI + API confirmation) — Status: LIVE — Next action: maintain API fallback smoke tests — Evidence: `/api/community/posts` returns `200`, no mass 503 on revalidation.
-- [ ] Recover `/profile` avatar render after upload — Status: PARTIAL — Next action: verify avatar URL candidate order in production and confirm image visible after upload refresh — Evidence: upload appears successful but avatar still not shown.
-- [ ] Repair `/paths` visual regression (font/layout quality) with no extra background artifacts — Status: DRIFT — Next action: run focused UI pass only on Paths and capture before/after screenshots — Evidence: user report “makin buruk layouting font + background”.
+- [ ] Recover `/profile` avatar render after upload — Status: BLOCKED — Next action: fix upstream avatar file persistence/serving on backend (`/storage/avatars/*`) then revalidate UI render — Evidence: profile API returns `avatar_url`, but asset resolves `404` on `admin/api/www` origins.
+- [ ] Repair `/paths` visual regression (font/layout quality) with no extra background artifacts — Status: PARTIAL — Next action: run visual A/B check on production after latest typography/surface patch and finalize copy-density tuning — Evidence: source patch applied on `/paths`, but final acceptance still depends on screenshot QA.
 
 ## D. UX / Mobile Refinement
-- [ ] Improve mobile bottom nav reachability (thumb zone) — Status: PARTIAL — Next action: validate on real devices after latest bottom offset reduction and decide final placement — Evidence: user complaint mobile nav sulit dijangkau.
+- [ ] Improve mobile bottom nav reachability (thumb zone) — Status: PARTIAL — Next action: validate on real devices after latest bottom offset reduction (`calc(2px + safe-area)`) and decide final placement — Evidence: source improved, but real-device ergonomics still needs confirmation.
 - [x] Revalidate VerseHub mobile interaction flow after sync fixes (`search -> ref -> chapter`) — Status: LIVE — Next action: add this path to release smoke checklist — Evidence: live chapter API ref normalization (`mzm-23-1`) now stable.
 
 ## E. Deferred / Lower Priority Warnings
