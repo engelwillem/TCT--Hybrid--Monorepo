@@ -28,7 +28,7 @@
 
 ## Update 2026-03-19 (Deployment Hygiene)
 - **Tencent Edge:** Terdeteksi isu *duplicate deployment target*. Satu commit memicu dua build paralel (Git Auto-deploy vs Webhook).
-- **Audit Case:** `docs/01-audits/overall/tencent-edge-duplicate-deploy-trigger-audit.md` telah dibuat untuk merekomendasikan penonaktifan auto-deploy di sisi Tencent Console agar alur rilis hanya dikendalikan satu pintu via GitHub Actions.
+- **Audit Case:** `docs/01-audits/overall/tencent-edge-duplicate-deploy-trigger-audit.md` ditindaklanjuti dengan menghapus webhook trigger Tencent dari GitHub Actions frontend agar rilis hanya melalui auto deploy bawaan integrasi Git Tencent Edge.
 
 - Dokumentasi pemulihan: `docs/01-audits/overall/frontend-ci-recovery-verification.md`
 
@@ -114,6 +114,6 @@ Status surface aktif production sudah bergerak ke **stabil operasional** untuk f
 - **Root Hygiene:** Pembersihan file liar (*.txt, *.log, debug artifacts) dari root dan `backend-api/`. Semua dipindahkan ke `docs/01-audits/overall/artifacts/`.
 ## Update 2026-03-20 (Post-Push Rerun Verification)
 - **Source Build (GitHub Actions):** ✅ **FIXED & VERIFIED**. Build sukses dalam 59 detik (Run 23339123819). Remidiasi font dependency telah terverifikasi di environment CI.
-- **Automated Deploy Trigger:** 🔴 **BLOCKED**. Kegagalan trigger akibat `TENCENT_EDGE_DEPLOY_HOOK_URL` secret tidak ditemukan di repository.
+- **Automated Deploy Trigger:** ✅ **FIXED (CI Scope)**. Workflow frontend tidak lagi memakai `TENCENT_EDGE_DEPLOY_HOOK_URL`; CI kini murni install/typecheck/build tanpa trigger deploy manual Tencent.
 - **Verification Report:** `docs/01-audits/deploy/2026-03-20-rerun-verification-report.md`.
-- **Conclusion:** Codebase `main` sudah optimal dan siap untuk re-trigger di Tencent EO setelah secret dikonfigurasi.
+- **Conclusion:** Codebase `main` menjalankan CI-only pipeline di GitHub; deploy frontend mengikuti auto deploy Tencent Edge dari integrasi Git.

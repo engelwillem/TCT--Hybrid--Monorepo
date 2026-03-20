@@ -26,8 +26,6 @@ concurrency:
 jobs:
   frontend-checks:
     runs-on: ubuntu-latest
-    env:
-      TENCENT_EDGE_DEPLOY_HOOK_URL: ${{ secrets.TENCENT_EDGE_DEPLOY_HOOK_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,16 +45,3 @@ jobs:
 
       - name: Build frontend
         run: npm run build
-
-      - name: Trigger Tencent Edge deploy
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          test -n "$TENCENT_EDGE_DEPLOY_HOOK_URL"
-          payload=$(printf '{"ref":"main","sha":"%s","source":"github-actions"}' "$GITHUB_SHA")
-          echo "Deploy payload: $payload"
-          response=$(curl --fail --show-error \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -d "$payload" \
-            "$TENCENT_EDGE_DEPLOY_HOOK_URL")
-          echo "Deploy response: $response"

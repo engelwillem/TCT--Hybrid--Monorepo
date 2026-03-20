@@ -4,8 +4,7 @@
 - [x] Identifikasi masalah source code pada `Frontend Monorepo Checks`: `Google Fonts Network Dependency` (DONE 2026-03-20).
 - [x] Implementasi Remediasi: System Fonts Fallback (DONE 2026-03-20).
 - [x] Verifikasi CI (GitHub Actions): **PASS** (Run 23339123819).
-- [ ] Konfigurasi `TENCENT_EDGE_DEPLOY_HOOK_URL` secret di GitHub Settings (PRIORITY).
-- [ ] Lanjutkan deploy ke production (Tencent Edge) via **Manual Rerun** (PENDING).
+- [x] Hapus trigger deploy manual Tencent dari workflow frontend agar CI tetap single-purpose (FIXED 2026-03-20).
 
 ## Eksekusi Prioritas (Production Recovery)
 - [x] Selesaikan blocker Edge artifact drift: Implementasi `generateBuildId` unik untuk memaksa update bundle.
@@ -44,8 +43,8 @@
 - [x] **Priority 5**: Implement real API integration for My Spiritual Journey (`src/app/versehub/[lang]/my-spiritual-journey/page.tsx`) (FIXED).
 
 ## Operasional Deploy
-- [ ] Nonaktifkan "Automatic Deployment" di Tencent Console untuk project Edge Pages (Penerapan Opsi B - One-Way Webhook).
-- [ ] Verifikasi rilis berikutnya hanya dipicu sekali oleh GitHub Actions.
+- [x] Frontend CI dipisah dari CD: GitHub Actions hanya checks, deploy mengikuti auto deploy bawaan Tencent Edge (FIXED 2026-03-20).
+- [ ] Verifikasi rilis berikutnya hanya muncul satu pipeline deploy aktif di Tencent Edge dashboard.
 
 ## Dokumentasi
 - [x] Audit report screenshot-based tersedia.

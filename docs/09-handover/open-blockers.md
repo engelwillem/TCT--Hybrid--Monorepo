@@ -3,21 +3,11 @@
 ## RESOLVED BLOCKERS (2026-03-20 - Build Stability)
 - [x] **Frontend Monorepo Checks (Source + CI)**: **FIXED**. Akar masalah Google Fonts dependency (`next/font/google`) telah diputus. Verifikasi CI (GitHub Actions Run 23339123819) PASS (0:59s).
 - [x] **Production Build Rerun**: **FIXED**. Build sukses di environment CI. Status deployment asinkron (CD) saat ini terhambat secret.
+- [x] **Tencent Edge Hook Dependency in Frontend Workflow**: **FIXED**. Referensi `TENCENT_EDGE_DEPLOY_HOOK_URL` dan trigger webhook deploy manual sudah dihapus dari workflow frontend.
 
 ---
 
-## 1. Tencent Edge Deploy Hook Secret Missing
-**Status:** BLOCKED  
-**Type:** DevOps / Security configuration  
-**Owner:** DevOps/Admin
-
-### Why it is still open
-Langkah `Trigger Tencent Edge deploy` pada GitHub Actions gagal karena variabel rahasia `TENCENT_EDGE_DEPLOY_HOOK_URL` tidak ditemukan di repository secrets. Hal ini menyebabkan otomatisasi rilis ke Tencent EO terhenti.
-
-### Path to Resolution
-Konfigurasi ulang `TENCENT_EDGE_DEPLOY_HOOK_URL` pada menu **Settings > Secrets and variables > Actions** di GitHub.
-
-## 2. GitHub Actions SSH/SCP Access Blocked (Firewall)
+## 1. GitHub Actions SSH/SCP Access Blocked (Firewall)
 **Status:** BLOCKED  
 **Type:** infrastructure / CI-CD blocker  
 **Owner:** infrastructure/admin
@@ -84,12 +74,12 @@ Issue profile readability (kontras teks) dan avatar resolution (URL storage) tel
 - ⚠️ **Reflection Detail**: **PARTIAL**. Ready but resolving from list collection.
 
 ## 4. Tencent Edge Duplicate Deployment Trigger
-**Status:** BLOCKED (Pending Console adjustment)  
+**Status:** FIXED  
 **Type:** DevOps / Deployment hygiene  
 **Owner:** DevOps/Admin
 
-### Why it is still open
-Satu commit memicu dua build paralel di dashboard Tencent Edge (Git-Connected vs Webhook). Ini menyebabkan pemborosan kuota build dan ketidakpastian versi rilis terakhir yang tampil di production.
+### Final state
+Sumber duplikasi deploy dari GitHub Actions sudah dihapus dengan menonaktifkan trigger webhook Tencent pada workflow frontend. Dengan demikian, frontend deploy mengikuti satu jalur: auto deploy Git integration milik Tencent Edge.
 
-### Path to Resolution
-Nonaktifkan fitur "Automatic Deployment from branch" di pengaturan Build Project pada konsol Tencent Cloud. Biarkan rilis hanya dipicu oleh GitHub Actions (Webhook) setelah seluruh tes (lint/typecheck) LULUS.
+### Verification focus
+Pastikan deployment berikutnya hanya memunculkan satu trigger deploy aktif per commit pada dashboard Tencent Edge.
