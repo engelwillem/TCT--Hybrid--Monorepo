@@ -1,62 +1,118 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useMemo, useState, use } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Share2, Quote, Flame, Edit3, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import HookCard from '@/components/cards/HookCard';
+import { ChevronLeft, Lock, Share2 } from 'lucide-react';
+import { getAppAccessToken } from '@/services/app-auth-token';
 
-interface ReflectionDetail {
-    title: string;
-    relevance_intro: string;
-    verse_quote: string;
+type ReflectionItem = {
+    id: string | number;
     verse_ref: string;
-    verse_reference_label: string;
-    body_content: React.ReactNode;
-    practical_application: string;
-    discussion_prompt: string;
-}
-
-// Dummy data for the template
-const DUMMY_REFLECTION: ReflectionDetail = {
-    title: 'Menemukan Kedamaian di Tengah Ketidakpastian',
-    relevance_intro: 'Kita sering merasa memegang kendali atas hidup, sampai sebuah kejadian tak terduga mengingatkan betapa rapuhnya rencana kita. Kecemasan adalah respons alami saat kita tidak tahu apa yang akan terjadi besok.',
-    verse_quote: 'Janganlah hendaknya kamu kuatir tentang apapun juga, tetapi nyatakanlah dalam segala hal keinginanmu kepada Allah dalam doa dan permohonan dengan ucapan syukur.',
-    verse_ref: 'flp-4-6',
-    verse_reference_label: 'Filipi 4:6',
-    body_content: (
-        <>
-            <p>
-                Kecemasan sering kali lahir bukan dari kenyataan hari ini, melainkan dari ilusi tentang masa depan. Paulus menuliskan surat Filipi bukan dari vila mewah, melainkan dari penjara Roma. Ia sangat mengerti apa artinya tidak memiliki kepastian hari esok.
-            </p>
-            <p>
-                Namun, perhatikan pendekatannya: ia tidak menyuruh kita menekan rasa cemas, melainkan mengalihkannya. Mengubah kekhawatiran yang berpusat pada diri sendiri menjadi doa yang berpusat pada Allah.
-            </p>
-        </>
-    ),
-    practical_application: 'Hari ini, setiap kali Anda mulai mereka-reka skenario terburuk di pikiran Anda, berhentilah sejenak. Tarik napas, dan ubah skenario itu menjadi satu kalimat doa yang sederhana.',
-    discussion_prompt: 'Apa satu hal spesifik yang paling membuatmu khawatir minggu ini? Maukah kamu menyerahkannya dalam doa hari ini?',
+    question_text: string;
+    answer_text: string;
+    is_private: boolean;
+    created_at: string;
 };
+
+type ReflectionsApiResponse = {
+    data?: {
+        items?: ReflectionItem[];
+    };
+    message?: string;
+};
+
+function formatDate(raw: string, lang: string) {
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+}
 
 export default function ReflectionDetailPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
+    const searchParams = useSearchParams();
     const router = useRouter();
-    const [data, setData] = useState<ReflectionDetail | null>(null);
+    const lang = searchParams.get('lang') || 'id';
+    const isId = lang === 'id';
+
+    const [loading, setLoading] = useState(true);
+    const [authRequired, setAuthRequired] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [reflection, setReflection] = useState<ReflectionItem | null>(null);
 
     useEffect(() => {
-        // Mock data fetch
-        setData(DUMMY_REFLECTION);
-    }, [slug]);
+        let active = true;
 
-    if (!data) {
+        const loadDetail = async () => {
+            const token = getAppAccessToken();
+            if (!token) {
+                if (!active) return;
+                setAuthRequired(true);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/versehub/${lang}/reflections`, {
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    cache: 'no-store',
+                });
+
+                if (!active) return;
+
+                if (response.status === 401 || response.status === 403) {
+                    setAuthRequired(true);
+                    return;
+                }
+
+                if (!response.ok) {
+                    const payload = (await response.json().catch(() => ({}))) as ReflectionsApiResponse;
+                    setErrorMessage(payload?.message || (isId ? 'Gagal memuat detail refleksi.' : 'Failed to load reflection detail.'));
+                    return;
+                }
+
+                const payload = (await response.json()) as ReflectionsApiResponse;
+                const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
+                const found =
+                    items.find((item) => String(item.id) === slug) ||
+                    items.find((item) => item.verse_ref === slug) ||
+                    null;
+
+                setReflection(found);
+            } catch {
+                if (!active) return;
+                setErrorMessage(isId ? 'Tidak dapat terhubung ke server refleksi.' : 'Unable to connect to reflections server.');
+            } finally {
+                if (active) setLoading(false);
+            }
+        };
+
+        loadDetail();
+        return () => {
+            active = false;
+        };
+    }, [isId, lang, slug]);
+
+    const chapterHref = useMemo(() => {
+        if (!reflection?.verse_ref) return `/versehub/${lang}`;
+        const [book, chapter] = reflection.verse_ref.split('-');
+        return `/versehub/${lang}/${book}-${chapter}`;
+    }, [lang, reflection?.verse_ref]);
+
+    if (loading) {
         return <div className="min-h-screen bg-background animate-pulse" />;
     }
 
     return (
-        <div className="min-h-screen bg-background pb-20 text-foreground selection:bg-brand/30">
-            {/* Minimalist Reader Navigation */}
-            <nav className="sticky top-0 z-40 bg-background/80 p-4 backdrop-blur-xl border-b border-border/50">
+        <div className="min-h-screen bg-background pb-20 text-foreground">
+            <nav className="sticky top-0 z-40 border-b border-border/50 bg-background/80 p-4 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-2xl items-center justify-between">
                     <button
                         onClick={() => router.back()}
@@ -65,7 +121,7 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
                         <ChevronLeft className="h-5 w-5" />
                     </button>
                     <span className="text-[12px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                        Refleksi Harian
+                        {isId ? 'Detail Refleksi' : 'Reflection Detail'}
                     </span>
                     <button className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-muted-foreground transition-all hover:bg-surface-elevated hover:text-foreground active:scale-95">
                         <Share2 className="h-4.5 w-4.5" />
@@ -73,83 +129,79 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
                 </div>
             </nav>
 
-            <motion.article 
-                initial={{ opacity: 0, y: 20 }}
+            <motion.article
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mx-auto mt-6 max-w-2xl px-5 md:px-8"
             >
-                {/* 1. Relevance Intro (Problem statement that hooks the user) */}
-                <span className="mb-4 inline-block rounded-full bg-rose-500/10 px-3 py-1 font-serif text-sm font-medium italic text-rose-400 ring-1 ring-rose-500/20">
-                    Kecemasan & Masa Depan
-                </span>
-                <h1 className="mb-6 font-serif text-3xl font-normal leading-[1.2] tracking-tight md:text-5xl">
-                    {data.title}
-                </h1>
-                
-                <p className="mb-10 text-lg font-medium leading-relaxed text-muted-foreground md:text-xl">
-                    {data.relevance_intro}
-                </p>
-
-                {/* 2. Anchor Verse (The Truth) */}
-                <div className="relative mb-12 overflow-hidden rounded-[32px] bg-surface p-8 ring-1 ring-border/50 backdrop-blur-sm shadow-soft">
-                    <Quote className="absolute right-6 top-6 h-16 w-16 text-foreground/5 z-0" />
-                    <p className="relative z-10 font-serif text-2xl italic leading-relaxed text-foreground md:text-3xl">
-                        "{data.verse_quote}"
-                    </p>
-                    <div className="mt-6 flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-widest text-brand">
-                            {data.verse_reference_label}
-                        </span>
-                    </div>
-                </div>
-
-                {/* 3. Reflection Body (The Guidance) */}
-                <div className="prose prose-invert prose-lg max-w-none text-foreground/80">
-                    {data.body_content}
-                </div>
-
-                {/* 4. Practical Application (The Challenge) */}
-                <div className="mt-12 rounded-[24px] border-l-4 border-amber-500/50 bg-amber-500/5 p-6 md:p-8">
-                    <div className="mb-3 flex items-center gap-2 text-amber-500">
-                        <Flame className="h-5 w-5" />
-                        <h3 className="font-bold uppercase tracking-wider text-sm">Aplikasi Praktis</h3>
-                    </div>
-                    <p className="text-base font-medium leading-relaxed text-foreground">
-                        {data.practical_application}
-                    </p>
-                </div>
-
-                {/* Divider */}
-                <div className="my-12 py-6 border-t border-border/50 flex justify-center">
-                    <div className="h-1 w-1 bg-border rounded-full mx-1"></div>
-                    <div className="h-1 w-1 bg-border rounded-full mx-1"></div>
-                    <div className="h-1 w-1 bg-border rounded-full mx-1"></div>
-                </div>
-
-                {/* 5. Journaling/Discussion Prompt & CTA */}
-                <div className="mb-20 space-y-6">
-                    <h2 className="font-serif text-2xl mb-4">Ruang Respons</h2>
-                    <HookCard
-                        variant="highlight"
-                        hookText={data.discussion_prompt}
-                        verseReference={data.verse_reference_label}
-                        relevanceText="Tuliskan pengalamanmu, atau doakan bersama di The Chosen."
-                        primaryAction={{
-                            type: 'discuss',
-                            href: `/community?intent=verse_reflection&ref=${data.verse_ref}`,
-                            label: 'Tulis Jurnal & Doa'
-                        }}
-                    />
-                    
-                    {/* Private Journal Fallback Action */}
-                    <button className="w-full flex items-center justify-between rounded-[24px] bg-surface-muted p-5 ring-1 ring-border/50 hover:bg-surface-elevated transition-colors focus:outline-none">
-                        <div className="flex items-center gap-3 text-muted-foreground">
-                            <Edit3 className="h-5 w-5" />
-                            <span className="text-sm font-medium">Buat Jurnal Pribadi (Hanya Anda yang melihat)</span>
+                {authRequired ? (
+                    <section className="rounded-[28px] border border-amber-200 bg-amber-50 p-6 text-amber-900">
+                        <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                            <Lock className="h-5 w-5" />
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                </div>
+                        <h1 className="text-xl font-black">{isId ? 'Login diperlukan' : 'Login required'}</h1>
+                        <p className="mt-2 text-sm">
+                            {isId
+                                ? 'Detail refleksi hanya tersedia untuk sesi user yang sudah login.'
+                                : 'Reflection detail is available only for authenticated users.'}
+                        </p>
+                    </section>
+                ) : errorMessage ? (
+                    <section className="rounded-[28px] border border-rose-200 bg-rose-50 p-6 text-rose-900">
+                        <h1 className="text-xl font-black">{isId ? 'Gagal memuat detail' : 'Failed to load detail'}</h1>
+                        <p className="mt-2 text-sm">{errorMessage}</p>
+                    </section>
+                ) : !reflection ? (
+                    <section className="rounded-[28px] border border-border/50 bg-surface p-6">
+                        <h1 className="text-xl font-black text-foreground">
+                            {isId ? 'Refleksi tidak ditemukan' : 'Reflection not found'}
+                        </h1>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {isId
+                                ? 'Endpoint detail by slug belum tersedia di backend. Halaman ini membaca item dari daftar refleksi user saat ini.'
+                                : 'Detail-by-slug endpoint is not available yet. This page resolves from the current user reflection list.'}
+                        </p>
+                    </section>
+                ) : (
+                    <section className="space-y-6 rounded-[32px] border border-border/50 bg-surface p-6 shadow-soft">
+                        <div className="space-y-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand">
+                                {reflection.verse_ref.toUpperCase()}
+                            </p>
+                            <h1 className="text-2xl font-black tracking-tight text-foreground">
+                                {isId ? 'Respons Refleksi Pribadi' : 'Personal Reflection Response'}
+                            </h1>
+                            <p className="text-xs font-semibold text-muted-foreground">
+                                {formatDate(reflection.created_at, lang)} • {reflection.is_private ? (isId ? 'Privat' : 'Private') : (isId ? 'Publik' : 'Public')}
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                                {isId ? 'Pertanyaan Refleksi' : 'Reflection Prompt'}
+                            </p>
+                            <blockquote className="rounded-2xl bg-surface-muted p-4 text-base font-semibold leading-relaxed text-foreground">
+                                {reflection.question_text}
+                            </blockquote>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                                {isId ? 'Jawabanmu' : 'Your Response'}
+                            </p>
+                            <div className="rounded-2xl border border-border/50 bg-background p-4 text-sm leading-relaxed text-foreground">
+                                {reflection.answer_text}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => router.push(chapterHref)}
+                            className="inline-flex items-center rounded-full bg-foreground px-4 py-2 text-xs font-black uppercase tracking-widest text-background"
+                        >
+                            {isId ? 'Buka Pasal Terkait' : 'Open Related Chapter'}
+                        </button>
+                    </section>
+                )}
             </motion.article>
         </div>
     );

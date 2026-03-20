@@ -14,12 +14,6 @@ import StateChips, { SpiritualState } from './components/sections/StateChips';
 import DailyVerseHeroCard from '@/components/versehub/DailyVerseHeroCard';
 import ReflectionPrompt from './components/cards/ReflectionPrompt';
 import QuoteCard from './components/cards/QuoteCard';
-import PinnedLessonCard from './components/cards/PinnedLessonCard';
-import DailyPrayerCard from './components/cards/DailyPrayerCard';
-import CommunityCard from './components/cards/CommunityCard';
-import QuestionOfTheDay from './components/cards/QuestionOfTheDay';
-import TalkCard from './components/cards/TalkCard';
-import ReflectionCard from './components/cards/ReflectionCard';
 
 // Feed Components
 import FeedList from './components/feed/FeedList';
@@ -45,19 +39,11 @@ type FeedItem = {
     can_moderate?: boolean;
 };
 
-type PinnedLesson = {
-    quarter: { id: number; title: string; date_range_human?: string; cover_image_url?: string };
-    lesson: { id: number; title: string; excerpt?: string; estimated_minutes: number; day_number: number };
-    progress: { state: 'start' | 'continue' | 'completed' };
-} | null;
-
 type TodayApiResponse = {
     data?: {
         dailyVerse?: DailyVerse | null;
         highlights?: any[];
         rituals?: any;
-        pinnedLesson?: PinnedLesson;
-        welcomeVerse?: DailyVerse | null;
         spiritual_state?: SpiritualState;
     };
 };
@@ -103,16 +89,13 @@ const stateMoodCopy: Record<SpiritualState, { kicker: string; title: string; bod
 };
 
 export default function TodayPage() {
-    const [apiPinnedLesson, setApiPinnedLesson] = useState<PinnedLesson>(null);
     const [apiDailyVerse, setApiDailyVerse] = useState<DailyVerse | null>(null);
     const [apiHighlights, setApiHighlights] = useState<FeedItem[]>([]);
     const [apiRituals, setApiRituals] = useState<any>(null);
-    const [apiWelcomeVerse, setApiWelcomeVerse] = useState<DailyVerse | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeState, setActiveState] = useState<SpiritualState>('fresh');
 
     const dailyVerse = apiDailyVerse ?? fallbackDailyVerse;
-    const welcomeVerse = apiWelcomeVerse ?? undefined;
     const rituals = normalizeRituals(apiRituals);
     const hasMinimalTodayData = !apiDailyVerse && Object.keys(rituals).length === 0 && apiHighlights.length === 0;
 
@@ -137,9 +120,7 @@ export default function TodayPage() {
 
                 setApiDailyVerse(payload?.data?.dailyVerse ?? null);
                 setApiHighlights(Array.isArray(payload?.data?.highlights) ? payload.data.highlights : []);
-                setApiPinnedLesson(payload?.data?.pinnedLesson ?? null);
                 setApiRituals(normalizeRituals(payload?.data?.rituals));
-                setApiWelcomeVerse(payload?.data?.welcomeVerse ?? null);
                 
                 if (payload?.data?.spiritual_state) {
                     setActiveState(payload.data.spiritual_state);
@@ -293,16 +274,9 @@ export default function TodayPage() {
                     {activeState !== 'on-fire' && (
                         <ThrowingCard index={0} className="rounded-[32px]">
                             <DailyVerseHeroCard
-                                welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
+                                welcomeVerse={normalizedRitualVerse ?? undefined}
                                 fallbackVerse={dailyVerse}
                             />
-                        </ThrowingCard>
-                    )}
-
-                    {/* Learning Path - Bring to top if On-Fire */}
-                    {apiPinnedLesson && (
-                        <ThrowingCard index={activeState === 'on-fire' ? -1 : 5} className="rounded-[32px]">
-                            <PinnedLessonCard pinned={apiPinnedLesson} />
                         </ThrowingCard>
                     )}
 
@@ -320,7 +294,7 @@ export default function TodayPage() {
                     {activeState === 'on-fire' && (
                         <ThrowingCard index={5} className="rounded-[32px]">
                             <DailyVerseHeroCard
-                                welcomeVerse={normalizedRitualVerse ?? welcomeVerse}
+                                welcomeVerse={normalizedRitualVerse ?? undefined}
                                 fallbackVerse={dailyVerse}
                             />
                         </ThrowingCard>

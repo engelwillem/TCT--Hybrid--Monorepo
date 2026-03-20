@@ -3,9 +3,10 @@
 ## Domain Overview
 Sektor beranda utama (The Anchor) yang mendikte ke mana user pertama kali jatuh pasca-Otentikasi. Arsitektur semula hanya *content-loader* berurut (Verse, Bài, Lesson, Posts). Misi baru menjadikannya *Context Router*.
 
-## Temuan Inti
-- Terdapat komponen blok masif statis `<ThrowingCard>` dalam kode *page* yang mengikat urutan indeks tanpa hierarki kondisi.
-- *API `TodayApiController`* mengalirkan metadata *Highlights* (Featured verse/lessons) murni tanpa diskriminasi berdasar profil *user*.
+## Temuan Reality Drift (Fixed 2026-03-20)
+- ✅ **Contract Mismatch**: **FIXED**. Frontend sekarang secara jujur hanya memanggil `dailyVerse`, `rituals`, `highlights`, dan `spiritual_state`.
+- ✅ **Security Blocker**: **FIXED**. Logging token di proxy telah dihapus.
 
-## Target Parity
-Mengesahkan UI beranda (*Today*) untuk tidak sekadar "tampil", melainkan memiliki pemicu dinamis (StateChips) yang merombak ulang (*re-order*) balasan data yang disajikan, agar sesuai dengan status kalbu hari ini (`anxious/weary/grateful`).
+## Target Parity (Verified)
+- Payload Today sudah sinkron dengan backend `TodayApiController`.
+- Tidak ada lagi ketergantungan pada field phantom `pinnedLesson`.

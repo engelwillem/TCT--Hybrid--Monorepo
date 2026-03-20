@@ -23,7 +23,7 @@ Akar masalah adalah **"Redundant Global-Local Navigation Clashes"**. Di mana sid
 - **Desktop Layout:** ✅ **STABILIZED** (Satu sidebar persepsi).
 - **Dark Hero Card:** ✅ **RESTORED**.
 - **Navigation:** ✅ **FIXED** (Hanya menggunakan sidebar global).
-- **Core Functionality:** ✅ **DONE** (Reader & Search normal).
+- **Core Functionality:** ⚠️ **PARTIAL** (Reader OK, but Reflections & Journey are MOCK).
 
 ## 6. Sisa QA yang Masih Perlu
 - [ ] **Viewport Check:** Verifikasi pada monitor ultra-wide (>= 1920px) agar kontainer tetap di tengah.

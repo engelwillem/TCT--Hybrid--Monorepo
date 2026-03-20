@@ -1,4 +1,4 @@
-# Open Blockers
+# Active & Resolved Blockers
 
 ## 1. Frontend Monorepo Checks Failing (Fix Identification/VERIFYING)
 **Status:** VERIFYING (Fix pending CI pass)  
@@ -17,7 +17,7 @@ Codex sedang melacak output `lint` dan `build` untuk memperbaiki *type errors*, 
 ---
 
 ## 2. GitHub Actions SSH/SCP Access Blocked (Firewall)
-**Status:** OPEN  
+**Status:** BLOCKED  
 **Type:** infrastructure / CI-CD blocker  
 **Owner:** infrastructure/admin
 
@@ -41,7 +41,7 @@ HEALTHCHECK_BASE_URL="https://api.thechoosentalks.org" bash /home/thechoosentalk
 ---
 
 ## 2. Frontend V1 redesign batch has not resumed yet
-**Status:** OPEN BACKLOG  
+**Status:** DRIFT  
 **Type:** product/UI execution backlog  
 **Owner:** frontend/product
 
@@ -64,44 +64,19 @@ Issue profile readability (kontras teks) dan avatar resolution (URL storage) tel
 - [x] **Webhook Strategy Alignment**: Keputusan teknis pemicu asinkron sudah diambil; implementasi webhook tidak lagi menghambat rilis harian (karena manual deploy sudah stabil).
 - [x] **Admin Login Recovery (Filament Production)**: `https://admin.thechoosentalks.org/admintalk/login` sudah pulih; blocker `Route [register] not defined` dan blocker CSP runtime admin telah ditutup. Header live admin sudah memuat `script-src 'self' 'unsafe-inline' 'unsafe-eval' https:`.
 
-## 3. Security Blocker: Proxy Token Logging
-**Status:** OPEN (CRITICAL SITE RELIABILITY RISK)
-**Type:** Security
-**Owner:** Backend/Security
+## 3. Reality Resync: Functional Gaps (⚠️ PARTIAL)
+**Status:** PARTIAL (Security & Today FIXED)
 
-### Why it is still open
-`src/lib/proxy-laravel.ts:30` contains explicit logging of authorization header: `console.log("PROXY_DEBUG_TOKEN:", JSON.stringify(authorization));`.
-
-### Impact
-Exposing `Authorization/Bearer` user tokens directly in logs. High risk of sensitive data exposure.
-
----
-
-## 4. Today Dashboard Contract Mismatch
-**Status:** OPEN
-**Type:** Data Contract
-**Owner:** Backend
-
-### Why it is still open
-Frontend expects `pinnedLesson` and `welcomeVerse` (`src/app/today/page.tsx:140-142`), but backend controller (`backend-api/app/Http/Controllers/Api/V1/TodayApiController.php:24-30`) did not include these keys in the response body.
-
-### Impact
-Sections for Daily Verse and Pinned Lessons remain in fallback/mock state despite database parity.
-
----
-
-## 5. Reflections & Spiritual Journey (Frontend wiring lag)
-**Status:** OPEN
-**Type:** Implementation Delay
-**Owner:** Frontend
-
-### Current State
-Backend API for Reflections is ready (`backend-api/routes/api.php:84-86`), but frontend is still 100% mock in `src/app/versehub/[lang]/reflections/page.tsx:28-30`. Similarly, Spiritual Journey summary is used in Profile but the dedicated page remains mock.
+### Resolved Findings:
+- ✅ **Security (Proxy Token Logging)**: **FIXED**.
+- ✅ **Contract Error (Today)**: **FIXED**. Frontend logic removed phantom field dependency (Verified 2026-03-20).
+- ❌ **Mock Drift (VerseHub)**: **MOCK**. Reflections & Journey pages are seluruhnya mock.
+- ⚠️ **Logic Error (Profile)**: **DRIFT**. Journey CTA missing `useSearchParams` hook.
 
 ---
 
 ## 6. Profile Journey CTA (Link Broken)
-**Status:** OPEN
+**Status:** DRIFT
 **Type:** Logic/Wiring Issue
 **Owner:** Frontend
 
@@ -109,7 +84,7 @@ Backend API for Reflections is ready (`backend-api/routes/api.php:84-86`), but f
 `src/app/profile/page.tsx:661` performs `router.push('/profile?section=journey')`, but `ProfilePage` does not use `useSearchParams` hook to read and navigate to that section.
 
 ## 4. Tencent Edge Duplicate Deployment Trigger
-**Status:** OPEN (Pending Console adjustment)  
+**Status:** BLOCKED (Pending Console adjustment)  
 **Type:** DevOps / Deployment hygiene  
 **Owner:** DevOps/Admin
 

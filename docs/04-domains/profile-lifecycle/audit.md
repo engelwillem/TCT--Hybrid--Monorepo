@@ -3,9 +3,10 @@
 ## Domain Overview
 Domain profil menangani sinkronisasi sesi pengguna dari Firebase (`app-auth-token.ts`) ke identitas Backend (Laravel Sanctum), pengeditan nama, serta unggahan avatar.
 
-## Temuan Inti
-- Validasi unggahan avatar Laravel cukup ketat (ukuran dan dimensi).
-- Bypass otentikasi e2e token dibutuhkan agar Playwright dapat meretas ke state auth tanpa harus login OTP Firebase.
+## Temuan Reality Drift (2026-03-20)
+- **Journey CTA Link Broken**: `src/app/profile/page.tsx:661` mengarah ke `?section=journey`, namun `ProfilePage` tidak membaca param `section` (`useSearchParams` tidak dipakai).
+- **Status 2FA**: UI sudah tersedia namun perlu validasi sync dengan session Laravel pasca-OTP.
 
-## Target Parity
-Mengesahkan penulisan nama dan penggantian foto profil dapat menembus API `/api/v1/auth/profile` dengan balasan *200 OK* dan sinkronisasi re-render di Client Next.js.
+## Target Parity (Revised)
+- Implementasi `useSearchParams` untuk navigasi internal section di Profile.
+- Sinkronisasi status avatar secara real-time pasca unggahan (re-fetch profil).

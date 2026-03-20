@@ -26,43 +26,30 @@ Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI 
 
 | Domain | Integrasi | Sifat Data | Status |
 |---|---|---|---|
-| Auth/Login | e2e Real | DB Backend | ✅ REAL |
-| Profile | e2e Real | DB Backend | ✅ PATCHED IN SOURCE |
-| Community | e2e Real | Legacy Parity | ✅ REAL |
-| Today | Partial | Contract Mismatch | ⚠️ FRAGILE |
-| VerseHub | e2e Real | DB Backend | ✅ REAL |
-| Reflections | Backend Ready | FRONTEND MOCK | ⚠️ IN PROGRESS |
-| My Spiritual Journey | Summary Real | PAGE MOCK | ⚠️ IN PROGRESS |
+| Auth/Login | e2e Real | DB Backend | ✅ LIVE |
+| Profile | e2e Real | DB Backend | ✅ LIVE |
+| Community | e2e Real | Legacy Parity | ✅ PARTIAL |
+| Today | e2e Real | DB Backend | ✅ LIVE |
+| VerseHub | e2e Real | DB Backend | ✅ LIVE |
+| Reflections | Backend Ready | FRONTEND MOCK | ❌ MOCK |
+| My Spiritual Journey | Summary Real | PAGE MOCK | ❌ MOCK |
 
 ---
 
-## 5. Active Issues & Needs QA
-- **SECURITY BLOCKER:** `src/lib/proxy-laravel.ts:30` logging authorization tokens. CRITICAL FIX REQUIRED.
-- **Frontend CI Failure (Blocked):** 🔴 Perbaikan `lucide-react` sedang diverifikasi. Menahan rilis otomatis.
-- **Today Dashboard:** ⚠️ **CONTRACT MISMATCH**. Backend tidak mengirim `pinnedLesson` dan `welcomeVerse`.
-- **Journey CTA:** ⚠️ **BROKEN LINK**. Profile page tidak merespons `?section=journey`.
-- **Tencent Edge:** ⚠️ **DUPLICATE TRIGGER**. Masalah pemicu ganda (Auto-deploy vs Webhook).
+## 5. Active Issues & Needs QA (Verified 2026-03-20)
+- ✅ **SECURITY FIX:** `src/lib/proxy-laravel.ts` logging tokens REMOVED.
+- ✅ **TODAY API:** Kontrak frontend disesuaikan dengan backend nyata. FIXED.
+- ⚠️ **Journey CTA:** `ProfilePage` missing `useSearchParams` wiring.
+- ⚠️ **Tencent Edge:** Masalah trigger ganda pada deployment.
 
 ---
 
-## 6. Blockers Operasional
-- **Proxy Token Logging:** Security risk di BFF layer.
-- **Today API Contract:** Inconsistency between frontend expectations and backend response.
-- **Reflections wiring:** UI disconnect from ready backend routes.
+## 6. Audit Verdict
+**Status Audit Resync:** ⚠️ **PARTIAL**
+- Dasar Bukti: `docs/01-audits/overall/2026-03-20-master-reality-resync-report.md`.
+- Security & Today: **FIXED**.
+- Integrasi core stabil, sisa sub-fitur VerseHub (Reflections) masih mock.
 
 ---
-
-## 7. Realitas Integrasi (Matrix Summary)
-| Domain | Integrasi | Sifat Data | Status |
-|---|---|---|---|
-| Auth/Login | e2e Real | DB Backend | ✅ REAL |
-| VerseHub Reader | e2e Real | DB Backend | ✅ REAL |
-| Today | Partial | Contract Gap | ⚠️ FRAGILE |
-| Community | Partial | Legacy Parity | ⚠️ FRAGILE |
-| Reflections | Backend Ready | MOCK FRONTEND | ⚠️ NOT END-TO-END |
-| My Spiritual Journey | Summary Real | MOCK PAGE | ⚠️ NOT END-TO-END |
-
----
-**Status Audit:** ✅ **AUDIT COMPLETE & VERIFIED (2026-03-20)**
-- Semua temuan berbasis bukti file (`src/app/today/page.tsx`, `proxy-laravel.ts`, dll).
-- Tidak ada overclaim persentase atau status "finally synchronized".
+**Status Audit:** ✅ **FIXED (2026-03-20)**
+- Semua klaim status ilegal (seperti 100% atau PARITY) telah diturunkan sesuai audit source nyata.

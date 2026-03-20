@@ -38,6 +38,13 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const baseUrl = getLaravelApiBaseUrl();
   const target = `${baseUrl}${normalizedPath}`;
+  const targetPathname = (() => {
+    try {
+      return new URL(target).pathname;
+    } catch {
+      return normalizedPath;
+    }
+  })();
 
   // Use a shorter timeout for proxy calls to prevent hanging the Next.js server
   const controller = new AbortController();
@@ -52,8 +59,11 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
         ...(init?.headers ?? {}),
       },
   };
-  console.log("FETCH_DEBUG_URL:", target);
-  console.log("FETCH_DEBUG_OPTIONS:", JSON.stringify(fetchOptions.headers));
+  console.info("[laravel-api] request", {
+    method: fetchOptions.method || "GET",
+    targetPath: targetPathname,
+    hasBody: Boolean(fetchOptions.body),
+  });
 
   try {
     const response = await fetch(target, fetchOptions as any);

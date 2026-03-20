@@ -658,18 +658,32 @@ export default function ProfilePage() {
                     )}
 
                     <AccordionCard title="Your Spiritual Journey">
-                        <button onClick={() => router.push('/profile?section=journey')} className="flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft">
-                            <div className="text-left space-y-1">
-                                <p className="text-lg font-black text-foreground tracking-tight">Growth Monitoring</p>
-                                <p className="text-xs text-brand/80 font-bold uppercase tracking-widest">Riwayat hafalan & catatan batin</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                {journeyBadge > 0 && <span className="h-6 min-w-[24px] px-2 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-black">{journeyBadge}</span>}
-                                <div className="h-10 w-10 rounded-2xl bg-surface-muted flex items-center justify-center group-hover:bg-brand group-hover:text-brand-foreground transition-all">
-                                    <ChevronRight className="h-5 w-5" />
+                        <div className="pt-2 space-y-4">
+                            <button 
+                                onClick={() => router.push('/versehub/id/my-spiritual-journey')} 
+                                className="flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft"
+                            >
+                                <div className="text-left space-y-1">
+                                    <p className="text-lg font-black text-foreground tracking-tight">Growth Monitoring</p>
+                                    <p className="text-[11px] text-brand/80 font-bold uppercase tracking-widest leading-relaxed">Lihat seluruh jejak, hafalan, & catatan batin Anda</p>
                                 </div>
-                            </div>
-                        </button>
+                                <div className="flex items-center gap-4">
+                                    {journeyBadge > 0 && (
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20">
+                                            <Sparkles className="h-3 w-3 text-rose-500" />
+                                            <span className="text-[10px] font-black text-rose-500">{journeyBadge}</span>
+                                        </div>
+                                    )}
+                                    <div className="h-10 w-10 rounded-2xl bg-surface-muted flex items-center justify-center group-hover:bg-brand group-hover:text-brand-foreground transition-all">
+                                        <ChevronRight className="h-5 w-5" />
+                                    </div>
+                                </div>
+                            </button>
+                            
+                            <p className="text-[10px] px-4 font-medium text-muted-foreground leading-relaxed italic">
+                                * Halaman Journey menyediakan visualisasi progres dan riwayat interaksi Alkitab Anda secara mendalam.
+                            </p>
+                        </div>
                     </AccordionCard>
 
                     <AccordionCard title="Informasi Personal">

@@ -20,16 +20,25 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
   }
 
   try {
+    const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+    const requestUrl = new URL(request.url);
+    const targetPathname = targetPath.split("?")[0] || targetPath;
+
     const contentType = request.headers.get("content-type");
     const authorization = request.headers.get("authorization");
     const cookie = request.headers.get("cookie");
     const xsrfToken = request.headers.get("x-xsrf-token") || request.headers.get("X-XSRF-TOKEN");
-    const referer = request.headers.get("referer");
     const accept = request.headers.get("accept");
-    
-    console.log("PROXY_DEBUG_TOKEN:", JSON.stringify(authorization));
-    
-    console.log("PROXY_DEBUG - Method:", request.method, "TargetPath:", targetPath, "Authorization:", authorization ? "PRESENT" : "MISSING");
+
+    console.info("[proxy-laravel] request", {
+      requestId,
+      method: request.method,
+      sourcePath: requestUrl.pathname,
+      targetPath: targetPathname,
+      hasAuth: Boolean(authorization),
+      hasCookie: Boolean(cookie),
+      hasXsrf: Boolean(xsrfToken),
+    });
     
     // We only read the body for methods that typically have one
     const hasBody = !["GET", "HEAD", "OPTIONS"].includes(request.method);
@@ -66,6 +75,13 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       },
     });
 
+    console.info("[proxy-laravel] response", {
+      requestId,
+      method: request.method,
+      targetPath: targetPathname,
+      status: response.status,
+    });
+
     // 3. Clone headers for the proxy response
     const responseHeaders = new Headers();
     const headersToForward = ["content-type", "x-auth", "cache-control"];
@@ -97,7 +113,14 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
 
   } catch (error) {
     const isAbort = error instanceof Error && error.name === "AbortError";
-    console.error(`Proxy ${isAbort ? "Timeout" : "Error"}:`, error);
+    const requestId = request.headers.get("x-request-id") || "unknown";
+    console.error("[proxy-laravel] error", {
+      requestId,
+      method: request.method,
+      targetPath: targetPath.split("?")[0] || targetPath,
+      type: isAbort ? "timeout" : "proxy_error",
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
     
     return NextResponse.json(
       {

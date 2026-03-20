@@ -2,7 +2,7 @@
 
 **Baseline:** `/home/user/studio/docs/TCT--Laravel--Legacy-main`  
 **Target:** Root Next.js (Frontend) + `backend-api/` (Laravel API)  
-**Tujuan:** 100% Functional & Visual Parity (Replication Only)
+**Tujuan:** Paritas fungsional dan visual (Replication Only)
 
 ---
 
@@ -11,8 +11,8 @@
 | Route | Legacy Source Page | Target Next.js File | Target API Controller (V1) | Status | Gap Key |
 |---|---|---|---|---|---|
 | `/` | `Auth/Welcome.tsx` | `src/app/page.tsx` | N/A (Marketing) | IN PROGRESS | Visual hero stacking duration & ghosting intensity |
-| `/today` | `Today/Index.tsx` | `src/app/today/page.tsx` | `TodayApiController` | PARITY DONE | Minimal gap in ritual card ordering |
-| `/community` | `Community/Index.tsx` | `src/app/community/page.tsx` | `CommunityApiController` | IN PROGRESS | Media upload proxy & admin/moderation action buttons |
+| `/today` | `Today/Index.tsx` | `src/app/today/page.tsx` | `TodayApiController` | **LIVE** | **Fixed**: Contract synced with backend. |
+| `/community` | `Community/Index.tsx` | `src/app/community/page.tsx` | `CommunityApiController` | **PARTIAL** | Media upload proxy & admin/moderation action buttons |
 | `/inbox` | `Inbox/Index.tsx` | `src/app/inbox/page.tsx` | `InboxController` | IN PROGRESS | Real-time unread count sync via pusher/polling |
 | `/inbox/{id}` | `Inbox/Show.tsx` | `src/app/inbox/[id]/page.tsx` | `DirectMessageController` | IN PROGRESS | Message approval flow logic |
 | `/profile` | `Profile.tsx` | `src/app/profile/page.tsx` | `ProfileController` | IN PROGRESS | 2FA setup/disable QR code & confirmation flow |
@@ -23,12 +23,12 @@
 
 | Route | Legacy Source Page | Target Next.js File | Target API Controller (V1) | Status | Gap Key |
 |---|---|---|---|---|---|
-| `/channels` | `Channels/Index.tsx` | `src/app/channels/page.tsx` | `ChannelController` | PARITY DONE | Consistency in membership count display |
-| `/channels/sabbath-school` | `Channels/SabbathSchool/QuarterIndex.tsx` | `src/app/channels/sabbath-school/page.tsx` | `SabbathSchoolController` | PARITY DONE | Continue study logic parity |
-| `/channels/sabbath-school/{year}/q{q}/lesson/{n}` | `Channels/SabbathSchool/LessonIndex.tsx` | `src/app/channels/sabbath-school/[year]/[quarter]/lesson/[lessonNumber]/page.tsx` | `SabbathSchoolController` | PARITY DONE | Lesson state indicator (completed vs current) |
+| `/channels` | `Channels/Index.tsx` | `src/app/channels/page.tsx` | `ChannelController` | LIVE | Consistency in membership count display |
+| `/channels/sabbath-school` | `Channels/SabbathSchool/QuarterIndex.tsx` | `src/app/channels/sabbath-school/page.tsx` | `SabbathSchoolController` | LIVE | Continue study logic parity |
+| `/channels/sabbath-school/{year}/q{q}/lesson/{n}` | `Channels/SabbathSchool/LessonIndex.tsx` | `src/app/channels/sabbath-school/[year]/[quarter]/lesson/[lessonNumber]/page.tsx` | `SabbathSchoolController` | LIVE | Lesson state indicator (completed vs current) |
 | `/channels/sabbath-school/{year}/q{q}/lesson/{n}/{day}` | `Channels/SabbathSchool/DayShow.tsx` | `src/app/channels/sabbath-school/[year]/[quarter]/lesson/[lessonNumber]/[dayKey]/page.tsx` | `SabbathSchoolController` | IN PROGRESS | Day-to-day transition animation & comment nested threading |
-| `/channels/{slug}` | `Channels/Weekly/Index.tsx` | `src/app/channels/[slug]/page.tsx` | `WeeklyController` | PARITY DONE | Sorting of published vs scheduled posts |
-| `/channels/{slug}/{date}` | `Channels/Weekly/Show.tsx` | `src/app/channels/[slug]/[date]/page.tsx` | `WeeklyController` | PARITY DONE | Layout density of long content |
+| `/channels/{slug}` | `Channels/Weekly/Index.tsx` | `src/app/channels/[slug]/page.tsx` | `WeeklyController` | LIVE | Sorting of published vs scheduled posts |
+| `/channels/{slug}/{date}` | `Channels/Weekly/Show.tsx` | `src/app/channels/[slug]/[date]/page.tsx` | `WeeklyController` | LIVE | Layout density of long content |
 
 ---
 
@@ -36,11 +36,11 @@
 
 | Route | Legacy Source Page | Target Next.js File | Target API Controller (V1) | Status | Gap Key |
 |---|---|---|---|---|---|
-| `/versehub/{lang}` | `VerseHub/Reader.tsx` | `src/app/versehub/[lang]/page.tsx` | `VerseHubReaderController` | IN PROGRESS | Full book/chapter list API integration (currently partial mock) |
+| `/versehub/{lang}` | `VerseHub/Reader.tsx` | `src/app/versehub/[lang]/page.tsx` | `VerseHubReaderController` | **PARTIAL** | Sub-features (Reflections/Journey) remain mock. |
 | `/versehub/{lang}/{ref}` | `versehub.show` (Blade) | `src/app/versehub/[lang]/[slug]/page.tsx` | `VerseHubController` | IN PROGRESS | Dynamic OG Image generation parity |
-| `/versehub/id/my-spiritual-journey` | `VerseHub/Activity.tsx` | `src/app/versehub/[lang]/my-spiritual-journey/page.tsx` | `VersehubActionController` | IN PROGRESS | Timeline grouping & note editing persistence |
-| `/versehub/{lang}/study` | `VerseHub/StudyPaths/Index.tsx` | `src/app/versehub/[lang]/study/page.tsx` | `StudyPathController` | PARITY DONE | Enrollment count visibility |
-| `/versehub/{lang}/study/{slug}` | `VerseHub/StudyPaths/Show.tsx` | `src/app/versehub/[lang]/study/[slug]/page.tsx` | `StudyPathController` | PARITY DONE | Step completion confetti & feedback loop |
+| `/versehub/id/my-spiritual-journey` | `VerseHub/Activity.tsx` | `src/app/versehub/[lang]/my-spiritual-journey/page.tsx` | `VersehubActionController` | **MOCK** | Page remains statis/hardcoded in frontend. |
+| `/versehub/{lang}/study` | `VerseHub/StudyPaths/Index.tsx` | `src/app/versehub/[lang]/study/page.tsx` | `StudyPathController` | LIVE | Enrollment count visibility |
+| `/versehub/{lang}/study/{slug}` | `VerseHub/StudyPaths/Show.tsx` | `src/app/versehub/[lang]/study/[slug]/page.tsx` | `StudyPathController` | LIVE | Step completion confetti & feedback loop |
 
 ---
 
