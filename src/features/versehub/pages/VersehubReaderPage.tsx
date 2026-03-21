@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useAuthSession } from '@/auth/use-auth-session';
 
 // UI Primitives
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +69,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const isId = lang === 'id';
     
     // Auth & Basic State
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { isAuthenticated, isRestoring: isAuthRestoring } = useAuthSession();
     const [isChapter, setIsChapter] = useState(mode === 'chapter');
     const [chapter_label, setChapterLabel] = useState('');
     const [verses, setVerses] = useState<Verse[]>([]);
@@ -146,16 +147,20 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     const fetchBooks = useCallback(async () => {
         try {
             const res = await fetch(`/api/versehub/${lang}/books`);
-            if (!res.ok) throw new Error('books_fetch_failed');
-            const data = await res.json();
-            if (data.books) {
+            if (!res.ok) {
+                // Graceful degradation: keep VerseHub usable even when books endpoint is down.
+                setBooks([]);
+                return;
+            }
+            const data = await res.json().catch(() => null);
+            if (Array.isArray(data?.books)) {
                 setBooks(data.books);
+                setError((prev) => (prev === 'books_fetch_failed' ? null : prev));
             } else {
                 setBooks([]);
             }
         } catch (e: any) { 
-            console.error("VerseHub: Failed to load books", e);
-            setError(e.message === 'books_fetch_failed' ? 'books_fetch_failed' : 'fetch_error');
+            // Keep this silent for users: landing can still run with search and chapter direct links.
             setBooks([]);
         }
     }, [lang]);
@@ -169,7 +174,14 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
             
             if (!res.ok) {
                 if (res.status === 404) throw new Error('chapter_not_found');
-                if (res.status === 503) throw new Error('backend_unavailable');
+                if (res.status === 503) {
+                    setIsChapter(false);
+                    setVerses([]);
+                    setChapterLabel('');
+                    setProgressTotal(0);
+                    setError('backend_unavailable');
+                    return;
+                }
                 throw new Error('server_error');
             }
 
@@ -189,7 +201,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                 throw new Error('invalid_payload');
             }
         } catch (e: any) { 
-            if (e.message !== 'chapter_not_found') {
+            if (e.message !== 'chapter_not_found' && e.message !== 'backend_unavailable') {
                 console.error("VerseHub: Load chapter error", e);
             }
             setError(e.message);
@@ -200,8 +212,6 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
 
     // Initial Load: Books & Auth
     useEffect(() => {
-        setIsAuthenticated(Boolean(getAppAccessToken()));
-        
         fetchBooks();
 
         if (mode === 'chapter' && initialChapterRef) {
@@ -327,6 +337,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     };
 
     const updateVerseAction = async (key: string, patch: Partial<VerseState>, label?: string) => {
+        if (isAuthRestoring) return;
         if (!isAuthenticated) {
             router.push('/');
             return;
@@ -443,13 +454,17 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                 </div>
 
                 <main className="mx-auto max-w-3xl px-4 py-8">
-                    {error === 'books_fetch_failed' || (error === 'fetch_error' && !isChapter) ? (
+                    {(error === 'fetch_error' || error === 'backend_unavailable') && !isChapter ? (
                         <div className="rounded-[2.5rem] bg-rose-500/5 border border-rose-500/10 p-10 text-center">
                             <div className="h-16 w-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-6 text-rose-500">
                                 <RefreshCcw size={32} />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">Gagal Memuat Daftar Kitab</h3>
-                            <p className="text-muted-foreground text-sm mb-8">Maaf, terjadi kesalahan saat mengambil data dari server.</p>
+                            <h3 className="text-xl font-bold mb-2">VerseHub Sedang Beristirahat</h3>
+                            <p className="text-muted-foreground text-sm mb-8">
+                                {error === 'backend_unavailable'
+                                    ? 'Backend sementara belum tersedia. Coba lagi dalam beberapa saat.'
+                                    : 'Maaf, terjadi kesalahan saat mengambil data dari server.'}
+                            </p>
                             <button 
                                 onClick={() => { setError(null); fetchBooks(); }}
                                 className="px-8 py-3 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 transition-all shadow-sm"
@@ -552,29 +567,32 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                         </div>
                                     </div>
 
-                                    {/* Landing Hero (restored) */}
-                                    <div className="rounded-[3rem] p-10 bg-[#02133d] border border-[#12315f] shadow-premium relative overflow-hidden text-white">
-                                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/40 to-transparent" />
+                                    {/* Landing Hero (Polished for iOS feel) */}
+                                    <div className="rounded-[2.5rem] p-8 sm:p-10 bg-surface border border-border/50 shadow-soft relative overflow-hidden text-foreground">
                                         <div className="relative z-10">
-                                            <Badge className="bg-brand/20 text-brand border-none mb-4">Daily Rhythm</Badge>
-                                            <h2 className="text-3xl font-bold mb-4 tracking-tight">Mulai baca Alkitab hari ini.</h2>
-                                            <p className="text-white/50 mb-8 max-w-sm font-medium">Pilih salah satu kitab di bawah untuk memulai perjalanan rohanimu yang tenang.</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <button onClick={() => {setTab('ot'); setPickerOpen(true);}} className="p-6 rounded-3xl bg-white/5 border border-white/5 text-left hover:bg-white/10 transition-all group">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Old Testament</p>
-                                                        <Scroll className="h-4 w-4 text-amber-500/50 group-hover:rotate-12 transition-transform" />
+                                            <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-4">Perpustakaan Firman</p>
+                                            <h2 className="tct-serif text-[28px] leading-tight mb-3 tracking-tight">Mulai perenungan firman.</h2>
+                                            <p className="text-muted-foreground text-[14px] font-medium mb-8 max-w-sm">Pilih kitab untuk memulai perjalanan. Anda akan masuk ke dalam mode baca yang tenang dan fokus.</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <button onClick={() => {setTab('ot'); setPickerOpen(true);}} className="p-5 rounded-[1.5rem] bg-surface-muted border border-border/60 text-left hover:bg-surface-elevated transition-all group flex flex-col justify-between">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <p className="text-[10px] font-black text-amber-600/80 uppercase tracking-widest">Perjanjian Lama</p>
+                                                        <Scroll className="h-4 w-4 text-amber-600/40 group-hover:rotate-12 transition-transform" />
                                                     </div>
-                                                    <p className="font-bold text-lg">Kejadian 1</p>
-                                                    <p className="mt-1 text-[11px] text-white/60">{otBooksCount} kitab tersedia</p>
+                                                    <div>
+                                                        <p className="font-bold text-[17px] leading-none mb-1">Kejadian 1</p>
+                                                        <p className="text-[11px] text-muted-foreground font-medium">{otBooksCount} kitab</p>
+                                                    </div>
                                                 </button>
-                                                <button onClick={() => {setTab('nt'); setPickerOpen(true);}} className="p-6 rounded-3xl bg-white/5 border border-white/5 text-left hover:bg-white/10 transition-all group">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <p className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">New Testament</p>
-                                                        <ArrowRightCircle className="h-4 w-4 text-sky-400/50 group-hover:translate-x-1 transition-transform" />
+                                                <button onClick={() => {setTab('nt'); setPickerOpen(true);}} className="p-5 rounded-[1.5rem] bg-surface-muted border border-border/60 text-left hover:bg-surface-elevated transition-all group flex flex-col justify-between">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <p className="text-[10px] font-black text-sky-600/80 uppercase tracking-widest">Perjanjian Baru</p>
+                                                        <ArrowRightCircle className="h-4 w-4 text-sky-600/40 group-hover:translate-x-1 transition-transform" />
                                                     </div>
-                                                    <p className="font-bold text-lg">Matius 1</p>
-                                                    <p className="mt-1 text-[11px] text-white/60">{ntBooksCount} kitab tersedia</p>
+                                                    <div>
+                                                        <p className="font-bold text-[17px] leading-none mb-1">Matius 1</p>
+                                                        <p className="text-[11px] text-muted-foreground font-medium">{ntBooksCount} kitab</p>
+                                                    </div>
                                                 </button>
                                             </div>
                                         </div>

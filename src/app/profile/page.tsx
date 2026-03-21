@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
+import { useAuthSession } from '@/auth/use-auth-session';
 import {
     ShieldCheck,
     LogOut,
@@ -54,6 +55,24 @@ type ApiProfilePayload = {
             recoveryCodesRemaining?: number;
         };
     };
+};
+
+type AvatarTransform = {
+    x: number;
+    y: number;
+    scale: number;
+};
+
+const DEFAULT_AVATAR_TRANSFORM: AvatarTransform = {
+    x: 0,
+    y: 0,
+    scale: 1,
+};
+
+const AVATAR_TRANSFORM_LIMIT = {
+    offset: 42,
+    minScale: 1,
+    maxScale: 1.6,
 };
 
 const API_BASE_FALLBACK = 'https://api.thechoosentalks.org';
@@ -149,9 +168,21 @@ function getInitials(rawName: string): string {
     return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
 }
 
+function clampTransform(next: AvatarTransform): AvatarTransform {
+    const offset = AVATAR_TRANSFORM_LIMIT.offset;
+    const minScale = AVATAR_TRANSFORM_LIMIT.minScale;
+    const maxScale = AVATAR_TRANSFORM_LIMIT.maxScale;
+    return {
+        x: Math.max(-offset, Math.min(offset, Number(next.x) || 0)),
+        y: Math.max(-offset, Math.min(offset, Number(next.y) || 0)),
+        scale: Math.max(minScale, Math.min(maxScale, Number(next.scale) || 1)),
+    };
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const { user: authUser } = useUser();
+    const { status: authStatus, isAuthenticated } = useAuthSession();
     
     // UI States
     const [loading, setLoading] = useState(true);
@@ -159,15 +190,16 @@ export default function ProfilePage() {
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const avatarPreviewBlobRef = useRef<string | null>(null);
+    const [avatarTransform, setAvatarTransform] = useState<AvatarTransform>(DEFAULT_AVATAR_TRANSFORM);
 
     // Profile States
     const [user, setUser] = useState({
-        name: authUser?.displayName || 'Guest User',
-        email: authUser?.email || 'guest@example.com',
+        name: authUser?.displayName || '',
+        email: authUser?.email || '',
         avatarUrl: null as string | null,
         avatarCandidates: [] as string[],
         is_admin: false,
-        email_verified_at: authUser?.emailVerified ? 'verified' : null,
+        email_verified_at: null as string | null,
     });
 
     const [opsGateway, setOpsGateway] = useState<OpsGatewayData | null>(null);
@@ -212,7 +244,31 @@ export default function ProfilePage() {
         setTimeout(() => setToast(null), 3000);
     };
 
+    const currentAvatarSrc = user.avatarUrl || user.avatarCandidates[0] || null;
+    const transformStorageKey = `tct.profile.avatarTransform:${user.email || 'guest'}`;
+
+    const updateAvatarTransform = (updater: (prev: AvatarTransform) => AvatarTransform) => {
+        setAvatarTransform((prev) => clampTransform(updater(prev)));
+    };
+
     useEffect(() => {
+        if (authStatus === 'restoring') return;
+        if (!isAuthenticated) {
+            router.replace('/login?next=/profile');
+        }
+    }, [authStatus, isAuthenticated, router]);
+
+    useEffect(() => {
+        if (authStatus === 'restoring') {
+            setLoading(true);
+            return;
+        }
+
+        if (!isAuthenticated) {
+            setLoading(false);
+            return;
+        }
+
         const authAvatarCandidates = buildAvatarCandidates(authUser?.photoURL || null);
         if (authAvatarCandidates.length > 0) {
             setUser((prev) => ({
@@ -251,8 +307,8 @@ export default function ProfilePage() {
                 if (!isActive) return;
 
                 const nextUser = {
-                    name: apiUser.name || 'Guest User',
-                    email: apiUser.email || 'guest@example.com',
+                    name: apiUser.name || authUser?.displayName || '',
+                    email: apiUser.email || authUser?.email || '',
                     avatarUrl: avatarCandidates[0] || null,
                     avatarCandidates,
                     is_admin: Boolean(apiUser.is_admin),
@@ -280,7 +336,7 @@ export default function ProfilePage() {
 
         loadProfile();
         return () => { isActive = false; };
-    }, [authUser?.photoURL]);
+    }, [authStatus, isAuthenticated, authUser?.displayName, authUser?.email, authUser?.photoURL]);
 
     useEffect(() => {
         return () => {
@@ -289,6 +345,34 @@ export default function ProfilePage() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const raw = window.localStorage.getItem(transformStorageKey);
+            if (!raw) {
+                setAvatarTransform(DEFAULT_AVATAR_TRANSFORM);
+                return;
+            }
+            const parsed = JSON.parse(raw) as Partial<AvatarTransform>;
+            setAvatarTransform(clampTransform({
+                x: Number(parsed?.x ?? 0),
+                y: Number(parsed?.y ?? 0),
+                scale: Number(parsed?.scale ?? 1),
+            }));
+        } catch {
+            setAvatarTransform(DEFAULT_AVATAR_TRANSFORM);
+        }
+    }, [transformStorageKey]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem(transformStorageKey, JSON.stringify(clampTransform(avatarTransform)));
+        } catch {
+            // ignore local persistence error
+        }
+    }, [avatarTransform, transformStorageKey]);
 
     useEffect(() => {
         let isActive = true;
@@ -372,8 +456,24 @@ export default function ProfilePage() {
             if (response.ok) {
                 if (payload?.data?.avatar_url) {
                     const avatarCandidates = buildAvatarCandidates(payload.data.avatar_url);
-                    const mergedCandidates = dedupeCandidates([localPreview, ...avatarCandidates]);
-                    setUser(prev => ({ ...prev, avatarUrl: mergedCandidates[0] || null, avatarCandidates: mergedCandidates }));
+                    const mergedCandidates = dedupeCandidates([
+                        ...avatarCandidates,
+                        localPreview,
+                        ...user.avatarCandidates,
+                    ]);
+                    const persistedAvatar = avatarCandidates[0] || mergedCandidates[0] || null;
+                    setUser(prev => ({ ...prev, avatarUrl: persistedAvatar, avatarCandidates: mergedCandidates }));
+                    if (avatarCandidates.length > 0 && avatarPreviewBlobRef.current) {
+                        URL.revokeObjectURL(avatarPreviewBlobRef.current);
+                        avatarPreviewBlobRef.current = null;
+                    }
+                    showToast('Foto profil diperbarui');
+                } else {
+                    setUser(prev => ({
+                        ...prev,
+                        avatarUrl: prev.avatarUrl || localPreview,
+                        avatarCandidates: dedupeCandidates([prev.avatarUrl, localPreview, ...prev.avatarCandidates]),
+                    }));
                     showToast('Foto profil diperbarui');
                 }
             } else {
@@ -649,6 +749,39 @@ export default function ProfilePage() {
 
     const firstName = user.name.split(' ')[0];
 
+    if (authStatus === 'restoring' || loading) {
+        return (
+            <MobileAppLayout title="Profile" activeNavId="profile" backHref="/today">
+                <div className="mx-auto max-w-[640px] px-4 py-10">
+                    <div className="rounded-[2rem] border border-border/50 bg-surface/70 p-8 flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-brand" />
+                        <p className="text-sm font-medium text-foreground/80">Memulihkan sesi akun...</p>
+                    </div>
+                </div>
+            </MobileAppLayout>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <MobileAppLayout title="Profile" activeNavId="profile" backHref="/today">
+                <div className="mx-auto max-w-[640px] px-4 py-10">
+                    <div className="rounded-[2rem] border border-border/50 bg-surface/70 p-8 space-y-3">
+                        <p className="text-lg font-bold tracking-tight text-foreground">Masuk untuk membuka profil.</p>
+                        <p className="text-sm text-muted-foreground">Anda tetap bisa membaca konten publik tanpa login.</p>
+                        <Button
+                            type="button"
+                            onClick={() => router.replace('/login?next=/profile')}
+                            className="rounded-full px-6"
+                        >
+                            Masuk
+                        </Button>
+                    </div>
+                </div>
+            </MobileAppLayout>
+        );
+    }
+
     return (
         <MobileAppLayout
             title="Profile"
@@ -674,23 +807,27 @@ export default function ProfilePage() {
             }
         >
             <div className="mx-auto max-w-[640px] px-4 py-4 space-y-6">
-                <DarkCard className="relative overflow-hidden group/profile-card">
-                    <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand/5 blur-3xl" />
+                <div className="relative overflow-hidden rounded-[2.5rem] bg-surface border border-border/50 p-8 shadow-soft group/profile-card">
+                    <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-brand/5 blur-3xl" />
                     
                     <div className="relative z-10 flex flex-col items-center text-center">
                         <div className="relative">
-                            <div className="absolute -inset-3 rounded-[2.2rem] bg-gradient-to-br from-brand/25 via-cyan-300/20 to-transparent opacity-50 blur-xl" />
-                            <div className="relative h-[7.5rem] w-[7.5rem] rounded-[2.2rem] bg-surface-muted flex items-center justify-center overflow-hidden ring-1 ring-white/60 shadow-premium border border-border/60">
+                            <div className="absolute -inset-2 rounded-[2.2rem] bg-brand/10 opacity-40 blur-lg" />
+                            <div className="relative h-[7.5rem] w-[7.5rem] rounded-[2.2rem] bg-surface-muted flex items-center justify-center overflow-hidden ring-1 ring-white/60 shadow-sm border border-border/60">
                                 {submittingAvatar && (
                                     <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-20">
                                         <Loader2 className="h-6 w-6 text-brand animate-spin" />
                                     </div>
                                 )}
-                                {user.avatarUrl ? (
+                                {currentAvatarSrc ? (
                                     <img
-                                        src={user.avatarUrl}
+                                        src={currentAvatarSrc}
                                         alt={user.name}
-                                        className="h-full w-full object-cover"
+                                        className="h-full w-full object-cover transition-transform duration-200"
+                                        style={{
+                                            transform: `translate(${avatarTransform.x}px, ${avatarTransform.y}px) scale(${avatarTransform.scale})`,
+                                            transformOrigin: 'center center',
+                                        }}
                                         onError={() =>
                                             setUser((prev) => {
                                                 const [, ...rest] = prev.avatarCandidates;
@@ -703,45 +840,101 @@ export default function ProfilePage() {
                                         }
                                     />
                                 ) : (
-                                    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-surface to-surface-elevated">
-                                        <span className="text-3xl font-black text-brand tracking-tight">
+                                    <div className="flex h-full w-full flex-col items-center justify-center bg-surface-muted">
+                                        <span className="text-3xl font-bold text-foreground/50 tracking-tight">
                                             {getInitials(user.name)}
-                                        </span>
-                                        <span className="mt-1 text-[9px] font-black uppercase tracking-[0.22em] text-muted-foreground/80">
-                                            TCT
                                         </span>
                                     </div>
                                 )}
                             </div>
                             <button 
                                 onClick={() => avatarInputRef.current?.click()}
-                                className="absolute -bottom-1 -right-1 h-11 w-11 rounded-full bg-brand text-brand-foreground flex items-center justify-center shadow-lg ring-4 ring-background transform transition-all hover:scale-105 active:scale-90"
+                                className="absolute -bottom-1 -right-1 h-11 w-11 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg ring-4 ring-background transform transition-all hover:scale-105 active:scale-95"
                             >
                                 <Camera className="h-4 w-4" />
                             </button>
                             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])} />
                         </div>
 
+                        {currentAvatarSrc && (
+                            <div className="mt-5 w-full max-w-[320px] rounded-2xl border border-border/50 bg-surface-muted/40 px-3 py-3">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 text-left px-1">
+                                    Posisi Foto
+                                </p>
+                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y - 6 }))}
+                                        className="col-start-2 rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Atas
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x - 6 }))}
+                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Kiri
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setAvatarTransform(DEFAULT_AVATAR_TRANSFORM)}
+                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Reset
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x + 6 }))}
+                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Kanan
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y + 6 }))}
+                                        className="col-start-2 rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Bawah
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, scale: prev.scale + 0.04 }))}
+                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Zoom +
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, scale: prev.scale - 0.04 }))}
+                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
+                                    >
+                                        Zoom -
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="mt-8 space-y-1">
-                            <h2 className="text-3xl font-black tracking-tighter text-foreground leading-tight">{user.name}</h2>
-                            <p className="text-muted-foreground font-bold tracking-wide text-sm">{user.email}</p>
+                            <h2 className="text-2xl font-bold tracking-tight text-foreground leading-tight">{user.name}</h2>
+                            <p className="text-muted-foreground font-medium tracking-wide text-sm">{user.email}</p>
                         </div>
 
                         <div className="mt-6">
                             <div className={cn(
-                                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border",
-                                user.email_verified_at ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] border",
+                                user.email_verified_at ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
                             )}>
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 <span>{user.email_verified_at ? 'Verified Account' : 'Guest Session'}</span>
                             </div>
                         </div>
                     </div>
-                </DarkCard>
+                </div>
 
                 <div className="space-y-4">
                     {user.is_admin && opsGateway && (
-                        <AccordionCard title="Gateway Operasional" className="ring-2 ring-brand/20 bg-brand/[0.02]">
+                        <AccordionCard title="Gateway Operasional" className="border-brand/20 bg-brand/5">
                             <div className="space-y-4 pt-2">
                                 <div className="rounded-3xl border border-border/60 bg-surface-muted p-5 backdrop-blur-md">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">

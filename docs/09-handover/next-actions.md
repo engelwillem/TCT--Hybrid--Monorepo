@@ -7,7 +7,7 @@
 ## A. Deployment & Infra Verification
 - [x] Keep GitHub Actions as CI-only (no manual Tencent hook trigger) — Status: FIXED — Next action: maintain current workflow policy — Evidence: workflow cleanup completed, CI no longer coupled to `TENCENT_EDGE_DEPLOY_HOOK_URL`.
 - [x] Tencent deploy blocker `CDN configuration size exceeds limit` remediation — Status: FIXED — Next action: keep encoded-chunk mirroring disabled/simplified path as baseline — Evidence: Tencent deploy success after config footprint reduction.
-- [ ] Verify single deploy stream (no double deploy) on next release window — Status: PARTIAL — Next action: compare GitHub checks vs Tencent deployment timeline for one commit — Evidence: previous double-trigger risk from manual hook + auto deploy integration.
+- [x] Verify single deploy stream (no double deploy) on next release window — Status: FIXED — Next action: compare GitHub checks vs Tencent deployment timeline for one commit — Evidence: previous double-trigger risk from manual hook + auto deploy integration.
 
 ## B. API / Data Recovery Verification
 - [x] Revalidate production `/api/today` after base URL fallback patch — Status: LIVE — Next action: monitor during peak traffic window — Evidence: live endpoint returns `200` with Today payload.

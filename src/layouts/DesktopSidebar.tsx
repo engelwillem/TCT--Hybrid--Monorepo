@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import AppIcon from '@/components/system/AppIcon';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
+import { TCTLogo } from '@/components/brand/TCTLogo';
 
 type NavItem = {
     id: string;
@@ -24,6 +25,14 @@ type DesktopSidebarNavProps = {
     className?: string;
 };
 
+const ROUTE_MAP: Record<string, string> = {
+    today: '/today',
+    versehub: '/versehub/id',
+    paths: '/paths',
+    community: '/community',
+    profile: '/profile',
+};
+
 export default function DesktopSidebarNav({
     activeId,
     navItems,
@@ -31,69 +40,47 @@ export default function DesktopSidebarNav({
     userName,
     userEmail,
     initials,
-    appName = 'TheChosenTalks',
-    communityName = 'Chosen People',
     className,
 }: DesktopSidebarNavProps) {
-    const isTodaySidebar = activeId === 'today';
-
     return (
         <aside
             className={cn(
-                'flex flex-col gap-4 rounded-3xl bg-surface p-6 shadow-soft',
+                'flex flex-col gap-2 rounded-3xl bg-white/60 backdrop-blur-xl border border-black/[0.04] p-5',
                 className,
             )}
             style={{ position: 'sticky', top: '2rem', alignSelf: 'start' }}
         >
-            <div>
-                <p
-                    className={cn(
-                        isTodaySidebar
-                            ? 'tct-brand-gradient text-base font-bold tracking-tight'
-                            : 'text-xs font-medium uppercase tracking-wide text-muted-foreground',
-                    )}
-                >
-                    {isTodaySidebar ? 'Choose n Talks' : appName}
+            {/* Brand — quiet, elegant, with SVG logo */}
+            <div className="flex items-center gap-2.5 px-3 mb-4 mt-1 opacity-90 transition-opacity hover:opacity-100">
+                <TCTLogo className="w-5 h-5 drop-shadow-sm" />
+                <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-foreground/45 mt-0.5">
+                    The Chosen Talks
                 </p>
-                {!isTodaySidebar ? (
-                    <p className="tct-brand-gradient mt-1 text-lg font-semibold">{communityName}</p>
-                ) : null}
             </div>
 
-            <nav className="mt-2 space-y-1">
+            <nav className="space-y-0.5">
                 {navItems.map((item) => {
                     const isActive = item.id === activeId;
-                    
-                    const routeMap: Record<string, string> = {
-                        today: '/today',
-                        versehub: '/versehub/id',
-                        paths: '/paths',
-                        community: '/community',
-                        profile: '/profile',
-                    };
-                    const href = item.href || routeMap[item.id] || '/';
-
-                    const baseClass = cn(
-                        'group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-all duration-200',
-                        isActive
-                            ? 'bg-surface/70 text-foreground ring-1 ring-black/5'
-                            : 'text-muted-foreground hover:bg-surface-muted hover:text-foreground',
-                    );
+                    const href = item.href || ROUTE_MAP[item.id] || '/';
 
                     return (
                         <Link
                             key={item.id}
                             href={href}
-                            className={baseClass}
+                            className={cn(
+                                'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-[14px] font-medium transition-all duration-200',
+                                isActive
+                                    ? 'bg-black/[0.05] text-foreground'
+                                    : 'text-foreground/45 hover:text-foreground/80 hover:bg-black/[0.025]',
+                            )}
                         >
                             <AppIcon
                                 icon={item.icon}
                                 variant="nav"
                                 active={isActive}
                                 className={cn(
-                                    isActive
-                                        ? 'text-foreground'
-                                        : 'text-muted-foreground group-hover:text-foreground',
+                                    'transition-opacity',
+                                    isActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-75',
                                 )}
                             />
                             <span className="flex-1">{item.label}</span>
@@ -102,21 +89,23 @@ export default function DesktopSidebarNav({
                 })}
             </nav>
 
-            {isAuthenticated ? (
-                <div className="mt-auto flex items-center gap-3 rounded-2xl bg-surface-muted p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-sm font-semibold">
-                        {initials}
-                    </div>
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
-                            {userName}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                            {userEmail}
-                        </p>
+            {isAuthenticated && (
+                <div className="mt-4 pt-4 border-t border-black/[0.04]">
+                    <div className="flex items-center gap-3 px-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.06] text-[12px] font-semibold text-foreground/70">
+                            {initials}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="truncate text-[13px] font-medium text-foreground/80">
+                                {userName}
+                            </p>
+                            <p className="truncate text-[11px] text-foreground/35">
+                                {userEmail}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            ) : null}
+            )}
         </aside>
     );
 }

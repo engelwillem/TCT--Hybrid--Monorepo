@@ -5,10 +5,18 @@ function isLikelySanctumToken(token: string): boolean {
   return /^\d+\|[A-Za-z0-9]+$/.test(token);
 }
 
+function isLocalDevRuntime(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1";
+}
+
 export function getAppAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   const bypass = window.localStorage.getItem("e2e_bypass_token");
-  if (bypass && bypass.trim().length > 0) return bypass;
+  if ((process.env.NODE_ENV === "test" || isLocalDevRuntime()) && bypass && bypass.trim().length > 0) {
+    return bypass.trim();
+  }
 
   const raw = window.localStorage.getItem(APP_ACCESS_TOKEN_KEY);
   if (!raw) return null;
@@ -26,6 +34,10 @@ export function getAppAccessToken(): string | null {
   }
 
   return token;
+}
+
+export function hasAppAccessToken(): boolean {
+  return Boolean(getAppAccessToken());
 }
 
 export function setAppAccessToken(token: string): void {

@@ -51,12 +51,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
-      { url: '/brand/favicon-premium.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
     ],
-    shortcut: '/favicon.ico',
-    apple: '/favicon.png',
+    shortcut: '/favicon.svg',
   },
   other: {
     'app-name': APP_NAME,

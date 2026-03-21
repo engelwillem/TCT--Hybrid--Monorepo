@@ -1,3 +1,9 @@
+# TCT Menjadi Web yang bisa membuat user member merasa:
+- Didengar
+- Dipahami
+- Dikuatkan
+- Diberikan doa dan ayat
+
 menurut anda apa yang perlu diupgrade lagi supaya web saya bisa bersaing dengan tech stack berikut ini:
 1. Frontend: React 19 + Vite + TypeScript
 2. Styling: Tailwind CSS v4

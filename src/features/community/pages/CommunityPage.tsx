@@ -6,13 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostComposer } from "../components/PostComposer";
 import { MemberPostCard } from "../components/MemberPostCard";
 import { CommentsSheet } from "../components/CommentsSheet";
+import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityPost } from "../types";
+import { MOCK_POSTS } from "../mock";
 import { Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-react";
 import { CommunityService } from "@/services/community.service";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthSession } from "@/auth/use-auth-session";
+import { buildWhatsAppShareUrl, copyToClipboard, getCanonicalUrl } from "@/lib/share";
 
 type ArchiveCategory = "all" | "quotes" | "reflections" | "prayer_requests" | "testimonies";
 
@@ -41,6 +45,7 @@ function SmartPostComposer({ onPost }: { onPost: any }) {
 }
 
 export function CommunityPage() {
+  const { isAuthenticated, isRestoring } = useAuthSession();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
@@ -50,10 +55,20 @@ export function CommunityPage() {
   const [rituals, setRituals] = useState<any>(null);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [authGateContent, setAuthGateContent] = useState<{ title: string; description: string }>({
+    title: "Tulisanmu sudah siap.",
+    description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
+  });
+  const resolveAuthorAvatar = (post: CommunityPost): string | null => {
+    const author = post.author as CommunityPost["author"] & {
+      profileImage?: string | null;
+      profile_image?: string | null;
+    };
+    return author.avatarUrl ?? author.profileImage ?? author.profile_image ?? null;
+  };
   
-  const hasActivePosts = posts.length > 0;
-  const isArchiveFallbackInDiscussion = !hasActivePosts && !isLoading && archivePosts.length > 0;
-  const discussionPosts = hasActivePosts ? posts : archivePosts.slice(0, 6);
+  const discussionPosts = posts;
   const bookmarkedPosts = useMemo(() => {
     const merged = [...posts, ...archivePosts];
     const seen = new Set<string>();
@@ -69,6 +84,24 @@ export function CommunityPage() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const openAuthGate = useCallback(
+    (mode: "share" | "interact") => {
+      if (mode === "share") {
+        setAuthGateContent({
+          title: "Tulisanmu sudah siap.",
+          description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
+        });
+      } else {
+        setAuthGateContent({
+          title: "Lanjutkan langkahmu.",
+          description: "Masuk atau daftar untuk ikut berinteraksi dengan komunitas.",
+        });
+      }
+      setAuthGateOpen(true);
+    },
+    []
+  );
 
   const handleCommentsUpdated = useCallback((postId: string, count: number) => {
     const patchComments = (list: CommunityPost[]) =>
@@ -97,8 +130,22 @@ export function CommunityPage() {
           setRituals(ritualData?.data?.rituals || null);
       }
     } catch (error: any) {
-      console.error("Failed to fetch community data", error);
-      setFetchError(error?.status === 401 ? "Unauthorized" : (error?.status === 503 ? "Server Unavailable" : "Failed to load feed"));
+      const status = Number(error?.status || 0);
+      const isExpectedAvailabilityIssue = status === 401 || status === 403 || status === 503;
+
+      if (!isExpectedAvailabilityIssue) {
+        console.error("Failed to fetch community data", error);
+      }
+
+      setFetchError(
+        status === 401 || status === 403
+          ? "Unauthorized"
+          : status === 503
+            ? "Server Unavailable"
+            : "Failed to load feed"
+      );
+      setPosts([]);
+      setArchivePosts((prev) => (prev.length > 0 ? prev : MOCK_POSTS));
     } finally {
       setIsLoading(false);
     }
@@ -109,17 +156,33 @@ export function CommunityPage() {
   }, [fetchData]);
 
   const handlePost = async (text: string, type: any, images: File[] = []) => {
+    if (isRestoring) {
+      return false;
+    }
+    if (!isAuthenticated) {
+      openAuthGate("share");
+      return false;
+    }
     try {
       const newPost = await CommunityService.createPost(text, type, images);
       setPosts((prev) => [newPost, ...prev]);
       showToast("Berhasil membagikan!", "success");
+      return true;
     } catch (error) {
       console.error("Failed to create post", error);
       showToast("Gagal membagikan post.", "error");
+      return false;
     }
   };
 
   const toggleLike = async (postId: string) => {
+    if (isRestoring) {
+      return;
+    }
+    if (!isAuthenticated) {
+      openAuthGate("interact");
+      return;
+    }
     const originalPosts = [...posts];
     const originalArchivePosts = [...archivePosts];
     const patchOptimistic = (list: CommunityPost[]) =>
@@ -152,6 +215,13 @@ export function CommunityPage() {
   };
 
   const toggleBookmark = async (postId: string) => {
+    if (isRestoring) {
+      return;
+    }
+    if (!isAuthenticated) {
+      openAuthGate("interact");
+      return;
+    }
     const originalPosts = [...posts];
     const originalArchivePosts = [...archivePosts];
     const patchOptimistic = (list: CommunityPost[]) =>
@@ -185,14 +255,14 @@ export function CommunityPage() {
   };
 
   const handleShare = async (postId: string, text?: string | null) => {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.thechoosentalks.org";
-    const url = `${baseUrl}/community/posts/${postId}/share`;
+    const url = getCanonicalUrl(`/community/posts/${postId}/share`);
+    const shortText = text ? text.substring(0, 100) + "..." : "Bagikan pos inspirasi ini.";
     
     if (navigator.share) {
       try {
         await navigator.share({
           title: "TheChosenTalks Community",
-          text: text ? text.substring(0, 100) + "..." : "Bagikan pos inspirasi ini.",
+          text: shortText,
           url: url,
         });
       } catch (err: any) {
@@ -201,14 +271,28 @@ export function CommunityPage() {
         }
       }
     } else {
-      try {
-        await navigator.clipboard.writeText(url);
+      const copied = await copyToClipboard(url);
+      if (copied) {
         showToast("Tautan disalin ke papan klip!", "success");
-      } catch (err) {
-        showToast("Gagal menyalin tautan.", "error");
+      } else {
+        window.open(buildWhatsAppShareUrl(`${shortText} ${url}`), "_blank", "noopener,noreferrer");
       }
     }
   };
+
+  const handleOpenComments = useCallback(
+    (postId: string) => {
+      if (isRestoring) {
+        return;
+      }
+      if (!isAuthenticated) {
+        openAuthGate("interact");
+        return;
+      }
+      setActiveCommentPostId(postId);
+    },
+    [isAuthenticated, isRestoring, openAuthGate]
+  );
 
   const featuredPost = useMemo(() => posts.find((p) => p.isFeatured), [posts]);
   
@@ -220,6 +304,7 @@ export function CommunityPage() {
             href: ritualVerse.cta_href || `/versehub/id?ref=${slugifyRef(ritualVerse.reference || '')}`,
             text: ritualVerse.text || ritualVerse.quote,
             reference: ritualVerse.reference || "Ayat Hari Ini",
+            imageUrl: ritualVerse.image_url || ritualVerse.imageUrl || undefined,
         };
     }
 
@@ -230,6 +315,7 @@ export function CommunityPage() {
         href: `/versehub/id?ref=${meta.ref || slugifyRef(meta.reference || '')}`,
         text: meta.quote || featuredPost?.text || "",
         reference: meta.reference || "Featured Reflection",
+        imageUrl: meta.imageUrl || featuredPost?.mediaPaths?.[0] || undefined,
       };
     }
 
@@ -274,16 +360,19 @@ export function CommunityPage() {
 
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-700 md:py-6">
-      <header className="px-6 md:px-0 mx-auto w-full max-w-[640px] space-y-2 pb-6">
-        <h2 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">
-          <span className="text-brand">Komunitas</span>
-        </h2>
-        <p className="text-sm font-medium tracking-wide leading-relaxed text-muted-foreground/80">
-          Ruang hangat untuk berbagi inspirasi, doa, dan pertumbuhan bersama.
+    <header className="px-2 md:px-0 mx-auto w-full max-w-[640px] pb-8 pt-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-foreground/30 mb-4">
+          Community
+        </p>
+        <h1 className="tct-serif text-[26px] leading-[1.25] tracking-tight text-foreground/90 mb-2">
+          Ruang berbagi dan bertumbuh bersama.
+        </h1>
+        <p className="text-[14px] font-medium tracking-wide leading-relaxed text-foreground/45">
+          Inspirasi, doa, dan kesaksian dari komunitas.
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-[640px] space-y-6 px-6 md:px-0 pb-28">
+      <div className="mx-auto w-full max-w-[640px] space-y-6 px-2 md:px-0 pb-28">
         <VerseHubFeaturedCard 
             verse={effectiveFeaturedVerse} 
             postId={featuredPost?.id}
@@ -318,26 +407,7 @@ export function CommunityPage() {
               <SmartPostComposer onPost={handlePost} />
             </Suspense>
 
-            {!isLoading && !fetchError && (
-              <Card className="rounded-[28px] border border-border/50 bg-background/70 shadow-none">
-                <CardContent className="px-5 py-4 flex items-start gap-3">
-                  <div className={cn(
-                    "mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                    isArchiveFallbackInDiscussion ? "bg-amber-400" : "bg-emerald-400"
-                  )} />
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/90">
-                      {isArchiveFallbackInDiscussion ? "Mode Kurasi Arsip" : "Feed Aktif Hari Ini"}
-                    </p>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      {isArchiveFallbackInDiscussion
-                        ? "Percakapan baru belum muncul. Kami menampilkan pilihan arsip terbaik agar ritme komunitas tetap hidup."
-                        : "Diskusi terbaru dari komunitas tampil real-time di sini."}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
 
             {isLoading ? (
                 <div className="space-y-6 mt-6">
@@ -356,44 +426,14 @@ export function CommunityPage() {
                         </div>
                     ))}
                 </div>
-            ) : fetchError ? (
-              <Card className="rounded-[40px] bg-red-50/10 border-red-500/20 shadow-none mt-4">
-                <CardContent className="p-12 text-center space-y-6">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
-                    <AlertTriangle size={28} />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xl font-black text-foreground tracking-tight">Gagal Memuat Feed</p>
-                    <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">{fetchError}</p>
-                  </div>
-                  <button 
-                    onClick={() => fetchData()}
-                    className="mt-4 px-10 py-3 bg-foreground text-background rounded-full text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95"
-                  >
-                    Coba Lagi
-                  </button>
-                </CardContent>
-              </Card>
             ) : discussionPosts.length ? (
               <div className="space-y-6">
-                {isArchiveFallbackInDiscussion && (
-                  <div className="flex flex-col items-center justify-center py-12 px-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-1000">
-                    <div className="h-16 w-16 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shadow-premium">
-                      <Sparkles className="h-7 w-7 text-brand" />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[17px] font-black tracking-tight text-foreground">Inspirasi Pilihan</p>
-                      <p className="text-[11px] uppercase font-bold tracking-[0.2em] text-muted-foreground/60 leading-relaxed max-w-[280px] mx-auto">
-                        Belum ada percakapan baru hari ini. Nikmati kurasi arsip terbaik sambil menunggu diskusi berikutnya.
-                      </p>
-                    </div>
-                  </div>
-                )}
+
                 {discussionPosts.map((p) => (
                   <MemberPostCard
                     key={p.id}
                     authorName={p.author.name}
-                    authorAvatar={p.author.avatarUrl}
+                    authorAvatar={resolveAuthorAvatar(p)}
                     isOfficial={p.author.isOfficial}
                     type={p.type}
                     text={p.text}
@@ -407,29 +447,23 @@ export function CommunityPage() {
                     bookmarkLabel={String(p.counts.bookmarks || 0)}
                     onPray={() => toggleLike(p.id)}
                     onBookmark={() => toggleBookmark(p.id)}
-                    onOpenComments={() => setActiveCommentPostId(p.id)}
+                    onOpenComments={() => handleOpenComments(p.id)}
                     onShare={() => handleShare(p.id, p.text)}
                   />
                 ))}
               </div>
             ) : (
-                <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden mt-4">
-                    <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
-                        <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
-                            <MessageCircle size={32} />
-                        </div>
-                        <div className="space-y-2">
-                            <p className="text-foreground font-black text-[18px]">Mulai Percakapan</p>
-                            <p className="text-[12px] text-muted-foreground font-medium max-w-[240px] leading-relaxed">Jadilah yang pertama berbagi terang dan berkat Anda hari ini.</p>
-                        </div>
-                        <button 
-                          onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}
-                          className="px-8 py-2.5 bg-brand text-brand-foreground rounded-full text-[11px] font-black uppercase tracking-widest shadow-lg shadow-brand/20"
-                        >
-                          Tulis Sesuatu
-                        </button>
-                    </CardContent>
-                </Card>
+              <div className="px-4 pt-12 pb-24 max-w-[420px]">
+                <p className="text-[15px] leading-relaxed text-foreground/70">
+                  Belum ada percakapan hari ini.
+                </p>
+                <button 
+                  onClick={() => fetchData()}
+                  className="mt-6 text-[13px] font-medium text-foreground/40 hover:text-foreground/70 transition-colors"
+                >
+                  Muat ulang
+                </button>
+              </div>
             )}
           </TabsContent>
 
@@ -477,7 +511,7 @@ export function CommunityPage() {
                       <MemberPostCard
                         key={p.id}
                         authorName={p.author.name}
-                        authorAvatar={p.author.avatarUrl}
+                        authorAvatar={resolveAuthorAvatar(p)}
                         type={p.type}
                         text={p.text}
                         imgSrc={p.imageUrl}
@@ -489,7 +523,7 @@ export function CommunityPage() {
                         bookmarkLabel={String(p.counts.bookmarks || 0)}
                         onPray={() => toggleLike(p.id)}
                         onBookmark={() => toggleBookmark(p.id)}
-                        onOpenComments={() => setActiveCommentPostId(p.id)}
+                        onOpenComments={() => handleOpenComments(p.id)}
                         onShare={() => handleShare(p.id, p.text)}
                       />
                     ))}
@@ -498,17 +532,11 @@ export function CommunityPage() {
               ))}
               </div>
             ) : (
-                <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden">
-                    <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
-                            <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
-                                <Inbox size={32} />
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-foreground/80 font-black text-sm">Arsip Kosong</p>
-                                <p className="text-[11px] text-muted-foreground font-medium">Belum ada jejak tersimpan untuk kategori ini. Coba kategori lain atau kembali ke Diskusi.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+              <div className="px-4 pt-12 pb-24 max-w-[420px]">
+                <p className="text-[15px] leading-relaxed text-foreground/70">
+                  Arsip belum tersedia.
+                </p>
+              </div>
             )}
           </TabsContent>
 
@@ -519,7 +547,7 @@ export function CommunityPage() {
                         <MemberPostCard
                             key={p.id}
                             authorName={p.author.name}
-                            authorAvatar={p.author.avatarUrl}
+                            authorAvatar={resolveAuthorAvatar(p)}
                             type={p.type}
                             text={p.text}
                             imgSrc={p.imageUrl}
@@ -532,22 +560,16 @@ export function CommunityPage() {
                             bookmarkLabel={String(p.counts.bookmarks || 0)}
                             onPray={() => toggleLike(p.id)}
                             onBookmark={() => toggleBookmark(p.id)}
-                            onOpenComments={() => setActiveCommentPostId(p.id)}
+                            onOpenComments={() => handleOpenComments(p.id)}
                             onShare={() => handleShare(p.id, p.text)}
                         />
                     ))
                 ) : (
-                    <Card className="border-dashed border-2 border-border/50 bg-transparent shadow-none rounded-[40px] overflow-hidden">
-                        <CardContent className="p-16 text-center flex flex-col items-center justify-center gap-6">
-                            <div className="h-20 w-20 rounded-full bg-surface-muted flex items-center justify-center text-muted-foreground/40 shadow-inner">
-                                <Bookmark size={32} />
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-foreground/80 font-black text-sm">Belum Ada Simpanan</p>
-                                <p className="text-[11px] text-muted-foreground font-medium">Simpan ayat atau refleksi yang menguatkan untuk membangun perpustakaan rohani pribadi.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+              <div className="px-4 pt-12 pb-24 max-w-[420px]">
+                <p className="text-[15px] leading-relaxed text-foreground/70">
+                  Belum ada simpanan.
+                </p>
+              </div>
                 )}
             </div>
           </TabsContent>
@@ -559,6 +581,13 @@ export function CommunityPage() {
         onOpenChange={(open) => !open && setActiveCommentPostId(null)}
         postId={activeCommentPostId}
         onCommentsUpdated={handleCommentsUpdated}
+      />
+
+      <AuthExecutionGate
+        open={authGateOpen}
+        onOpenChange={setAuthGateOpen}
+        title={authGateContent.title}
+        description={authGateContent.description}
       />
 
       {toast && (

@@ -41,5 +41,6 @@ export interface CommunityPost {
     quote?: string;
     media_aspect_ratio?: "4:5" | "og" | "auto";
     text_position?: "above" | "below";
+    imageUrl?: string;
   };
 }

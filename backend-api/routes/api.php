@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\CommunityApiController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
+use App\Http\Controllers\Api\V1\TodayV2SessionController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelMembershipController;
@@ -126,3 +127,5 @@ Route::prefix('v1')->group(function (): void {
             ->whereNumber('commentId');
     });
 });
+
+Route::get('/today-v2/session', [TodayV2SessionController::class, 'show']);

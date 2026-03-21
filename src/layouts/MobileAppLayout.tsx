@@ -107,7 +107,7 @@ export default function MobileAppLayout({
                                 >
                                     <IconChevronLeft className="h-5 w-5" />
                                 </button>
-                                <h1 className="tct-brand-gradient text-lg font-semibold">{title}</h1>
+                                <h1 className="text-[11px] font-bold uppercase tracking-[0.15em] text-foreground/40 mt-1">{title}</h1>
                                 <div className="flex h-12 w-12 items-center justify-center">{rightAction}</div>
                             </motion.header>
                         ) : null}

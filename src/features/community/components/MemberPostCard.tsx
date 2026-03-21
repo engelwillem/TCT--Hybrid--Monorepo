@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MemberPostActionBar } from "./MemberPostActionBar";
 import { QuoteCard } from "./QuoteCard";
+import { CommunityImageCarousel } from "./CommunityImageCarousel";
 
 type MemberPostCardProps = {
   className?: string;
@@ -112,15 +112,9 @@ export function MemberPostCard({
     return imgSrc ? [imgSrc] : [];
   }, [imgSrc, mediaSrcList]);
 
-  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
   const hasImage = media.length > 0;
   const isQuoteCard = (isPremiumQuoteAuthor && hasText) || (!hasImage && hasText && type === "quote");
   const isTwitterStyle = !isPremiumQuoteAuthor && !hasImage && hasText && type !== "quote" && normalizedText.length < 140;
-
-  const moveMedia = (dir: -1 | 1) => {
-    if (media.length <= 1) return;
-    setActiveMediaIdx((prev) => (prev + dir + media.length) % media.length);
-  };
 
   const actionBar = (
     <MemberPostActionBar
@@ -148,8 +142,6 @@ export function MemberPostCard({
       />
     );
   }
-
-  const currentMedia = media[Math.min(activeMediaIdx, Math.max(0, media.length - 1))] ?? null;
 
   return (
     <Card
@@ -215,40 +207,11 @@ export function MemberPostCard({
 
         {/* Media Container */}
         {hasImage ? (
-          <div className="relative group">
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-[24px] shadow-lg ring-1 ring-border/60 bg-surface-muted",
-                aspectRatio === "4:5" ? "aspect-[4/5]" : "aspect-[1.91/1]"
-              )}
-            >
-              {currentMedia && (
-                <img
-                  src={currentMedia}
-                  alt="Content"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
-              )}
-
-              {media.length > 1 && (
-                <>
-                  <button
-                    onClick={() => moveMedia(-1)}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    onClick={() => moveMedia(1)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+          <CommunityImageCarousel
+            images={media}
+            altBase={authorName ? `Post by ${authorName}` : "Post image"}
+            aspectRatio={aspectRatio}
+          />
         ) : null}
 
         {/* Twitter Style Text */}

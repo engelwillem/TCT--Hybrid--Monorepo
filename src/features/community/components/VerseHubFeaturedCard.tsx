@@ -10,6 +10,7 @@ export type FeaturedVerse = {
   href: string;
   text: string;
   reference: string;
+  imageUrl?: string;
 };
 
 function VerseQuoteRail({ text }: { text: string }) {
@@ -59,10 +60,10 @@ export function VerseHubFeaturedCard({
 }) {
   const shareOrigin = typeof window !== "undefined" ? window.location.origin : "";
   
-  const ogImageUrl = useMemo(() => {
-    if (!verse?.ref) return null;
-    return `/api/versehub/og/${verse.ref}.png`;
-  }, [verse?.ref]);
+  const highlightImageUrl = useMemo(() => {
+    if (verse?.imageUrl) return verse.imageUrl;
+    return "/og/verse-highlight-fallback.png";
+  }, [verse]);
 
   const toStaticVersehubHref = (href?: string, ref?: string) => {
     const raw = String(href || '').trim();
@@ -148,30 +149,29 @@ export function VerseHubFeaturedCard({
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="space-y-3">
+      <div className="space-y-1 mb-2">
         <a
           href="/versehub/id"
-          className="inline-flex items-center gap-2 rounded-full bg-surface-muted px-3 py-1 text-xs text-muted-foreground shadow-sm ring-1 ring-border/70 transition hover:text-foreground backdrop-blur"
+          className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40 transition hover:text-foreground/70"
           aria-label="Buka VerseHub"
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />
-          VerseHub
+          Sorotan VerseHub
         </a>
 
-        <a href={verseHref} className="mt-1 block max-w-full" aria-label={`Buka ayat ${verse.reference}`}>
-          <h2 className="text-2xl font-black text-brand hover:underline tracking-tight">{verse.reference}</h2>
+        <a href={verseHref} className="block max-w-full px-3" aria-label={`Buka ayat ${verse.reference}`}>
+          <h2 className="tct-serif text-[22px] md:text-[24px] leading-tight text-foreground/90 hover:opacity-80 transition-opacity tracking-tight">{verse.reference}</h2>
         </a>
       </div>
 
       <Card className="rounded-[32px] md:rounded-[40px] border-0 glass-card p-5 transition-all hover:shadow-card">
-        <a href={verseHref} className="mt-1 block overflow-hidden rounded-[24px] md:rounded-[32px] ring-1 ring-black/[0.04] shadow-sm transform transition-transform duration-500 hover:scale-[1.01]" aria-label={`Buka OG ayat ${verse.reference}`}>
+        <a href={verseHref} className="mt-1 block overflow-hidden rounded-[24px] md:rounded-[32px] ring-1 ring-black/[0.04] shadow-sm transform transition-transform duration-500 hover:scale-[1.01]" aria-label={`Buka highlight ayat ${verse.reference}`}>
           <img
-            src={ogImageUrl ?? `/api/versehub/og/${verse.ref}.png`}
-            alt={`OG image ${verse.reference}`}
+            src={highlightImageUrl}
+            alt={`Highlight image ${verse.reference}`}
             className="aspect-[1200/630] w-full object-cover"
             loading="lazy"
             onError={(event) => {
-              event.currentTarget.src = "/og/versehub-bg.png";
+              event.currentTarget.src = "/og/verse-highlight-fallback.png";
             }}
           />
         </a>
@@ -189,9 +189,9 @@ export function VerseHubFeaturedCard({
               <button
                 type="button"
                 onClick={() => window.location.assign(verseHref)}
-                className="tct-pressable inline-flex items-center justify-center rounded-2xl bg-brand px-4 py-2.5 font-bold text-brand-foreground transition-all hover:opacity-90"
+                className="tct-pressable inline-flex items-center justify-center rounded-2xl bg-surface border border-border/50 shadow-sm px-4 py-2.5 font-bold text-[13px] text-foreground/80 transition-all hover:bg-surface-elevated"
               >
-                Baca Alkitab hari ini
+                Baca lebih lanjut
               </button>
 
               <ActionBar

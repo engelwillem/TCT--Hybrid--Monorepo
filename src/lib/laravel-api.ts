@@ -8,6 +8,7 @@
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 const MISSING_BASE_PLACEHOLDER = "http://missing-laravel-api-base-url.local";
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://api.thechoosentalks.org";
+const DEFAULT_LOCAL_BASES = ["http://127.0.0.1:8000", "http://localhost:8000"];
 
 function pickConfiguredBaseUrl(): string {
   const candidates = [
@@ -31,6 +32,35 @@ function pickConfiguredBaseUrl(): string {
   return MISSING_BASE_PLACEHOLDER;
 }
 
+function buildCandidateBaseUrls(): string[] {
+  const explicitCandidates = [
+    process.env.LARAVEL_API_BASE_URL,
+    process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL,
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .map(trimTrailingSlash);
+
+  if (explicitCandidates.length > 0) {
+    const merged = [...explicitCandidates];
+    if (process.env.NODE_ENV !== "production") {
+      for (const localBase of DEFAULT_LOCAL_BASES) {
+        if (!merged.includes(localBase)) {
+          merged.push(localBase);
+        }
+      }
+    }
+    return merged;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return [DEFAULT_PRODUCTION_API_BASE_URL];
+  }
+
+  return [...DEFAULT_LOCAL_BASES];
+}
+
 /**
  * Safely retrieves the Laravel API base URL.
  * Does not throw during module initialization to prevent SSR crashes.
@@ -43,8 +73,8 @@ export function getLaravelApiBaseUrl(): string {
  * Internal helper to check if the base URL is valid.
  */
 export function isBaseUrlConfigured(): boolean {
-  const base = pickConfiguredBaseUrl();
-  return Boolean(base && !base.includes("missing-laravel-api-base-url"));
+  const candidates = buildCandidateBaseUrls();
+  return candidates.length > 0 && !candidates[0].includes("missing-laravel-api-base-url");
 }
 
 /**
@@ -52,21 +82,22 @@ export function isBaseUrlConfigured(): boolean {
  */
 export async function callLaravelApi(path: string, init?: RequestInit): Promise<Response> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const baseUrl = getLaravelApiBaseUrl();
-  const target = `${baseUrl}${normalizedPath}`;
-  const targetPathname = (() => {
-    try {
-      return new URL(target).pathname;
-    } catch {
-      return normalizedPath;
-    }
-  })();
+  const baseCandidates = buildCandidateBaseUrls();
 
-  // Use a shorter timeout for proxy calls to prevent hanging the Next.js server
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  let lastError: unknown = null;
+  for (const baseUrl of baseCandidates) {
+    const target = `${baseUrl}${normalizedPath}`;
+    const targetPathname = (() => {
+      try {
+        return new URL(target).pathname;
+      } catch {
+        return normalizedPath;
+      }
+    })();
 
-  const fetchOptions = {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const fetchOptions = {
       ...init,
       signal: controller.signal,
       cache: "no-store",
@@ -74,17 +105,32 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
         Accept: "application/json",
         ...(init?.headers ?? {}),
       },
-  };
-  console.info("[laravel-api] request", {
-    method: fetchOptions.method || "GET",
-    targetPath: targetPathname,
-    hasBody: Boolean(fetchOptions.body),
-  });
+    };
 
-  try {
-    const response = await fetch(target, fetchOptions as any);
-    return response;
-  } finally {
-    clearTimeout(timeoutId);
+    console.info("[laravel-api] request", {
+      method: fetchOptions.method || "GET",
+      targetPath: targetPathname,
+      hasBody: Boolean(fetchOptions.body),
+      baseUrl,
+    });
+
+    try {
+      return await fetch(target, fetchOptions as any);
+    } catch (error) {
+      lastError = error;
+      const isLast = baseUrl === baseCandidates[baseCandidates.length - 1];
+      console.warn("[laravel-api] request_failed", {
+        baseUrl,
+        targetPath: targetPathname,
+        isLastCandidate: isLast,
+      });
+      if (isLast) {
+        throw error;
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
+
+  throw (lastError instanceof Error ? lastError : new Error("Laravel API unreachable"));
 }

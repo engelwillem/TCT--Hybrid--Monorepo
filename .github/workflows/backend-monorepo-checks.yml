@@ -47,3 +47,6 @@ jobs:
       - name: PHP syntax check
         run: |
           find app routes config database -name "*.php" -print0 | xargs -0 -n1 php -l
+
+      - name: Today V2 readiness guardrail
+        run: composer today-v2:ready

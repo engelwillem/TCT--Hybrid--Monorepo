@@ -55,6 +55,16 @@
             "@php artisan route:cache --ansi",
             "@php artisan test"
         ],
+        "today-v2:lint": [
+            "@php artisan today-v2:lint"
+        ],
+        "today-v2:test": [
+            "@php artisan test tests/Feature/TodayV2SessionApiTest.php tests/Feature/TodayV2LintCommandTest.php"
+        ],
+        "today-v2:ready": [
+            "@composer today-v2:lint",
+            "@composer today-v2:test"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",

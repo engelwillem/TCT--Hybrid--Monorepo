@@ -1,25 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { useAuth } from '../provider';
+import { useUser as useFirebaseUser } from '../provider';
 
 export function useUser() {
-  const auth = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isUserLoading, userError } = useFirebaseUser();
+  const status = isUserLoading ? 'restoring' : user ? 'authenticated' : 'guest';
 
-  useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
-    
-    return onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-  }, [auth]);
-
-  return { user, loading };
+  return {
+    user,
+    loading: isUserLoading,
+    isUserLoading,
+    userError,
+    status,
+  } as const;
 }

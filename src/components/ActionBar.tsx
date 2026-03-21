@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Bookmark, Hand, MessageCircle, Share2 } from 'lucide-react';
 import AppIcon from '@/components/system/AppIcon';
 import { motion } from 'framer-motion';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { useAuthSession } from '@/auth/use-auth-session';
 
 export type ActionBarProps = {
     postType?: string;
@@ -35,9 +35,7 @@ export default function ActionBar({
     className,
     splitSave = false,
 }: ActionBarProps) {
-    // REAL AUTH CHECK: Features are only interactive if a Sanctum token exists.
-    // This removes the mock 'true' override.
-    const isAuthenticated = typeof window !== 'undefined' && Boolean(getAppAccessToken());
+    const { isAuthenticated, isRestoring } = useAuthSession();
 
     const triggerHaptic = (type: 'light' | 'medium' = 'light') => {
         try {
@@ -48,6 +46,9 @@ export default function ActionBar({
     };
 
     const runMemberAction = (action: () => void | Promise<void>, haptic: 'light' | 'medium' = 'light') => {
+        if (isRestoring) {
+            return;
+        }
         if (!isAuthenticated) {
             // Redirect to landing if unauthorized interaction is attempted
             window.location.assign('/');
