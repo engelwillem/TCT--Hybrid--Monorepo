@@ -27,12 +27,12 @@ Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI 
 - **VerseHub Layout:** ✅ **PATCHED**. Penghapusan *double sidebar* dan restorasi *Dark Hero Card*.
 - **Global Background:** ✅ **PATCHED**. Penerapan landasan visual biru muda lembut di seluruh modul user-facing.
 
-| Domain | Integrasi | Sifat Data | Status |
+| Domain | Integrasi | Sifat Data | Status Produk |
 |---|---|---|---|
 | Auth/Login | e2e Real | DB Backend | ✅ LIVE |
 | Profile | e2e Real | DB Backend | ✅ LIVE |
 | Community | e2e Real | Legacy Parity | ✅ PARTIAL |
-| Today | e2e Real | DB Backend | ✅ LIVE |
+| Today Ritual | Patched in source | Backend runtime still legacy | 🟠 Awaiting backend canonical runtime sync |
 | VerseHub | e2e Real | DB Backend | ✅ LIVE |
 | Reflections | e2e Real | DB Backend | ✅ LIVE |
 | My Spiritual Journey | e2e Real | DB Backend | ✅ LIVE |

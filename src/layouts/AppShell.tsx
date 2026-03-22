@@ -19,10 +19,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const activeNavId = navItems.find(item => pathname.startsWith(item.href))?.id || 'today';
 
   const [mounted, setMounted] = useState(false);
+  const [isVersehubSheetActive, setIsVersehubSheetActive] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const isVersehubRoute = pathname.startsWith('/versehub/');
+    if (!isVersehubRoute) {
+      setIsVersehubSheetActive(false);
+      return;
+    }
+
+    const onVersehubOverlayChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ source?: string; active?: boolean }>;
+      if (customEvent.detail?.source !== 'versehub') return;
+      setIsVersehubSheetActive(Boolean(customEvent.detail?.active));
+    };
+
+    window.addEventListener('tct:overlay-activity', onVersehubOverlayChange as EventListener);
+    return () => {
+      window.removeEventListener('tct:overlay-activity', onVersehubOverlayChange as EventListener);
+    };
+  }, [mounted, pathname]);
 
   if (!mounted) return <div className="tct-global-background min-h-screen" />;
 
@@ -162,7 +183,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Floating Mobile Nav (Parity with MobileAppLayout.tsx) */}
       {!isLanding && !isAuthSurface && !isTodayRitual && activeNavId && (
         <div
-          className="inset-x-0 z-50 flex justify-center md:hidden"
+          className={cn(
+            "inset-x-0 z-50 flex justify-center md:hidden transition-all duration-200",
+            isVersehubSheetActive
+              ? "pointer-events-none translate-y-10 opacity-0"
+              : "pointer-events-auto translate-y-0 opacity-100"
+          )}
           style={{
             position: 'fixed',
             left: 0,

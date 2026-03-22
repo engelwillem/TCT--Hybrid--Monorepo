@@ -385,8 +385,26 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
     };
 
     const selectedVerse = useMemo(() => verses.find(v => v.key === activeVerseKey), [verses, activeVerseKey]);
+    const hasVersehubOverlayActive = toolsOpen || mentorOpen || shareOpen || advancedToolsOpen;
     
     const fallback_reflection_question = 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        window.dispatchEvent(
+            new CustomEvent('tct:overlay-activity', {
+                detail: { source: 'versehub', active: hasVersehubOverlayActive },
+            }),
+        );
+
+        return () => {
+            window.dispatchEvent(
+                new CustomEvent('tct:overlay-activity', {
+                    detail: { source: 'versehub', active: false },
+                }),
+            );
+        };
+    }, [hasVersehubOverlayActive]);
 
     const handlePathSelect = (_path: { slug: string }) => {
         router.push('/paths');
@@ -766,22 +784,19 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                         <button className="absolute inset-0 cursor-default" onClick={() => setToolsOpen(false)} />
                         <motion.div 
                             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-6 pb-12 shadow-2xl"
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-6 shadow-2xl"
+                            style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
                         >
                             <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-6" />
-                            <div className="mb-6">
-                                <p className="text-[10px] font-black text-brand uppercase tracking-widest mb-1">{chapter_label}:{selectedVerse.verse}</p>
-                                <p className="text-sm font-medium text-slate-500 line-clamp-1 italic">"{selectedVerse.text}"</p>
+                            <div className="mb-5">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.16em] mb-2">Aksi Ayat</p>
+                                <p className="text-xs font-black text-brand uppercase tracking-[0.12em] mb-2">{chapter_label}:{selectedVerse.verse}</p>
+                                <p className="text-[15px] leading-relaxed font-serif text-slate-700 dark:text-slate-200 italic max-h-28 overflow-y-auto pr-1">
+                                    "{selectedVerse.text}"
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <button 
-                                    onClick={() => updateVerseAction(selectedVerse.key, { favorite: !stateFor(selectedVerse.key).favorite }, 'Disimpan di Favorites')}
-                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
-                                >
-                                    <Heart size={18} className={cn(stateFor(selectedVerse.key).favorite && "fill-rose-500 text-rose-500")} />
-                                    Favorites
-                                </button>
                                 <button 
                                     onClick={() => { setToolsOpen(false); setMentorOpen(true); }}
                                     className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500 text-slate-950 font-bold text-sm active:scale-95 transition-all shadow-lg shadow-amber-500/20"
@@ -790,18 +805,25 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     Mentor
                                 </button>
                                 <button 
-                                    onClick={() => updateVerseAction(selectedVerse.key, { bookmarked: !stateFor(selectedVerse.key).bookmarked }, 'Bookmark diperbarui')}
-                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
-                                >
-                                    <Bookmark size={18} className={cn(stateFor(selectedVerse.key).bookmarked && "fill-sky-500 text-sky-500")} />
-                                    Bookmark
-                                </button>
-                                <button 
                                     onClick={() => { setToolsOpen(false); setShareOpen(true); setShareData({ title: `${chapter_label}:${selectedVerse.verse}`, subtitle: selectedVerse.text, url: window.location.href, ogImageUrl: `/api/versehub/og/${selectedVerse.key}.png` }); }}
                                     className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
                                 >
                                     <SendHorizontal size={18} />
                                     Share
+                                </button>
+                                <button 
+                                    onClick={() => updateVerseAction(selectedVerse.key, { favorite: !stateFor(selectedVerse.key).favorite }, 'Disimpan di Favorites')}
+                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
+                                >
+                                    <Heart size={18} className={cn(stateFor(selectedVerse.key).favorite && "fill-rose-500 text-rose-500")} />
+                                    Favorites
+                                </button>
+                                <button 
+                                    onClick={() => updateVerseAction(selectedVerse.key, { bookmarked: !stateFor(selectedVerse.key).bookmarked }, 'Bookmark diperbarui')}
+                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
+                                >
+                                    <Bookmark size={18} className={cn(stateFor(selectedVerse.key).bookmarked && "fill-sky-500 text-sky-500")} />
+                                    Bookmark
                                 </button>
                             </div>
                         </motion.div>

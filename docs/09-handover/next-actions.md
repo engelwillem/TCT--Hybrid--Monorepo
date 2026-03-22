@@ -1,8 +1,8 @@
 # Next Actions
 
 ## Priority Sync 2026-03-22 (/today Runtime Integration)
-- [ ] Verify frontend live `/today` reads backend Today session from canonical API origin (not `www/.../api/today/session`) — Status: PENDING — Next action: deploy frontend patch, then verify network/runtime logs on production `/today` — Evidence: source patch exists, but live verification not completed yet.
-- [ ] Confirm `/today` no longer falls back due to endpoint mismatch on production runtime — Status: PENDING — Next action: run strict integration check + smoke against live `/today` after deploy — Evidence: backend endpoint already verified; frontend source patch only validated via typecheck.
+- [ ] **Frontend deploy verification on Tencent Edge:** Pastikan setiap push/release diverifikasi di production karena pernah terjadi stale deploy/cache drift.
+- [ ] **Today canonical runtime verification:** Frontend source sudah mengarah ke naming canonical yang bersih, tetapi backend production runtime masih belum menyajikan route canonical tersebut.
 
 ## Evidence-driven tasks added from production review
 - [x] Revalidate production `/` accessibility after latest frontend patch set — Status: LIVE — Next action: keep in smoke monitor script — Evidence: live HTTP check returns `200` after deploy.

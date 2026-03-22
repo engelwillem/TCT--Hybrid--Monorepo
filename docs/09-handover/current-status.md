@@ -3,7 +3,8 @@
 ## Update 2026-03-22 (Today Runtime Source Patch Synced / Production Verify Pending)
 - **Surface Produk:** `/today` (tetap canonical).
 - **Backend:** ✅ **FIXED & VERIFIED** untuk endpoint Today session internal contract di `https://api.thechoosentalks.org/api/today/session`.
-- **Frontend Source:** ✅ **PATCHED IN SOURCE**.
+- **Frontend Deploy:** Mengandalkan Tencent Edge Pages. Status sinkronisasi tetap perlu diverifikasi per push/release karena pernah terjadi stale deploy/cache drift.
+- **Frontend Source:** ✅ **PATCHED**. Kode frontend sudah mengarah ke naming canonical yang bersih, tetapi backend production runtime masih belum menyajikan route canonical tersebut.
   - Source Today Ritual tidak lagi mengandalkan path frontend-domain `www/.../api/today/session` yang 404.
   - Endpoint resolution diselaraskan ke helper API terpusat.
   - Auth/header forwarding tetap dipertahankan pada server boundary `/today`.
