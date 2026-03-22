@@ -1,4 +1,6 @@
 type FetchJsonObjectOptions = {
+  headers?: HeadersInit;
+  cache?: RequestCache;
   revalidateSeconds?: number;
   timeoutMs?: number;
 };
@@ -40,7 +42,14 @@ export async function fetchJsonObjectWithTimeout(
     try {
       response = await fetch(url, {
         signal: controller.signal,
-        next: options.revalidateSeconds ? { revalidate: options.revalidateSeconds } : undefined,
+        headers: options.headers,
+        cache: options.cache,
+        next:
+          options.cache === 'no-store'
+            ? undefined
+            : options.revalidateSeconds
+              ? { revalidate: options.revalidateSeconds }
+              : undefined,
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {

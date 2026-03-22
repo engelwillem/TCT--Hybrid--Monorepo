@@ -14,3 +14,4 @@ NOT READY
 
 ## Reason
 Masih ada domain dan environment parity yang belum selesai diverifikasi penuh.
+Secara spesifik untuk `/today`: backend endpoint sudah fixed, frontend source sudah patched, tetapi verifikasi runtime production frontend masih pending.

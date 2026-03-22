@@ -1,5 +1,11 @@
 # Web Progress Master Status
 
+## Update 2026-03-22 — `/today` Runtime Integration Sync
+- **Backend Today Session Endpoint:** ✅ VERIFIED (live backend origin).
+- **Frontend `/today` source pathing:** ✅ PATCHED IN SOURCE (menggunakan jalur API terpusat, tidak bergantung pada `www/.../api/today-v2/session`).
+- **Auth context forwarding:** ✅ dipertahankan di server boundary `/today`.
+- **Production runtime verification (`/today`):** 🔵 PENDING (belum final sampai deploy frontend + validasi live selesai).
+
 ## 1. Ringkasan Status Global
 Status proyek **TCT Hybrid** saat ini berada pada fase **Stabilisasi Infrastruktur & Polishing UI/UX**. Berdasarkan *Reality Matrix Audit*, integrasi inti (Auth, Profile, VerseHub) sudah berstatus **REAL** dan terkoneksi ke backend.
 

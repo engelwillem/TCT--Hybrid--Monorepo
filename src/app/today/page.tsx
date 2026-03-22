@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import TodayDailyRitualScreen from '@/features/today-ritual/components/TodayDailyRitualScreen';
 import { loadTodaySessionContent } from '@/features/today-ritual/data/today-session.loader';
 
@@ -39,11 +40,26 @@ function normalizePreviewDate(value: string | string[] | undefined): string | nu
   return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
 }
 
+async function buildTodayForwardedHeaders(): Promise<HeadersInit | undefined> {
+  const incoming = await headers();
+  const forwarded = new Headers();
+
+  const allowList = ['authorization', 'cookie', 'x-xsrf-token', 'x-request-id'] as const;
+
+  for (const key of allowList) {
+    const value = incoming.get(key);
+    if (value) forwarded.set(key, value);
+  }
+
+  return Array.from(forwarded.keys()).length > 0 ? forwarded : undefined;
+}
+
 export default async function TodayPage({ searchParams }: TodayPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const previewDate = normalizePreviewDate(resolvedSearchParams?.previewDate);
+  const forwardedHeaders = await buildTodayForwardedHeaders();
 
-  const sessionContent = await loadTodaySessionContent({ previewDate });
+  const sessionContent = await loadTodaySessionContent({ previewDate, forwardedHeaders });
 
   return <TodayDailyRitualScreen sessionContent={sessionContent} />;
 }

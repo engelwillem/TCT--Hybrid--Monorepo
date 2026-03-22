@@ -1,5 +1,9 @@
 # Next Actions
 
+## Priority Sync 2026-03-22 (/today Runtime Integration)
+- [ ] Verify frontend live `/today` reads backend Today session from canonical API origin (not `www/.../api/today-v2/session`) — Status: PENDING — Next action: deploy frontend patch, then verify network/runtime logs on production `/today` — Evidence: source patch exists, but live verification not completed yet.
+- [ ] Confirm `/today` no longer falls back due to endpoint mismatch on production runtime — Status: PENDING — Next action: run strict integration check + smoke against live `/today` after deploy — Evidence: backend endpoint already verified; frontend source patch only validated via typecheck.
+
 ## Evidence-driven tasks added from production review
 - [x] Revalidate production `/` accessibility after latest frontend patch set — Status: LIVE — Next action: keep in smoke monitor script — Evidence: live HTTP check returns `200` after deploy.
 - [x] Revalidate production `/today`, `/community`, `/versehub/id`, `/paths`, `/profile` with fresh cache pass — Status: LIVE — Next action: keep visual QA cycle for UX regressions — Evidence: all listed routes return `200` on live recheck.

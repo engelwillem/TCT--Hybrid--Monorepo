@@ -8,6 +8,7 @@ import { fetchTodaySessionRaw } from './today-session.source';
 
 type LoadTodaySessionContentOptions = {
   previewDate?: string | null;
+  forwardedHeaders?: HeadersInit;
 };
 
 export async function loadTodaySessionContent(
@@ -20,7 +21,10 @@ export async function loadTodaySessionContent(
   let sourceIssue: ContentFieldIssue | null = null;
 
   try {
-    rawSession = await fetchTodaySessionRaw({ previewDate: options.previewDate });
+    rawSession = await fetchTodaySessionRaw({
+      previewDate: options.previewDate,
+      forwardedHeaders: options.forwardedHeaders,
+    });
   } catch (error) {
     if (error instanceof FetchBoundaryError) {
       sourceIssue = {
@@ -56,7 +60,8 @@ export async function loadTodaySessionContent(
       severity: 'info',
       field: '$source',
       message: 'No external payload available, using fallback defaults',
-      recommendedAction: 'Set TODAY_SESSION_ENDPOINT when backend content source is ready.',
+      recommendedAction:
+        'Check Laravel API connectivity or set TODAY_V2_SESSION_ENDPOINT/TODAY_SESSION_ENDPOINT when needed.',
     });
   }
 

@@ -1,5 +1,13 @@
 # Active & Resolved Blockers
 
+## ACTIVE BLOCKER (2026-03-22 - Today Frontend Runtime Verification)
+- [ ] **`/today` runtime production verification after frontend source patch**: **PENDING**
+  - **Type:** integration verification blocker
+  - **Owner:** frontend
+  - **Why open:** backend endpoint sudah verified, tetapi patch source frontend belum terverifikasi pada runtime production Tencent Edge.
+  - **Impact:** risiko `/today` masih fallback/mock di live jika deploy frontend belum membawa patch terbaru.
+  - **Evidence ringkas:** local git masih dirty (patch belum commit/deploy saat audit ini ditulis).
+
 ## RESOLVED BLOCKERS (2026-03-20 - Build Stability)
 - [x] **Frontend Monorepo Checks (Source + CI)**: **FIXED**. Akar masalah Google Fonts dependency (`next/font/google`) telah diputus. Verifikasi CI (GitHub Actions Run 23339123819) PASS (0:59s).
 - [x] **Production Build Rerun**: **FIXED**. Build sukses di environment CI. Status deployment asinkron (CD) saat ini terhambat secret.
