@@ -8,7 +8,7 @@ app-like feel
 Jadi kita koreksi arah:
 
 landing page / boleh bersih tanpa bottom nav
-tapi begitu user masuk ke main app (/today, /today-v2, /paths, /community, /profile, /versehub)
+tapi begitu user masuk ke main app (/today, /today, /paths, /community, /profile, /versehub)
 bottom nav harus kembali menjadi anchor navigasi yang jelas, sticky, dan mudah dijangkau ibu jari
 
 Berikut 1 prompt koreksi saja.
@@ -33,7 +33,7 @@ Pulihkan bottom navigation agar kembali menjadi:
 - Homepage `/` tetap boleh tanpa bottom nav
 - Tetapi untuk main apps, bottom nav harus hadir dan mudah dipakai:
   - `/today`
-  - `/today-v2`
+  - `/today`
   - `/paths`
   - `/community`
   - `/profile`
@@ -56,7 +56,7 @@ Saya ingin bottom nav:
 - tetap premium dan ringan
 - tidak terlalu besar
 - tidak terlalu decorative
-- tidak mengganggu `/today-v2`, tapi tetap tersedia di main app surfaces jika memang itu aturan shell
+- tidak mengganggu `/today`, tapi tetap tersedia di main app surfaces jika memang itu aturan shell
 
 Gunakan pendekatan paling masuk akal:
 - fixed bottom
@@ -69,8 +69,8 @@ Gunakan pendekatan paling masuk akal:
 Saya ingin:
 - `/` = tidak perlu bottom nav
 - main app routes = bottom nav hadir
-- jangan sampai logika full-bleed `/today-v2` membuat nav sepenuhnya hilang jika seharusnya tetap ada
-- kalau `/today-v2` sengaja tanpa nav karena fokus ritual, pastikan route transisi ke halaman lain tetap mudah dan keputusan ini benar-benar disengaja
+- jangan sampai logika full-bleed `/today` membuat nav sepenuhnya hilang jika seharusnya tetap ada
+- kalau `/today` sengaja tanpa nav karena fokus ritual, pastikan route transisi ke halaman lain tetap mudah dan keputusan ini benar-benar disengaja
 
 Anda harus audit ini secara kritis dan pilih implementasi yang paling usable.
 
@@ -109,5 +109,6 @@ Setelah ini:
 - hasil siap dicek ulang di preview
 
 Langsung perbaiki bottom nav sticky/floating regression ini.
+
 
 

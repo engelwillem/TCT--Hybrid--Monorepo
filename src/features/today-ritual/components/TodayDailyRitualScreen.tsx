@@ -33,10 +33,10 @@ export default function TodayDailyRitualScreen({ sessionContent }: TodayDailyRit
   } = useTodayRitualProgress();
   const profileName = user?.displayName?.trim();
   const isAuthRestoring = authStatus === 'restoring';
-  const audienceName =
-    authStatus === 'authenticated' && profileName && profileName.length > 0
-      ? profileName
-      : 'Chosen People';
+  const isAuthenticatedWithName = authStatus === 'authenticated' && profileName && profileName.length > 0;
+  const greetingText = isAuthenticatedWithName
+    ? `Selamat datang kembali, ${profileName}`
+    : 'Selamat datang kembali,';
   const phase: 'reflection' | 'prayer' | 'completed' = isPrayerCompleted
     ? 'completed'
     : isReflectDone
@@ -92,8 +92,8 @@ export default function TodayDailyRitualScreen({ sessionContent }: TodayDailyRit
       >
         
         <TodayHeader
-          greeting={sessionContent.greeting}
-          audienceName={audienceName}
+          greeting={greetingText}
+          audienceName={isAuthenticatedWithName ? profileName : undefined}
           dateLabel={sessionContent.dateLabel}
           isAuthRestoring={isAuthRestoring}
         />

@@ -5,7 +5,7 @@ namespace App\Support;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
-class TodayV2SessionContentSource
+class TodaySessionContentSource
 {
     /**
      * @return array<string, mixed>
@@ -50,7 +50,7 @@ class TodayV2SessionContentSource
             ];
         }
 
-        Log::warning('today_v2.content_source.empty_payload', [
+        Log::warning('today.content_source.empty_payload', [
             'dateKey' => $dateKey,
             'datedPath' => $datedPath,
             'defaultPath' => $defaultPath,
@@ -70,7 +70,7 @@ class TodayV2SessionContentSource
             return (string) $forcedDateKey;
         }
 
-        $override = trim((string) config('today_v2.date_override', ''));
+        $override = trim((string) config('today.date_override', ''));
         if ($this->isValidDateKey($override)) {
             return $override;
         }
@@ -80,21 +80,21 @@ class TodayV2SessionContentSource
 
     private function contentDirectory(): string
     {
-        $path = trim((string) config('today_v2.content_path', 'content/today-v2'));
+        $path = trim((string) config('today.content_path', 'content/today'));
 
         return base_path(trim($path, '/\\'));
     }
 
     private function defaultFileName(): string
     {
-        $name = trim((string) config('today_v2.default_file', 'default.php'));
+        $name = trim((string) config('today.default_file', 'default.php'));
 
         return $name !== '' ? $name : 'default.php';
     }
 
     private function timezone(): string
     {
-        $timezone = trim((string) config('today_v2.timezone', 'Asia/Jakarta'));
+        $timezone = trim((string) config('today.timezone', 'Asia/Jakarta'));
 
         return $timezone !== '' ? $timezone : 'Asia/Jakarta';
     }
@@ -115,7 +115,7 @@ class TodayV2SessionContentSource
 
         $payload = include $path;
         if (! is_array($payload)) {
-            Log::warning('today_v2.content_source.invalid_file_payload', ['path' => $path]);
+            Log::warning('today.content_source.invalid_file_payload', ['path' => $path]);
 
             return [];
         }
@@ -123,3 +123,4 @@ class TodayV2SessionContentSource
         return $payload;
     }
 }
+

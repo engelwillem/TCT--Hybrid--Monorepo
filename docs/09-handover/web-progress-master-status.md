@@ -2,7 +2,7 @@
 
 ## Update 2026-03-22 — `/today` Runtime Integration Sync
 - **Backend Today Session Endpoint:** ✅ VERIFIED (live backend origin).
-- **Frontend `/today` source pathing:** ✅ PATCHED IN SOURCE (menggunakan jalur API terpusat, tidak bergantung pada `www/.../api/today-v2/session`).
+- **Frontend `/today` source pathing:** ✅ PATCHED IN SOURCE (menggunakan jalur API terpusat, tidak bergantung pada `www/.../api/today/session`).
 - **Auth context forwarding:** ✅ dipertahankan di server boundary `/today`.
 - **Production runtime verification (`/today`):** 🔵 PENDING (belum final sampai deploy frontend + validasi live selesai).
 
@@ -56,3 +56,4 @@ Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI 
 ---
 **Status Audit:** ✅ **FIXED (2026-03-20)**
 - Sinkronisasi realitas fungsional untuk VerseHub (Reflections & Journey) telah tuntas.
+

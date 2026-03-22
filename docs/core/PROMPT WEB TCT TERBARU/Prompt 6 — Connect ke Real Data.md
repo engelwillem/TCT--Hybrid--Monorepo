@@ -1,12 +1,12 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan tambah fitur baru, jangan sentuh tab bar, jangan sentuh auth, jangan sentuh analytics, dan jangan ubah visual hierarchy utama.
 
 Fokus tahap ini hanya pada:
-**menghubungkan `/today-v2` ke data nyata melalui satu data-loading boundary yang bersih, sambil tetap mempertahankan fallback mock agar UI tetap stabil.**
+**menghubungkan `/today` ke data nyata melalui satu data-loading boundary yang bersih, sambil tetap mempertahankan fallback mock agar UI tetap stabil.**
 
 Konteks:
-- `/today-v2` sudah content-driven
+- `/today` sudah content-driven
 - komponen presentational sudah cukup bersih
 - sekarang saya ingin menyiapkan jalur integrasi nyata tanpa merusak UX dan tanpa menyebarkan logic fetch ke banyak komponen
 - saya ingin nanti mudah mengganti dari mock ke CMS/API/Laravel source

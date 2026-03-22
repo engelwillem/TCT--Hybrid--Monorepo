@@ -61,7 +61,7 @@ export async function loadTodaySessionContent(
       field: '$source',
       message: 'No external payload available, using fallback defaults',
       recommendedAction:
-        'Check Laravel API connectivity or set TODAY_V2_SESSION_ENDPOINT/TODAY_SESSION_ENDPOINT when needed.',
+        'Check Laravel API connectivity or set TODAY_SESSION_ENDPOINT when needed.',
     });
   }
 
@@ -105,3 +105,4 @@ export async function loadTodaySessionContent(
 
   return content;
 }
+

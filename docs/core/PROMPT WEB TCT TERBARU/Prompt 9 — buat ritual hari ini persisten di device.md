@@ -1,9 +1,9 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan tambah fitur baru di luar flow utama, jangan sentuh auth, jangan sentuh analytics, jangan sentuh global navigation, dan jangan ubah visual hierarchy utama.
 
 Fokus tahap ini hanya pada:
-**menambahkan persistence lokal untuk progress ritual hari ini**, agar `/today-v2` mengingat status user saat reload atau kembali lagi di hari yang sama.
+**menambahkan persistence lokal untuk progress ritual hari ini**, agar `/today` mengingat status user saat reload atau kembali lagi di hari yang sama.
 
 Konteks:
 - saat ini flow utama sudah baik: Receive → Reflect → Pray → Complete

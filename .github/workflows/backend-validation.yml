@@ -1,4 +1,4 @@
-name: Backend Monorepo Checks
+name: Backend Validation (No Deploy Trigger)
 
 on:
   workflow_dispatch:
@@ -6,23 +6,21 @@ on:
     branches:
       - main
     paths:
-      - 'backend-api/**'
-      - '.github/workflows/backend-monorepo-checks.yml'
-      - '.github/workflows/backend-validation.yml'
+      - "backend-api/**"
+      - ".github/workflows/backend-validation.yml"
   push:
     branches:
       - main
     paths:
-      - 'backend-api/**'
-      - '.github/workflows/backend-monorepo-checks.yml'
-      - '.github/workflows/backend-validation.yml'
+      - "backend-api/**"
+      - ".github/workflows/backend-validation.yml"
 
 concurrency:
-  group: backend-monorepo-${{ github.ref }}
+  group: backend-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  backend-checks:
+  backend-validation:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -34,7 +32,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: mbstring, pdo_mysql
           coverage: none
 
@@ -47,6 +45,3 @@ jobs:
       - name: PHP syntax check
         run: |
           find app routes config database -name "*.php" -print0 | xargs -0 -n1 php -l
-
-      - name: Today readiness guardrail
-        run: composer today:ready

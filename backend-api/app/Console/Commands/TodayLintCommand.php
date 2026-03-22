@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands;
 
-use App\Support\TodayV2SessionContentLint;
-use App\Support\TodayV2SessionContentSource;
+use App\Support\TodaySessionContentLint;
+use App\Support\TodaySessionContentSource;
 use Illuminate\Console\Command;
 
-class TodayV2LintCommand extends Command
+class TodayLintCommand extends Command
 {
-    protected $signature = 'today-v2:lint {--date= : Validate a specific date key (YYYY-MM-DD)}';
+    protected $signature = 'today:lint {--date= : Validate a specific date key (YYYY-MM-DD)}';
 
-    protected $description = 'Lint today-v2 daily content payload shape and editorial safety before serving the API.';
+    protected $description = 'Lint today daily content payload shape and editorial safety before serving the API.';
 
-    public function handle(TodayV2SessionContentSource $source, TodayV2SessionContentLint $lint): int
+    public function handle(TodaySessionContentSource $source, TodaySessionContentLint $lint): int
     {
         $date = $this->option('date');
         if ($date !== null && $date !== '' && ! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $date)) {
@@ -25,7 +25,7 @@ class TodayV2LintCommand extends Command
         $resolved = $source->resolveWithMeta($forcedDate);
         $report = $lint->lint($resolved['payload']);
 
-        $this->info('Today V2 Content Lint');
+        $this->info('Today Content Lint');
         $this->line('Date key: '.$resolved['dateKey']);
         $this->line('Source file: '.($resolved['sourceFile'] ?? '(none)'));
         $this->line('Fallback used: '.($resolved['fallbackUsed'] ? 'yes' : 'no'));
@@ -72,3 +72,5 @@ class TodayV2LintCommand extends Command
         $this->newLine();
     }
 }
+
+

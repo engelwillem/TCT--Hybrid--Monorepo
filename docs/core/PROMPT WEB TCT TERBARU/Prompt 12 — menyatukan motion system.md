@@ -1,9 +1,9 @@
-Lanjutkan dari baseline `/today-v2` yang terbaru.
+Lanjutkan dari baseline `/today` yang terbaru.
 
 Jangan tambah fitur baru, jangan sentuh auth, analytics, global navigation, backend persistence, atau data architecture utama.
 
 Fokus tahap ini hanya pada:
-**merapikan dan menyatukan motion system `/today-v2`** agar seluruh animasi, reveal, dissolve, dan transition terasa berasal dari satu bahasa desain yang konsisten, premium, dan iOS-native.
+**merapikan dan menyatukan motion system `/today`** agar seluruh animasi, reveal, dissolve, dan transition terasa berasal dari satu bahasa desain yang konsisten, premium, dan iOS-native.
 
 Konteks:
 - visual direction sudah cukup matang
@@ -97,12 +97,12 @@ ini juga akan memaksa motion system kamu jadi benar-benar sistem, bukan hanya pr
 
 Ada satu catatan jujur juga: di output tadi dia bilang “Full Revised Code”, tapi yang diberikan lebih banyak audit + desain sistem, bukan dump kode final lengkap. Itu tidak fatal, tapi berarti tahap berikut harus lebih implementatif dan spesifik.
 
-Lanjutkan dari `/today-v2` yang motion system-nya sudah dirapikan.
+Lanjutkan dari `/today` yang motion system-nya sudah dirapikan.
 
 Jangan tambah fitur baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, backend persistence, atau data architecture utama.
 
 Fokus tahap ini hanya pada:
-**membuat motion system `/today-v2` lebih matang secara accessibility dan runtime behavior**, terutama untuk reduced motion, sticky header behavior, dan performa animasi di device yang tidak sekuat flagship iPhone.
+**membuat motion system `/today` lebih matang secara accessibility dan runtime behavior**, terutama untuk reduced motion, sticky header behavior, dan performa animasi di device yang tidak sekuat flagship iPhone.
 
 Konteks:
 - motion system dasar sudah ada
@@ -197,12 +197,12 @@ user yang butuh alur fokus jelas saat step baru muncul
 dan ini langsung menyentuh deferred items yang tadi sudah teridentifikasi
 
 
-Lanjutkan dari baseline `/today-v2` yang motion system-nya sudah matang dan reduced-motion aware.
+Lanjutkan dari baseline `/today` yang motion system-nya sudah matang dan reduced-motion aware.
 
 Jangan tambah fitur baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, backend persistence, atau data architecture utama.
 
 Fokus tahap ini hanya pada:
-**menyempurnakan accessibility interaction layer `/today-v2`**, terutama focus management, keyboard flow, dan screen reader semantics, agar pengalaman tetap premium, tenang, dan usable untuk lebih banyak user.
+**menyempurnakan accessibility interaction layer `/today`**, terutama focus management, keyboard flow, dan screen reader semantics, agar pengalaman tetap premium, tenang, dan usable untuk lebih banyak user.
 
 Konteks:
 - visual direction sudah matang
@@ -212,7 +212,7 @@ Konteks:
 - saya tidak ingin hasilnya terasa seperti “form enterprise” atau “accessibility patch”; tetap harus calm, editorial, dan iOS-native in feel
 
 Tugas Anda:
-Audit implementasi `/today-v2` saat ini secara kritis, lalu revisi agar:
+Audit implementasi `/today` saat ini secara kritis, lalu revisi agar:
 1. focus flow lebih jelas saat step baru muncul
 2. keyboard navigation terasa masuk akal dan tidak membingungkan
 3. elemen interaktif punya semantics yang benar
@@ -269,4 +269,5 @@ Format jawaban:
 5. Full Revised Code
 6. Why This Improves Accessibility Without Breaking Premium Feel
 7. Deferred Again
+
 

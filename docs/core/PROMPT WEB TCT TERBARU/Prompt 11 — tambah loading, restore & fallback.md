@@ -1,9 +1,9 @@
-Lanjutkan dari baseline `/today-v2` yang sudah terkunci.
+Lanjutkan dari baseline `/today` yang sudah terkunci.
 
 Jangan tambah fitur baru, jangan sentuh auth, analytics, global navigation, cross-device sync, atau backend persistence.
 
 Fokus tahap ini hanya pada:
-**menyempurnakan state pengalaman saat loading, hydration, restore, dan fallback**, agar `/today-v2` terasa premium dari detik pertama dibuka sampai state final tampil.
+**menyempurnakan state pengalaman saat loading, hydration, restore, dan fallback**, agar `/today` terasa premium dari detik pertama dibuka sampai state final tampil.
 
 Konteks:
 - arsitektur utama sudah benar

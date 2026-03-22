@@ -1,11 +1,11 @@
 # PROMPT
 
-Lanjutkan dari implementasi `/today-v2` yang sudah ada.
+Lanjutkan dari implementasi `/today` yang sudah ada.
 
 Sekarang saya tidak ingin Anda menyentuh backend, database, auth, analytics, atau fitur baru apa pun.
 
 Fokus tahap ini hanya pada:
-**meningkatkan fidelity agar `/today-v2` terasa lebih seperti high-end iOS native screen, dan kurang terasa seperti website scroll sections.**
+**meningkatkan fidelity agar `/today` terasa lebih seperti high-end iOS native screen, dan kurang terasa seperti website scroll sections.**
 
 Konteks:
 - Halaman ini adalah “Digital Sanctuary”
@@ -16,7 +16,7 @@ Konteks:
 - Harus terasa seperti app screen yang very intentional
 
 Tugas Anda:
-Audit implementasi `/today-v2` yang sudah dibuat, lalu revisi kodenya agar:
+Audit implementasi `/today` yang sudah dibuat, lalu revisi kodenya agar:
 1. spacing terasa lebih native iOS, bukan sekadar besar
 2. top area mengikuti pola safe-area dan header behavior ala iPhone
 3. hierarchy visual lebih halus dan lebih premium

@@ -1,9 +1,9 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan tambah fitur baru di luar flow utama, jangan sentuh auth, jangan sentuh analytics, jangan sentuh global navigation, jangan ubah visual hierarchy inti, dan jangan pindah ke backend persistence dulu.
 
 Fokus tahap ini hanya pada:
-**menyempurnakan UX untuk same-day re-entry**, yaitu saat user membuka kembali `/today-v2` di hari yang sama setelah progress ritual sudah tersimpan.
+**menyempurnakan UX untuk same-day re-entry**, yaitu saat user membuka kembali `/today` di hari yang sama setelah progress ritual sudah tersimpan.
 
 Konteks:
 - sekarang progress ritual sudah persisted secara lokal

@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TodayV2SessionResource extends JsonResource
+class TodaySessionResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -13,7 +13,7 @@ class TodayV2SessionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'contractVersion' => data_get($this->resource, 'contractVersion', 'today-v2.session.v1'),
+            'contractVersion' => data_get($this->resource, 'contractVersion', 'today.session.v1'),
             'user' => [
                 'name' => data_get($this->resource, 'user.name'),
                 'avatarInitial' => data_get($this->resource, 'user.avatarInitial'),
@@ -49,3 +49,4 @@ class TodayV2SessionResource extends JsonResource
         ];
     }
 }
+

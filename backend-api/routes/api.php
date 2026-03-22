@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\V1\CommunityApiController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
-use App\Http\Controllers\Api\V1\TodayV2SessionController;
+use App\Http\Controllers\Api\V1\TodaySessionController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelMembershipController;
@@ -22,6 +22,8 @@ use App\Http\Controllers\VerseHubReaderController;
 use App\Http\Controllers\VerseHubReflectionController;
 use App\Http\Controllers\WeeklyController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/today/session', [TodaySessionController::class, 'show']);
 
 Route::prefix('v1')->group(function (): void {
     Route::post('/login', [\App\Http\Controllers\Api\V1\AuthController::class, 'login']);
@@ -128,5 +130,3 @@ Route::prefix('v1')->group(function (): void {
             ->whereNumber('commentId');
     });
 });
-
-Route::get('/today-v2/session', [TodayV2SessionController::class, 'show']);

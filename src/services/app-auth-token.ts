@@ -1,4 +1,7 @@
 const APP_ACCESS_TOKEN_KEY = "tct_app_access_token";
+const APP_AUTH_SOURCE_KEY = "tct_app_auth_source";
+
+export type AppAuthSource = "firebase" | "password" | "unknown";
 
 function isLikelySanctumToken(token: string): boolean {
   // Laravel Sanctum plain text token format: "{id}|{secret}"
@@ -40,14 +43,23 @@ export function hasAppAccessToken(): boolean {
   return Boolean(getAppAccessToken());
 }
 
-export function setAppAccessToken(token: string): void {
+export function getAppAuthSource(): AppAuthSource {
+  if (typeof window === "undefined") return "unknown";
+  const raw = window.localStorage.getItem(APP_AUTH_SOURCE_KEY);
+  if (raw === "firebase" || raw === "password") return raw;
+  return "unknown";
+}
+
+export function setAppAccessToken(token: string, source: AppAuthSource = "unknown"): void {
   if (typeof window === "undefined") return;
   const clean = token.trim();
   if (!clean) return;
   window.localStorage.setItem(APP_ACCESS_TOKEN_KEY, clean);
+  window.localStorage.setItem(APP_AUTH_SOURCE_KEY, source);
 }
 
 export function clearAppAccessToken(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(APP_ACCESS_TOKEN_KEY);
+  window.localStorage.removeItem(APP_AUTH_SOURCE_KEY);
 }

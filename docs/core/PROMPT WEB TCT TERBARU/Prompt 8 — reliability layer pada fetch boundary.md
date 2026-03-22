@@ -1,9 +1,9 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan tambah fitur baru, jangan sentuh visual hierarchy utama, jangan ubah flow Receive → Reflect → Pray → Complete, jangan sentuh auth, jangan sentuh analytics, dan jangan pindah ke global navigation.
 
 Fokus tahap ini hanya pada:
-**membuat fetch/data-loading boundary `/today-v2` lebih reliable untuk production**, terutama saat nanti terhubung ke Laravel/CMS sungguhan.
+**membuat fetch/data-loading boundary `/today` lebih reliable untuk production**, terutama saat nanti terhubung ke Laravel/CMS sungguhan.
 
 Konteks:
 - sekarang sudah ada source -> mapper -> loader -> UI
@@ -42,7 +42,7 @@ Jangan lakukan ini:
 - jangan tambah analytics
 - jangan tambah state global
 - jangan pindahkan fallback ke komponen UI
-- jangan tambah fitur baru di `/today-v2`
+- jangan tambah fitur baru di `/today`
 - jangan membuat abstraction layer berlebihan
 
 Saya ingin output berupa:

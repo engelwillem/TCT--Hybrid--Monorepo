@@ -58,7 +58,7 @@ export default function LoginPage() {
 
       const apiToken = data?.data?.token;
       if (typeof apiToken === "string" && apiToken.length > 0) {
-        setAppAccessToken(apiToken);
+        setAppAccessToken(apiToken, "password");
       }
 
       // Success

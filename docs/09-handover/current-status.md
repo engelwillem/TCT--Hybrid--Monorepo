@@ -2,9 +2,9 @@
 
 ## Update 2026-03-22 (Today Runtime Source Patch Synced / Production Verify Pending)
 - **Surface Produk:** `/today` (tetap canonical).
-- **Backend:** ✅ **FIXED & VERIFIED** untuk endpoint Today session internal contract di `https://api.thechoosentalks.org/api/today-v2/session`.
+- **Backend:** ✅ **FIXED & VERIFIED** untuk endpoint Today session internal contract di `https://api.thechoosentalks.org/api/today/session`.
 - **Frontend Source:** ✅ **PATCHED IN SOURCE**.
-  - Source Today Ritual tidak lagi mengandalkan path frontend-domain `www/.../api/today-v2/session` yang 404.
+  - Source Today Ritual tidak lagi mengandalkan path frontend-domain `www/.../api/today/session` yang 404.
   - Endpoint resolution diselaraskan ke helper API terpusat.
   - Auth/header forwarding tetap dipertahankan pada server boundary `/today`.
   - Typecheck lokal: PASS.
@@ -128,3 +128,4 @@ Status surface aktif production sudah bergerak ke **stabil operasional** untuk f
 - **Automated Deploy Trigger:** ✅ **FIXED (CI Scope)**. Workflow frontend tidak lagi memakai `TENCENT_EDGE_DEPLOY_HOOK_URL`; CI kini murni install/typecheck/build tanpa trigger deploy manual Tencent.
 - **Verification Report:** `docs/01-audits/deploy/2026-03-20-rerun-verification-report.md`.
 - **Conclusion:** Codebase `main` menjalankan CI-only pipeline di GitHub; deploy frontend mengikuti auto deploy Tencent Edge dari integrasi Git.
+

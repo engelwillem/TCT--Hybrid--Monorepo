@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 class CommunityApiController extends Controller
@@ -80,7 +81,8 @@ class CommunityApiController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('community/posts', 'public');
-                $mediaPaths[] = Storage::disk('public')->url($path);
+                $this->syncPublicMediaMirror($path);
+                $mediaPaths[] = '/storage/'.ltrim($path, '/');
             }
         }
 
@@ -283,4 +285,33 @@ class CommunityApiController extends Controller
             ],
         ];
     }
+
+    /**
+     * Keep /storage/<path> readable on shared-hosting environments where public/storage
+     * is a real directory (not a symlink to storage/app/public).
+     */
+    private function syncPublicMediaMirror(string $relativePath): void
+    {
+        try {
+            $publicStorageRoot = public_path('storage');
+
+            if (is_link($publicStorageRoot)) {
+                return;
+            }
+
+            $source = storage_path('app/public/'.ltrim($relativePath, '/'));
+            $target = $publicStorageRoot.DIRECTORY_SEPARATOR.ltrim($relativePath, '/');
+
+            if (! is_file($source)) {
+                return;
+            }
+
+            File::ensureDirectoryExists(dirname($target));
+            File::copy($source, $target);
+        } catch (\Throwable) {
+            // Non-fatal: file already persisted on public disk.
+        }
+    }
 }
+
+

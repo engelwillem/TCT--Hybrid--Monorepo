@@ -1,12 +1,12 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan pindah ke backend penuh, API fetch nyata, auth, analytics, tab bar, atau sistem global dulu.
 
 Fokus tahap ini hanya pada:
-**mengubah `/today-v2` dari static mock menjadi content-driven screen yang siap menerima data dinamis, tanpa merusak UX, visual hierarchy, dan iOS-native feel yang sudah berhasil.**
+**mengubah `/today` dari static mock menjadi content-driven screen yang siap menerima data dinamis, tanpa merusak UX, visual hierarchy, dan iOS-native feel yang sudah berhasil.**
 
 Konteks:
-- `/today-v2` sudah punya flow dan feel yang cukup baik
+- `/today` sudah punya flow dan feel yang cukup baik
 - struktur utama tetap: Receive → Reflect → Pray → Complete
 - positioning tetap: Digital Sanctuary
 - goal tahap ini: memisahkan content model dari presentational UI agar nanti mudah dihubungkan ke CMS / backend nyata

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'contractVersion' => 'today-v2.session.v1',
+    'contractVersion' => 'today.session.v1',
     'user' => [
         'name' => 'Sahabat',
         'avatarInitial' => 'S',
@@ -35,3 +35,4 @@ return [
         'tomorrowCueText' => 'Kita lanjutkan langkah ini lagi esok hari.',
     ],
 ];
+

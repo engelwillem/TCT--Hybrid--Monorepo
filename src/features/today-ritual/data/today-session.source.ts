@@ -15,8 +15,7 @@ function normalizePreviewDate(previewDate?: string | null): string | null {
 }
 
 function resolveTodaySessionEndpoint(): string | null {
-  const explicitEndpoint =
-    process.env.TODAY_V2_SESSION_ENDPOINT?.trim() ?? process.env.TODAY_SESSION_ENDPOINT?.trim();
+  const explicitEndpoint = process.env.TODAY_SESSION_ENDPOINT?.trim();
   if (explicitEndpoint) {
     return explicitEndpoint;
   }
@@ -90,15 +89,13 @@ export async function fetchTodaySessionRaw(
   options: FetchTodaySessionRawOptions = {}
 ): Promise<RawTodaySessionPayload | null> {
   const explicitEndpoint = resolveTodaySessionEndpoint();
-  const timeoutMs = Number(process.env.TODAY_V2_SESSION_TIMEOUT_MS ?? process.env.TODAY_SESSION_TIMEOUT_MS ?? 4500);
-  const revalidateSeconds = Number(
-    process.env.TODAY_V2_SESSION_REVALIDATE_SECONDS ?? process.env.TODAY_SESSION_REVALIDATE_SECONDS ?? 300
-  );
+  const timeoutMs = Number(process.env.TODAY_SESSION_TIMEOUT_MS ?? 4500);
+  const revalidateSeconds = Number(process.env.TODAY_SESSION_REVALIDATE_SECONDS ?? 300);
 
   const previewDate = normalizePreviewDate(options.previewDate);
 
   if (!explicitEndpoint) {
-    const path = previewDate ? appendPreviewDateToPath('/api/today-v2/session', previewDate) : '/api/today-v2/session';
+    const path = previewDate ? appendPreviewDateToPath('/api/today/session', previewDate) : '/api/today/session';
     return fetchTodaySessionFromLaravelPath(path, options.forwardedHeaders);
   }
 
@@ -113,3 +110,4 @@ export async function fetchTodaySessionRaw(
 
   return payload as RawTodaySessionPayload;
 }
+

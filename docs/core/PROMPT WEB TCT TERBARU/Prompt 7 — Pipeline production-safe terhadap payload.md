@@ -1,9 +1,9 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan tambah fitur baru, jangan sentuh visual hierarchy utama, jangan sentuh tab bar, jangan sentuh auth, dan jangan pindah ke analytics.
 
 Fokus tahap ini hanya pada:
-**membuat data pipeline `/today-v2` lebih production-safe terhadap payload eksternal yang parsial, tidak konsisten, atau belum lengkap, tanpa merusak UX.**
+**membuat data pipeline `/today` lebih production-safe terhadap payload eksternal yang parsial, tidak konsisten, atau belum lengkap, tanpa merusak UX.**
 
 Konteks:
 - saat ini sudah ada source -> mapper -> loader -> UI

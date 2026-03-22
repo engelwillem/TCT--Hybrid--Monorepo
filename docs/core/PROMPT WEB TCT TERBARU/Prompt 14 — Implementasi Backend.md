@@ -2,7 +2,7 @@ Bagus. Ini handoff backend-nya sudah cukup jelas untuk mulai eksekusi.
 
 Tahap berikutnya yang paling tepat adalah:
 
-membuat implementasi backend minimum yang benar-benar berjalan, tapi masih sederhana — cukup satu endpoint Laravel /api/today-v2/session dengan resource/transformer yang mengikuti kontrak final.
+membuat implementasi backend minimum yang benar-benar berjalan, tapi masih sederhana — cukup satu endpoint Laravel /api/today/session dengan resource/transformer yang mengikuti kontrak final.
 
 Kenapa ini next step terbaik:
 
@@ -13,12 +13,12 @@ sekarang kamu butuh proof of integration, bukan teori tambahan
 jangan lompat ke CMS penuh dulu; cukup buat jalur backend minimum yang valid
 
 
-Lanjutkan dari baseline `/today-v2` yang sekarang sudah punya backend handoff jelas untuk Laravel/CMS.
+Lanjutkan dari baseline `/today` yang sekarang sudah punya backend handoff jelas untuk Laravel/CMS.
 
 Jangan tambah fitur baru di frontend, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, atau cross-device sync.
 
 Fokus tahap ini hanya pada:
-**membuat implementasi backend minimum yang berjalan untuk Laravel**, agar frontend `/today-v2` bisa mulai terhubung ke payload nyata dengan risiko rendah.
+**membuat implementasi backend minimum yang berjalan untuk Laravel**, agar frontend `/today` bisa mulai terhubung ke payload nyata dengan risiko rendah.
 
 Konteks:
 - kontrak payload v1 sudah dikunci
@@ -29,14 +29,14 @@ Konteks:
 
 Tugas Anda:
 Rancang dan implementasikan versi minimum backend Laravel untuk endpoint:
-`GET /api/today-v2/session`
+`GET /api/today/session`
 
 Saya ingin pendekatan yang sederhana dan praktis:
 1. satu route API
 2. satu controller
 3. satu resource / transformer
 4. satu source data sederhana dulu (mis. array statis, config, atau file mock di Laravel)
-5. payload harus mengikuti kontrak final `today-v2.session.v1`
+5. payload harus mengikuti kontrak final `today.session.v1`
 6. jangan over-engineer
 7. jangan buat CMS/admin panel dulu
 
@@ -103,7 +103,7 @@ kamu belum overbuild ke CMS atau DB terlalu cepat
 
 Tahap berikutnya yang paling tepat adalah:
 
-membuat proof-of-integration lokal frontend ↔ backend benar-benar tersambung, supaya /today-v2 tidak lagi hanya “siap diintegrasikan”, tapi benar-benar membaca payload Laravel minimum yang baru dibuat.
+membuat proof-of-integration lokal frontend ↔ backend benar-benar tersambung, supaya /today tidak lagi hanya “siap diintegrasikan”, tapi benar-benar membaca payload Laravel minimum yang baru dibuat.
 
 Kenapa ini next step terbaik:
 
@@ -118,23 +118,23 @@ apakah diagnostics frontend tetap tenang saat menerima payload Laravel
 
 
 Lanjutkan dari baseline yang sekarang sudah punya:
-- frontend `/today-v2` matang
-- endpoint Laravel minimum `GET /api/today-v2/session`
+- frontend `/today` matang
+- endpoint Laravel minimum `GET /api/today/session`
 - kontrak payload v1 yang sama di dua sisi
 
 Jangan tambah fitur UI baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan bangun CMS/DB dulu, dan jangan sentuh auth/analytics/global navigation.
 
 Fokus tahap ini hanya pada:
-**membuat proof-of-integration lokal frontend ↔ backend untuk `/today-v2`**, agar halaman frontend benar-benar membaca payload dari endpoint Laravel minimum yang baru dibuat.
+**membuat proof-of-integration lokal frontend ↔ backend untuk `/today`**, agar halaman frontend benar-benar membaca payload dari endpoint Laravel minimum yang baru dibuat.
 
 Konteks:
-- frontend sudah punya `TODAY_V2_SESSION_ENDPOINT`
+- frontend sudah punya `TODAY_SESSION_ENDPOINT`
 - backend sudah punya endpoint minimum sesuai kontrak
 - saya sekarang ingin local integration yang nyata dan rapi
 - goal tahap ini: memastikan kedua sisi benar-benar tersambung dengan risiko rendah
 
 Tugas Anda:
-Audit struktur frontend dan backend yang ada, lalu implementasikan sambungan lokal minimum yang benar untuk `/today-v2`.
+Audit struktur frontend dan backend yang ada, lalu implementasikan sambungan lokal minimum yang benar untuk `/today`.
 
 Saya ingin Anda menangani hal-hal ini:
 1. cara frontend diarahkan ke endpoint Laravel lokal
@@ -152,7 +152,7 @@ Kalau perlu, Anda boleh menambahkan:
 tetapi tetap minimal dan practical.
 
 Saya ingin Anda secara khusus memeriksa:
-- apakah `TODAY_V2_SESSION_ENDPOINT` sudah cukup atau perlu naming/usage dirapikan
+- apakah `TODAY_SESSION_ENDPOINT` sudah cukup atau perlu naming/usage dirapikan
 - apakah frontend perlu mode “strict integration check” lokal supaya fallback tidak terlalu silent saat sedang integrasi
 - apakah backend perlu CORS adjustment
 - bagaimana memastikan local developer cepat tahu “frontend sedang baca backend sungguhan”
@@ -192,6 +192,7 @@ Format jawaban:
 6. Verification Steps
 7. Why This Is the Right Next Integration Step
 8. Deferred Again
+
 
 
 

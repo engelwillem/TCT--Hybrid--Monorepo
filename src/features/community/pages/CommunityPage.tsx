@@ -45,6 +45,7 @@ function SmartPostComposer({ onPost }: { onPost: any }) {
 }
 
 export function CommunityPage() {
+  const COMMUNITY_FEED_CACHE_KEY = "tct.community.feed.cache.v1";
   const { isAuthenticated, isRestoring } = useAuthSession();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
@@ -85,6 +86,18 @@ export function CommunityPage() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
+  const persistFeedCache = useCallback((nextPosts: CommunityPost[], nextArchivePosts: CommunityPost[]) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      COMMUNITY_FEED_CACHE_KEY,
+      JSON.stringify({
+        posts: nextPosts,
+        archivePosts: nextArchivePosts,
+        cachedAt: new Date().toISOString(),
+      })
+    );
+  }, [COMMUNITY_FEED_CACHE_KEY]);
+
   const openAuthGate = useCallback(
     (mode: "share" | "interact") => {
       if (mode === "share") {
@@ -123,6 +136,7 @@ export function CommunityPage() {
       const fetched = await CommunityService.listPosts();
       setPosts(fetched.posts);
       setArchivePosts(fetched.archivePosts);
+      persistFeedCache(fetched.posts, fetched.archivePosts);
       
       const ritualRes = await fetch('/api/today');
       if (ritualRes.ok) {
@@ -144,12 +158,33 @@ export function CommunityPage() {
             ? "Server Unavailable"
             : "Failed to load feed"
       );
-      setPosts([]);
-      setArchivePosts((prev) => (prev.length > 0 ? prev : MOCK_POSTS));
+      let usedCachedFeed = false;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem(COMMUNITY_FEED_CACHE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw) as { posts?: CommunityPost[]; archivePosts?: CommunityPost[] };
+            const cachedPosts = Array.isArray(parsed.posts) ? parsed.posts : [];
+            const cachedArchive = Array.isArray(parsed.archivePosts) ? parsed.archivePosts : [];
+            if (cachedPosts.length > 0 || cachedArchive.length > 0) {
+              setPosts(cachedPosts);
+              setArchivePosts(cachedArchive);
+              usedCachedFeed = true;
+            }
+          }
+        } catch {
+          // ignore cache parse errors
+        }
+      }
+
+      if (!usedCachedFeed) {
+        setPosts([]);
+        setArchivePosts((prev) => (prev.length > 0 ? prev : MOCK_POSTS));
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [persistFeedCache]);
 
   useEffect(() => {
     fetchData();
@@ -165,7 +200,11 @@ export function CommunityPage() {
     }
     try {
       const newPost = await CommunityService.createPost(text, type, images);
-      setPosts((prev) => [newPost, ...prev]);
+      setPosts((prev) => {
+        const nextPosts = [newPost, ...prev];
+        persistFeedCache(nextPosts, archivePosts);
+        return nextPosts;
+      });
       showToast("Berhasil membagikan!", "success");
       return true;
     } catch (error) {
@@ -206,8 +245,15 @@ export function CommunityPage() {
       const updatedPost = await CommunityService.toggleLike(postId);
       const patchServer = (list: CommunityPost[]) =>
         list.map((p) => (p.id === postId ? updatedPost : p));
-      setPosts((prev) => patchServer(prev));
-      setArchivePosts((prev) => patchServer(prev));
+      setPosts((prev) => {
+        const nextPosts = patchServer(prev);
+        setArchivePosts((prevArchive) => {
+          const nextArchive = patchServer(prevArchive);
+          persistFeedCache(nextPosts, nextArchive);
+          return nextArchive;
+        });
+        return nextPosts;
+      });
     } catch (error) {
       setPosts(originalPosts); 
       setArchivePosts(originalArchivePosts);
@@ -245,8 +291,15 @@ export function CommunityPage() {
       const updatedPost = await CommunityService.toggleBookmark(postId);
       const patchServer = (list: CommunityPost[]) =>
         list.map((p) => (p.id === postId ? updatedPost : p));
-      setPosts((prev) => patchServer(prev));
-      setArchivePosts((prev) => patchServer(prev));
+      setPosts((prev) => {
+        const nextPosts = patchServer(prev);
+        setArchivePosts((prevArchive) => {
+          const nextArchive = patchServer(prevArchive);
+          persistFeedCache(nextPosts, nextArchive);
+          return nextArchive;
+        });
+        return nextPosts;
+      });
       showToast(updatedPost.isBookmarked ? "Disimpan ke Simpanan" : "Dihapus dari Simpanan", "success");
     } catch (error) {
       setPosts(originalPosts);

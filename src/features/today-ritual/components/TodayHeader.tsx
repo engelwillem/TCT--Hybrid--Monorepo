@@ -33,7 +33,8 @@ export default function TodayHeader({
   const m = useMotionConfig();
   const greetingLine = normalizeGreetingLine(greeting, audienceName);
   const primaryGreeting = /[.!?]$/.test(greetingLine) ? greetingLine : `${greetingLine}.`;
-  const identityLabel = isAuthRestoring ? '...' : audienceName ?? 'Chosen People';
+  const normalizedAudience = String(audienceName || '').trim();
+  const identityLabel = isAuthRestoring ? null : normalizedAudience.length > 0 ? normalizedAudience : null;
 
   return (
     <header className="sticky top-0 z-50 w-full pt-[env(safe-area-inset-top,0px)] mix-blend-multiply">
@@ -52,9 +53,11 @@ export default function TodayHeader({
           <h1 className="text-[22px] leading-[1.22] font-semibold tracking-[-0.01em] text-foreground/95 md:text-[25px]">
             {primaryGreeting}
           </h1>
-          <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
-            {identityLabel}
-          </p>
+          {identityLabel && (
+            <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
+              {identityLabel}
+            </p>
+          )}
         </motion.div>
       </div>
     </header>

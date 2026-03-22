@@ -1,7 +1,7 @@
 # Next Actions
 
 ## Priority Sync 2026-03-22 (/today Runtime Integration)
-- [ ] Verify frontend live `/today` reads backend Today session from canonical API origin (not `www/.../api/today-v2/session`) — Status: PENDING — Next action: deploy frontend patch, then verify network/runtime logs on production `/today` — Evidence: source patch exists, but live verification not completed yet.
+- [ ] Verify frontend live `/today` reads backend Today session from canonical API origin (not `www/.../api/today/session`) — Status: PENDING — Next action: deploy frontend patch, then verify network/runtime logs on production `/today` — Evidence: source patch exists, but live verification not completed yet.
 - [ ] Confirm `/today` no longer falls back due to endpoint mismatch on production runtime — Status: PENDING — Next action: run strict integration check + smoke against live `/today` after deploy — Evidence: backend endpoint already verified; frontend source patch only validated via typecheck.
 
 ## Evidence-driven tasks added from production review
@@ -45,3 +45,4 @@
 - [ ] Harden typed API contracts with response validation on critical surfaces — Status: PARTIAL — Next action: prioritize Today, Community, VerseHub, Profile response normalization — Evidence: roadmap week 3 contract hardening guidance.
 - [ ] Prepare backend AI abstraction layer (provider-agnostic) before any wider AI UX rollout — Status: DRIFT — Next action: define Laravel AI gateway contract and safety/logging controls — Evidence: roadmap week 4 AI-ready architecture.
 - [ ] Add journey/progress visualization where decision value exists (not decorative charts) — Status: PARTIAL — Next action: pilot one charted journey metric with clear user benefit — Evidence: roadmap week 4 progress visualization.
+

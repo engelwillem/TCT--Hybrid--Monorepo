@@ -9,7 +9,7 @@ semua itu dilakukan tanpa merusak rasa tenang
 
 Tahap berikutnya yang paling tepat adalah:
 
-mengunci kontrak content/API untuk /today-v2, supaya backend Laravel/CMS nanti tidak merusak UX yang sudah susah dibangun.
+mengunci kontrak content/API untuk /today, supaya backend Laravel/CMS nanti tidak merusak UX yang sudah susah dibangun.
 
 Kenapa ini next step terbaik:
 
@@ -20,15 +20,15 @@ kalau kontrak content/API tidak disiplin, hasil akhirnya akan kembali noisy, ter
 
 # PROMPT
 
-Lanjutkan dari baseline `/today-v2` yang frontend-nya sudah matang: visual, motion, persistence, fallback, dan accessibility interaction layer sudah cukup rapi.
+Lanjutkan dari baseline `/today` yang frontend-nya sudah matang: visual, motion, persistence, fallback, dan accessibility interaction layer sudah cukup rapi.
 
 Jangan tambah fitur baru di UI, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, atau cross-device sync.
 
 Fokus tahap ini hanya pada:
-**mengunci kontrak content/API untuk `/today-v2`** agar integrasi Laravel/CMS nanti aman, konsisten, dan tidak merusak kualitas UX yang sudah dibangun.
+**mengunci kontrak content/API untuk `/today`** agar integrasi Laravel/CMS nanti aman, konsisten, dan tidak merusak kualitas UX yang sudah dibangun.
 
 Konteks:
-- UI `/today-v2` sangat sensitif terhadap kualitas content
+- UI `/today` sangat sensitif terhadap kualitas content
 - jika backend mengirim teks terlalu panjang, field kosong, penamaan berubah, atau struktur tidak disiplin, experience premium akan rusak
 - saya ingin satu kontrak yang jelas antara frontend dan backend
 - goal tahap ini: membuat content/API shape yang siap dipakai tim backend tanpa membuat frontend harus “menebak-nebak”
@@ -124,7 +124,7 @@ kamu butuh content quality diagnostics ringan, bukan error UI, bukan telemetry b
 
 # PROMPT
 
-Lanjutkan dari baseline `/today-v2` yang sekarang sudah punya content contract, field rules, fallback per-field, truncation, dan normalization.
+Lanjutkan dari baseline `/today` yang sekarang sudah punya content contract, field rules, fallback per-field, truncation, dan normalization.
 
 Jangan tambah fitur UI baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics produk, global navigation, atau endpoint nyata dulu.
 
@@ -232,7 +232,7 @@ apa yang harus dibetulkan content editor
 apa yang hanya informasi normal dan tidak perlu aksi
 
 
-Lanjutkan dari baseline `/today-v2` yang sekarang sudah punya lightweight content diagnostics di data layer.
+Lanjutkan dari baseline `/today` yang sekarang sudah punya lightweight content diagnostics di data layer.
 
 Jangan tambah fitur UI baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics produk, global navigation, atau endpoint nyata dulu.
 
@@ -329,7 +329,7 @@ frontend tetap menjaga user experience tanpa membuat tim buta
 
 Tahap berikutnya yang paling tepat adalah:
 
-membuat test coverage ringan untuk baseline /today-v2, terutama pada mapper, loader, persistence, dan diagnostics, supaya semua fondasi yang sudah susah dibangun ini tidak rusak diam-diam saat iterasi berikutnya.
+membuat test coverage ringan untuk baseline /today, terutama pada mapper, loader, persistence, dan diagnostics, supaya semua fondasi yang sudah susah dibangun ini tidak rusak diam-diam saat iterasi berikutnya.
 
 Kenapa ini next step terbaik:
 
@@ -344,7 +344,7 @@ daily reset Jakarta
 persistence restore
 tanpa test, iterasi selanjutnya sangat mudah merusak baseline ini
 
-Lanjutkan dari baseline `/today-v2` yang sekarang sudah punya:
+Lanjutkan dari baseline `/today` yang sekarang sudah punya:
 - UI/UX ritual yang matang
 - content contract
 - fallback per-field
@@ -357,7 +357,7 @@ Lanjutkan dari baseline `/today-v2` yang sekarang sudah punya:
 Jangan tambah fitur baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, atau endpoint nyata dulu.
 
 Fokus tahap ini hanya pada:
-**menambahkan test coverage ringan dan strategis untuk `/today-v2`**, agar baseline yang sudah matang ini tidak mudah rusak pada iterasi berikutnya.
+**menambahkan test coverage ringan dan strategis untuk `/today`**, agar baseline yang sudah matang ini tidak mudah rusak pada iterasi berikutnya.
 
 Konteks:
 - saat ini banyak rule penting sudah ada di data layer dan hook layer
@@ -366,7 +366,7 @@ Konteks:
 - goal-nya: menjaga baseline tetap aman tanpa membuat test suite berat dan rapuh
 
 Tugas Anda:
-Audit baseline `/today-v2` saat ini, lalu tambahkan test strategy dan implementasi test yang ringan namun efektif untuk area yang paling riskan.
+Audit baseline `/today` saat ini, lalu tambahkan test strategy dan implementasi test yang ringan namun efektif untuk area yang paling riskan.
 
 Saya ingin Anda secara khusus memeriksa dan memilih test untuk:
 1. mapper:
@@ -438,7 +438,7 @@ test suite-nya tetap ringan dan tidak berubah jadi beban
 
 Tahap berikutnya yang paling tepat adalah:
 
-menambahkan E2E smoke coverage yang sangat tipis untuk ritual inti /today-v2, supaya kita tahu integrasi nyata halaman ini tetap hidup dari sudut pandang user.
+menambahkan E2E smoke coverage yang sangat tipis untuk ritual inti /today, supaya kita tahu integrasi nyata halaman ini tetap hidup dari sudut pandang user.
 
 Kenapa ini next step terbaik:
 
@@ -451,25 +451,25 @@ ritual bisa dijalankan
 persistence same-day benar-benar bekerja di browser
 fallback mode tetap usable
 
-Lanjutkan dari baseline `/today-v2` yang sekarang sudah punya test coverage unit/integration ringan untuk mapper, loader, dan persistence hook.
+Lanjutkan dari baseline `/today` yang sekarang sudah punya test coverage unit/integration ringan untuk mapper, loader, dan persistence hook.
 
 Jangan tambah fitur baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, atau endpoint nyata production dulu.
 
 Fokus tahap ini hanya pada:
-**menambahkan E2E smoke coverage yang tipis tapi bernilai tinggi untuk `/today-v2`**, agar pengalaman ritual inti terlindungi dari sudut pandang user nyata di browser.
+**menambahkan E2E smoke coverage yang tipis tapi bernilai tinggi untuk `/today`**, agar pengalaman ritual inti terlindungi dari sudut pandang user nyata di browser.
 
 Konteks:
 - unit tests sekarang sudah melindungi banyak rule internal
-- tetapi saya masih perlu memastikan halaman `/today-v2` benar-benar hidup sebagai pengalaman utuh
+- tetapi saya masih perlu memastikan halaman `/today` benar-benar hidup sebagai pengalaman utuh
 - saya tidak ingin E2E suite besar
 - saya ingin beberapa smoke tests saja yang melindungi hal paling penting
 
 Tugas Anda:
-Audit baseline saat ini, lalu tambahkan E2E smoke tests yang ringan dan stabil untuk `/today-v2`.
+Audit baseline saat ini, lalu tambahkan E2E smoke tests yang ringan dan stabil untuk `/today`.
 
 Saya ingin Anda memprioritaskan test untuk:
 1. happy path ritual inti:
-   - buka `/today-v2`
+   - buka `/today`
    - isi reflection
    - submit "Aminkan"
    - lanjut ke prayer
@@ -551,7 +551,7 @@ diagnostics sudah actionable
 test sudah melindungi baseline
 sekarang bottleneck berpindah ke bagaimana backend benar-benar menyediakan payload yang benar
 
-Lanjutkan dari baseline `/today-v2` yang sekarang sudah matang di sisi frontend:
+Lanjutkan dari baseline `/today` yang sekarang sudah matang di sisi frontend:
 - UX ritual inti stabil
 - content contract sudah ada
 - mapper/fallback/diagnostics sudah ada
@@ -560,7 +560,7 @@ Lanjutkan dari baseline `/today-v2` yang sekarang sudah matang di sisi frontend:
 Jangan tambah fitur UI baru, jangan ubah flow utama Receive → Reflect → Pray → Complete, jangan sentuh auth, analytics, global navigation, atau cross-device sync.
 
 Fokus tahap ini hanya pada:
-**menyiapkan handoff backend Laravel/CMS yang sangat spesifik untuk `/today-v2`**, agar tim backend bisa mulai implementasi payload nyata tanpa menebak-nebak dan tanpa merusak UX contract yang sudah dibangun.
+**menyiapkan handoff backend Laravel/CMS yang sangat spesifik untuk `/today`**, agar tim backend bisa mulai implementasi payload nyata tanpa menebak-nebak dan tanpa merusak UX contract yang sudah dibangun.
 
 Konteks:
 - frontend sekarang sangat sensitif terhadap kualitas payload
@@ -572,7 +572,7 @@ Tugas Anda:
 Audit kontrak content/API, diagnostics, mapper, dan test baseline saat ini, lalu susun handoff backend yang konkret dan siap dipakai.
 
 Saya ingin output yang mencakup:
-1. tujuan endpoint/backend untuk `/today-v2`
+1. tujuan endpoint/backend untuk `/today`
 2. payload shape final yang direkomendasikan
 3. field wajib vs field opsional
 4. field yang sebaiknya di-derive lokal, bukan dipaksa dari backend
@@ -596,7 +596,7 @@ Jangan lakukan ini:
 - jangan implementasi endpoint nyata dulu
 - jangan tulis kode Laravel yang terlalu besar jika tidak perlu
 - jangan jadi terlalu arsitektural/enterprise
-- jangan membahas fitur lain di luar `/today-v2`
+- jangan membahas fitur lain di luar `/today`
 - jangan mengubah kontrak UI seenaknya
 
 Saya ingin output berupa:
@@ -627,5 +627,6 @@ Format jawaban:
 7. Backend Readiness Checklist
 8. Optional Minimal Laravel Shape
 9. Why This Handoff Reduces Integration Risk
+
 
 

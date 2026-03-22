@@ -1,9 +1,9 @@
-Lanjutkan dari implementasi `/today-v2` yang terbaru.
+Lanjutkan dari implementasi `/today` yang terbaru.
 
 Jangan pindah ke backend, blueprint dokumentasi, global system, atau fitur lain dulu.
 
 Fokus tahap ini hanya pada:
-**menyempurnakan interaction states, step progression, dan completion feeling** agar `/today-v2` benar-benar terasa sebagai ritual harian yang utuh dan memuaskan.
+**menyempurnakan interaction states, step progression, dan completion feeling** agar `/today` benar-benar terasa sebagai ritual harian yang utuh dan memuaskan.
 
 Konteks:
 - flow utama tetap: Receive → Reflect → Pray → Complete

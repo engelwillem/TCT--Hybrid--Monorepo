@@ -169,15 +169,15 @@ AppShell sudah cukup baik. Saya perlu memastikan homepage (`/`) tidak mendapat s
 
 Edited page.tsx
 
-Sekarang cek apakah `/today` (bukan `/today-v2`) sudah pakai arsitektur yang benar atau masih yang lama:
+Sekarang cek apakah `/today` (bukan `/today`) sudah pakai arsitektur yang benar atau masih yang lama:
 
 Viewed page.tsx:1-40
 
-`/today` masih memakai arsitektur lama dengan banyak komponen. Sesuai permintaan user — `/today` harus jadi pusat utama. Saya buat redirect dari `/today` ke `/today-v2` sementara arsitektur baru sudah siap:
+`/today` masih memakai arsitektur lama dengan banyak komponen. Sesuai permintaan user — `/today` harus jadi pusat utama. Saya buat redirect dari `/today` ke `/today` sementara arsitektur baru sudah siap:
 
 Edited page.tsx
 
-Sekarang pastikan AppShell tidak inject nav/sidebar untuk homepage baru — perlu verifikasi bahwa `/today-v2` juga sudah dikeluarkan dari overflow padding AppShell (karena halaman ini mendapat `min-h-screen` sendiri):
+Sekarang pastikan AppShell tidak inject nav/sidebar untuk homepage baru — perlu verifikasi bahwa `/today` juga sudah dikeluarkan dari overflow padding AppShell (karena halaman ini mendapat `min-h-screen` sendiri):
 
 Edited AppShell.tsx
 
@@ -190,8 +190,8 @@ Semua perubahan inti sudah dilakukan. Sekarang verifikasi struktur akhir:
 | Route | Sebelum | Sesudah |
 |---|---|---|
 | **`/`** | 278 baris, 3 sections, 4 pillar cards, 2 CTAs besar, marketing copy | 45 baris. Satu viewport: brand label, headline 3 kata, 1 CTA primary ke Today |
-| **`/today`** | 317 baris legacy dashboard (DailyVerseHeroCard, FeedList, StateChips, dll) | Redirect langsung ke `/today-v2` |
-| **`/today-v2`** | Berjalan baik tapi AppShell inject sidebar + nav + padding 120px | `isTodayRitual=true` → zero padding, no sidebar, no nav — screen mengendalikan dirinya sendiri |
+| **`/today`** | 317 baris legacy dashboard (DailyVerseHeroCard, FeedList, StateChips, dll) | Redirect langsung ke `/today` |
+| **`/today`** | Berjalan baik tapi AppShell inject sidebar + nav + padding 120px | `isTodayRitual=true` → zero padding, no sidebar, no nav — screen mengendalikan dirinya sendiri |
 | **`/paths`** | 276 baris, API call, loading skeleton, multiple empty states noisy | 45 baris static. Tenang, tidak mempermalukan, redirect ke Today |
 | **`/community`** | Thin wrapper ke Feature component — sudah OK | Tidak disentuh |
 | **`/profile`** | 1004 baris fungsional — sudah cukup | Tidak disentuh — ini utilitas, bukan showcase |
@@ -199,9 +199,9 @@ Semua perubahan inti sudah dilakukan. Sekarang verifikasi struktur akhir:
 ### 2. What You Changed
 
 1. **[src/app/page.tsx](cci:7://file:///e:/thechoosentalksnext/src/app/page.tsx:0:0-0:0)** — Homepage baru. Zero sections. Satu viewport. Brand → headline → CTA → footer link quiet.
-2. **[src/app/today/page.tsx](cci:7://file:///e:/thechoosentalksnext/src/app/today/page.tsx:0:0-0:0)** — Redirect murni ke `/today-v2`. Semua link ke `/today` tetap bekerja.
+2. **[src/app/today/page.tsx](cci:7://file:///e:/thechoosentalksnext/src/app/today/page.tsx:0:0-0:0)** — Redirect murni ke `/today`. Semua link ke `/today` tetap bekerja.
 3. **[src/app/paths/page.tsx](cci:7://file:///e:/thechoosentalksnext/src/app/paths/page.tsx:0:0-0:0)** — Placeholder premium yang tidak memalukan. Static, tidak ada API call, tidak ada loading state.
-4. **[src/layouts/AppShell.tsx](cci:7://file:///e:/thechoosentalksnext/src/layouts/AppShell.tsx:0:0-0:0)** — `isTodayRitual` flag: halaman `/today` dan `/today-v2` tidak mendapat sidebar, nav bar, dan padding 120px dari shell. Screen mengontrol dirinya sendiri sepenuhnya.
+4. **[src/layouts/AppShell.tsx](cci:7://file:///e:/thechoosentalksnext/src/layouts/AppShell.tsx:0:0-0:0)** — `isTodayRitual` flag: halaman `/today` dan `/today` tidak mendapat sidebar, nav bar, dan padding 120px dari shell. Screen mengontrol dirinya sendiri sepenuhnya.
 
 ### 3. What Is Now Ready to Deploy
 
@@ -209,7 +209,7 @@ Semua perubahan inti sudah dilakukan. Sekarang verifikasi struktur akhir:
 |---|---|
 | Homepage minimal | ✅ Deploy-ready |
 | `/today` redirect ke ritual experience | ✅ Deploy-ready |
-| `/today-v2` ritual experience (full) | ✅ Deploy-ready |
+| `/today` ritual experience (full) | ✅ Deploy-ready |
 | `/paths` quiet placeholder | ✅ Deploy-ready |
 | `/community`, `/profile`, `/versehub` | ✅ Tidak berubah, tetap berjalan |
 | AppShell behavior untuk Today | ✅ Shell tidak lagi menginjeksi padding/nav ke ritual screen |
@@ -228,16 +228,16 @@ Hasil tahap 1 yang paling penting:
 
 / sudah dipangkas brutal
 /today sudah jadi entry ke experience baru
-/today-v2 tidak lagi dirusak shell lama
+/today tidak lagi dirusak shell lama
 /paths tidak lagi memalukan untuk preview deploy
 
 Tapi supaya benar-benar layak kamu lihat di deploy preview, tahap berikutnya harus fokus ke:
 
-menyatukan app shell visual untuk halaman yang terlihat user, terutama /, /today-v2, /paths, /community, dan nav/entry behavior di mobile.
+menyatukan app shell visual untuk halaman yang terlihat user, terutama /, /today, /paths, /community, dan nav/entry behavior di mobile.
 
 Karena sekarang masih ada risiko:
 
-homepage sudah tenang, tapi belum tentu terasa satu keluarga dengan /today-v2
+homepage sudah tenang, tapi belum tentu terasa satu keluarga dengan /today
 halaman sekunder bisa masih terasa “sisa sistem lama”
 transisi antar halaman belum tentu premium
 main app belum tentu punya visual grammar yang konsisten
@@ -267,7 +267,7 @@ CommunityPage sudah punya header sendiri. Masalahnya di baris `h2` yang memakai 
 
 Edited CommunityPage.tsx
 
-Sekarang pastikan AppShell sendiri punya background yang konsisten dengan `/today-v2` dan homepage. Audit `globals.css` untuk melihat token yang dipakai:
+Sekarang pastikan AppShell sendiri punya background yang konsisten dengan `/today` dan homepage. Audit `globals.css` untuk melihat token yang dipakai:
 
 Searched for "tct-global-background"
 Searched for "tct-serif"
@@ -276,7 +276,7 @@ Searched for "tct-global-background"
 Viewed globals.css:1-220
 Viewed globals.css:220-339
 
-`tct-global-background` adalah `#eaf1f9` — biru keabu-abuan yang berbeda dari `#FAFCFF` yang dipakai `/today-v2` dan homepage baru. Ini sumber ketidakcocokan visual. Saya perlu menyatukan token background-nya:
+`tct-global-background` adalah `#eaf1f9` — biru keabu-abuan yang berbeda dari `#FAFCFF` yang dipakai `/today` dan homepage baru. Ini sumber ketidakcocokan visual. Saya perlu menyatukan token background-nya:
 
 Edited globals.css
 
@@ -335,7 +335,7 @@ Tidak ada file baru. Semua perubahan surgis pada file yang sudah ada.
 | Route | Status |
 |---|---|
 | `/` | ✅ Full-bleed minimal — satu viewport, satu CTA |
-| `/today` + `/today-v2` | ✅ Full-bleed ritual screen — shell benar-benar tidak mengintervensi |
+| `/today` + `/today` | ✅ Full-bleed ritual screen — shell benar-benar tidak mengintervensi |
 | `/paths` | ✅ Editorial placeholder yang intentional |
 | `/community` | ✅ Header sekarang sejalur dengan halaman lain |
 | Desktop sidebar | ✅ Quiet glass, tidak terasa SaaS |
@@ -604,7 +604,7 @@ Gunakan judgement yang tenang.
 ### 3. Samakan brand treatment di halaman utama
 Prioritaskan:
 - `/`
-- `/today-v2`
+- `/today`
 - `/paths`
 - `/community`
 
@@ -612,7 +612,7 @@ Saya tidak ingin semua halaman punya logo besar.
 Saya ingin:
 - homepage = brand paling terasa
 - app shell = subtle brand
-- `/today-v2` tetap fokus pada ritual, bukan branding berlebihan
+- `/today` tetap fokus pada ritual, bukan branding berlebihan
 - secondary pages tetap satu keluarga visual
 
 ---
@@ -658,7 +658,7 @@ Setelah tahap ini:
 - brand terasa konsisten
 - mobile dan desktop sama-sama rapi
 - deploy preview terlihat seperti produk yang sudah punya identitas jelas
-- `/today-v2` tetap tidak terganggu oleh branding berlebihan
+- `/today` tetap tidak terganggu oleh branding berlebihan
 
 Langsung implementasikan brand finishing pass ini.
 
@@ -670,7 +670,7 @@ Yang paling benar dari hasil ini:
 metadata palsu dibersihkan
 favicon jadi jujur dan konsisten
 secondary mobile pages sekarang punya anchor brand tipis
-/today-v2 tetap tidak tercemar branding berlebihan
+/today tetap tidak tercemar branding berlebihan
 
 Ada satu catatan kecil: keputusan menghapus favicon.ico/PNG boilerplate itu tepat selama browser target utama kamu modern. Untuk preview sekarang, itu masuk akal.
 
@@ -747,7 +747,7 @@ Gunakan judgement yang tenang.
 ### 3. Samakan brand treatment di halaman utama
 Prioritaskan:
 - `/`
-- `/today-v2`
+- `/today`
 - `/paths`
 - `/community`
 
@@ -755,7 +755,7 @@ Saya tidak ingin semua halaman punya logo besar.
 Saya ingin:
 - homepage = brand paling terasa
 - app shell = subtle brand
-- `/today-v2` tetap fokus pada ritual, bukan branding berlebihan
+- `/today` tetap fokus pada ritual, bukan branding berlebihan
 - secondary pages tetap satu keluarga visual
 
 ---
@@ -801,7 +801,7 @@ Setelah tahap ini:
 - brand terasa konsisten
 - mobile dan desktop sama-sama rapi
 - deploy preview terlihat seperti produk yang sudah punya identitas jelas
-- `/today-v2` tetap tidak terganggu oleh branding berlebihan
+- `/today` tetap tidak terganggu oleh branding berlebihan
 
 Langsung implementasikan brand finishing pass ini.
 
@@ -814,7 +814,7 @@ Yang sudah terasa benar:
 
 / sudah minimal dan tidak noisy
 /today sudah mengarah ke core experience baru
-/today-v2 sudah jadi pusat
+/today sudah jadi pusat
 /paths sudah tidak memalukan
 /community sudah lebih nyambung
 app shell dan branding sudah lebih konsisten
@@ -851,7 +851,7 @@ Bukan karena jelek, tapi karena masih ada beberapa area yang sengaja ditahan:
 /community baru dibersihkan di permukaan
 /versehub belum dibawa masuk ke bahasa desain baru
 transisi antar halaman masih aman, belum “signature”
-main app selain /today-v2 belum semuanya setara kualitasnya
+main app selain /today belum semuanya setara kualitasnya
 
 Jadi status paling akurat:
 
@@ -872,7 +872,7 @@ desktop
 tab baru / first load
 lihat 3 hal ini:
 apakah / cukup tenang
-apakah /today-v2 terasa paling kuat
+apakah /today terasa paling kuat
 apakah /paths dan /community sudah cukup tidak mengganggu
 Langkah paling tepat berikutnya
 
@@ -901,8 +901,8 @@ Lanjutkan pekerjaan frontend The Chosen Talks.
 
 Tahap sebelumnya sudah berhasil:
 - homepage `/` sudah minimal dan tenang
-- `/today` sudah redirect ke `/today-v2`
-- `/today-v2` menjadi pusat utama experience
+- `/today` sudah redirect ke `/today`
+- `/today` menjadi pusat utama experience
 - `/paths` sudah dibersihkan jadi quiet placeholder
 - app shell, nav, background, dan branding sudah lebih konsisten
 - hasilnya sudah cukup baik untuk preview internal
@@ -1063,7 +1063,7 @@ Setelah tahap ini:
 - `/community`, `/profile`, dan `/versehub` tidak lagi terasa seperti produk yang berbeda
 - keseluruhan app terasa lebih utuh
 - preview bisa ditunjukkan dengan lebih percaya diri
-- `/today-v2` tetap menjadi pusat utama
+- `/today` tetap menjadi pusat utama
 - pengguna tidak merasa quality gap antar route terlalu ekstrem
 
 Langsung implementasikan demo/public-preview hardening pass ini.
@@ -1073,7 +1073,7 @@ Ini sudah cukup untuk public preview terbatas.
 
 Penilaian jujur
 Sudah kuat
-/today-v2 jelas jadi pusat produk
+/today jelas jadi pusat produk
 / sudah terasa seperti gerbang yang sengaja dibuat
 /community, /profile, /versehub tidak lagi terasa seperti produk yang berbeda total
 shell, nav, background, dan brand identity sudah cukup menyatu
@@ -1081,7 +1081,7 @@ noise visual sudah turun signifikan
 Masih belum “launch polish”
 community masih baru dibersihkan di layer presentasi
 profile masih utilitarian di dalam
-versehub sudah lebih tenang, tapi belum sepenuhnya masuk bahasa desain inti /today-v2
+versehub sudah lebih tenang, tapi belum sepenuhnya masuk bahasa desain inti /today
 
 Tapi untuk:
 
@@ -1130,7 +1130,7 @@ Tujuan:
 Audit dan rapikan hanya route utama:
 - `/`
 - `/today`
-- `/today-v2`
+- `/today`
 - `/paths`
 - `/community`
 - `/profile`
@@ -1168,7 +1168,7 @@ Audit dan rapikan hanya route utama:
 - favicon benar muncul
 - logo tidak pecah
 - mobile brand anchor tidak terlalu ramai
-- `/today-v2` tetap tidak over-branded
+- `/today` tetap tidak over-branded
 
 ## Cara kerja
 - Audit actual frontend files yang relevan
@@ -1194,4 +1194,5 @@ Setelah tahap ini:
 - saya bisa deploy preview dengan percaya diri
 
 Langsung lakukan pre-deploy QA pass ini.
+
 

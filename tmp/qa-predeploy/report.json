@@ -31,8 +31,8 @@
   },
   {
     "ctx": "desktop",
-    "route": "/today-v2",
-    "url": "http://127.0.0.1:9002/today-v2",
+    "route": "/today",
+    "url": "http://127.0.0.1:9002/today",
     "status": 200,
     "metrics": {
       "clientWidth": 1440,
@@ -42,7 +42,7 @@
       "hasHorizontalOverflow": false,
       "title": "The Chosen Talks - The Chosen People"
     },
-    "screenshot": "E:\\thechoosentalksnext\\tmp\\qa-predeploy\\desktop_today-v2.png"
+    "screenshot": "E:\\thechoosentalksnext\\tmp\\qa-predeploy\\desktop_today.png"
   },
   {
     "ctx": "desktop",
@@ -136,8 +136,8 @@
   },
   {
     "ctx": "mobile",
-    "route": "/today-v2",
-    "url": "http://127.0.0.1:9002/today-v2",
+    "route": "/today",
+    "url": "http://127.0.0.1:9002/today",
     "status": 200,
     "metrics": {
       "clientWidth": 390,
@@ -147,7 +147,7 @@
       "hasHorizontalOverflow": false,
       "title": "The Chosen Talks - The Chosen People"
     },
-    "screenshot": "E:\\thechoosentalksnext\\tmp\\qa-predeploy\\mobile_today-v2.png"
+    "screenshot": "E:\\thechoosentalksnext\\tmp\\qa-predeploy\\mobile_today.png"
   },
   {
     "ctx": "mobile",

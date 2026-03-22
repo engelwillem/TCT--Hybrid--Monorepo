@@ -2,9 +2,9 @@
 
 namespace App\Support;
 
-class TodayV2SessionContentLint
+class TodaySessionContentLint
 {
-    private const CONTRACT_VERSION = 'today-v2.session.v1';
+    private const CONTRACT_VERSION = 'today.session.v1';
 
     /**
      * @var array<string, int>
@@ -144,3 +144,4 @@ class TodayV2SessionContentLint
         ];
     }
 }
+

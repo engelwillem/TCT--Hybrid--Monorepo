@@ -56,15 +56,79 @@ interface ApiPost {
   isBookmarked: boolean;
 }
 
+const API_BASE_FALLBACK = "https://api.thechoosentalks.org";
+
+const resolveApiOrigin = (): string => {
+  const raw =
+    process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    API_BASE_FALLBACK;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return API_BASE_FALLBACK;
+  }
+};
+
+const extractKnownAssetPath = (pathname: string): string | null => {
+  if (!pathname) return null;
+  const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  if (normalizedPath.startsWith("/storage/") || normalizedPath.startsWith("/api/v1/avatar/")) {
+    return normalizedPath;
+  }
+
+  const storageMarker = normalizedPath.indexOf("/storage/");
+  if (storageMarker >= 0) {
+    return normalizedPath.slice(storageMarker);
+  }
+
+  const avatarMarker = normalizedPath.indexOf("/api/v1/avatar/");
+  if (avatarMarker >= 0) {
+    return normalizedPath.slice(avatarMarker);
+  }
+
+  return null;
+};
+
+const normalizeCommunityAssetUrl = (value?: string | null): string | undefined => {
+  const raw = String(value || "").trim();
+  if (!raw) return undefined;
+  if (raw.startsWith("blob:") || raw.startsWith("data:image/")) return raw;
+
+  const apiOrigin = resolveApiOrigin();
+
+  try {
+    const parsed = new URL(raw);
+    const knownPath = extractKnownAssetPath(parsed.pathname);
+    if (knownPath) {
+      const normalizedPath = `${knownPath}${parsed.search}${parsed.hash}`;
+      return `${apiOrigin}${normalizedPath}`;
+    }
+    return parsed.toString();
+  } catch {
+    // Handle relative paths below
+  }
+
+  const normalized = raw.startsWith("/") ? raw : `/${raw.replace(/^\/+/, "")}`;
+  const knownPath = extractKnownAssetPath(normalized);
+  if (knownPath) {
+    return `${apiOrigin}${knownPath}`;
+  }
+
+  return normalized;
+};
+
 const mapApiPost = (post: ApiPost): CommunityPost => ({
   id: String(post.id),
   type: post.type,
   type_label: post.type_label || post.type,
   text: post.text || "",
   title: post.title ?? undefined,
-  imageUrl: (post.imageUrl || post.image_path) ?? undefined,
+  imageUrl: normalizeCommunityAssetUrl(post.imageUrl || post.image_path),
   thumbPath: post.thumb_path ?? undefined,
-  mediaPaths: (post.mediaPaths || post.media_paths) ?? undefined,
+  mediaPaths: (post.mediaPaths || post.media_paths || [])
+    .map((item) => normalizeCommunityAssetUrl(item))
+    .filter((item): item is string => Boolean(item)),
   isFeatured: Boolean(post.is_featured),
   can_moderate: Boolean(post.can_moderate),
   metadata: post.metadata,
@@ -72,7 +136,7 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
   author: {
     id: String(post.author?.id || ""),
     name: post.author?.name || "Member",
-    avatarUrl: (post.author?.avatarUrl || post.author?.avatar_url) ?? undefined,
+    avatarUrl: normalizeCommunityAssetUrl(post.author?.avatarUrl || post.author?.avatar_url),
     isOfficial: Boolean(post.author?.isOfficial || post.author?.is_official || post.author?.is_admin),
   },
   counts: {
@@ -196,7 +260,7 @@ export const CommunityService = {
       author: {
         id: String(c.author?.id ?? ""),
         name: String(c.author?.name ?? "Member"),
-        avatarUrl: c.author?.avatarUrl,
+        avatarUrl: normalizeCommunityAssetUrl(c.author?.avatarUrl),
         isOfficial: Boolean(c.author?.isOfficial),
       },
     }));
@@ -236,7 +300,7 @@ export const CommunityService = {
       author: {
         id: String(c.author?.id ?? ""),
         name: String(c.author?.name ?? "Member"),
-        avatarUrl: c.author?.avatarUrl,
+        avatarUrl: normalizeCommunityAssetUrl(c.author?.avatarUrl),
         isOfficial: Boolean(c.author?.isOfficial),
       },
     };

@@ -17,7 +17,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "today:ready": "composer --working-dir backend-api today-v2:ready",
+    "today:ready": "composer --working-dir backend-api today:ready",
     "today:ready:full": "npm run today:ready && npm run typecheck && npm run test:e2e -- tests/today.smoke.spec.ts",
     "smoke:prod": "powershell -ExecutionPolicy Bypass -File scripts/smoke-production.ps1"
   },
@@ -78,3 +78,4 @@
     "vitest": "^4.1.0"
   }
 }
+

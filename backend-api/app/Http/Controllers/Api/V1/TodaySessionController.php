@@ -3,25 +3,25 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\TodayV2SessionResource;
-use App\Support\TodayV2SessionContentSource;
+use App\Http\Resources\TodaySessionResource;
+use App\Support\TodaySessionContentSource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class TodayV2SessionController extends Controller
+class TodaySessionController extends Controller
 {
-    public function show(Request $request, TodayV2SessionContentSource $contentSource): JsonResponse
+    public function show(Request $request, TodaySessionContentSource $contentSource): JsonResponse
     {
         $previewDate = $this->resolvePreviewDate($request);
         $resolved = $contentSource->resolveWithMeta($previewDate);
 
         $response = response()->json(
-            TodayV2SessionResource::make($resolved['payload'])->resolve()
+            TodaySessionResource::make($resolved['payload'])->resolve()
         );
 
         if ($previewDate !== null) {
-            $response->headers->set('X-Today-V2-Preview-Date', $resolved['dateKey']);
-            $response->headers->set('X-Today-V2-Preview-Fallback', $resolved['fallbackUsed'] ? '1' : '0');
+            $response->headers->set('X-Today-Preview-Date', $resolved['dateKey']);
+            $response->headers->set('X-Today-Preview-Fallback', $resolved['fallbackUsed'] ? '1' : '0');
         }
 
         return $response;
@@ -45,6 +45,8 @@ class TodayV2SessionController extends Controller
     {
         return app()->isLocal()
             || app()->environment('testing')
-            || (bool) config('today_v2.allow_preview_query', false);
+            || (bool) config('today.allow_preview_query', false);
     }
 }
+
+

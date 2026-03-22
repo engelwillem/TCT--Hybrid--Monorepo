@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { getApps } from "firebase/app";
 import { getAuth, onIdTokenChanged, signOut } from "firebase/auth";
-import { clearAppAccessToken, getAppAccessToken, setAppAccessToken } from "@/services/app-auth-token";
+import { clearAppAccessToken, getAppAccessToken, getAppAuthSource, setAppAccessToken } from "@/services/app-auth-token";
 
 export function FirebaseAuthSync() {
   useEffect(() => {
@@ -14,6 +14,13 @@ export function FirebaseAuthSync() {
       // 1. If Firebase says user is logged out
       if (!user) {
         if (typeof window !== "undefined" && window.localStorage.getItem('e2e_bypass_token')) {
+          return;
+        }
+
+        // Important: do not revoke non-Firebase sessions (e.g. email/password login).
+        // Otherwise a valid Laravel token gets wiped and user falls back to guest.
+        const source = getAppAuthSource();
+        if (source !== "firebase") {
           return;
         }
 
@@ -59,7 +66,7 @@ export function FirebaseAuthSync() {
         const payload = await response.json().catch(() => null);
         const token = payload?.data?.token;
         if (typeof token === "string" && token.length > 0) {
-          setAppAccessToken(token);
+          setAppAccessToken(token, "firebase");
           return;
         }
 
