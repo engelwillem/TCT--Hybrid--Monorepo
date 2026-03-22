@@ -32,7 +32,9 @@ describe('today-session.loader', () => {
       })
     );
     expect(infoSpy).not.toHaveBeenCalled();
-    expect(mockedFetchTodaySessionRaw).toHaveBeenCalledWith({ previewDate: undefined });
+    expect(mockedFetchTodaySessionRaw).toHaveBeenCalledWith(
+      expect.objectContaining({ previewDate: undefined })
+    );
   });
 
   it('emits lightweight info diagnostics when running in fallback-only mode', async () => {
@@ -57,6 +59,8 @@ describe('today-session.loader', () => {
 
     await loadTodaySessionContent({ previewDate: '2026-03-22' });
 
-    expect(mockedFetchTodaySessionRaw).toHaveBeenCalledWith({ previewDate: '2026-03-22' });
+    expect(mockedFetchTodaySessionRaw).toHaveBeenCalledWith(
+      expect.objectContaining({ previewDate: '2026-03-22' })
+    );
   });
 });

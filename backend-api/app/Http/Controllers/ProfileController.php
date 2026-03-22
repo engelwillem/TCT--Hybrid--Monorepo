@@ -6,7 +6,9 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\AdminAuditLog;
 use App\Models\Post;
 use App\Models\SsDay;
+use App\Models\User;
 use App\Services\Security\TwoFactorService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,22 @@ use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
+    public function avatar(User $user): BinaryFileResponse
+    {
+        $path = trim((string) ($user->avatar_path ?? ''));
+        if ($path === '' || ! Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        $filePath = Storage::disk('public')->path($path);
+        $mimeType = Storage::disk('public')->mimeType($path) ?: 'application/octet-stream';
+
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'public, max-age=604800, stale-while-revalidate=86400',
+        ]);
+    }
+
     /**
      * Display the user's profile form.
      */

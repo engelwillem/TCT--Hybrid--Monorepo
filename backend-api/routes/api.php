@@ -31,6 +31,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/today', [TodayApiController::class, 'show']);
 
     Route::post('/auth/firebase/sync', [FirebaseAuthSyncController::class, 'sync']);
+    Route::get('/avatar/{user}', [ProfileController::class, 'avatar']);
 
     Route::get('/community/posts', [CommunityApiController::class, 'index']);
     Route::get('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsIndex']);

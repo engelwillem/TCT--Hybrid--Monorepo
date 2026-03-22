@@ -124,8 +124,10 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return null;
         }
 
-        // Keep URL relative so it doesn't depend on APP_URL host.
-        return '/storage/'.ltrim($path, '/');
+        $version = (string) (optional($this->updated_at)->timestamp ?? time());
+
+        // Serve through API endpoint so avatar rendering does not depend on public/storage symlink.
+        return '/api/v1/avatar/'.$this->getKey().'?v='.$version;
     }
 
     public function isSystemAccount(): bool
