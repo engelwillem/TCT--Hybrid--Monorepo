@@ -1,3 +1,8 @@
+# SOP UNTUK TIM WORK GEMINI DAN CODEX
+anda CHAT-GPT harus analisa folder /docs, agar Gemini dan Codex bekerja terkoordinasi lewat /docs, dengan aturan bahwa Gemini menulis audit + evidence dulu, lalu Codex mengeksekusi berdasarkan output dokumentasi Gemini. Karena mereka harus mendokumentasikan pekerjaan mereka pada file dan folder yang sesuai di dalam folder /docs, jadi anda harus menentukan file pada folder mana di dalam /docs untuk mereka lakukan kerjasama, gemini mencatat audit mendalam, dan codex akan menyelesaikan masalah tersebut berdasarkan output dokumentasi yang sudah gemini tulis.
+
+
+
 # SOP Stabilization (Single Branch Main)
 
 Dokumen ini adalah standar release wajib. Semua batch kerja harus mengikuti urutan ini.

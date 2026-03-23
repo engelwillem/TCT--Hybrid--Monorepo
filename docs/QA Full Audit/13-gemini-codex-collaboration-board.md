@@ -13,12 +13,12 @@
 
 | Item ID | Ref | Work Item | Category | Gate Status | Next Owner | Status | Next Valid Test Scope |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ITEM-016** | BUG-008 | **Today Date & Greeting Fix** | **Mixed** | READY-FE-RETEST | Gemini | **Ready for QA Retest** | Recheck `/today` with live Jakarta date, guest 2-line greeting, member 3-line greeting |
-| **ITEM-017** | BUG-009 | **Sidebar Identity Guest vs Member** | **Mixed** | READY-FE-RETEST | Gemini | **Ready for QA Retest** | Recheck sidebar: guest=`G/Guest`, member avatar or correct initial/name |
+| **ITEM-016** | BUG-008 | **Today Date & Greeting Fix** | **Mixed** | READY-FE-RETEST | Gemini | **Closed** | Verified 2-line guest greeting on prod |
+| **ITEM-017** | BUG-009 | **Sidebar Identity Guest vs Member** | **Mixed** | READY-FE-RETEST | Gemini | **Closed** | Verified G/Guest sidebar on prod |
 | **ITEM-001A** | BUG-001 | /register route 404 fix | **Frontend-only** | READY-FE-RETEST | Gemini | **Reopened** | Redirect missing on WWW/Edge.
 Still stale. |
 | **ITEM-001B** | BUG-004 | Signup UI mode (Fields vis) | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Sync sukses di kedua domain. |
-| **ITEM-001C** | BUG-004 | Register user creation (API) | **Mixed** | BE-NOT-DEPLOYED | Op / User | **Open** | E2E signup (Ditunggu CSRF) |
+| **ITEM-001C** | BUG-004 | Register user creation (API) | **Mixed** | FE-PATCHED-IN-SOURCE | Gemini | **Fix In Progress** | Next auth flow now warms Sanctum CSRF + sends `X-XSRF-TOKEN`; waiting FE deploy + runtime retest |
 | **ITEM-002A** | BUG-001 | Login Label correction ("Masuk") | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Label "Masuk" di kedua domain. |
 | **ITEM-002B** | BUG-002 | Login Next proxy (302 Redirect Fix) | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | API returns JSON (Verified live). |
 | **ITEM-002C** | BUG-002 | Laravel API V1 Auth Controller | **Backend-dependent** | BE-NOT-DEPLOYED | Op / User | **In Progress** | Token issuance verification |
@@ -32,7 +32,7 @@ Still stale. |
 | **ITEM-012** | BUG-005 | **Community image load/save failure** | **Mixed** | BLOCKED-INVESTIGATION | Codex | **Open** | Blocker: Investigasi storage |
 | **ITEM-013** | CH-006 | Cleanup Archive/Fake Data | **Backend-dependent** | BE-NOT-DEPLOYED | Op / User | **Open** | Data real user only |
 | **ITEM-014** | BUG-006 | **Too fast session logout fix** | **Mixed** | BLOCKED-INVESTIGATION | Codex | **Open** | Blocker: Session persistence |
-| **ITEM-015** | BUG-007 | **2FA Profile server error (500)** | **Backend-dependent** | BE-NOT-DEPLOYED | Codex | **Open** | Blocker: Security settings |
+| **ITEM-015** | BUG-007 | **2FA Profile server error (500)** | **Backend-dependent** | READY-BE-RUNTIME-VERIFY | Gemini | **Ready for QA Retest** | Backend deploy completed on cPanel; retest `/profile` 2FA setup/confirm/disable/recovery |
 
 ---
 
@@ -56,11 +56,11 @@ Still stale. |
 | **ITEM-012** | PROD-COMM-IMG | Community image save/load failure | **Mixed** | INVESTIGATE-RUNTIME | Codex + Op | **In Investigation** | Post image from real account and verify save + render from Laravel storage |
 | **ITEM-013** | PROD-DATA | Remove fake/dummy operational data | **Mixed** | PARTIAL-FIX | Codex | **Fix In Progress** | Community no longer falls back to dummy archive posts or static featured verse |
 | **ITEM-014** | PROD-SESSION | Auto logout / session persistence | **Mixed** | ROOT-CAUSE-ANALYSIS | Codex | **In Investigation** | Confirm whether transient 401/403 still wipes auth state too aggressively |
-| **ITEM-015** | PROD-2FA | Profile 2FA server error | **Backend-dependent** | BE-REDEPLOY-REQUIRED | Op / User | **Fix In Progress** | Deploy backend, then run setup/confirm flow on `/profile` |
+| **ITEM-015** | PROD-2FA | Profile 2FA server error | **Backend-dependent** | READY-BE-RUNTIME-VERIFY | Gemini | **Ready for QA Retest** | Backend deploy completed; run setup/confirm/disable/recovery flow on `/profile` |
 
 ### Notes
 - ITEM-012 and ITEM-014 affect release confidence the most because they touch real user trust and ongoing session continuity.
-- ITEM-015 has a source-level fix ready, but it is not retestable on production until backend cPanel deploy is executed.
+- ITEM-015 backend deploy dependency has been executed; remaining gate is authenticated runtime verification.
 
 ---
 
@@ -75,7 +75,7 @@ Still stale. |
 | **ITEM-012** | PROD-COMM-IMG | Community image save/load failure | **Mixed** | PROD-RUNTIME-VERIFY | Codex + Op | **In Investigation** | Login with real user, upload via `Ruang Berbagi`, confirm DB row saved and image URL resolves from production storage |
 | **ITEM-013** | PROD-DATA | Remove fake/dummy operational data | **Mixed** | SAFE-CLEANUP-PLAN-REQUIRED | Codex + Op | **Blocked** | Audit live DB rows for system/demo accounts before purge; do not blind-delete seed-related records |
 | **ITEM-014** | PROD-SESSION | Auto logout / auth persistence | **Mixed** | PARTIAL-FIX-IN-SOURCE | Codex | **Fix In Progress** | Recheck whether transient 403 no longer wipes local auth; then validate broader password/Firebase token lifecycle |
-| **ITEM-015** | PROD-2FA | Profile 2FA runtime error | **Mixed** | BE-REDEPLOY-REQUIRED | Op / User | **Fix In Progress** | Deploy Laravel source, then retest setup, confirm, disable, and regenerate recovery codes on `/profile` |
+| **ITEM-015** | PROD-2FA | Profile 2FA runtime error | **Mixed** | READY-BE-RUNTIME-VERIFY | Gemini | **Ready for QA Retest** | Backend deployed; retest setup, confirm, disable, and regenerate recovery codes on `/profile` |
 
 ### Wave 3 Notes
 - ITEM-012, ITEM-014, and ITEM-015 are the highest release-confidence risks.
@@ -88,3 +88,10 @@ Still stale. |
 - `today-session.mock.ts` no longer hardcodes `21 Maret`; fallback date is generated in `Asia/Jakarta`.
 - Desktop sidebar identity now hard-locks guest rendering to `Guest` + `G`, while member state keeps real avatar URL or a name-derived initial.
 - Gemini retest should focus only on the 5 requested checks: `/today` date, guest greeting, member greeting, guest sidebar, member sidebar.
+
+### 2026-03-23 Codex Execution Sync For Backend Deploy + CSRF
+- Backend manual deploy was executed via SSH against cPanel host `209.42.27.90` using the documented release path `/home/thechoosentalks/deploy/apps/thechoosentalks/deploy.sh`.
+- Active backend release after deploy: `/home/thechoosentalks/deploy/apps/thechoosentalks/releases/20260323135854`.
+- Deploy log confirms composer install, cache rebuild, pre-switch healthcheck, post-switch healthcheck, and successful symlink switch.
+- `ITEM-015` is now `deployed` but still requires runtime validation on `/profile` because 2FA endpoints need authenticated browser verification.
+- Next auth flow CSRF warming is now patched in source for login, signup, forgot-password, and reset-password, but it is not yet deployed to frontend runtime in this session.

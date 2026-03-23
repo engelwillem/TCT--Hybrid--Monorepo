@@ -19,7 +19,7 @@ Lakukan ANALISA MENDALAM terlebih dahulu terhadap seluruh codebase dan seluruh d
 ## TUJUAN UTAMA
 Saya ingin Anda bertindak sebagai engineer penerus yang masuk ke project ini di tengah jalan, lalu:
 1. membaca repo secara serius
-2. membaca dokumentasi `/docs` secara menyeluruh
+2. membaca dokumentasi `/docs` secara menyeluruh terutama /docs/QA Full Audit/docs_patch_bundle_continuation.md
 3. menyusun peta kondisi project terkini
 4. mengidentifikasi pekerjaan yang belum selesai di web saat ini
 5. menyiapkan langkah lanjutan yang aman, presisi, dan tidak keluar konteks dokumentasi

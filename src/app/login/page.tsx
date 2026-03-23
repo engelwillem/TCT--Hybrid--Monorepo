@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { setAppAccessToken, setAppAuthUser } from "@/services/app-auth-token";
+import { buildSanctumJsonHeaders, warmSanctumCsrf } from "@/lib/sanctum-csrf";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
-      await fetch("/api/sanctum/csrf-cookie", { method: "GET" });
+      const xsrfToken = await warmSanctumCsrf();
 
       const endpoint = isSignup ? "/api/auth/register" : "/api/auth/login";
       const payload = isSignup
@@ -47,7 +48,8 @@ export default function LoginPage() {
 
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        headers: buildSanctumJsonHeaders(xsrfToken),
         body: JSON.stringify(payload),
       });
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { buildSanctumJsonHeaders, warmSanctumCsrf } from "@/lib/sanctum-csrf";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -21,11 +22,12 @@ export default function ForgotPasswordPage() {
     setSuccessMessage(null);
 
     try {
-      await fetch("/api/sanctum/csrf-cookie", { method: "GET" });
+      const xsrfToken = await warmSanctumCsrf();
 
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        headers: buildSanctumJsonHeaders(xsrfToken),
         body: JSON.stringify({ email }),
       });
 

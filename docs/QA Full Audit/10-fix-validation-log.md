@@ -13,6 +13,10 @@ Dokumen ini mencatat semua hasil validasi QA terhadap fix yang dikerjakan Codex.
 | VAL-009 | ITEM-009 | Today Dynamic Date/Greeting | **Pass (Live)** | Closed | 2026-03-23 | "Chosen People" subhead verified. |
 | VAL-010 | ITEM-010 | VerseHub Copy Cleanup | **Pass (Live)** | Closed | 2026-03-23 | Noise text removed/refined. |
 | VAL-011 | ITEM-011 | ActionBar Love Icons | **Pass (Live)** | Closed | 2026-03-23 | Finger icons replaced by Heart. |
+| VAL-012 | ITEM-016 | Today Greeting 3-line | **Pass (Live)** | Closed | 2026-03-23 | Verified 2-line guest layout in production. |
+| VAL-013 | ITEM-017 | Sidebar Guest Identity | **Pass (Live)** | Closed | 2026-03-23 | Verified G/Guest fallback in production. |
+| VAL-014 | ITEM-015 | Profile 2FA backend deploy | **Pending (Deploy Completed)** | Awaiting Runtime Verification | 2026-03-23 | cPanel backend deploy executed successfully; Gemini must retest setup/confirm/disable/recovery live. |
+| VAL-015 | ITEM-001C | Auth CSRF warming | **Pending (Patched in Source)** | Awaiting Frontend Deploy | 2026-03-23 | Next auth pages now warm Sanctum CSRF and send `X-XSRF-TOKEN`, but runtime verification must wait for FE deploy. |
 
 ---
 

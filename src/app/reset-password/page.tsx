@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { buildSanctumJsonHeaders, warmSanctumCsrf } from "@/lib/sanctum-csrf";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -42,11 +43,12 @@ function ResetPasswordForm() {
     }
 
     try {
-      await fetch("/api/sanctum/csrf-cookie", { method: "GET" });
+      const xsrfToken = await warmSanctumCsrf();
 
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        headers: buildSanctumJsonHeaders(xsrfToken),
         body: JSON.stringify({ 
           token,
           email,

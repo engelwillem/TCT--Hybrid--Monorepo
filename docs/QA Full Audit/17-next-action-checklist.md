@@ -28,15 +28,15 @@ Setelah sinkronisasi domain selesai (Phase 1), fokus beralih pada perbaikan fung
 
 | Item ID | Request | Category | Owner | Priority | Dependency | Testing Gate | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ITEM-016** | Today Date & Greeting Fix | Mixed (BE Payload) | Codex | **P0** | None | BLOCKED-INVESTIGATION | Root Cause Confirmed: Mock drift (21 Mar) & String concatenation |
-| **ITEM-017** | Sidebar Identity Guest vs Member | Mixed (Auth State) | Codex | **P0** | None | BLOCKED-INVESTIGATION | Root Cause Confirmed: Greeting Logic Separation |
-| **ITEM-008** | Landing page entry (Guest/Login flow) | Frontend | Gemini | P1 | None | READY-FE | "Masuk" -> "Login" |
-| **ITEM-009** | /today dynamic date & greeting | Frontend | Gemini | P2 | None | READY-FE | Add "Chosen People" |
-| **ITEM-010** | /versehub/id noise cleanup | Frontend | Gemini | P2 | None | READY-FE | Clean noise items |
-| **ITEM-011** | Action bar icons (Finger -> Love) | Frontend | Gemini | P2 | None | READY-FE | Global CSS/Component change |
+| **ITEM-016** | Today Date & Greeting Fix | Mixed (BE Payload) | Codex | **P0** | None | **READY-E2E-PASS** | Verified 2-line layout (2026-03-23) |
+| **ITEM-017** | Sidebar Identity Guest vs Member | Mixed (Auth State) | Codex | **P0** | None | **READY-E2E-PASS** | Verified G/Guest identity (2026-03-23) |
+| **ITEM-008** | Landing page entry (Guest/Login flow) | Frontend | Gemini | P1 | None | **READY-E2E-PASS** | Verified "Login" label & Guest CTA |
+| **ITEM-009** | /today dynamic date & greeting | Frontend | Gemini | P2 | None | **READY-E2E-PASS** | Verified dynamic date & Chosen People subhead |
+| **ITEM-010** | /versehub/id noise cleanup | Frontend | Gemini | P2 | None | **READY-E2E-PASS** | Verified copy cleanup |
+| **ITEM-011** | Action bar icons (Finger -> Love) | Frontend | Gemini | P2 | None | **READY-E2E-PASS** | Verified Heart icons globally |
 | **ITEM-012** | Community media failure | Mixed | Codex | **P0** | Storage/API | BLOCKED-INVESTIGATION | Audit storage/API |
 | **ITEM-014** | Too fast session logout | Mixed | Codex | **P0** | Session Config | BLOCKED-INVESTIGATION | Fix session persistence |
-| **ITEM-015** | 2FA Server Error (Profile) | Backend | Codex | **P0** | Laravel Auth | BE-NOT-DEPLOYED | Fix Laravel Auth |
+| **ITEM-015** | 2FA Server Error (Profile) | Backend | Codex | **P0** | Laravel Auth | READY-BE-RUNTIME-VERIFY | Backend deployed 2026-03-23; Gemini must retest live 2FA flow |
 | **ITEM-013** | Cleanup Archive/Fake Data | Backend | User/Op | P1 | DB Access | BE-NOT-DEPLOYED | Data real user only |
 
 ---
@@ -64,7 +64,14 @@ Setelah sinkronisasi domain selesai (Phase 1), fokus beralih pada perbaikan fung
 - **Why it matters:** Fitur keamanan dasar yang rusak merusak kepercayaan user.
 - **Owner:** Codex.
 - **Dependencies:** Fortify/Sanctum config, 2FA recovery code storage.
-- **Suggested Validation:** Profile -> Security -> Toggle 2FA.
+- **Suggested Validation:** Profile -> Security -> Setup 2FA -> Confirm OTP -> Disable -> Regenerate recovery codes.
+- **Execution Update (2026-03-23):** Backend manual deploy via cPanel/SSH sudah dijalankan; item ini bukan lagi `BE-NOT-DEPLOYED`, tetapi masih wajib runtime verification.
+
+### Auth CSRF Warming (Execution Update 2026-03-23)
+- **Summary:** Next auth POST flows sekarang melakukan warming `/api/sanctum/csrf-cookie`, membaca cookie `XSRF-TOKEN`, lalu mengirim header `X-XSRF-TOKEN` ke proxy auth route.
+- **Files:** `src/app/login/page.tsx`, `src/app/forgot-password/page.tsx`, `src/app/reset-password/page.tsx`, `src/lib/sanctum-csrf.ts`.
+- **Stage:** Patched in source only.
+- **Next Step:** Frontend deploy/runtime retest untuk signup dan login terhadap 419/CSRF mismatch.
 
 ### ITEM-008: Landing Page Entry Flow (P1)
 - **Summary:** Refactor landing page agar user eksplisit memilih Guest, Daftar, atau Login. Ganti teks "Masuk" ke "Login".
