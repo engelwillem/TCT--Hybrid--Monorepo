@@ -13,7 +13,10 @@
 
 | Item ID | Ref | Work Item | Category | Gate Status | Next Owner | Status | Next Valid Test Scope |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ITEM-001A** | BUG-004 | /register route availability | **Frontend-only** | READY-FE-RETEST | Gemini | **Reopened** | No redirect (AppShell). Still stale. |
+| **ITEM-016** | BUG-008 | **Today Date & Greeting Fix** | **Mixed** | READY-FE-RETEST | Gemini | **Ready for QA Retest** | Recheck `/today` with live Jakarta date, guest 2-line greeting, member 3-line greeting |
+| **ITEM-017** | BUG-009 | **Sidebar Identity Guest vs Member** | **Mixed** | READY-FE-RETEST | Gemini | **Ready for QA Retest** | Recheck sidebar: guest=`G/Guest`, member avatar or correct initial/name |
+| **ITEM-001A** | BUG-001 | /register route 404 fix | **Frontend-only** | READY-FE-RETEST | Gemini | **Reopened** | Redirect missing on WWW/Edge.
+Still stale. |
 | **ITEM-001B** | BUG-004 | Signup UI mode (Fields vis) | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Sync sukses di kedua domain. |
 | **ITEM-001C** | BUG-004 | Register user creation (API) | **Mixed** | BE-NOT-DEPLOYED | Op / User | **Open** | E2E signup (Ditunggu CSRF) |
 | **ITEM-002A** | BUG-001 | Login Label correction ("Masuk") | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Label "Masuk" di kedua domain. |
@@ -22,10 +25,10 @@
 | **ITEM-003** | BUG-003 | VerseHub Bottom Nav Overlap | **Frontend-only** | READY-FE-RETEST | Gemini | **Reopened** | Bottom nav overlap on both. |
 | **ITEM-006** | CH-004 | **Source-of-Truth Sync** | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | WWW/EdgeOne are Equal (Fresh). |
 | **ITEM-007** | - | Laravel manual deploy dependency | **Backend-dependent** | BE-NOT-DEPLOYED | Op / User | **In Progress** | Manual pull performed |
-| **ITEM-008** | CH-005 | Landing page entry (Guest/Login flow) | **Frontend-only** | READY-FE-RETEST | Gemini | **Open** | Rename "Masuk" -> "Login" |
-| **ITEM-009** | CH-005 | /today dynamic date & greeting | **Frontend-only** | READY-FE-RETEST | Gemini | **Open** | Add "Chosen People" |
-| **ITEM-010** | CH-005 | /versehub/id noise cleanup | **Frontend-only** | READY-FE-RETEST | Gemini | **Open** | Clean noise items |
-| **ITEM-011** | CH-005 | Action bar icons (Finger -> Love) | **Frontend-only** | READY-FE-RETEST | Gemini | **Open** | Global CSS/Component change |
+| **ITEM-008** | CH-005 | Landing page entry (Guest/Login flow) | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Rename "Masuk" -> "Login" |
+| **ITEM-009** | CH-005 | /today dynamic date & greeting | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Add "Chosen People" |
+| **ITEM-010** | CH-005 | /versehub/id noise cleanup | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Clean noise items |
+| **ITEM-011** | CH-005 | Action bar icons (Finger -> Love) | **Frontend-only** | READY-FE-RETEST | Gemini | **Closed** | Global CSS/Component change |
 | **ITEM-012** | BUG-005 | **Community image load/save failure** | **Mixed** | BLOCKED-INVESTIGATION | Codex | **Open** | Blocker: Investigasi storage |
 | **ITEM-013** | CH-006 | Cleanup Archive/Fake Data | **Backend-dependent** | BE-NOT-DEPLOYED | Op / User | **Open** | Data real user only |
 | **ITEM-014** | BUG-006 | **Too fast session logout fix** | **Mixed** | BLOCKED-INVESTIGATION | Codex | **Open** | Blocker: Session persistence |
@@ -78,3 +81,10 @@
 - ITEM-012, ITEM-014, and ITEM-015 are the highest release-confidence risks.
 - ITEM-014 now has a partial frontend hardening fix in source: `403` no longer hard-clears auth state in the audited flows.
 - ITEM-015 now has two source-level fixes: backend cache-backed pending setup and frontend recovery-code flow correction.
+
+### 2026-03-23 Local Source Fix Sync For ITEM-016 / ITEM-017
+- `useAuthSession()` now treats Firebase anonymous sessions as `guest`, not `authenticated`.
+- `/today` loader path is now backed by a real Next proxy route at `src/app/api/today/session/route.ts`, so local Today content no longer falls through because of a missing frontend route.
+- `today-session.mock.ts` no longer hardcodes `21 Maret`; fallback date is generated in `Asia/Jakarta`.
+- Desktop sidebar identity now hard-locks guest rendering to `Guest` + `G`, while member state keeps real avatar URL or a name-derived initial.
+- Gemini retest should focus only on the 5 requested checks: `/today` date, guest greeting, member greeting, guest sidebar, member sidebar.

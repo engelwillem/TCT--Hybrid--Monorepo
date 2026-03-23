@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { getApps } from "firebase/app";
 import { getAuth, onIdTokenChanged, signOut } from "firebase/auth";
-import { clearAppAccessToken, getAppAccessToken, getAppAuthSource, setAppAccessToken, setAppAuthUser } from "@/services/app-auth-token";
+import { clearAppAccessToken, getAppAccessToken, getAppAuthSource, setAppAccessToken, setAppAuthUser, shouldInvalidateLocalSession } from "@/services/app-auth-token";
 
 export function FirebaseAuthSync() {
   useEffect(() => {
@@ -55,7 +55,7 @@ export function FirebaseAuthSync() {
 
         // 3. Handle auth rejection from backend
         if (!response.ok) {
-          if (response.status === 401 || response.status === 403 || response.status === 422) {
+          if (shouldInvalidateLocalSession(response.status)) {
             // If backend rejects identity, force client logout
             clearAppAccessToken();
             await signOut(auth);
@@ -78,7 +78,8 @@ export function FirebaseAuthSync() {
           return;
         }
 
-        clearAppAccessToken();
+        // Keep the previous token if the sync payload is malformed.
+        // A broken refresh response should not feel like an instant logout.
       } catch {
         // Keep the previous token when the backend is temporarily unreachable.
       }

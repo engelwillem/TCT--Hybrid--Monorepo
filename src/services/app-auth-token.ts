@@ -50,6 +50,10 @@ export function hasAppAccessToken(): boolean {
   return Boolean(getAppAccessToken());
 }
 
+export function shouldInvalidateLocalSession(status: number): boolean {
+  return status === 401;
+}
+
 export function getAppAuthSource(): AppAuthSource {
   if (typeof window === "undefined") return "unknown";
   const raw = window.localStorage.getItem(APP_AUTH_SOURCE_KEY);

@@ -1,9 +1,19 @@
 import type { TodaySessionContent } from './today-session.types';
 
+function buildMockDateLabel(): string {
+  return new Intl.DateTimeFormat('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  }).format(new Date());
+}
+
 export const todaySessionMock: TodaySessionContent = {
   userName: 'Willem',
   avatarInitial: 'W',
-  dateLabel: 'Sabtu, 21 Maret',
+  dateLabel: buildMockDateLabel(),
   greeting: 'Selamat pagi',
   openingLine: 'Terimalah firman yang menuntun langkahmu hari ini.',
   verseLabel: 'Suara yang menuntun',

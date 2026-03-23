@@ -6,7 +6,7 @@
  */
 
 import { CommunityPost, CommunityComment } from "@/features/community/types";
-import { getAppAccessToken, clearAppAccessToken } from "@/services/app-auth-token";
+import { getAppAccessToken, clearAppAccessToken, shouldInvalidateLocalSession } from "@/services/app-auth-token";
 
 class ApiError extends Error {
   constructor(
@@ -169,7 +169,7 @@ const buildHeaders = (needsAuth = false): HeadersInit => {
 function handleAuthFailure(status: number) {
   // Only treat 401 as a confirmed invalid session.
   // 403 can be a transient permission/config issue and should not hard-logout the user.
-  if (status === 401) {
+  if (shouldInvalidateLocalSession(status)) {
     clearAppAccessToken();
   }
 }

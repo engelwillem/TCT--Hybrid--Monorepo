@@ -68,4 +68,29 @@ class ProfileTwoFactorApiTest extends TestCase
         $response->assertJsonPath('twoFactor.enabled', true);
         $response->assertJsonPath('twoFactor.recoveryCodesRemaining', 2);
     }
+
+    public function test_two_factor_recovery_code_regeneration_returns_new_codes_for_token_authenticated_api_request(): void
+    {
+        $user = User::factory()->create([
+            'app_authentication_secret' => 'SECRET1234567890',
+            'app_authentication_recovery_codes' => ['hashed-code'],
+        ]);
+        Sanctum::actingAs($user);
+
+        $mock = Mockery::mock(TwoFactorService::class);
+        $mock->shouldReceive('verifyCode')->once()->with('SECRET1234567890', '123456')->andReturnTrue();
+        $mock->shouldReceive('regenerateRecoveryCodes')->once()->withArgs(function (User $target) use ($user): bool {
+            return $target->is($user);
+        })->andReturn(['fresh-1', 'fresh-2']);
+        $this->app->instance(TwoFactorService::class, $mock);
+
+        $response = $this->postJson('/api/v1/profile/two-factor/recovery-codes', [
+            'current_password' => 'password',
+            'code' => '123456',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('recoveryCodes.0', 'fresh-1');
+        $response->assertJsonPath('recoveryCodes.1', 'fresh-2');
+    }
 }

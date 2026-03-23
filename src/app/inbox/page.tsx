@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Search, ChevronRight, Loader2, PlusCircle, UserCircle2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAppAccessToken, clearAppAccessToken } from '@/services/app-auth-token';
+import { getAppAccessToken, clearAppAccessToken, shouldInvalidateLocalSession } from '@/services/app-auth-token';
 import MobileAppLayout from '@/layouts/MobileAppLayout';
 import SegmentedTabs from '@/components/core/SegmentedTabs';
 
@@ -71,7 +71,7 @@ export default function InboxPage() {
             if (response.ok) {
                 const payload = await response.json();
                 setInbox(payload.inbox ?? {});
-            } else if (response.status === 401) {
+            } else if (shouldInvalidateLocalSession(response.status)) {
                 clearAppAccessToken();
                 setInbox({});
             }

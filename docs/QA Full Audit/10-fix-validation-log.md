@@ -5,10 +5,14 @@ Dokumen ini mencatat semua hasil validasi QA terhadap fix yang dikerjakan Codex.
 | Validation ID | Item ID | Title | Result | Status | Date | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | VAL-001 | ITEM-001A | /register route 404 fix | **Fail (Runtime)** | Reopened | 2026-03-23 | No redirect in both domains. Still stale. |
-| VAL-002 | ITEM-002A | Login label "Masuk" replacement | **Pass (Live)** | Closed | 2026-03-23 | Label synced on both domains. |
+| VAL-002 | ITEM-002A | Login label "Masuk" replacement | **Pass (Live)** | Closed | 2026-03-23 | Label "Login" synced on both domains. |
 | VAL-003 | ITEM-003 | VerseHub Bottom Nav Overlap | **Fail (Runtime)** | Reopened | 2026-03-23 | Overflow still visible on Both. |
 | VAL-006 | ITEM-002B | Auth 302 Redirect Removal | **Pass (Live)** | Closed | 2026-03-23 | API returns 419 JSON instead of 302 HTML |
 | VAL-007 | ITEM-001B | Signup UI Mode | **Pass (Live)** | Closed | 2026-03-23 | Heading "Mulai Akun" and fields rendered |
+| VAL-008 | ITEM-008 | Landing Entry Flow / Copy | **Pass (Live)** | Closed | 2026-03-23 | "Login" label & Guest CTA verified. |
+| VAL-009 | ITEM-009 | Today Dynamic Date/Greeting | **Pass (Live)** | Closed | 2026-03-23 | "Chosen People" subhead verified. |
+| VAL-010 | ITEM-010 | VerseHub Copy Cleanup | **Pass (Live)** | Closed | 2026-03-23 | Noise text removed/refined. |
+| VAL-011 | ITEM-011 | ActionBar Love Icons | **Pass (Live)** | Closed | 2026-03-23 | Finger icons replaced by Heart. |
 
 ---
 

@@ -1,35 +1,45 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMotionConfig } from '../hooks/useMotionConfig';
 
 interface TodayHeaderProps {
   greeting: string;
   dateLabel: string;
+  memberName?: string | null;
   isAuthRestoring?: boolean;
 }
 
 function buildTodayDateLabel(fallback: string): string {
   try {
-    return new Intl.DateTimeFormat('id-ID', {
+    const formatted = new Intl.DateTimeFormat('id-ID', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
+      year: 'numeric',
       timeZone: 'Asia/Jakarta',
     }).format(new Date());
+    return formatted.toUpperCase();
   } catch {
-    return fallback;
+    return String(fallback || '').trim().toUpperCase();
   }
 }
 
 export default function TodayHeader({
   greeting,
   dateLabel,
+  memberName = null,
   isAuthRestoring = false,
 }: TodayHeaderProps) {
   const m = useMotionConfig();
   const primaryGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
-  const liveDateLabel = buildTodayDateLabel(dateLabel);
+  const [liveDateLabel, setLiveDateLabel] = useState(() => buildTodayDateLabel(dateLabel));
+  const normalizedMemberName = String(memberName || '').trim();
+
+  useEffect(() => {
+    setLiveDateLabel(buildTodayDateLabel(dateLabel));
+  }, [dateLabel]);
 
   return (
     <header className="sticky top-0 z-50 w-full pt-[env(safe-area-inset-top,0px)] mix-blend-multiply">
@@ -49,9 +59,16 @@ export default function TodayHeader({
             {primaryGreeting}
           </h1>
           {!isAuthRestoring && (
-            <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
-              Chosen People
-            </p>
+            <>
+              {normalizedMemberName ? (
+                <p className="mt-1 text-[16px] leading-[1.35] font-semibold tracking-[-0.01em] text-foreground/80 md:text-[18px]">
+                  {normalizedMemberName}
+                </p>
+              ) : null}
+              <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
+                Chosen People
+              </p>
+            </>
           )}
         </motion.div>
       </div>

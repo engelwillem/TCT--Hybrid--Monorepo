@@ -28,14 +28,16 @@ Setelah sinkronisasi domain selesai (Phase 1), fokus beralih pada perbaikan fung
 
 | Item ID | Request | Category | Owner | Priority | Dependency | Testing Gate | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **ITEM-016** | Today Date & Greeting Fix | Mixed (BE Payload) | Codex | **P0** | None | BLOCKED-INVESTIGATION | Root Cause Confirmed: Mock drift (21 Mar) & String concatenation |
+| **ITEM-017** | Sidebar Identity Guest vs Member | Mixed (Auth State) | Codex | **P0** | None | BLOCKED-INVESTIGATION | Root Cause Confirmed: Greeting Logic Separation |
 | **ITEM-008** | Landing page entry (Guest/Login flow) | Frontend | Gemini | P1 | None | READY-FE | "Masuk" -> "Login" |
 | **ITEM-009** | /today dynamic date & greeting | Frontend | Gemini | P2 | None | READY-FE | Add "Chosen People" |
 | **ITEM-010** | /versehub/id noise cleanup | Frontend | Gemini | P2 | None | READY-FE | Clean noise items |
 | **ITEM-011** | Action bar icons (Finger -> Love) | Frontend | Gemini | P2 | None | READY-FE | Global CSS/Component change |
-| **ITEM-012** | **Audit: Community image failure** | Mixed | Codex | **P0** | Storage/API | BLOCKED | Blocker fungsionalitas sosial |
-| **ITEM-013** | Cleanup Archive/Fake Data | Backend | User/Op | P1 | DB Access | READY-BE | Pakai data real user |
-| **ITEM-014** | **Fix: Fast Session Logout** | Mixed | Codex | **P0** | Session Config | BLOCKED | Blocker retensi user |
-| **ITEM-015** | **Fix: 2FA Server Error (/profile)** | Backend | Codex | **P0** | Laravel Auth | BLOCKED | Blocker keamanan profil |
+| **ITEM-012** | Community media failure | Mixed | Codex | **P0** | Storage/API | BLOCKED-INVESTIGATION | Audit storage/API |
+| **ITEM-014** | Too fast session logout | Mixed | Codex | **P0** | Session Config | BLOCKED-INVESTIGATION | Fix session persistence |
+| **ITEM-015** | 2FA Server Error (Profile) | Backend | Codex | **P0** | Laravel Auth | BE-NOT-DEPLOYED | Fix Laravel Auth |
+| **ITEM-013** | Cleanup Archive/Fake Data | Backend | User/Op | P1 | DB Access | BE-NOT-DEPLOYED | Data real user only |
 
 ---
 

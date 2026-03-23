@@ -33,6 +33,8 @@ Dokumen ini adalah sumber kebenaran untuk seluruh pekerjaan teknis yang dihandof
 | BUG-005 | **Mixed** | **Community image load/save failure** | Community | Critical | Codex | **Open** | 2026-03-23 |
 | BUG-006 | **Mixed** | **Fast Session Logout fix** | Auth / Session | Critical | Codex | **Open** | 2026-03-23 |
 | BUG-007 | **Backend-only** | **2FA Profile server error (500)** | Profile / Security | Critical | Codex | **Open** | 2026-03-23 |
+| BUG-008 | **Mixed** | Today Date / Greeting Mismatch | Today / UI State | High | Codex | **Ready for QA Retest** | 2026-03-23 |
+| BUG-009 | **Mixed** | Sidebar Identity Mismatch | Sidebar / UI State | High | Codex | **Ready for QA Retest** | 2026-03-23 |
 
 ---
 
@@ -213,12 +215,31 @@ Dokumen ini adalah sumber kebenaran untuk seluruh pekerjaan teknis yang dihandof
 - Layer affected: `src/features/today-ritual/components/TodayDailyRitualScreen.tsx`, `src/features/today-ritual/components/TodayHeader.tsx`
 - Current source truth:
   - greeting is forced from live auth state, not blindly trusting backend copy
-  - logged-in greeting becomes `Selamat datang kembali, {name}`
-  - guest/no-name greeting stays `Selamat datang kembali,`
-  - subcopy `Chosen People` already present
-  - date label is rendered dynamically with `Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta' })`
+  - guest state now stays exactly 2 lines: `Selamat datang kembali,` then `Chosen People`
+  - member state now stays exactly 3 lines: `Selamat datang kembali,` then real login name, then `Chosen People`
+  - date label is rendered against live `Asia/Jakarta` time and the missing Next proxy path for `/api/today/session` is now restored in source
+- Root cause confirmed:
+  - frontend loader expected `/api/today/session`, but that Next route did not exist locally, so Today content could silently fall back
+  - fallback content file still contained a hardcoded March 21 date string, which was a QA drift risk even when used only as resilience content
+- Safe fix applied:
+  - added `src/app/api/today/session/route.ts` to proxy the exact loader path to Laravel
+  - replaced the hardcoded mock `dateLabel` with a Jakarta-time generated value
 - Risk:
-  - backend `content/today/default.php` still contains stale static fallback text, but active header rendering already overrides it on the frontend
+  - if Laravel payload itself is editorially stale, frontend still renders the live local date in the header, but content QA should still verify backend payload freshness separately
+
+### BUG-009: Sidebar Identity Guest vs Member
+- Category: Frontend-only state normalization
+- Layer affected: `src/auth/use-auth-session.ts`, `src/layouts/DesktopSidebar.tsx`, `/today` header consumer
+- Root cause confirmed:
+  - Firebase anonymous sessions were being treated as `authenticated`, which blurred guest/member identity
+  - sidebar fallback rendering was too permissive, so the wrong initial could survive instead of explicit guest identity
+- Safe fix applied:
+  - anonymous Firebase session now resolves to `guest` unless a real app token exists
+  - authenticated identity prefers real name, then email local-part, before any generic fallback
+  - sidebar now hard-locks guest rendering to `Guest` and `G`, and only uses avatar image for non-guest users
+- Retest focus:
+  - guest sidebar must show `G` and `Guest`
+  - member sidebar must show the real avatar when present, otherwise the correct initial from the real user identity
 
 ### ITEM-010: VerseHub Copy Cleanup
 - Category: Frontend-only

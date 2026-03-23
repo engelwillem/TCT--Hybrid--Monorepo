@@ -13,7 +13,7 @@ import { TCTLogo } from "@/components/brand/TCTLogo";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthSession();
+  const { identity, isAuthenticated } = useAuthSession();
   const navItems = getUiNavItems(isAuthenticated);
 
   const activeNavId = navItems.find(item => pathname.startsWith(item.href))?.id || 'today';
@@ -74,9 +74,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   activeId={activeNavId}
                   navItems={navItems}
                   isAuthenticated={isAuthenticated}
-                  userName={user?.displayName || ''}
-                  userEmail={user?.email || ''}
-                  initials={user?.displayName?.slice(0, 1).toUpperCase() || 'U'}
+                  userName={identity.name}
+                  userEmail={identity.email}
+                  initials={identity.initial}
+                  avatarUrl={identity.avatarUrl}
+                  isGuest={identity.isGuest}
                 />
               </div>
             )}
@@ -135,9 +137,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 activeId={activeNavId}
                 navItems={navItems}
                 isAuthenticated={isAuthenticated}
-                userName={user?.displayName || ''}
-                userEmail={user?.email || ''}
-                initials={user?.displayName?.slice(0, 1).toUpperCase() || 'U'}
+                userName={identity.name}
+                userEmail={identity.email}
+                initials={identity.initial}
+                avatarUrl={identity.avatarUrl}
+                isGuest={identity.isGuest}
               />
             </div>
           )}

@@ -20,7 +20,7 @@ interface TodayDailyRitualScreenProps {
 
 export default function TodayDailyRitualScreen({ sessionContent }: TodayDailyRitualScreenProps) {
   const m = useMotionConfig();
-  const { profileName, status: authStatus } = useAuthSession();
+  const { identity, status: authStatus } = useAuthSession();
   const {
     isHydrating,
     hydrationMode,
@@ -32,10 +32,7 @@ export default function TodayDailyRitualScreen({ sessionContent }: TodayDailyRit
     completePrayer,
   } = useTodayRitualProgress();
   const isAuthRestoring = authStatus === 'restoring';
-  const isAuthenticatedWithName = authStatus === 'authenticated' && profileName && profileName.length > 0;
-  const greetingText = isAuthenticatedWithName
-    ? `Selamat datang kembali, ${profileName}`
-    : 'Selamat datang kembali,';
+  const memberName = authStatus === 'authenticated' && !identity.isGuest ? identity.name : null;
   const phase: 'reflection' | 'prayer' | 'completed' = isPrayerCompleted
     ? 'completed'
     : isReflectDone
@@ -91,8 +88,9 @@ export default function TodayDailyRitualScreen({ sessionContent }: TodayDailyRit
       >
         
         <TodayHeader
-          greeting={greetingText}
+          greeting="Selamat datang kembali,"
           dateLabel={sessionContent.dateLabel}
+          memberName={memberName}
           isAuthRestoring={isAuthRestoring}
         />
 

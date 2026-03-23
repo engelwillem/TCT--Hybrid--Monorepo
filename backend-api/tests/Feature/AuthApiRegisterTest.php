@@ -82,4 +82,28 @@ class AuthApiRegisterTest extends TestCase
         $response->assertHeader('content-type', 'application/json');
         $response->assertJsonPath('message', 'Unauthenticated.');
     }
+
+    public function test_api_login_does_not_revoke_previous_next_web_tokens(): void
+    {
+        User::factory()->create([
+            'email' => 'member@example.com',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $first = $this->postJson('/api/v1/login', [
+            'email' => 'member@example.com',
+            'password' => 'password123',
+        ]);
+
+        $second = $this->postJson('/api/v1/login', [
+            'email' => 'member@example.com',
+            'password' => 'password123',
+        ]);
+
+        $first->assertOk();
+        $second->assertOk();
+
+        $user = User::query()->where('email', 'member@example.com')->firstOrFail();
+        $this->assertSame(2, $user->tokens()->where('name', 'next-web')->count());
+    }
 }

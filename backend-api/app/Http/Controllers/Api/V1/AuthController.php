@@ -75,8 +75,8 @@ class AuthController extends Controller
             ]);
         }
 
-        // Decoupled Next.js frontend uses Sanctum bearer token across API routes.
-        $user->tokens()->where('name', 'next-web')->delete();
+        // Preserve existing still-valid sessions so a fresh login does not
+        // aggressively invalidate other tabs/devices.
         $token = $user->createToken('next-web')->plainTextToken;
 
         return response()->json([
@@ -158,4 +158,5 @@ class AuthController extends Controller
         ]);
     }
 }
+
 

@@ -20,6 +20,8 @@ type DesktopSidebarNavProps = {
     userName?: string;
     userEmail?: string;
     initials?: string;
+    avatarUrl?: string | null;
+    isGuest?: boolean;
     appName?: string;
     communityName?: string;
     className?: string;
@@ -40,8 +42,14 @@ export default function DesktopSidebarNav({
     userName,
     userEmail,
     initials,
+    avatarUrl,
+    isGuest = false,
     className,
 }: DesktopSidebarNavProps) {
+    const resolvedName = userName?.trim() || 'Guest';
+    const resolvedInitials = (initials?.trim() || (isGuest ? 'G' : resolvedName.slice(0, 1) || 'U')).toUpperCase();
+    const resolvedAvatarUrl = isGuest ? null : avatarUrl;
+
     return (
         <aside
             className={cn(
@@ -89,23 +97,25 @@ export default function DesktopSidebarNav({
                 })}
             </nav>
 
-            {isAuthenticated && (
-                <div className="mt-4 pt-4 border-t border-black/[0.04]">
-                    <div className="flex items-center gap-3 px-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.06] text-[12px] font-semibold text-foreground/70">
-                            {initials}
-                        </div>
-                        <div className="min-w-0">
-                            <p className="truncate text-[13px] font-medium text-foreground/80">
-                                {userName}
-                            </p>
-                            <p className="truncate text-[11px] text-foreground/35">
-                                {userEmail}
-                            </p>
-                        </div>
+            <div className="mt-4 pt-4 border-t border-black/[0.04]">
+                <div className="flex items-center gap-3 px-2">
+                    <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-black/[0.06] text-[12px] font-semibold text-foreground/70">
+                        {resolvedAvatarUrl ? (
+                            <img src={resolvedAvatarUrl} alt={resolvedName} className="h-full w-full object-cover" />
+                        ) : (
+                            resolvedInitials
+                        )}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate text-[13px] font-medium text-foreground/80">
+                            {resolvedName}
+                        </p>
+                        <p className="truncate text-[11px] text-foreground/35">
+                            {isGuest ? 'Chosen People' : (userEmail || 'Chosen People')}
+                        </p>
                     </div>
                 </div>
-            )}
+            </div>
         </aside>
     );
 }

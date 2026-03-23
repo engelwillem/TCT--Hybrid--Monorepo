@@ -118,7 +118,6 @@ class FirebaseAuthSyncController extends Controller
             }
         }
 
-        $user->tokens()->where('name', 'next-web')->delete();
         $token = $user->createToken('next-web')->plainTextToken;
 
         return response()->json([
