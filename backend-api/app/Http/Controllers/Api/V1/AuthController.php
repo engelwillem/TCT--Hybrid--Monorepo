@@ -16,6 +16,39 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
+     * Handle incoming registration request for decoupled frontend.
+     */
+    public function register(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = User::query()->create([
+            'name' => trim((string) $validated['name']),
+            'email' => strtolower(trim((string) $validated['email'])),
+            'password' => Hash::make((string) $validated['password']),
+        ]);
+
+        $token = $user->createToken('next-web')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'token' => $token,
+            ],
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'redirect_to' => '/today',
+        ], 201);
+    }
+
+    /**
      * Handle an incoming authentication request.
      */
     public function login(LoginRequest $request): JsonResponse
@@ -125,3 +158,4 @@ class AuthController extends Controller
         ]);
     }
 }
+

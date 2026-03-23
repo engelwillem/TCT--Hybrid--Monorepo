@@ -27,6 +27,7 @@ Route::get('/today/session', [TodaySessionController::class, 'show']);
 
 Route::prefix('v1')->group(function (): void {
     Route::post('/login', [\App\Http\Controllers\Api\V1\AuthController::class, 'login']);
+    Route::post('/register', [\App\Http\Controllers\Api\V1\AuthController::class, 'register']);
     Route::post('/forgot-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'resetPassword']);
 
