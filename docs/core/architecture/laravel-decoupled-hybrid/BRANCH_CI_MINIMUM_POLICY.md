@@ -1,3 +1,21 @@
+# Historical Notice: Branch + CI Minimum Policy
+
+Dokumen ini hanya boleh dibaca sebagai konteks transisi.
+
+Bagian yang sudah obsolete:
+- backend deploy dari GitHub Actions ke cPanel
+- frontend deploy hook Tencent sebagai baseline aktif
+
+Baseline aktif sekarang:
+- frontend production deploy dari `main`
+- backend Laravel deploy manual via cPanel/script
+
+Lihat:
+- [../MONOREPO HYBRID LOCAL-SERVER PARITY AUDIT.md](../MONOREPO%20HYBRID%20LOCAL-SERVER%20PARITY%20AUDIT.md)
+- [../ARCHITECTURE DOC DRIFT AUDIT 2026-03-23.md](../ARCHITECTURE%20DOC%20DRIFT%20AUDIT%202026-03-23.md)
+
+---
+
 # Branch + CI Minimum Policy (Single Main Branch)
 
 Dokumen ini menetapkan aturan minimum agar Laravel backend (cPanel) dan Next.js frontend (Tencent Edge) tetap sinkron tanpa branch permanen terpisah.

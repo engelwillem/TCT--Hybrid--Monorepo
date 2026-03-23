@@ -2,6 +2,24 @@
 
 use Laravel\Sanctum\Sanctum;
 
+$defaultStatefulDomains = array_values(array_filter(array_unique(array_map(
+    static fn (?string $value): string => trim((string) $value),
+    [
+        'localhost',
+        'localhost:3000',
+        'localhost:9002',
+        '127.0.0.1',
+        '127.0.0.1:8000',
+        '127.0.0.1:9002',
+        '::1',
+        Sanctum::currentApplicationUrlWithPort(),
+        parse_url((string) env('NEXT_PUBLIC_APP_URL', ''), PHP_URL_HOST) ?: '',
+        'thechoosentalks.org',
+        'www.thechoosentalks.org',
+        'api.thechoosentalks.org',
+    ],
+))));
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -14,11 +32,10 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,localhost:9002,127.0.0.1,127.0.0.1:8000,127.0.0.1:9002,::1,',
-        Sanctum::currentApplicationUrlWithPort(),
-    ))),
+    'stateful' => array_values(array_filter(array_unique(array_map(
+        static fn (?string $value): string => trim((string) $value),
+        explode(',', env('SANCTUM_STATEFUL_DOMAINS', implode(',', $defaultStatefulDomains))),
+    )))),
 
     'guard' => ['web'],
 

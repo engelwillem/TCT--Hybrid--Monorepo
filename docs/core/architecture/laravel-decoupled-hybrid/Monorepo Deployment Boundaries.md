@@ -1,3 +1,21 @@
+# Historical Notice: Monorepo Deployment Boundaries
+
+Dokumen ini masih berguna untuk membaca boundary konseptual, tetapi tidak lagi akurat sebagai baseline deploy aktif.
+
+Bagian yang obsolete:
+- backend deploy via GitHub Actions + SSH ke cPanel
+- asumsi separation lama antara CI dan platform deploy
+
+Baseline aktif sekarang:
+- frontend production deploy dari `main`
+- backend Laravel deploy manual via cPanel/script
+
+Lihat:
+- [../MONOREPO HYBRID LOCAL-SERVER PARITY AUDIT.md](../MONOREPO%20HYBRID%20LOCAL-SERVER%20PARITY%20AUDIT.md)
+- [../ARCHITECTURE DOC DRIFT AUDIT 2026-03-23.md](../ARCHITECTURE%20DOC%20DRIFT%20AUDIT%202026-03-23.md)
+
+---
+
 # Monorepo Deployment Boundaries
 
 ## Purpose

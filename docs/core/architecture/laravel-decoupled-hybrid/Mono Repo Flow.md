@@ -1,3 +1,21 @@
+# Historical Notice: Mono Repo Flow
+
+Dokumen ini dipertahankan sebagai jejak design lama.
+
+Jangan gunakan dokumen ini sebagai source of truth operasional aktif karena isinya masih mengandung asumsi yang sudah obsolete, termasuk:
+- `frontend-prod` sebagai branch frontend release aktif
+- backend deploy ke cPanel via GitHub Actions + SSH
+
+Baseline aktif sekarang:
+- frontend production deploy dari `main`
+- backend Laravel deploy manual via cPanel/script
+
+Untuk baseline yang benar, baca:
+- [../MONOREPO HYBRID LOCAL-SERVER PARITY AUDIT.md](../MONOREPO%20HYBRID%20LOCAL-SERVER%20PARITY%20AUDIT.md)
+- [../ARCHITECTURE DOC DRIFT AUDIT 2026-03-23.md](../ARCHITECTURE%20DOC%20DRIFT%20AUDIT%202026-03-23.md)
+
+---
+
 # Mono Repo Flow
 
 ## Repository

@@ -1,3 +1,21 @@
+# Historical Notice: Platform Config Checklist
+
+Dokumen ini tidak lagi menjadi baseline aktif karena masih memuat asumsi:
+- frontend release branch `frontend-prod`
+- model deploy lama yang tidak lagi sesuai runtime sekarang
+
+Gunakan dokumen ini hanya sebagai arsip historis.
+
+Baseline aktif sekarang:
+- frontend production deploy dari `main`
+- backend Laravel deploy manual via cPanel/script
+
+Lihat:
+- [../MONOREPO HYBRID LOCAL-SERVER PARITY AUDIT.md](../MONOREPO%20HYBRID%20LOCAL-SERVER%20PARITY%20AUDIT.md)
+- [../ARCHITECTURE DOC DRIFT AUDIT 2026-03-23.md](../ARCHITECTURE%20DOC%20DRIFT%20AUDIT%202026-03-23.md)
+
+---
+
 # Platform Config Checklist
 
 ## Tujuan

@@ -35,8 +35,10 @@ Berdasarkan audit mendalam terhadap struktur repositori monorepo, konfigurasi se
 
 ### 4. Infrastructure & DevOps
 *   **Version Control:** `GitHub` (Private Repository) sebagai *single source of truth* untuk seluruh monorepo.
-*   **CI/CD Pipeline:**
-    *   `GitHub Actions` yang mengelola otomatisasi *checks* (Linting) dan pemicu *deployment* backend melalui mekanisme *Webhook*.
+*   **CI / Deploy Reality:**
+    *   `GitHub Actions` dipakai terutama untuk *checks* dan validasi source.
+    *   **Frontend** tayang melalui auto-redeploy Tencent Cloud dari branch `main`.
+    *   **Backend Laravel** tidak auto-deploy dari GitHub Actions; operator harus melakukan `git pull` di server/cPanel lalu menjalankan script deploy backend.
 *   **Storage & Assets:**
     *   **Backend:** Sistem file lokal (`storage/app/public`) yang ditautkan melalui *shared symlink* di antara rilis backend.
     *   **Frontend:** Cloud-native assets yang di-bundle oleh sistem *build* Next.js.
