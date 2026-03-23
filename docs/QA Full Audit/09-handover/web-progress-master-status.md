@@ -1,36 +1,59 @@
 # Web Progress Master Status
 
-## Update 2026-03-22 — Current Hybrid Runtime Baseline
-- **Frontend:** source is patched in repo, but production Tencent runtime is still treated as potentially stale.
-- **Backend:** Laravel remains live through cPanel release flow, but auth/runtime parity depends on manual deploy.
-- **Audit posture:** do not collapse source state and live state into one status.
+## Update 2026-03-22 — `/today` Runtime Integration Sync
+- **Backend Today Session Endpoint:** ✅ VERIFIED (live backend origin).
+- **Frontend `/today` source pathing:** ✅ PATCHED IN SOURCE (menggunakan jalur API terpusat, tidak bergantung pada `www/.../api/today/session`).
+- **Auth context forwarding:** ✅ dipertahankan di server boundary `/today`.
+- **Production runtime verification (`/today`):** 🔵 PENDING (belum final sampai deploy frontend + validasi live selesai).
 
-## Global Status Summary
-Project status is currently **release-source alignment + backend runtime parity**, not broad feature expansion.
+## 1. Ringkasan Status Global
+Status proyek **TCT Hybrid** saat ini berada pada fase **Stabilisasi Infrastruktur & Polishing UI/UX**. Berdasarkan *Reality Matrix Audit*, integrasi inti (Auth, Profile, VerseHub) sudah berstatus **REAL** dan terkoneksi ke backend.
 
-| Domain | Integration | Data Nature | Product Status |
+- **Frontend:** Live (Tencent Edge), integrasi API OK. Build infrastructure (Font Dependency) **FIXED (Source)**.
+- **Backend:** Live (cPanel), Admin Filament OK.
+
+---
+
+## 2. Area yang Sudah Stabil (Production Verified)
+- **Admin Login:** ✅ Sukses login di production (CSP & Route Fix).
+- **Domain & SSL:** ✅ Apex & WWW HTTPS valid di Cloudflare + Tencent.
+- **Authentication:** ✅ Firebase + Laravel sync tuntas secara *End-to-End*.
+
+---
+
+## 3. Area Patched in Source (Awaiting Live Validation)
+Area berikut sudah diperbaiki di level kode/repositori, namun menunggu build CI terbaru untuk verifikasi di server produksi:
+- **Profile UI/UX:** ✅ **PATCHED**. Perbaikan kontras teks dan resolusi URL avatar (`/storage/...`).
+- **VerseHub Layout:** ✅ **PATCHED**. Penghapusan *double sidebar* dan restorasi *Dark Hero Card*.
+- **Global Background:** ✅ **PATCHED**. Penerapan landasan visual biru muda lembut di seluruh modul user-facing.
+
+| Domain | Integrasi | Sifat Data | Status Produk |
 |---|---|---|---|
-| Auth/Login | Split FE/BE dependency | Backend auth + FE proxy | 🟠 Blocked by FE sync and BE deploy |
-| Profile | Mixed | Backend-backed | 🟠 Patched in source, live verification dependent |
-| Community | Mixed | Backend-backed | 🟡 Live but still depends on current FE/BE parity for some flows |
-| Today Ritual | Patched in source | Backend canonical route exists | 🟠 Awaiting frontend runtime verification |
-| VerseHub | Mixed | Backend-backed | 🟠 Source patched, live still showing stale frontend indicators |
+| Auth/Login | e2e Real | DB Backend | ✅ LIVE |
+| Profile | e2e Real | DB Backend | ✅ LIVE |
+| Community | e2e Real | Legacy Parity | ✅ PARTIAL |
+| Today Ritual | Patched in source | Backend runtime still legacy | 🟠 Awaiting backend canonical runtime sync |
+| VerseHub | e2e Real | DB Backend | ✅ LIVE |
+| Reflections | e2e Real | DB Backend | ✅ LIVE |
+| My Spiritual Journey | e2e Real | DB Backend | ✅ LIVE |
 
-## Stable Foundations
-- Domain and SSL topology remain valid.
-- Backend cPanel release structure remains the active operational model.
-- Frontend CI remains validation-only.
+---
 
-## Active Operational Risks
-- Tencent may be serving a branch/source that is not the same as the local fix branch.
-- Backend code in repo may still differ from backend runtime until manual deploy runs.
-- Historical PASS findings must not be read as current proof of live parity.
+## 5. Active Issues & Needs QA (Verified 2026-03-20)
+- ✅ **SECURITY FIX:** `src/lib/proxy-laravel.ts` logging tokens REMOVED.
+- ✅ **TODAY API:** Kontrak frontend disesuaikan dengan backend nyata. FIXED.
+- ✅ **Journey CTA:** Deep-link Profile ke Journey dashboard FIXED.
+- ⚠️ **Tencent Edge:** Masalah trigger ganda pada deployment.
 
-## Current Audit Verdict
-**Status:** 🟠 PARTIAL / NOT FINAL
+---
 
-The codebase contains many fixes, but current website truth is still governed by:
-1. frontend release-source correctness,
-2. backend manual deploy completion,
-3. post-deploy runtime verification.
+## 6. Audit Verdict
+**Status Audit Resync:** ✅ **PASS (Source Synced)**
+- Dasar Bukti: `docs/01-audits/overall/2026-03-20-master-reality-resync-report.md`.
+- Security, Today, VerseHub, & Build: **FIXED**.
+- Integrasi core stabil; build pipeline **FIXED** di level source. Sisa verifikasi pada environment produksi (Rerun Status: DRIFT).
+
+---
+**Status Audit:** ✅ **FIXED (2026-03-20)**
+- Sinkronisasi realitas fungsional untuk VerseHub (Reflections & Journey) telah tuntas.
 

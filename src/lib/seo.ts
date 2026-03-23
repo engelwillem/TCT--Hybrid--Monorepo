@@ -1,5 +1,5 @@
-const PRIMARY_HOST = 'www.thechoosentalks.org';
-const PRIMARY_SITE_URL = `https://${PRIMARY_HOST}`;
+export const PRIMARY_HOST = 'www.thechoosentalks.org';
+export const PRIMARY_SITE_URL = `https://${PRIMARY_HOST}`;
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1']);
 
 function normalizeHost(value?: string | null): string | null {
@@ -14,6 +14,29 @@ function normalizeHost(value?: string | null): string | null {
       .replace(/:\d+$/, '')
       .toLowerCase();
   }
+}
+
+export function getNormalizedHost(value?: string | null): string | null {
+  return normalizeHost(value);
+}
+
+export function isLocalHost(value?: string | null): boolean {
+  const normalized = normalizeHost(value);
+  return normalized ? LOCAL_HOSTS.has(normalized) : false;
+}
+
+export function isPrimaryHost(value?: string | null): boolean {
+  const normalized = normalizeHost(value);
+  return normalized === PRIMARY_HOST || (normalized ? LOCAL_HOSTS.has(normalized) : false);
+}
+
+export function isNonPrimaryHost(value?: string | null): boolean {
+  const normalized = normalizeHost(value);
+  if (!normalized) {
+    return false;
+  }
+
+  return !isPrimaryHost(normalized);
 }
 
 export function getPrimarySiteUrl(): string {

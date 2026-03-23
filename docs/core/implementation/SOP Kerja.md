@@ -1,6 +1,9 @@
 # SOP UNTUK TIM WORK GEMINI DAN CODEX
 Buat prompt untuk gemini dan codex yang lebih simple, efektif dan cepat di eksekusi! anda CHAT-GPT harus analisa folder /docs, agar Gemini dan Codex bekerja terkoordinasi lewat /docs, dengan aturan bahwa Gemini menulis audit + evidence dulu, lalu Codex mengeksekusi berdasarkan output dokumentasi Gemini. Karena mereka harus mendokumentasikan pekerjaan mereka pada file dan folder yang sesuai di dalam folder /docs, jadi anda harus menentukan file pada folder mana di dalam /docs untuk mereka lakukan kerjasama, gemini mencatat audit mendalam, dan codex akan menyelesaikan masalah tersebut berdasarkan output dokumentasi yang sudah gemini tulis. pastikan di folder /docs anda memutuskan dengan bijak file mana untuk codex dan gemini dapat bekerjasama, apakah buat baru atau pakai file yang sudah ada, anda harus analisa file zip saya. Urutan kerja yang benar: selesai di lokal dulu, test lokal dulu, baru nanti bicara live. Batasi scope validasi kerja masih lokal dan belum commit/push/deploy. server hanya dinyalakan saat perlu sesudah cek selesai, harus dimatikan lagi jangan dibiarkan hidup dan makan CPU desktop terus.
 
+# SOP VALIDASI DAN VERIFIKASI WEB LOKAL DAN LIVE PRODUCTION
+prompt final pasca-local-validation untuk: Gemini: checklist verifikasi production setelah deploy selesai. minta gemini buat audit perbandingan antara lokal dan live production, supaya bila ada hidden bug bisa ketahuan, apakah di lokal berhasil tapi di production frontend tidak, harus dicari tau akar masalahnya, nanti codex akan gunakan itu untuk perbaiki supaya lakukan penyesuaian mungkin di backend, dan lain sebagainya. jangan lupa setelah beres validasi di lokal matikan seluruh port server website lokal yang sedang berjalan.
+
 
 
 # SOP Stabilization (Single Branch Main)

@@ -1,45 +1,105 @@
 # Senior QA Audit - TCT Hybrid Monorepo
 
-## Audit Name
-TCT Hybrid Monorepo Deep QA Audit (Reality Sync)
+## Tujuan Folder
 
-## Target Website
-[https://www.thechoosentalks.org/](https://www.thechoosentalks.org/)
+Folder ini menyimpan audit QA, handoff Gemini ↔ Codex, evidence testing, dan dokumen operasional untuk melanjutkan proyek web saat ini.
 
-## Date
-2026-03-22
+Masalah sebelumnya adalah root folder ini bercampur antara:
 
-## Current Audit Status
-🟠 **IN PROGRESS**
+- dokumen operasional aktif
+- arsip audit
+- template
+- catatan ad-hoc
+- dump sensitif / sementara
 
-Current project state is no longer a generic "deploy issue". The operative baseline is:
-- **Frontend:** Next.js auto-deploys from GitHub monorepo into Tencent Edge from `main`.
-- **Backend:** Laravel does **not** auto-deploy; it must be pulled and deployed manually from cPanel.
-- **Main risk right now:** production frontend is likely serving a stale or misaligned release source, while some backend auth/runtime fixes still depend on manual cPanel deploy.
+Mulai sekarang, baca folder ini dengan hierarki yang jelas.
 
-## Important Reading Order
-1. `03-findings-summary.md` for the current hybrid-layer summary.
-2. `07-release-readiness.md` for the present go/no-go decision.
-3. `09-codex-handoff.md` for engineering execution details.
-4. `13-gemini-codex-collaboration-board.md` and `15-bug-separation-matrix.md` for FE/BE dependency separation.
-5. `00a-current-deploy-truth.md` for the current deploy reality baseline.
+## Start Here
 
-## Folder Interpretation Rules
-- Files in `01-audits/` are mostly **historical audit snapshots**.
-- Files in `09-handover/` and the root summary docs are the **current operational source of truth** unless a newer update overrides them.
-- Historical documents should not be read as today's runtime truth without cross-checking against the handoff and blocker documents.
-- Any old assumption that Tencent production deploys from `frontend-prod` is obsolete unless preserved only as historical context.
+1. `00b-active-doc-map.md`
+2. `00a-current-deploy-truth.md`
+3. `07-release-readiness.md`
+4. `09-handover/current-status.md`
+5. `09-handover/open-blockers.md`
+6. `09-codex-handoff.md`
+7. `10-fix-validation-log.md`
+8. `17-next-action-checklist.md`
 
-## Folder Summary
-- `00-audit-plan.md`: audit objectives and strategy.
-- `01-scope-and-assumptions.md`: current environment baseline and hybrid assumptions.
-- `03-findings-summary.md`: current summary by layer.
-- `07-release-readiness.md`: go/no-go decision using current hybrid reality.
-- `08-recommendations.md`: action-oriented next steps.
-- `09-codex-handoff.md`: engineering execution handoff.
-- `13-gemini-codex-collaboration-board.md`: active collaboration board.
-- `15-bug-separation-matrix.md`: frontend vs backend dependency matrix.
+## Source of Truth Sekarang
 
-## Collaboration Roles
-- **Gemini:** browser QA, repro evidence, retest validation.
-- **Codex:** engineering investigation, source-of-truth analysis, code and release-path fixes.
+- `00a-current-deploy-truth.md`
+  - model deploy aktif frontend vs backend
+- `07-release-readiness.md`
+  - gate GO / NO-GO saat ini
+- `09-handover/current-status.md`
+  - status operasional terbaru
+- `09-handover/open-blockers.md`
+  - blocker aktif yang belum selesai
+- `10-fix-validation-log.md`
+  - bukti validasi runtime / live
+
+Jika ada konflik antar dokumen, prioritaskan:
+
+1. `10-fix-validation-log.md` untuk kebenaran runtime
+2. `00a-current-deploy-truth.md` untuk kebenaran deploy model
+3. `07-release-readiness.md` untuk keputusan gate release
+4. `09-handover/` untuk status operasional aktif
+
+## Struktur Folder yang Disarankan
+
+- `00-governance/`
+  - aturan kerja dan kebijakan dokumentasi
+- `01-audits/`
+  - audit historis dan artifacts
+- `02-roadmap/`
+  - roadmap lama dan planning
+- `02-uiux/`
+  - audit UI/UX dan direction
+- `03-architecture/`
+  - referensi arsitektur
+- `04-domains/`
+  - domain-specific docs, termasuk EdgeOne/dashboard checklist
+- `05-features/`
+  - design brief dan implementation notes per fitur
+- `06-testing/`
+  - parity, e2e, manual QA
+- `07-decisions/`
+  - ADR / keputusan
+- `08-changelog/`
+  - changelog harian dan release notes
+- `09-handover/`
+  - handover aktif untuk continuation
+- `10-report/`
+  - report dan log lama
+- `quarantine/`
+  - dump sensitif, editor state, log sementara
+- `reference/`
+  - template dan catatan referensi yang tidak boleh dibaca sebagai status harian
+
+## Aturan Baca
+
+- Jangan baca `01-audits/`, `10-report/`, atau `reference/` sebagai status harian tanpa cross-check ke `09-handover/`.
+- Jangan baca `quarantine/` sebagai sumber truth operasional.
+- Dokumen di `reference/templates/` hanya template, bukan pekerjaan aktif.
+- Dokumen di `reference/ad-hoc-notes/` adalah catatan tambahan, bukan gate operasional.
+
+## Kolaborasi
+
+- **Gemini**
+  - audit browser/runtime
+  - kumpulkan evidence
+  - isi validation log
+- **Codex**
+  - analisa source
+  - patch code / config
+  - update handoff teknis
+- **Operator**
+  - dashboard EdgeOne
+  - cPanel / deploy manual
+  - cache purge / domain mapping / infra rule
+
+## Checklist EdgeOne
+
+Checklist operasional EdgeOne sekarang berada di:
+
+- `04-domains/edgeone-dashboard-checklist.md`
