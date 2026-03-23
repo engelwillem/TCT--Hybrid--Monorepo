@@ -9,7 +9,6 @@ import { CommentsSheet } from "../components/CommentsSheet";
 import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityPost } from "../types";
-import { MOCK_POSTS } from "../mock";
 import { Inbox, Sparkles, MessageCircle, AlertTriangle, Bookmark } from "lucide-react";
 import { CommunityService } from "@/services/community.service";
 import { cn } from "@/lib/utils";
@@ -179,7 +178,7 @@ export function CommunityPage() {
 
       if (!usedCachedFeed) {
         setPosts([]);
-        setArchivePosts((prev) => (prev.length > 0 ? prev : MOCK_POSTS));
+        setArchivePosts([]);
       }
     } finally {
       setIsLoading(false);
@@ -349,7 +348,7 @@ export function CommunityPage() {
 
   const featuredPost = useMemo(() => posts.find((p) => p.isFeatured), [posts]);
   
-  const effectiveFeaturedVerse = useMemo((): FeaturedVerse => {
+  const effectiveFeaturedVerse = useMemo<FeaturedVerse | null>(() => {
     const ritualVerse = rituals?.today_verse ?? null;
     if (ritualVerse?.quote) {
         return {
@@ -372,12 +371,7 @@ export function CommunityPage() {
       };
     }
 
-    return {
-      ref: "mzm-23-1",
-      href: "/versehub/id?ref=mzm-23-1",
-      text: "TUHAN adalah gembalaku, takkan kekurangan aku.",
-      reference: "Mazmur 23:1",
-    };
+    return null;
   }, [rituals, featuredPost]);
 
   const archiveGroups = useMemo(() => {
@@ -426,11 +420,13 @@ export function CommunityPage() {
       </header>
 
       <div className="mx-auto w-full max-w-[640px] space-y-6 px-2 md:px-0 pb-28">
-        <VerseHubFeaturedCard 
-            verse={effectiveFeaturedVerse} 
-            postId={featuredPost?.id}
-            onOpenComments={setActiveCommentPostId}
-        />
+        {effectiveFeaturedVerse && (
+          <VerseHubFeaturedCard 
+              verse={effectiveFeaturedVerse} 
+              postId={featuredPost?.id}
+              onOpenComments={setActiveCommentPostId}
+          />
+        )}
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
           <div className="sticky top-0 z-40 py-2 -mx-1 px-1">

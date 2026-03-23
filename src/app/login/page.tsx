@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { setAppAccessToken } from "@/services/app-auth-token";
+import { setAppAccessToken, setAppAuthUser } from "@/services/app-auth-token";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -79,6 +79,13 @@ export default function LoginPage() {
       if (typeof apiToken === "string" && apiToken.length > 0) {
         setAppAccessToken(apiToken, "password");
       }
+      if (data?.user) {
+        setAppAuthUser({
+          id: String(data.user.id ?? ""),
+          name: String(data.user.name ?? ""),
+          email: String(data.user.email ?? ""),
+        });
+      }
 
       if (data.two_factor_required) {
         router.push(data.redirect_to || "/two-factor-challenge");
@@ -107,7 +114,7 @@ export default function LoginPage() {
           <p className="mt-5 text-sm font-medium leading-relaxed text-slate-600">
             {isSignup
               ? "Mulai akunmu untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh bersama komunitas."
-              : "Masuk untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh konsisten bersama komunitas."}
+              : "Login untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh konsisten bersama komunitas."}
           </p>
         </section>
 
@@ -124,7 +131,7 @@ export default function LoginPage() {
           {errorMessage && (
             <Alert variant="destructive" className="mt-6 border-rose-400/35 bg-rose-500/15 text-rose-100">
               <ShieldAlert className="h-4 w-4" />
-              <AlertTitle>{isSignup ? "Gagal Daftar" : "Gagal Masuk"}</AlertTitle>
+              <AlertTitle>{isSignup ? "Gagal Daftar" : "Gagal Login"}</AlertTitle>
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
@@ -208,7 +215,7 @@ export default function LoginPage() {
                     className="rounded border-white/30 bg-white/10 text-cyan-400 focus:ring-cyan-400 focus:ring-offset-[#02113a]"
                   />
                   <Label htmlFor="remember" className="text-sm text-cyan-100/80 cursor-pointer">
-                    Tetap Masuk (Remember Me)
+                    Tetap Login
                   </Label>
                 </div>
               )}
@@ -226,7 +233,7 @@ export default function LoginPage() {
                 ) : (
                   <>
                     {isSignup ? <UserPlus className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />}
-                    {isSignup ? "Daftar" : "Masuk"}
+                    {isSignup ? "Daftar" : "Login"}
                   </>
                 )}
               </Button>
@@ -236,7 +243,7 @@ export default function LoginPage() {
           <div className="pt-6 text-center space-y-2">
             {isSignup ? (
               <Link href="/login" className="inline-flex items-center text-sm font-medium text-cyan-100/80 hover:text-cyan-100 transition-colors">
-                Sudah punya akun? Masuk
+                Sudah punya akun? Login
               </Link>
             ) : (
               <Link href="/login?intent=signup" className="inline-flex items-center text-sm font-medium text-cyan-100/80 hover:text-cyan-100 transition-colors">

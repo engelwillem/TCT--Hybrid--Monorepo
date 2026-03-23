@@ -15,7 +15,7 @@ export function AuthExecutionGate({
   open,
   onOpenChange,
   title = "Tulisanmu sudah siap.",
-  description = "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
+  description = "Daftar atau login untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
 }: AuthExecutionGateProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -35,7 +35,7 @@ export function AuthExecutionGate({
               <Link href="/login?intent=signup">Daftar</Link>
             </Button>
             <Button asChild variant="secondary" className="h-11 rounded-full font-semibold">
-              <Link href="/login">Masuk</Link>
+              <Link href="/login">Login</Link>
             </Button>
             <button
               type="button"

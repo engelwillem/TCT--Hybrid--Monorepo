@@ -259,7 +259,7 @@ export default function ProfilePage() {
         enabled: false,
         recoveryCodesRemaining: 0
     });
-    const [twoFactorStep, setTwoFactorStep] = useState<'idle' | 'password' | 'setup' | 'disable'>('idle');
+    const [twoFactorStep, setTwoFactorStep] = useState<'idle' | 'password' | 'setup' | 'disable' | 'recovery'>('idle');
     const [twoFactorPassword, setTwoFactorPassword] = useState('');
     const [twoFactorCode, setTwoFactorCode] = useState('');
     const [twoFactorSetupData, setTwoFactorSetupData] = useState<{
@@ -744,6 +744,7 @@ export default function ProfilePage() {
         if (!token || !twoFactorPassword || !twoFactorCode) return;
 
         setTwoFactorBusy(true);
+        setTwoFactorError(null);
         try {
             const response = await fetch('/api/profile/two-factor/recovery-codes', {
                 method: 'POST',
@@ -761,13 +762,17 @@ export default function ProfilePage() {
             if (response.ok) {
                 const payload = await response.json();
                 setNewRecoveryCodes(payload.recoveryCodes);
+                setTwoFactorStep('idle');
+                setTwoFactorPassword('');
                 setTwoFactorCode('');
                 showToast('Recovery codes baru dibuat');
             } else {
                 const error = await response.json().catch(() => ({}));
-                showToast(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes', 'error');
+                setTwoFactorError(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes');
             }
-        } catch { /* ignore */ } finally {
+        } catch {
+            setTwoFactorError('Terjadi gangguan sistem');
+        } finally {
             setTwoFactorBusy(false);
         }
     };
@@ -1124,7 +1129,11 @@ export default function ProfilePage() {
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-[28px] bg-surface-muted border border-border/50 space-y-5">
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-[11px] font-black text-brand uppercase tracking-[0.2em]">
-                                            {twoFactorStep === 'disable' ? 'Nonaktifkan Keamanan' : 'Konfigurasi 2FA'}
+                                            {twoFactorStep === 'disable'
+                                                ? 'Nonaktifkan Keamanan'
+                                                : twoFactorStep === 'recovery'
+                                                    ? 'Recovery Codes Baru'
+                                                    : 'Konfigurasi 2FA'}
                                         </h4>
                                         <button onClick={() => setTwoFactorStep('idle')} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
                                     </div>
@@ -1183,6 +1192,20 @@ export default function ProfilePage() {
                                         </div>
                                     )}
 
+                                    {twoFactorStep === 'recovery' && (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-brand/10 border border-brand/20 text-brand">
+                                                <RefreshCw size={16} className="shrink-0" />
+                                                <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Masukkan password saat ini dan OTP atau recovery code aktif untuk membuat paket recovery code yang baru.</p>
+                                            </div>
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code Aktif" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Button onClick={handleRegenerateCodes} disabled={twoFactorBusy || !twoFactorPassword || !twoFactorCode} className="w-full h-11 bg-brand text-brand-foreground font-bold text-xs rounded-xl">
+                                                {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Buat Recovery Codes Baru'}
+                                            </Button>
+                                        </div>
+                                    )}
+
                                     {twoFactorError && <p className="text-rose-500 text-[10px] font-black uppercase text-center">{twoFactorError}</p>}
                                 </motion.div>
                             )}
@@ -1191,7 +1214,13 @@ export default function ProfilePage() {
                                 <div className="space-y-4">
                                     <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] ml-2">Manajemen Kunci</label>
                                     <div className="grid gap-2">
-                                        <button onClick={() => setTwoFactorStep('disable')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-border/50 hover:bg-surface-elevated transition-all group">
+                                        <button
+                                            onClick={() => {
+                                                setTwoFactorError(null);
+                                                setTwoFactorStep('recovery');
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 rounded-2xl bg-surface border border-border/50 hover:bg-surface-elevated transition-all group"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <RefreshCw size={16} className="text-muted-foreground group-hover:rotate-180 transition-transform duration-700" />
                                                 <span className="text-xs font-bold text-foreground/80">Buat Ulang Recovery Codes</span>

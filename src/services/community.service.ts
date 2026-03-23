@@ -167,7 +167,9 @@ const buildHeaders = (needsAuth = false): HeadersInit => {
 };
 
 function handleAuthFailure(status: number) {
-  if (status === 401 || status === 403) {
+  // Only treat 401 as a confirmed invalid session.
+  // 403 can be a transient permission/config issue and should not hard-logout the user.
+  if (status === 401) {
     clearAppAccessToken();
   }
 }

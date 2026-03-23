@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { getApps } from "firebase/app";
 import { getAuth, onIdTokenChanged, signOut } from "firebase/auth";
-import { clearAppAccessToken, getAppAccessToken, getAppAuthSource, setAppAccessToken } from "@/services/app-auth-token";
+import { clearAppAccessToken, getAppAccessToken, getAppAuthSource, setAppAccessToken, setAppAuthUser } from "@/services/app-auth-token";
 
 export function FirebaseAuthSync() {
   useEffect(() => {
@@ -67,6 +67,14 @@ export function FirebaseAuthSync() {
         const token = payload?.data?.token;
         if (typeof token === "string" && token.length > 0) {
           setAppAccessToken(token, "firebase");
+          if (payload?.data?.user) {
+            setAppAuthUser({
+              id: String(payload.data.user.id ?? ""),
+              name: String(payload.data.user.name ?? ""),
+              email: String(payload.data.user.email ?? ""),
+              avatarUrl: typeof payload.data.user.avatarUrl === "string" ? payload.data.user.avatarUrl : null,
+            });
+          }
           return;
         }
 

@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ImagePlus, MessageSquare, Hand, X } from "lucide-react";
-import { CommunityUser } from "../types";
+import { ImagePlus, X } from "lucide-react";
+import type { CommunityUser } from "../types";
 import { ActionBarButton } from "@/components/actions/ActionBarButton";
 
 type PostType = "user_post" | "prayer_request" | "reflection" | "testimony";

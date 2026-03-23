@@ -71,7 +71,7 @@ export default function InboxPage() {
             if (response.ok) {
                 const payload = await response.json();
                 setInbox(payload.inbox ?? {});
-            } else if (response.status === 401 || response.status === 403) {
+            } else if (response.status === 401) {
                 clearAppAccessToken();
                 setInbox({});
             }

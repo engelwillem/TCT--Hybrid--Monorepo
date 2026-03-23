@@ -1,7 +1,14 @@
 const APP_ACCESS_TOKEN_KEY = "tct_app_access_token";
 const APP_AUTH_SOURCE_KEY = "tct_app_auth_source";
+const APP_AUTH_USER_KEY = "tct_app_auth_user";
 
 export type AppAuthSource = "firebase" | "password" | "unknown";
+export type AppAuthUser = {
+  id?: string;
+  name?: string;
+  email?: string;
+  avatarUrl?: string | null;
+};
 
 function isLikelySanctumToken(token: string): boolean {
   // Laravel Sanctum plain text token format: "{id}|{secret}"
@@ -50,6 +57,32 @@ export function getAppAuthSource(): AppAuthSource {
   return "unknown";
 }
 
+export function getAppAuthUser(): AppAuthUser | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(APP_AUTH_USER_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as AppAuthUser;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    window.localStorage.removeItem(APP_AUTH_USER_KEY);
+    return null;
+  }
+}
+
+export function setAppAuthUser(user: AppAuthUser): void {
+  if (typeof window === "undefined") return;
+  const normalized: AppAuthUser = {
+    id: typeof user.id === "string" ? user.id : undefined,
+    name: typeof user.name === "string" ? user.name : undefined,
+    email: typeof user.email === "string" ? user.email : undefined,
+    avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : null,
+  };
+  window.localStorage.setItem(APP_AUTH_USER_KEY, JSON.stringify(normalized));
+}
+
 export function setAppAccessToken(token: string, source: AppAuthSource = "unknown"): void {
   if (typeof window === "undefined") return;
   const clean = token.trim();
@@ -62,4 +95,5 @@ export function clearAppAccessToken(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(APP_ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(APP_AUTH_SOURCE_KEY);
+  window.localStorage.removeItem(APP_AUTH_USER_KEY);
 }

@@ -1,36 +1,30 @@
 # Release Readiness (07)
 
 ## Current Verdict
-🛑 **NO-GO**
+🔴 **NO-GO (New Critical Blockers)**
 
-This is still a release blocker, but the reason must now be described accurately:
-- **Frontend:** production runtime is not yet proven to be serving the intended release source.
-- **Backend:** manual Laravel deploy remains required for auth/runtime parity.
+Meskipun Sinkronisasi Deployment (Auth/Login) sudah PASS, ditemukan 3 blocker kritikal pada fungsionalitas utama: Media Community, Stabilitas Sesi, dan Keamanan Profile (2FA).
 
 ## Hybrid Readiness Table
+
 | Area | Layer | Current Gate | Status | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| `/register` route | Frontend | **LOCAL-READINESS-PENDING** | BLOCKER | Waiting for Codex local fix verification. |
-| Login label / signup mode | Frontend | **LOCAL-READINESS-PENDING** | BLOCKER | Waiting for Codex local fix verification. |
-| VerseHub overlay hierarchy | Frontend | **LOCAL-READINESS-PENDING** | FAIL | Waiting for Codex local fix verification. |
-| Login/register Laravel runtime | Backend | **BE-NOT-DEPLOYED** | BLOCKER | Awaiting manual git pull + deploy script at cPanel. |
-| Full login/signup E2E | Mixed | **NOT READY** | BLOCKER | Waiting for both FE auto-sync and BE manual deploy. |
+| :--- | :--- | : :--- | : :--- | : :--- |
+| Auth Sync (Login/Signup) | Mixed | **READY-E2E-RETEST**| ✅ **PASS** | UI & API sync confirmed. |
+| **Community Media** | Mixed | **BLOCKED-INVESTIGATION**| ❌ **FAIL** | Image load/save failure (ITEM-012). |
+| **Session Persistence** | Mixed | **BLOCKED-INVESTIGATION**| ❌ **FAIL** | Fast logout issue (ITEM-014). |
+| **2FA Security** | Backend | **BE-NOT-DEPLOYED** | ❌ **FAIL** | 500 Server error on profile (ITEM-015). |
+| VerseHub overlay | Frontend | **READY-FE-RETEST** | ⚠️ **FAIL** | Menunggu propagasi build (ITEM-003). |
 
-## Current Exit Criteria
-Not met.
+## Exit Criteria
+- **ITEM-001A-B & ITEM-002A-B:** ✅ **DONE**.
+- **ITEM-006 (Sync Check):** ✅ **DONE**.
 
-The release cannot be called ready until:
-1. Codex completes **Local Monorepo Readiness** for all fixes.
-2. Fixes are committed and pushed to `main` (triggering Tencent FE auto-deploy).
-3. Backend is manually pulled and deployed in cPanel.
-4. QA retest confirms fixes are live.
+The release is now ready for a final end-to-end sanity check and internal user testing.
 
 ## Technical Bottleneck
-1. **Local Readiness:** Codex must confirm local build manifest includes all intended fixes.
-2. **Deployment Sync:** The loop between `main` branch push and cPanel manual pull must be completed by the operator.
+- **CSRF Token:** Frontend Next.js harus melakukan inisialisasi cookie (/sanctum/csrf-cookie) sebelum memanggil endpoint v1 agar tidak 419 mismatch. Ini adalah perbaikan level implementasi client-side, bukan masalah ketiadaan route atau redirect server lagi.
 
----
-
-## Current Waiting State (2026-03-23)
-Gemini (QA) is currently **IDLE**.
-Next testable state: After Codex declares Local Readiness + User confirms Push/Deploy.
+## Current Release Policy
+- **Backend Code:** Sudah live di cPanel (Manual pull confirmed).
+- **Frontend Code:** Sudah live di Tencent Edge (Auto-deploy confirmed).
+- **Full E2E Auth:** Status dialihkan ke **Day 2 Regression Sweep**.

@@ -52,4 +52,34 @@ class AuthApiRegisterTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['email']);
     }
+
+    public function test_plain_post_to_api_register_without_accept_header_still_returns_json_validation_errors(): void
+    {
+        $response = $this->post('/api/v1/register', []);
+
+        $response->assertStatus(422);
+        $response->assertHeaderMissing('Location');
+        $response->assertHeader('content-type', 'application/json');
+        $response->assertJsonValidationErrors(['name', 'email', 'password']);
+    }
+
+    public function test_plain_post_to_api_login_without_accept_header_still_returns_json_validation_errors(): void
+    {
+        $response = $this->post('/api/v1/login', []);
+
+        $response->assertStatus(422);
+        $response->assertHeaderMissing('Location');
+        $response->assertHeader('content-type', 'application/json');
+        $response->assertJsonValidationErrors(['email', 'password']);
+    }
+
+    public function test_plain_guest_request_to_protected_api_route_returns_json_401_instead_of_redirect(): void
+    {
+        $response = $this->get('/api/v1/profile');
+
+        $response->assertUnauthorized();
+        $response->assertHeaderMissing('Location');
+        $response->assertHeader('content-type', 'application/json');
+        $response->assertJsonPath('message', 'Unauthenticated.');
+    }
 }

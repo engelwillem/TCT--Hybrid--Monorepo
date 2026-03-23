@@ -494,10 +494,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                         <section className="space-y-10">
                             <div className="px-1 space-y-1">
                                 <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                                    Gerbang VerseHub
-                                </p>
-                                <p className="text-xs leading-relaxed text-muted-foreground">
-                                    Temukan ayat dengan cepat, lalu masuk ke mode baca yang tenang dan fokus.
+                                    VerseHub
                                 </p>
                             </div>
 
@@ -565,7 +562,7 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
 
                                     <div className="rounded-[24px] border border-border/50 bg-surface p-4 shadow-soft">
                                         <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground mb-3">
-                                            Akses Cepat Reader
+                                            Akses Cepat
                                         </p>
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                             {[
@@ -588,9 +585,8 @@ export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initia
                                     {/* Landing Hero (Polished for iOS feel) */}
                                     <div className="rounded-[2.5rem] p-8 sm:p-10 bg-surface border border-border/50 shadow-soft relative overflow-hidden text-foreground">
                                         <div className="relative z-10">
-                                            <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-[0.2em] mb-4">Perpustakaan Firman</p>
                                             <h2 className="tct-serif text-[28px] leading-tight mb-3 tracking-tight">Mulai perenungan firman.</h2>
-                                            <p className="text-muted-foreground text-[14px] font-medium mb-8 max-w-sm">Pilih kitab untuk memulai perjalanan. Anda akan masuk ke dalam mode baca yang tenang dan fokus.</p>
+                                            <p className="text-muted-foreground text-[14px] font-medium mb-8 max-w-sm">Pilih Kitab untuk memulai Reading Journey.</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <button onClick={() => {setTab('ot'); setPickerOpen(true);}} className="p-5 rounded-[1.5rem] bg-surface-muted border border-border/60 text-left hover:bg-surface-elevated transition-all group flex flex-col justify-between">
                                                     <div className="flex items-center justify-between mb-4">

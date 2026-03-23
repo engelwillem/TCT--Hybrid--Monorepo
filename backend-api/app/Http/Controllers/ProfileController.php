@@ -13,6 +13,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
@@ -156,7 +157,7 @@ class ProfileController extends Controller
         $recoveryCodes = $twoFactorService->generateRecoveryCodes();
         $qrCodeDataUri = $twoFactorService->generateQrCodeDataUri($user, $secret);
 
-        $request->session()->put('profile.2fa.setup', [
+        $this->storePendingTwoFactorSetup((int) $user->id, [
             'secret' => $secret,
             'recovery_codes' => $recoveryCodes,
         ]);
@@ -175,7 +176,12 @@ class ProfileController extends Controller
             'code' => ['required', 'digits:6'],
         ]);
 
-        $setup = $request->session()->get('profile.2fa.setup');
+        $user = $request->user();
+        if (! $user) {
+            abort(401);
+        }
+
+        $setup = $this->getPendingTwoFactorSetup((int) $user->id);
         if (! is_array($setup) || blank($setup['secret'] ?? null)) {
             return response()->json([
                 'message' => 'Two-factor setup has expired.',
@@ -193,13 +199,8 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        $user = $request->user();
-        if (! $user) {
-            abort(401);
-        }
-
         $twoFactorService->enable($user, $secret, $recoveryCodes);
-        $request->session()->forget('profile.2fa.setup');
+        $this->forgetPendingTwoFactorSetup((int) $user->id);
 
         return response()->json([
             'ok' => true,
@@ -237,7 +238,7 @@ class ProfileController extends Controller
         }
 
         $twoFactorService->disable($user);
-        $request->session()->forget('profile.2fa.setup');
+        $this->forgetPendingTwoFactorSetup((int) $user->id);
 
         return response()->json([
             'ok' => true,
@@ -404,5 +405,25 @@ class ProfileController extends Controller
         } catch (\Throwable) {
             // Ignore mirror cleanup failures.
         }
+    }
+
+    private function pendingTwoFactorSetupCacheKey(int $userId): string
+    {
+        return "profile:2fa:setup:user:{$userId}";
+    }
+
+    private function storePendingTwoFactorSetup(int $userId, array $payload): void
+    {
+        Cache::put($this->pendingTwoFactorSetupCacheKey($userId), $payload, now()->addMinutes(10));
+    }
+
+    private function getPendingTwoFactorSetup(int $userId): mixed
+    {
+        return Cache::get($this->pendingTwoFactorSetupCacheKey($userId));
+    }
+
+    private function forgetPendingTwoFactorSetup(int $userId): void
+    {
+        Cache::forget($this->pendingTwoFactorSetupCacheKey($userId));
     }
 }

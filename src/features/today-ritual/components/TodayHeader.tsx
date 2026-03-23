@@ -5,36 +5,31 @@ import { useMotionConfig } from '../hooks/useMotionConfig';
 
 interface TodayHeaderProps {
   greeting: string;
-  audienceName?: string;
   dateLabel: string;
   isAuthRestoring?: boolean;
 }
 
-function normalizeGreetingLine(greeting: string, audienceName?: string): string {
-  const rawGreeting = String(greeting || '').trim();
-  if (!rawGreeting) return 'Selamat datang';
-
-  const normalizedAudience = String(audienceName || '').trim();
-  if (!normalizedAudience) return rawGreeting;
-
-  const escapedAudience = normalizedAudience.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const trailingAudiencePattern = new RegExp(`[\\s,.-]*${escapedAudience}[\\s,.-]*$`, 'i');
-  const cleaned = rawGreeting.replace(trailingAudiencePattern, '').trim();
-
-  return cleaned || rawGreeting;
+function buildTodayDateLabel(fallback: string): string {
+  try {
+    return new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'Asia/Jakarta',
+    }).format(new Date());
+  } catch {
+    return fallback;
+  }
 }
 
 export default function TodayHeader({
   greeting,
-  audienceName,
   dateLabel,
   isAuthRestoring = false,
 }: TodayHeaderProps) {
   const m = useMotionConfig();
-  const greetingLine = normalizeGreetingLine(greeting, audienceName);
-  const primaryGreeting = /[.!?]$/.test(greetingLine) ? greetingLine : `${greetingLine}.`;
-  const normalizedAudience = String(audienceName || '').trim();
-  const identityLabel = isAuthRestoring ? null : normalizedAudience.length > 0 ? normalizedAudience : null;
+  const primaryGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
+  const liveDateLabel = buildTodayDateLabel(dateLabel);
 
   return (
     <header className="sticky top-0 z-50 w-full pt-[env(safe-area-inset-top,0px)] mix-blend-multiply">
@@ -48,14 +43,14 @@ export default function TodayHeader({
           className="flex max-w-[34rem] flex-col"
         >
           <span className="mb-1 text-[10px] font-bold tracking-[0.15em] text-foreground/40 uppercase">
-            {dateLabel}
+            {liveDateLabel}
           </span>
           <h1 className="text-[22px] leading-[1.22] font-semibold tracking-[-0.01em] text-foreground/95 md:text-[25px]">
             {primaryGreeting}
           </h1>
-          {identityLabel && (
+          {!isAuthRestoring && (
             <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
-              {identityLabel}
+              Chosen People
             </p>
           )}
         </motion.div>

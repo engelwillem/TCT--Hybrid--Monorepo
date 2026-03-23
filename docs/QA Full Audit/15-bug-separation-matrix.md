@@ -42,12 +42,53 @@ Dokumen ini digunakan untuk memetakan setiap temuan bug berdasarkan ketergantung
 
 ### ITEM-001 (Parent: Auth Branding & UI)
 - **ID:** ITEM-001A
-- **Parent:** CH-001 / BUG-001
-- **Scope:** Login Button Label Correction ("Masuk")
+- **Scope:** `/register` redirect logic.
 - **Category:** Frontend-only
 - **Owner:** Codex
 - **Gate:** FE-LIVE-NOT-SYNCED
-- **Ready for:** READY-FE-RETEST (Post-Sync)
+- **Ready for:** READY-FE-RETEST
+
+- **ID:** ITEM-002A
+- **Scope:** Login button label "Masuk".
+- **Category:** Frontend-only
+- **Owner:** Codex
+- **Gate:** FE-LIVE-NOT-SYNCED
+- **Ready for:** READY-FE-RETEST
+
+- **ID:** ITEM-003
+- **Scope:** VerseHub bottom nav overlap.
+- **Category:** Frontend-only
+- **Owner:** Codex
+- **Gate:** FE-LIVE-NOT-SYNCED
+- **Ready for:** READY-FE-RETEST
+
+- **ID:** ITEM-008
+- **Scope:** Landing page "Login" and flow.
+- **Category:** Frontend-only
+- **Owner:** Codex
+- **Gate:** FE-LIVE-NOT-SYNCED
+- **Ready for:** READY-FE-RETEST
+
+- **ID:** ITEM-009
+- **Scope:** /today date & greeting.
+- **Category:** Frontend-only
+- **Owner:** Codex
+- **Gate:** FE-LIVE-NOT-SYNCED
+- **Ready for:** READY-FE-RETEST
+
+- **ID:** ITEM-010
+- **Scope:** /versehub copy cleanup.
+- **Category:** Frontend-only
+- **Owner:** Codex
+- **Gate:** FE-LIVE-NOT-SYNCED
+- **Ready for:** READY-FE-RETEST
+
+- **ID:** ITEM-011
+- **Scope:** ActionBar Icon love change.
+- **Category:** Frontend-only
+- **Owner:** Codex
+- **Gate:** FE-LIVE-NOT-SYNCED
+- **Ready for:** READY-FE-RETEST
 
 ### ITEM-004 (Parent: Onboarding / Signup)
 - **ID:** ITEM-004A
@@ -75,6 +116,34 @@ Dokumen ini digunakan untuk memetakan setiap temuan bug berdasarkan ketergantung
 - **Ready for:** READY-E2E-RETEST
 
 ### ITEM-002 (Parent: Auth Contract Reconciliation)
+- **ID:** ITEM-001C
+- **Scope:** Register user creation (Frontend logic + Backend DB).
+- **Category:** Mixed
+- **Owner:** Codex / Op
+- **Gate:** BLOCKED-INFRA/DEPLOY
+- **Ready for:** READY-E2E-RETEST
+
+- **ID:** ITEM-002B
+- **Scope:** Login session/CSRF (Next.js proxy + Sanctum).
+- **Category:** Mixed
+- **Owner:** Codex / Op
+- **Gate:** BE-NOT-DEPLOYED
+- **Ready for:** READY-E2E-RETEST
+
+- **ID:** ITEM-012
+- **Scope:** Community image load/save.
+- **Category:** Mixed
+- **Owner:** Codex / Op
+- **Gate:** BE-NOT-DEPLOYED
+- **Ready for:** READY-E2E-RETEST
+
+- **ID:** ITEM-014
+- **Scope:** Session expiry/Logout speed.
+- **Category:** Mixed
+- **Owner:** Codex / Op
+- **Gate:** BE-NOT-DEPLOYED
+- **Ready for:** READY-E2E-RETEST
+
 - **ID:** ITEM-002A
 - **Parent:** CH-002 / BUG-002
 - **Scope:** Login Next.js Proxy Handler (`/api/auth/login`)

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from '@/lib/utils';
-import { Bookmark, Hand, MessageCircle, Share2 } from 'lucide-react';
+import { Bookmark, Heart, MessageCircle, Share2 } from 'lucide-react';
 import AppIcon from '@/components/system/AppIcon';
 import { motion } from 'framer-motion';
 import { useAuthSession } from '@/auth/use-auth-session';
@@ -73,7 +73,7 @@ export default function ActionBar({
                     aria-pressed={prayed}
                     onClick={() => onPray && runMemberAction(onPray, 'medium')}
                 >
-                    <AppIcon icon={Hand} variant="action" active={prayed} className={prayed ? 'text-emerald-600' : 'opacity-70'} />
+                    <AppIcon icon={Heart} variant="action" active={prayed} className={prayed ? 'text-emerald-600 fill-current' : 'opacity-70'} />
                     <span className="text-[12px] font-medium tabular-nums whitespace-nowrap">{prayLabel}</span>
                 </motion.button>
             )}

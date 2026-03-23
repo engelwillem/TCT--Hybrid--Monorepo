@@ -39,14 +39,14 @@ export default function HomePage() {
           href="/today"
           className="w-full max-w-[280px] rounded-full bg-foreground text-background py-[14px] text-[15px] font-semibold tracking-wide transition-all active:scale-[0.97] hover:opacity-90"
         >
-          Buka Today
+          Lanjut sebagai Guest
         </Link>
 
         {/* Secondary — very quiet auth */}
         <div className="mt-8 flex items-center gap-4 text-[12px] text-foreground/40 font-medium">
           <Link href="/login?intent=signup" className="hover:text-foreground/70 transition-colors">Daftar</Link>
           <span aria-hidden="true" className="opacity-30">·</span>
-          <Link href="/login" className="hover:text-foreground/70 transition-colors">Masuk</Link>
+          <Link href="/login" className="hover:text-foreground/70 transition-colors">Login</Link>
         </div>
 
       </main>
