@@ -1,0 +1,44 @@
+PHPUnit 11.5.53 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.3.30
+Configuration: E:\thechoosentalksnext\backend-api\phpunit.xml
+
+FFFF                                                                4 / 4 (100%)
+
+Time: 00:25.013, Memory: 24.00 MB
+
+There were 4 failures:
+
+1) Tests\Feature\Auth\AuthenticationTest::test_login_screen_can_be_rendered
+Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:199
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\AuthenticationTest.php:17
+
+2) Tests\Feature\Auth\AuthenticationTest::test_users_can_authenticate_using_the_login_screen
+Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:199
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\AuthenticationTest.php:30
+
+3) Tests\Feature\Auth\AuthenticationTest::test_users_can_not_authenticate_with_invalid_password
+Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:199
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\AuthenticationTest.php:43
+
+4) Tests\Feature\Auth\AuthenticationTest::test_users_can_logout
+The user is authenticated
+Failed asserting that true is false.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication.php:77
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\AuthenticationTest.php:52
+
+FAILURES!
+Tests: 4, Assertions: 6, Failures: 4.

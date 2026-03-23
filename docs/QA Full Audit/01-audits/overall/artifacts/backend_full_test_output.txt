@@ -1,0 +1,859 @@
+
+   PASS  Tests\Unit\ExampleTest
+  Γ£ô that true is tΓÇª 0.02s  
+
+   FAIL  Tests\Feature\Auth\AuthenticationTest
+  Γ¿» login screenΓÇª  16.35s  
+  Γ¿» users can authΓÇª 1.07s  
+  Γ¿» users can notΓÇª  0.96s  
+  Γ¿» users can logoΓÇª 1.12s  
+
+   FAIL  Tests\Feature\Auth\EmailVerificationTest
+  Γ¿» email verificaΓÇª 1.21s  
+  Γ¿» email can be vΓÇª 0.21s  
+  Γ¿» email is not vΓÇª 0.21s  
+
+   FAIL  Tests\Feature\Auth\PasswordConfirmationTest
+  Γ¿» confirm passwoΓÇª 1.41s  
+  Γ¿» password can bΓÇª 1.08s  
+  Γ¿» password is noΓÇª 0.96s  
+
+   FAIL  Tests\Feature\Auth\PasswordResetTest
+  Γ¿» reset passwordΓÇª 1.08s  
+  Γ¿» reset passwordΓÇª 0.99s  
+  Γ¿» reset passwordΓÇª 0.96s  
+  Γ¿» password can bΓÇª 0.96s  
+
+   FAIL  Tests\Feature\Auth\PasswordUpdateTest
+  Γ¿» password can bΓÇª 0.97s  
+  Γ¿» correct passwoΓÇª 0.98s  
+
+   FAIL  Tests\Feature\Auth\RegistrationTest
+  Γ¿» registration sΓÇª 0.98s  
+  Γ¿» new users cannΓÇª 0.95s  
+  Γ¿» register endpoΓÇª 0.99s  
+  Γ¿» registration rΓÇª 1.03s  
+
+   FAIL  Tests\Feature\ExampleTest
+  Γ¿» the applicatioΓÇª 1.11s  
+
+   FAIL  Tests\Feature\InboxTest
+  Γ¿» inbox groups pΓÇª 0.24s  
+  Γ¿» mark all readΓÇª  0.24s  
+
+   FAIL  Tests\Feature\InboxThreadTest
+  Γ¿» opening threadΓÇª 0.20s  
+  Γ¿» thread endpoinΓÇª 0.25s  
+
+   FAIL  Tests\Feature\ProfileTest
+  Γ¿» profile page iΓÇª 0.96s  
+  Γ¿» profile informΓÇª 0.98s  
+  Γ¿» email verificaΓÇª 1.20s  
+  Γ¿» user can deletΓÇª 1.17s  
+  Γ¿» correct passwoΓÇª 1.22s  
+
+   FAIL  Tests\Feature\UiSmokeTest
+  Γ¿» it renders theΓÇª 1.15s  
+  Γ¿» it renders allΓÇª 1.03s  
+
+   FAIL  Tests\Feature\VerseHubActivityCursorTest
+  Γ¿» recent cursorΓÇª  1.05s  
+  Γ¿» oldest cursorΓÇª  1.11s  
+  Γ¿» tab filter worΓÇª 1.02s  
+  Γ¿» search filterΓÇª  0.97s  
+  Γ¿» quote of weekΓÇª  0.97s  
+
+   FAIL  Tests\Feature\VerseHubMentorApiTest
+  Γ¿» mentor insightΓÇª 0.99s  
+  Γ¿» mentor ask retΓÇª 1.02s  
+  Γ¿» mentor og imagΓÇª 0.98s  
+
+   FAIL  Tests\Feature\VerseHubOgAndStudyRoutingTest
+  Γ¿» guest can openΓÇª 0.97s  
+  Γ¿» guest can acceΓÇª 0.99s  
+  Γ¿» chapter readerΓÇª 0.98s  
+  Γ¿» chapter og aliΓÇª 0.98s  
+
+   FAIL  Tests\Feature\VerseHubRefTest
+  Γ£ô id ref flm worΓÇª 1.11s  
+  Γ£ô id ref 1ptr woΓÇª 0.98s  
+  Γ£ô id ref normaliΓÇª 0.97s  
+  Γ¿» en chapter onlΓÇª 1.09s  
+
+   FAIL  Tests\Feature\VerseHubStudyAndMentorGuardrailsTest
+  Γ¿» mentor ask isΓÇª  1.07s  
+  Γ¿» study path proΓÇª 1.01s  
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\AuthenticationTest.php:17
+     13Γûò     public function test_login_screen_can_be_rendered(): void
+     14Γûò     {
+     15Γûò         $response = $this->get('/login');
+     16Γûò 
+  Γ₧£  17Γûò         $response->assertRedirect('/admintalk/login');
+     18Γûò     }
+     19Γûò 
+     20Γûò     public function test_users_can_authenticate_using_the_login_screen(): void
+     21Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\AuthenticationTest.php:30
+     26Γûò             'password' => 'password',
+     27Γûò         ]);
+     28Γûò 
+     29Γûò         $this->assertGuest();
+  Γ₧£  30Γûò         $response->assertRedirect('/admintalk/login');
+     31Γûò     }
+     32Γûò 
+     33Γûò     public function test_users_can_not_authenticate_with_invalid_password(): void
+     34Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\AuthenticationTest.php:43
+     39Γûò             'password' => 'wrong-password',
+     40Γûò         ]);
+     41Γûò 
+     42Γûò         $this->assertGuest();
+  Γ₧£  43Γûò         $response->assertRedirect('/admintalk/login');
+     44Γûò     }
+     45Γûò 
+     46Γûò     public function test_users_can_logout(): void
+     47Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  The user is authenticated
+Failed asserting that true is false.
+
+  at tests\Feature\Auth\AuthenticationTest.php:52
+     48Γûò         $user = User::factory()->create();
+     49Γûò 
+     50Γûò         $response = $this->actingAs($user)->post('/logout');
+     51Γûò 
+  Γ₧£  52Γûò         $this->assertGuest();
+     53Γûò         $response->assertRedirect('/');
+     54Γûò     }
+     55Γûò }
+     56Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\Auth\EmailVerificationTest.php:22
+     18Γûò         $user = User::factory()->unverified()->create();
+     19Γûò 
+     20Γûò         $response = $this->actingAs($user)->get('/verify-email');
+     21Γûò 
+  Γ₧£  22Γûò         $response->assertStatus(200);
+     23Γûò     }
+     24Γûò 
+     25Γûò     public function test_email_can_be_verified(): void
+     26Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\Feature\Auth\EmailVerificationTest > email can be verified  RouteNotFoundException   
+  Route [verification.verify] not defined.
+
+  at vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+    524Γûò             ! is_null($url = call_user_func($this->missingNamedRouteResolver, $name, $parameters, $absolute))) {
+    525Γûò             return $url;
+    526Γûò         }
+    527Γûò 
+  Γ₧£ 528Γûò         throw new RouteNotFoundException("Route [{$name}] not defined.");
+    529Γûò     }
+    530Γûò 
+    531Γûò     /**
+    532Γûò      * Get the URL for a given route instance.
+
+  1   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+  2   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:375
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\Feature\Auth\EmailVerificationTest > email is not verified with invalid hash  RouteNotFoundException   
+  Route [verification.verify] not defined.
+
+  at vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+    524Γûò             ! is_null($url = call_user_func($this->missingNamedRouteResolver, $name, $parameters, $absolute))) {
+    525Γûò             return $url;
+    526Γûò         }
+    527Γûò 
+  Γ₧£ 528Γûò         throw new RouteNotFoundException("Route [{$name}] not defined.");
+    529Γûò     }
+    530Γûò 
+    531Γûò     /**
+    532Γûò      * Get the URL for a given route instance.
+
+  1   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+  2   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:375
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\Auth\PasswordConfirmationTest.php:19
+     15Γûò         $user = User::factory()->create();
+     16Γûò 
+     17Γûò         $response = $this->actingAs($user)->get('/confirm-password');
+     18Γûò 
+  Γ₧£  19Γûò         $response->assertStatus(200);
+     20Γûò     }
+     21Γûò 
+     22Γûò     public function test_password_can_be_confirmed(): void
+     23Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\PasswordConfirmationTest.php:30
+     26Γûò         $response = $this->actingAs($user)->post('/confirm-password', [
+     27Γûò             'password' => 'password',
+     28Γûò         ]);
+     29Γûò 
+  Γ₧£  30Γûò         $response->assertRedirect();
+     31Γûò         $response->assertSessionHasNoErrors();
+     32Γûò     }
+     33Γûò 
+     34Γûò     public function test_password_is_not_confirmed_with_invalid_password(): void
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Session is missing expected key [errors].
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\PasswordConfirmationTest.php:42
+     38Γûò         $response = $this->actingAs($user)->post('/confirm-password', [
+     39Γûò             'password' => 'wrong-password',
+     40Γûò         ]);
+     41Γûò 
+  Γ₧£  42Γûò         $response->assertSessionHasErrors();
+     43Γûò     }
+     44Γûò }
+     45Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\Auth\PasswordResetTest.php:19
+     15Γûò     public function test_reset_password_link_screen_can_be_rendered(): void
+     16Γûò     {
+     17Γûò         $response = $this->get('/forgot-password');
+     18Γûò 
+  Γ₧£  19Γûò         $response->assertStatus(200);
+     20Γûò     }
+     21Γûò 
+     22Γûò     public function test_reset_password_link_can_be_requested(): void
+     23Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  The expected [Illuminate\Auth\Notifications\ResetPassword] notification was not sent.
+Failed asserting that false is true.
+
+  at vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\NotificationFake.php:89
+     85Γûò         if (is_numeric($callback)) {
+     86Γûò             return $this->assertSentToTimes($notifiable, $notification, $callback);
+     87Γûò         }
+     88Γûò 
+  Γ₧£  89Γûò         PHPUnit::assertTrue(
+     90Γûò             $this->sent($notifiable, $notification, $callback)->count() > 0,
+     91Γûò             "The expected [{$notification}] notification was not sent."
+     92Γûò         );
+     93Γûò     }
+
+  1   vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\NotificationFake.php:89
+  2   vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:363
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  The expected [Illuminate\Auth\Notifications\ResetPassword] notification was not sent.
+Failed asserting that false is true.
+
+  at vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\NotificationFake.php:89
+     85Γûò         if (is_numeric($callback)) {
+     86Γûò             return $this->assertSentToTimes($notifiable, $notification, $callback);
+     87Γûò         }
+     88Γûò 
+  Γ₧£  89Γûò         PHPUnit::assertTrue(
+     90Γûò             $this->sent($notifiable, $notification, $callback)->count() > 0,
+     91Γûò             "The expected [{$notification}] notification was not sent."
+     92Γûò         );
+     93Γûò     }
+
+  1   vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\NotificationFake.php:89
+  2   vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:363
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  The expected [Illuminate\Auth\Notifications\ResetPassword] notification was not sent.
+Failed asserting that false is true.
+
+  at vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\NotificationFake.php:89
+     85Γûò         if (is_numeric($callback)) {
+     86Γûò             return $this->assertSentToTimes($notifiable, $notification, $callback);
+     87Γûò         }
+     88Γûò 
+  Γ₧£  89Γûò         PHPUnit::assertTrue(
+     90Γûò             $this->sent($notifiable, $notification, $callback)->count() > 0,
+     91Γûò             "The expected [{$notification}] notification was not sent."
+     92Γûò         );
+     93Γûò     }
+
+  1   vendor\laravel\framework\src\Illuminate\Support\Testing\Fakes\NotificationFake.php:89
+  2   vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:363
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\PasswordUpdateTest.php:29
+     25Γûò             ]);
+     26Γûò 
+     27Γûò         $response
+     28Γûò             ->assertSessionHasNoErrors()
+  Γ₧£  29Γûò             ->assertRedirect('/account/profile');
+     30Γûò 
+     31Γûò         $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
+     32Γûò     }
+     33Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Session is missing expected key [errors].
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\PasswordUpdateTest.php:48
+     44Γûò                 'password_confirmation' => 'new-password',
+     45Γûò             ]);
+     46Γûò 
+     47Γûò         $response
+  Γ₧£  48Γûò             ->assertSessionHasErrors('current_password')
+     49Γûò             ->assertRedirect('/account/profile');
+     50Γûò     }
+     51Γûò }
+     52Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\Auth\RegistrationTest.php:17
+     13Γûò     public function test_registration_screen_redirects_to_landing_when_disabled(): void
+     14Γûò     {
+     15Γûò         $response = $this->get('/register');
+     16Γûò 
+  Γ₧£  17Γûò         $response->assertRedirect('/');
+     18Γûò     }
+     19Γûò 
+     20Γûò     public function test_new_users_cannot_register_when_signup_is_disabled(): void
+     21Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [403] but received 404.
+Failed asserting that 404 is identical to 403.
+
+  at tests\Feature\Auth\RegistrationTest.php:29
+     25Γûò             'password' => 'password',
+     26Γûò             'password_confirmation' => 'password',
+     27Γûò         ]);
+     28Γûò 
+  Γ₧£  29Γûò         $response->assertForbidden();
+     30Γûò         $this->assertGuest();
+     31Γûò         $this->assertDatabaseMissing('users', ['email' => 'test@example.com']);
+     32Γûò     }
+     33Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [403] but received 404.
+Failed asserting that 404 is identical to 403.
+
+  at tests\Feature\Auth\RegistrationTest.php:43
+     39Γûò             'password' => 'password',
+     40Γûò             'password_confirmation' => 'password',
+     41Γûò         ]);
+     42Γûò 
+  Γ₧£  43Γûò         $response->assertForbidden();
+     44Γûò         $this->assertGuest();
+     45Γûò         $this->assertDatabaseMissing('users', ['email' => 'chosen.member@example.com']);
+     46Γûò     }
+     47Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [403] but received 404.
+Failed asserting that 404 is identical to 403.
+
+  at tests\Feature\Auth\RegistrationTest.php:61
+     57Γûò             'password' => 'password',
+     58Γûò             'password_confirmation' => 'password',
+     59Γûò         ]);
+     60Γûò 
+  Γ₧£  61Γûò         $response->assertForbidden();
+     62Γûò         $this->assertDatabaseCount('users', 1);
+     63Γûò     }
+     64Γûò }
+     65Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 302.
+Failed asserting that 302 is identical to 200.
+
+  at tests\Feature\ExampleTest.php:17
+     13Γûò     public function test_the_application_returns_a_successful_response(): void
+     14Γûò     {
+     15Γûò         $response = $this->get('/');
+     16Γûò 
+  Γ₧£  17Γûò         $response->assertStatus(200);
+     18Γûò     }
+     19Γûò }
+     20Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\Feature\InboxTest > inbox groups primary general requests  RouteNotFoundException   
+  Route [inbox.index] not defined.
+
+  at vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+    524Γûò             ! is_null($url = call_user_func($this->missingNamedRouteResolver, $name, $parameters, $absolute))) {
+    525Γûò             return $url;
+    526Γûò         }
+    527Γûò 
+  Γ₧£ 528Γûò         throw new RouteNotFoundException("Route [{$name}] not defined.");
+    529Γûò     }
+    530Γûò 
+    531Γûò     /**
+    532Γûò      * Get the URL for a given route instance.
+
+  1   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+  2   vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:870
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\Feature\InboxTest > mark all read marks all incoming dm as read  RouteNotFoundException   
+  Route [inbox.readAll] not defined.
+
+  at vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+    524Γûò             ! is_null($url = call_user_func($this->missingNamedRouteResolver, $name, $parameters, $absolute))) {
+    525Γûò             return $url;
+    526Γûò         }
+    527Γûò 
+  Γ₧£ 528Γûò         throw new RouteNotFoundException("Route [{$name}] not defined.");
+    529Γûò     }
+    530Γûò 
+    531Γûò     /**
+    532Γûò      * Get the URL for a given route instance.
+
+  1   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+  2   vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:870
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\Feature\InboxThreadTest > opening thread marks incoming messages as read  RouteNotFoundException   
+  Route [inbox.show] not defined.
+
+  at vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+    524Γûò             ! is_null($url = call_user_func($this->missingNamedRouteResolver, $name, $parameters, $absolute))) {
+    525Γûò             return $url;
+    526Γûò         }
+    527Γûò 
+  Γ₧£ 528Γûò         throw new RouteNotFoundException("Route [{$name}] not defined.");
+    529Γûò     }
+    530Γûò 
+    531Γûò     /**
+    532Γûò      * Get the URL for a given route instance.
+
+  1   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+  2   vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:870
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\Feature\InboxThreadTest > thread endpoint supports cursor pagination  RouteNotFoundException   
+  Route [inbox.messages.thread] not defined.
+
+  at vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+    524Γûò             ! is_null($url = call_user_func($this->missingNamedRouteResolver, $name, $parameters, $absolute))) {
+    525Γûò             return $url;
+    526Γûò         }
+    527Γûò 
+  Γ₧£ 528Γûò         throw new RouteNotFoundException("Route [{$name}] not defined.");
+    529Γûò     }
+    530Γûò 
+    531Γûò     /**
+    532Γûò      * Get the URL for a given route instance.
+
+  1   vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:528
+  2   vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:870
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\ProfileTest.php:21
+     17Γûò         $response = $this
+     18Γûò             ->actingAs($user)
+     19Γûò             ->get('/profile');
+     20Γûò 
+  Γ₧£  21Γûò         $response->assertOk();
+     22Γûò     }
+     23Γûò 
+     24Γûò     public function test_profile_information_can_be_updated(): void
+     25Γûò     {
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\ProfileTest.php:37
+     33Γûò             ]);
+     34Γûò 
+     35Γûò         $response
+     36Γûò             ->assertSessionHasNoErrors()
+  Γ₧£  37Γûò             ->assertRedirect('/profile');
+     38Γûò 
+     39Γûò         $user->refresh();
+     40Γûò 
+     41Γûò         $this->assertSame('Test User', $user->name);
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\ProfileTest.php:59
+     55Γûò             ]);
+     56Γûò 
+     57Γûò         $response
+     58Γûò             ->assertSessionHasNoErrors()
+  Γ₧£  59Γûò             ->assertRedirect('/profile');
+     60Γûò 
+     61Γûò         $this->assertNotNull($user->refresh()->email_verified_at);
+     62Γûò     }
+     63Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\ProfileTest.php:76
+     72Γûò             ]);
+     73Γûò 
+     74Γûò         $response
+     75Γûò             ->assertSessionHasNoErrors()
+  Γ₧£  76Γûò             ->assertRedirect('/');
+     77Γûò 
+     78Γûò         $this->assertGuest();
+     79Γûò         $this->assertNull($user->fresh());
+     80Γûò     }
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Session is missing expected key [errors].
+Failed asserting that false is true.
+
+  at tests\Feature\ProfileTest.php:94
+     90Γûò                 'password' => 'wrong-password',
+     91Γûò             ]);
+     92Γûò 
+     93Γûò         $response
+  Γ₧£  94Γûò             ->assertSessionHasErrors('password')
+     95Γûò             ->assertRedirect('/profile');
+     96Γûò 
+     97Γûò         $this->assertNotNull($user->fresh());
+     98Γûò     }
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 302.
+Failed asserting that 302 is identical to 200.
+
+  at tests\Feature\UiSmokeTest.php:20
+     16Γûò         $this->withoutVite();
+     17Γûò         $response = $this->get('/');
+     18Γûò 
+     19Γûò         $response
+  Γ₧£  20Γûò             ->assertStatus(200)
+     21Γûò             ->assertInertia(fn (Assert $page) => $page->component('Auth/Welcome'));
+     22Γûò     }
+     23Γûò 
+     24Γûò     public function test_it_renders_all_ui_pages(): void
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 302.
+Failed asserting that 302 is identical to 200.
+
+  at tests\Feature\UiSmokeTest.php:36
+     32Γûò         ];
+     33Γûò 
+     34Γûò         foreach ($publicRoutes as $route => $component) {
+     35Γûò             $this->get($route)
+  Γ₧£  36Γûò                 ->assertStatus(200)
+     37Γûò                 ->assertInertia(fn (Assert $page) => $page->component($component));
+     38Γûò         }
+     39Γûò 
+     40Γûò         $protectedRoutes = [
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubActivityCursorTest.php:29
+     25Γûò             ]);
+     26Γûò         }
+     27Γûò 
+     28Γûò         $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&sort=recent&per_page=20');
+  Γ₧£  29Γûò         $first->assertOk();
+     30Γûò         $items1 = $first->json('items');
+     31Γûò         $this->assertCount(20, $items1);
+     32Γûò         $cursor = (string) $first->json('page.next_cursor');
+     33Γûò         $this->assertNotSame('', $cursor);
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubActivityCursorTest.php:59
+     55Γûò             ]);
+     56Γûò         }
+     57Γûò 
+     58Γûò         $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&sort=oldest&per_page=20');
+  Γ₧£  59Γûò         $first->assertOk();
+     60Γûò         $items1 = $first->json('items');
+     61Γûò         $this->assertCount(20, $items1);
+     62Γûò         $cursor = (string) $first->json('page.next_cursor');
+     63Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubActivityCursorTest.php:97
+     93Γûò             ]);
+     94Γûò         }
+     95Γûò 
+     96Γûò         $first = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=favorites&sort=recent&per_page=20');
+  Γ₧£  97Γûò         $first->assertOk();
+     98Γûò         $items1 = $first->json('items');
+     99Γûò         $this->assertCount(20, $items1);
+    100Γûò         foreach ($items1 as $item) {
+    101Γûò             $this->assertTrue((bool) ($item['is_favorite'] ?? false));
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubActivityCursorTest.php:131
+    127Γûò             'updated_at' => now()->subMinutes(2),
+    128Γûò         ]);
+    129Γûò 
+    130Γûò         $res = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=all&q=kej&sort=recent&per_page=20&cursor=invalid-cursor');
+  Γ₧£ 131Γûò         $res->assertOk();
+    132Γûò         $items = $res->json('items');
+    133Γûò         $this->assertCount(1, $items);
+    134Γûò         $this->assertSame('kej', $items[0]['book']);
+    135Γûò     }
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubActivityCursorTest.php:150
+    146Γûò             'updated_at' => now()->subMinutes(1),
+    147Γûò         ]);
+    148Γûò 
+    149Γûò         $res = $this->actingAs($user)->getJson(self::ACTIVITY_URL . '?tab=notes&sort=recent&per_page=20');
+  Γ₧£ 150Γûò         $res->assertOk();
+    151Γûò         $quote = (string) $res->json('activity_stats.quote_of_week');
+    152Γûò         $this->assertTrue(strlen($quote) <= 183);
+    153Γûò         $this->assertStringEndsWith('...', $quote);
+    154Γûò     }
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubMentorApiTest.php:29
+     25Γûò         ]);
+     26Γûò 
+     27Γûò         $response = $this->getJson('/versehub/id/yoh-3-16/mentor');
+     28Γûò 
+  Γ₧£  29Γûò         $response->assertOk()->assertJsonStructure([
+     30Γûò             'ref',
+     31Γûò             'query',
+     32Γûò             'mentor_label',
+     33Γûò             'insights' => [
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubMentorApiTest.php:67
+     63Γûò             ->postJson('/versehub/id/yoh-3-16/mentor/ask', [
+     64Γûò                 'question' => 'Apa makna ayat ini?',
+     65Γûò             ]);
+     66Γûò 
+  Γ₧£  67Γûò         $response->assertOk()->assertJsonStructure([
+     68Γûò             'answer',
+     69Γûò             'interpretation',
+     70Γûò             'study_guidance',
+     71Γûò             'related_refs',
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubMentorApiTest.php:105
+    101Γûò         ]);
+    102Γûò 
+    103Γûò         $response = $this->get('/versehub/id/yoh-3-16/mentor/og.png?q=Apa%20makna%20ayat%20ini&summary=Belajar%20dengan%20pendekatan%20scripture-first');
+    104Γûò 
+  Γ₧£ 105Γûò         $response->assertOk();
+    106Γûò         $response->assertHeader('Content-Type', 'image/png');
+    107Γûò     }
+    108Γûò }
+    109Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubOgAndStudyRoutingTest.php:33
+     29Γûò             'sort_order' => 1,
+     30Γûò         ]);
+     31Γûò 
+     32Γûò         $this->get('/versehub/id/study')
+  Γ₧£  33Γûò             ->assertOk()
+     34Γûò             ->assertInertia(fn(Assert $page) => $page->component('VerseHub/StudyPaths/Index'));
+     35Γûò     }
+     36Γûò 
+     37Γûò     public function test_guest_can_access_study_og_png(): void
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubOgAndStudyRoutingTest.php:53
+     49Γûò             'sort_order' => 1,
+     50Γûò         ]);
+     51Γûò 
+     52Γûò         $this->get('/versehub/id/study/who-is-jesus/og.png')
+  Γ₧£  53Γûò             ->assertOk()
+     54Γûò             ->assertHeader('Content-Type', 'image/png');
+     55Γûò     }
+     56Γûò 
+     57Γûò     public function test_chapter_reader_contains_chapter_og_image_url_prop(): void
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubOgAndStudyRoutingTest.php:73
+     69Γûò             'translation_name' => 'AYT',
+     70Γûò         ]);
+     71Γûò 
+     72Γûò         $this->get('/versehub/id/yoh-3')
+  Γ₧£  73Γûò             ->assertOk()
+     74Γûò             ->assertInertia(fn(Assert $page) => $page
+     75Γûò                 ->component('VerseHub/Reader')
+     76Γûò                 ->where('og_image_url', url('/versehub/id/yoh-3/og.png')));
+     77Γûò     }
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\VerseHubOgAndStudyRoutingTest.php:93
+     89Γûò             'translation_name' => 'AYT',
+     90Γûò         ]);
+     91Γûò 
+     92Γûò         $this->get('/versehub/id/1ptr_3/og.png')
+  Γ₧£  93Γûò             ->assertRedirect('/versehub/id/1ptr-3/og.png');
+     94Γûò     }
+     95Γûò }
+     96Γûò 
+     97Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\VerseHubRefTest.php:57
+     53Γûò             ], 200),
+     54Γûò         ]);
+     55Γûò 
+     56Γûò         $this->get('/versehub/en/1pe-3')
+  Γ₧£  57Γûò             ->assertRedirect('/versehub/en/1pe-3-1');
+     58Γûò     }
+     59Γûò }
+     60Γûò
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [200] but received 404.
+Failed asserting that 404 is identical to 200.
+
+  at tests\Feature\VerseHubStudyAndMentorGuardrailsTest.php:39
+     35Γûò             $this->actingAs($user)
+     36Γûò                 ->postJson('/versehub/id/yoh-3-16/mentor/ask', [
+     37Γûò                     'question' => 'Apa makna ayat ini?',
+     38Γûò                 ])
+  Γ₧£  39Γûò                 ->assertOk();
+     40Γûò         }
+     41Γûò 
+     42Γûò         $this->actingAs($user)
+     43Γûò             ->postJson('/versehub/id/yoh-3-16/mentor/ask', [
+
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  
+   FAILED  Tests\FeaturΓÇª   
+  Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+  at tests\Feature\VerseHubStudyAndMentorGuardrailsTest.php:86
+     82Γûò         ]);
+     83Γûò 
+     84Γûò         $this->actingAs($user)
+     85Γûò             ->post("/versehub/id/study/{$path->slug}/complete/{$step1->id}")
+  Γ₧£  86Γûò             ->assertRedirect();
+     87Γûò 
+     88Γûò         $progress = UserStudyPathProgress::query()
+     89Γûò             ->where('user_id', $user->id)
+     90Γûò             ->where('path_id', $path->id)
+
+
+  Tests:    47 failed, 4 passed (52 assertions)
+  Duration: 63.20s
+

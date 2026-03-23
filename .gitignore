@@ -92,6 +92,9 @@ docs/archive/**
 !docs/archive/README.md
 docs/quarantine/**
 !docs/quarantine/README.md
+docs/QA Full Audit.zip
+docs/QA Full Audit/quarantine/**
+!docs/QA Full Audit/quarantine/README.md
 docs/STRUKTUR DOCS.md
 docs/core/architecture/laravel-hybrid/0. AUDIT MATRIX.md
 TCT--Laravel--Legacy-main/File

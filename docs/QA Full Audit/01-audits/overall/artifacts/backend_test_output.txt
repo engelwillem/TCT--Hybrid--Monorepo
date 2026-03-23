@@ -1,0 +1,48 @@
+PHPUnit 11.5.53 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.3.30
+Configuration: E:\thechoosentalksnext\backend-api\phpunit.xml
+
+FFFF                                                                4 / 4 (100%)
+
+Time: 00:30.604, Memory: 24.00 MB
+
+There were 4 failures:
+
+1) Tests\Feature\Auth\RegistrationTest::test_registration_screen_redirects_to_landing_when_disabled
+Expected response status code [201, 301, 302, 303, 307, 308] but received 404.
+Failed asserting that false is true.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:199
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\RegistrationTest.php:17
+
+2) Tests\Feature\Auth\RegistrationTest::test_new_users_cannot_register_when_signup_is_disabled
+Expected response status code [403] but received 404.
+Failed asserting that 404 is identical to 403.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:174
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:141
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\RegistrationTest.php:29
+
+3) Tests\Feature\Auth\RegistrationTest::test_register_endpoint_returns_forbidden_and_does_not_persist_user
+Expected response status code [403] but received 404.
+Failed asserting that 404 is identical to 403.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:174
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:141
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\RegistrationTest.php:43
+
+4) Tests\Feature\Auth\RegistrationTest::test_registration_rejects_duplicate_email_with_different_case_while_disabled
+Expected response status code [403] but received 404.
+Failed asserting that 404 is identical to 403.
+
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:174
+E:\thechoosentalksnext\backend-api\vendor\laravel\framework\src\Illuminate\Testing\Concerns\AssertsStatusCodes.php:141
+E:\thechoosentalksnext\backend-api\tests\Feature\Auth\RegistrationTest.php:61
+
+FAILURES!
+Tests: 4, Assertions: 4, Failures: 4.
