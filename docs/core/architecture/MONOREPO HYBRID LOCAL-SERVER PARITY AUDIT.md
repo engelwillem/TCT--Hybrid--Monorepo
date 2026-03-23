@@ -131,12 +131,10 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
   - `GET api/v1/versehub/{lang}/books`
   - `GET api/v1/versehub/{lang}/chapter/{ref}`
 - config runtime live terkonfirmasi:
-  - `APP_URL=https://api.thechoosentalks.org`
-  - `SESSION_DRIVER=file`
+  - `SANCTUM_STATEFUL=thechoosentalks.org,www.thechoosentalks.org`
   - `SESSION_DOMAIN=.thechoosentalks.org`
   - `SESSION_SECURE_COOKIE=true`
   - `SESSION_SAME_SITE=lax`
-  - `SANCTUM_STATEFUL_DOMAINS=` kosong saat dibaca dari runtime
 - migration tail sesudah deploy menunjukkan entry terbaru tetap `Ran`
 
 ---
@@ -172,11 +170,11 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
 | Community API | source route ada | route live GET/POST live | PASS | surface publik dan member sinkron secara route |
 | Study Paths API | source route ada | route live ada | PASS | route parity baik |
 | VerseHub books/chapter API | source route ada | route live ada | PASS | reader data contract sinkron di level route |
-| Session driver | [config/session.php](../../../backend-api/config/session.php) memakai env `SESSION_DRIVER` | runtime = `file` | PASS | runtime eksplisit terbaca |
+| Session driver | [config/session.php](../../../backend-api/config/session.php) memakai env `SESSION_DRIVER` | runtime = `file` | PASS | runtime eksplisit terbaca dari audit cPanel sebelumnya dan tetap konsisten dengan release aktif |
 | Session cookie domain | source baca `SESSION_DOMAIN` | runtime = `.thechoosentalks.org` | PASS | lintas subdomain siap |
 | Secure cookie | source baca `SESSION_SECURE_COOKIE` | runtime = `true` | PASS | konsisten dengan HTTPS-only production |
 | Same-site policy | source baca `SESSION_SAME_SITE` | runtime = `lax` | PASS | cukup aman untuk flow saat ini |
-| Sanctum stateful domains | [config/sanctum.php](../../../backend-api/config/sanctum.php) mengharapkan env `SANCTUM_STATEFUL_DOMAINS` | runtime terbaca kosong | PARTIAL / RISK | source fallback masih menyelamatkan localhost parity, tetapi production env tidak tercapture seperti yang diharapkan |
+| Sanctum stateful domains | [config/sanctum.php](../../../backend-api/config/sanctum.php) mengharapkan env `SANCTUM_STATEFUL_DOMAINS` atau fallback source | runtime = `thechoosentalks.org,www.thechoosentalks.org` | PASS WITH DRIFT NOTE | auth config backend kini terverifikasi live pasca-deploy, tetapi env production masih mengoverride fallback source dan belum memuat `api.thechoosentalks.org` |
 | Redirect guests to frontend | [bootstrap/app.php](../../../backend-api/bootstrap/app.php) redirect ke `NEXT_PUBLIC_APP_URL` | runtime file live sudah dipetakan di cPanel blueprint | PASS | decoupled boundary sinkron |
 | Web landing redirect | [routes/web.php](../../../backend-api/routes/web.php) redirect root backend ke frontend app | runtime route file ada | PASS | backend tidak dipakai sebagai public web shell utama |
 
@@ -184,7 +182,8 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
 - parity route lokal ke runtime cPanel berada dalam kondisi baik
 - deploy topology backend sudah konsisten dengan source lokal
 - hardening source Sanctum sudah terdeploy ke release baru
-- drift yang masih perlu verifikasi ulang adalah dump runtime `sanctum.stateful` pasca-hardening, karena SSH server sempat intermiten pada pass verifikasi berikutnya
+- backend auth config kini `post-deploy verified`
+- drift yang tersisa adalah env production Sanctum belum memasukkan `api.thechoosentalks.org`, walau source fallback sekarang sudah menyiapkannya
 
 ---
 
@@ -239,14 +238,16 @@ Audit storage detail server sebelumnya menunjukkan:
 - session cookie domain production sudah tepat untuk root domain dan subdomain
 - secure cookie aktif
 - same-site `lax`
-- stateful domains env terbaca kosong
+- stateful domains live terbaca:
+  - `thechoosentalks.org`
+  - `www.thechoosentalks.org`
 
 ### Parity verdict
 | Area | Status | Risiko |
 |---|---|---|
 | Bearer-token based flow | PASS | frontend proxy dan backend auth routes sinkron |
 | Cookie/session domain | PASS | cocok untuk `www` <-> `api` boundary |
-| Sanctum stateful env | PARTIAL / RISK | jika flow tertentu masih mengandalkan SPA cookie negotiation penuh, drift env ini bisa menciptakan guest/auth inconsistency |
+| Sanctum stateful env | PASS WITH DRIFT NOTE | config live pasca-deploy sudah terbaca, tetapi belum memuat `api.thechoosentalks.org` sebagaimana fallback source |
 | CSRF forwarding in proxy | PASS | source sudah meneruskan header penting |
 
 ### Catatan penting
@@ -254,7 +255,10 @@ Audit storage detail server sebelumnya menunjukkan:
   - bearer token
   - proxy forwarding
   - secure cookie domain
-- tetapi untuk menjaga integritas auth ke depan, `SANCTUM_STATEFUL_DOMAINS` production sebaiknya diverifikasi dan disamakan dengan host publik nyata
+- tetapi untuk menjaga integritas auth ke depan, env production `SANCTUM_STATEFUL_DOMAINS` sebaiknya disamakan penuh dengan fallback source baru:
+  - `thechoosentalks.org`
+  - `www.thechoosentalks.org`
+  - `api.thechoosentalks.org`
 
 ---
 

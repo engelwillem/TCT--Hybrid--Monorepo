@@ -85,6 +85,18 @@ Expected minimum:
 
 Jika env kosong tetapi fallback source sudah benar, ketiga domain ini tetap harus muncul.
 
+Observed live output on `2026-03-23`:
+
+```text
+SANCTUM_STATEFUL=thechoosentalks.org,www.thechoosentalks.org
+```
+
+Interpretasi:
+- verifikasi live pasca-deploy berhasil
+- auth config backend tidak lagi unknown
+- tetapi env production masih belum memasukkan `api.thechoosentalks.org`
+- ini bukan blocker langsung, namun tetap drift yang layak dibersihkan
+
 ### E. Dump config auth/session inti
 
 ```bash
