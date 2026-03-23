@@ -88,14 +88,13 @@ Jika env kosong tetapi fallback source sudah benar, ketiga domain ini tetap haru
 Observed live output on `2026-03-23`:
 
 ```text
-SANCTUM_STATEFUL=thechoosentalks.org,www.thechoosentalks.org
+SANCTUM_STATEFUL=thechoosentalks.org,www.thechoosentalks.org,api.thechoosentalks.org
 ```
 
 Interpretasi:
 - verifikasi live pasca-deploy berhasil
-- auth config backend tidak lagi unknown
-- tetapi env production masih belum memasukkan `api.thechoosentalks.org`
-- ini bukan blocker langsung, namun tetap drift yang layak dibersihkan
+- auth config backend kini fully verified
+- env production dan runtime config sudah selaras dengan domain production utama
 
 ### E. Dump config auth/session inti
 
@@ -149,6 +148,9 @@ Gejala:
 Makna:
 - auth cookie/stateful SPA flow masih rapuh
 - user login bisa tetap jatuh ke guest di beberapa surface
+
+Status pada `2026-03-23`:
+- anomaly ini sudah CLOSED
 
 ### C. Session boundary anomaly
 Gejala:
@@ -272,3 +274,6 @@ Hardening ini dianggap minimal PASS jika:
 - login/register tidak timeout
 
 Jika satu saja gagal, jangan anggap hardening selesai penuh.
+
+Observed live verdict on `2026-03-23`:
+- `PASS`

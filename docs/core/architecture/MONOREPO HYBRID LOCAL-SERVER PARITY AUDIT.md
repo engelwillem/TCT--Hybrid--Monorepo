@@ -131,7 +131,7 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
   - `GET api/v1/versehub/{lang}/books`
   - `GET api/v1/versehub/{lang}/chapter/{ref}`
 - config runtime live terkonfirmasi:
-  - `SANCTUM_STATEFUL=thechoosentalks.org,www.thechoosentalks.org`
+  - `SANCTUM_STATEFUL=thechoosentalks.org,www.thechoosentalks.org,api.thechoosentalks.org`
   - `SESSION_DOMAIN=.thechoosentalks.org`
   - `SESSION_SECURE_COOKIE=true`
   - `SESSION_SAME_SITE=lax`
@@ -174,7 +174,7 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
 | Session cookie domain | source baca `SESSION_DOMAIN` | runtime = `.thechoosentalks.org` | PASS | lintas subdomain siap |
 | Secure cookie | source baca `SESSION_SECURE_COOKIE` | runtime = `true` | PASS | konsisten dengan HTTPS-only production |
 | Same-site policy | source baca `SESSION_SAME_SITE` | runtime = `lax` | PASS | cukup aman untuk flow saat ini |
-| Sanctum stateful domains | [config/sanctum.php](../../../backend-api/config/sanctum.php) mengharapkan env `SANCTUM_STATEFUL_DOMAINS` atau fallback source | runtime = `thechoosentalks.org,www.thechoosentalks.org` | PASS WITH DRIFT NOTE | auth config backend kini terverifikasi live pasca-deploy, tetapi env production masih mengoverride fallback source dan belum memuat `api.thechoosentalks.org` |
+| Sanctum stateful domains | [config/sanctum.php](../../../backend-api/config/sanctum.php) mengharapkan env `SANCTUM_STATEFUL_DOMAINS` atau fallback source | runtime = `thechoosentalks.org,www.thechoosentalks.org,api.thechoosentalks.org` | PASS | auth config backend kini fully verified live pasca-deploy dan selaras dengan target domain production utama |
 | Redirect guests to frontend | [bootstrap/app.php](../../../backend-api/bootstrap/app.php) redirect ke `NEXT_PUBLIC_APP_URL` | runtime file live sudah dipetakan di cPanel blueprint | PASS | decoupled boundary sinkron |
 | Web landing redirect | [routes/web.php](../../../backend-api/routes/web.php) redirect root backend ke frontend app | runtime route file ada | PASS | backend tidak dipakai sebagai public web shell utama |
 
@@ -182,8 +182,8 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
 - parity route lokal ke runtime cPanel berada dalam kondisi baik
 - deploy topology backend sudah konsisten dengan source lokal
 - hardening source Sanctum sudah terdeploy ke release baru
-- backend auth config kini `post-deploy verified`
-- drift yang tersisa adalah env production Sanctum belum memasukkan `api.thechoosentalks.org`, walau source fallback sekarang sudah menyiapkannya
+- backend auth config kini `fully verified`
+- tidak ada drift aktif yang tersisa pada boundary Sanctum/session production utama
 
 ---
 
@@ -241,13 +241,14 @@ Audit storage detail server sebelumnya menunjukkan:
 - stateful domains live terbaca:
   - `thechoosentalks.org`
   - `www.thechoosentalks.org`
+  - `api.thechoosentalks.org`
 
 ### Parity verdict
 | Area | Status | Risiko |
 |---|---|---|
 | Bearer-token based flow | PASS | frontend proxy dan backend auth routes sinkron |
 | Cookie/session domain | PASS | cocok untuk `www` <-> `api` boundary |
-| Sanctum stateful env | PASS WITH DRIFT NOTE | config live pasca-deploy sudah terbaca, tetapi belum memuat `api.thechoosentalks.org` sebagaimana fallback source |
+| Sanctum stateful env | PASS | config live pasca-deploy sudah memuat domain production utama secara lengkap |
 | CSRF forwarding in proxy | PASS | source sudah meneruskan header penting |
 
 ### Catatan penting
@@ -255,10 +256,7 @@ Audit storage detail server sebelumnya menunjukkan:
   - bearer token
   - proxy forwarding
   - secure cookie domain
-- tetapi untuk menjaga integritas auth ke depan, env production `SANCTUM_STATEFUL_DOMAINS` sebaiknya disamakan penuh dengan fallback source baru:
-  - `thechoosentalks.org`
-  - `www.thechoosentalks.org`
-  - `api.thechoosentalks.org`
+- env production `SANCTUM_STATEFUL_DOMAINS` kini sudah selaras dengan kebutuhan domain production utama
 
 ---
 
@@ -297,9 +295,12 @@ Audit storage detail server sebelumnya menunjukkan:
 - ini berbahaya jika dijadikan dasar keputusan engineering
 
 ### Drift 2: Sanctum stateful domains kosong di runtime
-- source config siap
-- runtime env tidak terbaca seperti yang diharapkan
-- ini bisa menjelaskan bug auth/session yang terasa “kadang login, kadang guest”
+- status lama ini sekarang sudah CLOSED
+- source hardening sudah terdeploy
+- runtime live kini memuat:
+  - `thechoosentalks.org`
+  - `www.thechoosentalks.org`
+  - `api.thechoosentalks.org`
 
 ### Drift 3: Frontend build strictness terlalu longgar
 - `ignoreBuildErrors: true`
@@ -343,11 +344,11 @@ Batasan:
 - `SANCTUM_STATEFUL_DOMAINS` kosong di runtime adalah drift yang harus dicatat serius
 
 ### Monorepo hybrid secara keseluruhan
-Verdict: `OPERATIONALLY USABLE, NOT FULLY CLOSED`
+Verdict: `OPERATIONALLY USABLE WITH BACKEND AUTH FULLY VERIFIED`
 
 Maknanya:
 - cukup kuat untuk bug cleanup, security triage, dan web development
-- belum cukup untuk mengklaim full parity final lintas source, runtime, env, dan database
+- belum cukup untuk mengklaim full parity final lintas source, runtime, env, dan database karena schema MySQL production dan Tencent panel-level deployment evidence masih punya batasan tersendiri
 
 ---
 
@@ -447,7 +448,7 @@ Kondisi real saat audit ini:
 - source lokal frontend dan backend sudah cukup selaras dengan runtime publik
 - frontend Tencent menunjukkan marker bahwa source baru sudah masuk ke artifact live
 - backend cPanel menunjukkan route parity yang baik terhadap source lokal
-- auth/session boundary cukup sehat, tetapi masih ada satu drift penting di `SANCTUM_STATEFUL_DOMAINS`
+- auth/session boundary backend production kini fully verified untuk domain utama
 - storage/media blueprint sudah cukup kuat untuk membantu bug cleanup
 - MySQL/Filament parity penuh masih membutuhkan audit lanjutan tersendiri
 
