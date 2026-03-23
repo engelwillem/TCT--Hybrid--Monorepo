@@ -84,7 +84,7 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
 
     // 3. Clone headers for the proxy response
     const responseHeaders = new Headers();
-    const headersToForward = ["content-type", "x-auth", "cache-control"];
+    const headersToForward = ["content-type", "x-auth", "cache-control", "content-disposition"];
     
     headersToForward.forEach(header => {
       const value = response.headers.get(header);
@@ -105,8 +105,11 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       responseHeaders.set("content-type", "application/json");
     }
 
-    // 4. Return the response stream directly (more efficient and robust)
-    return new NextResponse(response.body, {
+    // Buffer the upstream payload before returning it.
+    // Some edge runtimes are brittle when piping the original ReadableStream directly.
+    const responseBody = request.method === "HEAD" ? null : await response.arrayBuffer();
+
+    return new NextResponse(responseBody, {
       status: response.status,
       headers: responseHeaders,
     });
