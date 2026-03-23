@@ -119,6 +119,8 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
 ### Evidence backend live cPanel
 - current release:
   - `/home/thechoosentalks/deploy/apps/thechoosentalks/current`
+- post-hardening release setelah deploy:
+  - `/home/thechoosentalks/deploy/apps/thechoosentalks/releases/20260323070624`
 - route live terkonfirmasi:
   - `GET api/today/session`
   - `POST api/v1/login`
@@ -135,6 +137,7 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
   - `SESSION_SECURE_COOKIE=true`
   - `SESSION_SAME_SITE=lax`
   - `SANCTUM_STATEFUL_DOMAINS=` kosong saat dibaca dari runtime
+- migration tail sesudah deploy menunjukkan entry terbaru tetap `Ran`
 
 ---
 
@@ -180,7 +183,8 @@ Jadi dokumen ini adalah parity audit operasional yang kuat di level source, rout
 ### Kesimpulan backend parity
 - parity route lokal ke runtime cPanel berada dalam kondisi baik
 - deploy topology backend sudah konsisten dengan source lokal
-- drift terpenting ada pada pembacaan `SANCTUM_STATEFUL_DOMAINS` yang kosong di runtime saat audit
+- hardening source Sanctum sudah terdeploy ke release baru
+- drift yang masih perlu verifikasi ulang adalah dump runtime `sanctum.stateful` pasca-hardening, karena SSH server sempat intermiten pada pass verifikasi berikutnya
 
 ---
 

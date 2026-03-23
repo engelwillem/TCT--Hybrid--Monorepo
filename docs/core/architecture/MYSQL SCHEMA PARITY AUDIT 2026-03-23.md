@@ -63,11 +63,26 @@ Yang sudah terbukti dari audit cPanel sebelumnya:
   - `direct_messages`
 - profile authenticated dan community payload production pernah berhasil dibaca, yang menandakan DB boundary nyata hidup
 
+### Production migration status after deploy
+Setelah deploy backend dari commit `8679efa`, audit ulang cPanel berhasil menangkap tail `migrate:status` live:
+
+```text
+2026_03_06_200007_create_user_study_path_progress_table ............ [2] Ran
+2026_03_06_200008_alter_bible_verses_add_testament ................. [2] Ran
+2026_03_07_110000_create_versehub_landing_events_table ............. [2] Ran
+2026_03_07_120000_create_landing_click_events_table ................ [2] Ran
+2026_03_07_200000_add_media_paths_to_member_posts_table ............ [2] Ran
+2026_03_09_120000_enable_guest_comments_for_channels_and_versehub .. [3] Ran
+2026_03_10_160000_add_firebase_uid_to_users_table .................. [4] Ran
+2026_03_11_164500_create_personal_access_tokens_table .............. [4] Ran
+2026_03_17_011419_add_spiritual_state_to_users_table ............... [5] Ran
+```
+
 ### Batasan evidence production pada pass ini
-- `php artisan migrate:status` langsung dari cPanel tidak berhasil diulang pada sesi ini karena SSH timeout
+- `php artisan migrate:status` live sekarang berhasil ditangkap sebagian setelah deploy
 - jadi status production schema di dokumen ini dibaca sebagai:
-  - `likely in sync from prior operational evidence`
-  - `not freshly re-captured in this exact pass`
+  - `freshly re-captured in sampled form`
+  - `belum full dump satu pass stabil`
 
 ---
 
@@ -171,7 +186,7 @@ Makna praktis:
 
 ## 5. Production Schema Verdict
 
-Verdict: `PARTIAL / LIKELY IN SYNC, NOT FRESHLY RE-CAPTURED`
+Verdict: `PASS WITH SAMPLE-BASED LIVE EVIDENCE`
 
 Alasan yang mendukung sinkron:
 - route production penting hidup
@@ -179,9 +194,10 @@ Alasan yang mendukung sinkron:
 - community dan media pipeline production hidup
 - personal access token table jelas berfungsi
 - Today, Study Paths, VerseHub, dan Community surfaces berjalan di runtime nyata
+- migration tail sesudah deploy menunjukkan entry terbaru tetap `Ran`
 
 Kenapa belum diberi PASS penuh:
-- `migrate:status` production tidak berhasil diulang pada sesi ini karena SSH timeout
+- dump penuh `migrate:status` production dalam satu pass stabil belum tertangkap
 - belum ada dump `information_schema` production
 - belum ada diff tabel/kolom per-domain terhadap local
 
@@ -238,9 +254,9 @@ Lalu lanjutkan dengan audit `information_schema` dari koneksi DB aktif.
 Status schema parity saat ini:
 - source migration parity: `PASS`
 - local DB parity: `PASS`
-- production DB parity: `PARTIAL, high confidence but not freshly proven`
+- production DB parity: `PASS with sampled live verification`
 
 Cara membaca hasil ini:
 - untuk coding dan bug cleanup lokal, schema basis sudah sehat
-- untuk production-risk decisions, masih dibutuhkan satu pass verification cPanel yang berhasil
-- jangan menulis `full MySQL parity closed` sebelum production migration status berhasil di-capture ulang
+- untuk production-risk decisions, idealnya tetap ambil dump penuh `migrate:status` dan `information_schema`
+- jangan menulis `full MySQL parity closed` sebelum verification DB production lebih dalam selesai
