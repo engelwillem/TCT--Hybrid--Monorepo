@@ -11,7 +11,7 @@ use App\Notifications\MemberPostCommentReplyNotification;
 use App\Services\Interaction\SpiritualInteractionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
