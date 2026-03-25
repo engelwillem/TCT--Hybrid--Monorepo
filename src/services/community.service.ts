@@ -80,8 +80,26 @@ const resolveApiOrigin = (): string => {
 const extractKnownAssetPath = (pathname: string): string | null => {
   if (!pathname) return null;
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  if (normalizedPath.startsWith("/api/v1/community/media/")) {
+    return normalizedPath;
+  }
+
+  if (normalizedPath.startsWith("/storage/community/posts/")) {
+    return normalizedPath.replace("/storage/community/posts/", "/api/v1/community/media/community/posts/");
+  }
+
   if (normalizedPath.startsWith("/storage/") || normalizedPath.startsWith("/api/v1/avatar/")) {
     return normalizedPath;
+  }
+
+  const communityMediaMarker = normalizedPath.indexOf("/api/v1/community/media/");
+  if (communityMediaMarker >= 0) {
+    return normalizedPath.slice(communityMediaMarker);
+  }
+
+  const communityStorageMarker = normalizedPath.indexOf("/storage/community/posts/");
+  if (communityStorageMarker >= 0) {
+    return normalizedPath.slice(communityStorageMarker).replace("/storage/community/posts/", "/api/v1/community/media/community/posts/");
   }
 
   const storageMarker = normalizedPath.indexOf("/storage/");

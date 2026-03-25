@@ -37,6 +37,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/avatar/{user}', [ProfileController::class, 'avatar']);
 
     Route::get('/community/posts', [CommunityApiController::class, 'index']);
+    Route::get('/community/media/{path}', [CommunityApiController::class, 'media'])->where('path', '.*');
     Route::get('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsIndex']);
 
     Route::get('/study-paths/{lang}', [StudyPathController::class, 'index'])

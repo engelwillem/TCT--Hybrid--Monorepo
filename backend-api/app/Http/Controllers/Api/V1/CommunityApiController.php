@@ -11,6 +11,7 @@ use App\Notifications\MemberPostCommentReplyNotification;
 use App\Services\Interaction\SpiritualInteractionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -83,7 +84,6 @@ class CommunityApiController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('community/posts', 'public');
-                $this->syncPublicMediaMirror($path);
                 $mediaPaths[] = '/storage/'.ltrim($path, '/');
             }
         }
@@ -247,6 +247,19 @@ class CommunityApiController extends Controller
         ], 201);
     }
 
+    public function media(string $path): Response
+    {
+        $relativePath = $this->normalizeStoredMediaPath($path);
+        abort_unless($relativePath !== null, 404);
+
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($relativePath), 404);
+
+        return $disk->response($relativePath, null, [
+            'Cache-Control' => 'public, max-age=31536000, immutable',
+        ]);
+    }
+
     private function reloadPost(int $postId, int $userId): MemberPost
     {
         return MemberPost::query()
@@ -283,8 +296,12 @@ class CommunityApiController extends Controller
             'id' => (string) $post->id,
             'type' => (string) ($post->type->value ?? 'user_post'),
             'text' => (string) ($post->text ?? ''),
-            'imageUrl' => $post->image_path,
-            'mediaPaths' => $post->media_paths,
+            'imageUrl' => $this->communityMediaUrl($post->image_path),
+            'mediaPaths' => collect($post->media_paths ?? [])
+                ->map(fn ($item) => $this->communityMediaUrl(is_string($item) ? $item : null))
+                ->filter()
+                ->values()
+                ->all(),
             'createdAt' => $post->created_at?->diffForHumans(),
             'author' => [
                 'id' => (string) ($author?->id ?? ''),
@@ -322,6 +339,53 @@ class CommunityApiController extends Controller
                 'avatarUrl' => $comment->user?->getFilamentAvatarUrl(),
             ],
         ];
+    }
+
+
+    private function communityMediaUrl(?string $value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        $relativePath = $this->normalizeStoredMediaPath($raw);
+        if ($relativePath === null) {
+            return $raw;
+        }
+
+        return url('/api/v1/community/media/'.implode('/', array_map('rawurlencode', explode('/', $relativePath))));
+    }
+
+    private function normalizeStoredMediaPath(?string $value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        if (filter_var($raw, FILTER_VALIDATE_URL)) {
+            $parsedPath = parse_url($raw, PHP_URL_PATH);
+            if (! is_string($parsedPath) || $parsedPath === '') {
+                return null;
+            }
+            $raw = $parsedPath;
+        }
+
+        $normalized = '/'.ltrim($raw, '/');
+
+        if (str_starts_with($normalized, '/storage/')) {
+            $normalized = substr($normalized, strlen('/storage/'));
+        } else {
+            $normalized = ltrim($normalized, '/');
+        }
+
+        $normalized = trim($normalized, '/');
+        if ($normalized === '' || str_contains($normalized, '..')) {
+            return null;
+        }
+
+        return $normalized;
     }
 
     private function syncPublicMediaMirror(string $relativePath): void

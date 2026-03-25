@@ -24,12 +24,14 @@ export function useAuthSession() {
   const hasToken = hasAppAccessToken();
   const authUser = getAppAuthUser();
   const hasAuthenticatedFirebaseUser = firebaseStatus === "authenticated" && !user?.isAnonymous;
+  const isAwaitingFirebaseToken = hasAuthenticatedFirebaseUser && !hasToken;
 
   const status: AuthSessionStatus = useMemo(() => {
     if (firebaseStatus === "restoring") return "restoring";
+    if (isAwaitingFirebaseToken) return "restoring";
     if (hasAuthenticatedFirebaseUser) return "authenticated";
     return hasToken ? "authenticated" : "guest";
-  }, [firebaseStatus, hasAuthenticatedFirebaseUser, hasToken]);
+  }, [firebaseStatus, hasAuthenticatedFirebaseUser, hasToken, isAwaitingFirebaseToken]);
 
   const profileName = user?.displayName?.trim() || authUser?.name?.trim() || null;
   const profileEmail = user?.email?.trim() || authUser?.email?.trim() || null;
