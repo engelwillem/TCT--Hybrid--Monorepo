@@ -10,6 +10,13 @@ use App\Services\Engagement\FeedComposerService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
+use function filter_var;
+use function parse_url;
+use function rawurlencode;
+
+use const FILTER_VALIDATE_URL;
+use const PHP_URL_PATH;
+
 class TodayFeedService
 {
     public function __construct(
@@ -81,13 +88,17 @@ class TodayFeedService
             'type_label' => $p->type->label(),
             'title' => $p->title,
             'text' => $p->text ?? '',
-            'imageUrl' => $p->image_path,
-            'thumbPath' => $p->thumb_path,
-            'mediaPaths' => is_array($p->media_paths)
+            'imageUrl' => $this->communityMediaUrl($p->image_path),
+            'thumbPath' => $this->communityMediaUrl($p->thumb_path),
+            'mediaPaths' => collect(is_array($p->media_paths)
                 ? $p->media_paths
                 : ((is_array($p->metadata) && isset($p->metadata['media_paths']) && is_array($p->metadata['media_paths']))
                     ? $p->metadata['media_paths']
-                    : []),
+                    : []))
+                ->map(fn ($item) => $this->communityMediaUrl(is_string($item) ? $item : null))
+                ->filter()
+                ->values()
+                ->all(),
             'metadata' => $p->metadata,
             'createdAt' => $p->created_at?->diffForHumans(),
             'author' => [
@@ -106,5 +117,51 @@ class TodayFeedService
             'isFeatured' => $p->isFeatured(),
             'can_moderate' => (bool) ($user?->is_admin ?? false),
         ];
+    }
+
+    protected function communityMediaUrl(?string $value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        $relativePath = $this->normalizeStoredMediaPath($raw);
+        if ($relativePath === null) {
+            return $raw;
+        }
+
+        return url('/api/v1/community/media/'.implode('/', array_map('rawurlencode', explode('/', $relativePath))));
+    }
+
+    protected function normalizeStoredMediaPath(?string $value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        if (filter_var($raw, FILTER_VALIDATE_URL)) {
+            $parsedPath = parse_url($raw, PHP_URL_PATH);
+            if (! is_string($parsedPath) || $parsedPath === '') {
+                return null;
+            }
+            $raw = $parsedPath;
+        }
+
+        $normalized = '/'.ltrim($raw, '/');
+
+        if (str_starts_with($normalized, '/storage/')) {
+            $normalized = substr($normalized, strlen('/storage/'));
+        } else {
+            $normalized = ltrim($normalized, '/');
+        }
+
+        $normalized = trim($normalized, '/');
+        if ($normalized === '' || str_contains($normalized, '..')) {
+            return null;
+        }
+
+        return $normalized;
     }
 }
