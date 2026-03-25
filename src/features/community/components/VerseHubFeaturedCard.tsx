@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ActionBar } from "./ActionBar";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { getVerseShareUrl } from "@/lib/share";
 
 export type FeaturedVerse = {
   ref: string;
@@ -128,7 +129,7 @@ export function VerseHubFeaturedCard({
   }, [reactionKey, liked, bookmarked]);
 
   const onShare = async () => {
-    const url = `${shareOrigin}${verseHref}`;
+    const url = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${shareOrigin}${verseHref}`;
     const title = verse?.reference || "VerseHub";
 
     try {

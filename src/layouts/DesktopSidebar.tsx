@@ -5,6 +5,7 @@ import AppIcon from '@/components/system/AppIcon';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { TCTLogo } from '@/components/brand/TCTLogo';
+import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
 
 type NavItem = {
     id: string;
@@ -28,9 +29,8 @@ type DesktopSidebarNavProps = {
 };
 
 const ROUTE_MAP: Record<string, string> = {
-    today: '/today',
+    today: '/renungan',
     versehub: '/versehub/id',
-    paths: '/paths',
     community: '/community',
     profile: '/profile',
 };
@@ -49,6 +49,11 @@ export default function DesktopSidebarNav({
     const resolvedName = userName?.trim() || 'Guest';
     const resolvedInitials = (initials?.trim() || (isGuest ? 'G' : resolvedName.slice(0, 1) || 'U')).toUpperCase();
     const resolvedAvatarUrl = isGuest ? null : avatarUrl;
+    const avatarPresentation = useCurrentUserAvatarStyle(
+        resolvedAvatarUrl,
+        { name: resolvedName },
+        32,
+    );
 
     return (
         <aside
@@ -101,7 +106,12 @@ export default function DesktopSidebarNav({
                 <div className="flex items-center gap-3 px-2">
                     <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-black/[0.06] text-[12px] font-semibold text-foreground/70">
                         {resolvedAvatarUrl ? (
-                            <img src={resolvedAvatarUrl} alt={resolvedName} className="h-full w-full object-cover" />
+                            <img
+                                src={resolvedAvatarUrl}
+                                alt={resolvedName}
+                                className={cn('h-full w-full object-cover', avatarPresentation.className)}
+                                style={avatarPresentation.style}
+                            />
                         ) : (
                             resolvedInitials
                         )}

@@ -25,7 +25,7 @@ test.describe('Hybrid App E2E Read-Path Smoke Tests', () => {
     await expect(page.locator('body')).toBeVisible();
     
     // Pastikan hydration tidak crash (cek adanya elemen hero/landing)
-    await expect(page.locator('text=The Chosen People').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Renungan harian/i })).toBeVisible();
   });
 
   test('Login Page Available', async ({ page }) => {
@@ -47,11 +47,12 @@ test.describe('Hybrid App E2E Read-Path Smoke Tests', () => {
     await expect(page.locator('body')).toBeVisible();
     const isLogin = await page.locator('input[type="email"]').count() > 0;
     const isAuthWait = await page.locator('text=Memuat profil').count() > 0;
-    const isRedirectMsg = await page.locator('text=Mengarahkan').count() > 0;
+    const isRedirectMsg = await page.locator('text=Mengalihkan').count() > 0;
     const isPleaseLogin = await page.locator('text=Silakan masuk').count() > 0;
     const isProfileForm = await page.locator('text=Simpan Perubahan').count() > 0;
+    const isProfileTitle = await page.getByRole('heading', { name: 'Profile' }).count() > 0;
     
-    expect(isLogin || isAuthWait || isRedirectMsg || isPleaseLogin || isProfileForm).toBeTruthy();
+    expect(isLogin || isAuthWait || isRedirectMsg || isPleaseLogin || isProfileForm || isProfileTitle).toBeTruthy();
   });
 
   test('Community Feed Data Logic Check (No Infinite Load)', async ({ page }) => {
@@ -83,20 +84,16 @@ test.describe('Hybrid App E2E Read-Path Smoke Tests', () => {
     expect(response?.status()).toBeLessThan(400);
     
     // Pastikan tidak tersangkut skeleton bab terus menerus
-    await expect(page.locator('.animate-spin').first()).toBeHidden({ timeout: 10000 });
-    
-    // Jika tidak ada error koneksi backend, salah satu konten harus muncul
-    await expect(page.locator('body')).toContainText(/Kejadian|Gagal Memuat|Bible|Alkitab|Masuk/);
+    await expect(page.locator('text=Menyiapkan Ruang Doa...')).toBeHidden({ timeout: 20000 });
+    await expect(page.locator('body')).toContainText(/Kejadian|Koleksi Kitab|Ayat tidak ditemukan|Terjadi kesalahan|Alkitab/);
   });
   
   test('Channels Catalog / Class Loading', async ({ page }) => {
-    const response = await page.goto(`${BASE_URL}/channels/god-first`);
+    const response = await page.goto(`${BASE_URL}/channels`);
     expect(response?.status()).toBeLessThan(400);
-    
-    // Loader hilang
-    await expect(page.locator('.animate-spin').first()).toBeHidden({ timeout: 10000 });
-    
-    await expect(page.locator('body')).toBeVisible();
+
+    await expect(page.getByRole('heading', { name: 'Channels' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('body')).toContainText(/Sabbath School|Channel Lainnya|Belum ada channel aktif/);
   });
 
 });

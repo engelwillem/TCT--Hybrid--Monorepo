@@ -2,12 +2,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageSquare, Send, Bookmark, X, ChevronLeft, ArrowLeft } from 'lucide-react';
+import { Heart, MessageSquare, Send, Bookmark, X, ChevronLeft, ArrowLeft, BookOpenText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { VersehubReaderPage } from "@/features/versehub/pages/VersehubReaderPage";
 import { getAppAccessToken } from '@/services/app-auth-token';
+import { getVerseShareUrl } from '@/lib/share';
+import { VersehubReaderPage } from '@/features/versehub/pages/VersehubReaderPage';
 
 type VerseData = {
     ref: string;
@@ -19,8 +20,298 @@ type VerseData = {
     canonical_url: string;
 };
 
-export default function UnifiedVerseHubPage({ params }: { params: { lang: string; slug: string } }) {
-    const { lang, slug } = params;
+type ReaderBook = {
+    code: string;
+    label: string;
+    testament: 'ot' | 'nt';
+};
+
+type ReaderVerse = {
+    key: string;
+    verse: number;
+    text: string;
+};
+
+function ChapterReaderPage({ lang, slug }: { lang: string; slug: string }) {
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [tab, setTab] = useState<'ot' | 'nt'>('ot');
+    const [books, setBooks] = useState<ReaderBook[]>([]);
+    const [activeBook, setActiveBook] = useState<string | null>(null);
+    const [chapters, setChapters] = useState<number[]>([]);
+    const [chapterLabel, setChapterLabel] = useState('');
+    const [verses, setVerses] = useState<ReaderVerse[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchJson = async (input: string, timeoutMs = 12000) => {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const response = await fetch(input, {
+                    cache: 'no-store',
+                    signal: controller.signal,
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`http_${response.status}`);
+                }
+
+                return response.json();
+            } finally {
+                window.clearTimeout(timeoutId);
+            }
+        };
+
+        const load = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const [booksPayload, chapterPayload] = await Promise.all([
+                    fetchJson(`/api/versehub/${lang}/books`),
+                    fetchJson(`/api/versehub/${lang}/chapter/${slug}`),
+                ]);
+
+                if (cancelled) return;
+
+                const nextBooks = Array.isArray(booksPayload?.books) ? booksPayload.books : [];
+                const nextVerses = Array.isArray(chapterPayload?.verses) ? chapterPayload.verses : [];
+                const nextChapters = Array.isArray(chapterPayload?.chapters) ? chapterPayload.chapters : [];
+                const nextBook = chapterPayload?.selected_book ?? slug.split('-')[0] ?? null;
+
+                setBooks(nextBooks);
+                setVerses(nextVerses);
+                setChapters(nextChapters);
+                setActiveBook(nextBook);
+                setChapterLabel(chapterPayload?.chapter_label ?? slug);
+
+                if (nextBooks.some((book: ReaderBook) => book.code === nextBook)) {
+                    setTab(nextBooks.find((book: ReaderBook) => book.code === nextBook)?.testament === 'nt' ? 'nt' : 'ot');
+                }
+            } catch {
+                if (!cancelled) setError('chapter_not_found');
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+
+        load();
+        return () => {
+            cancelled = true;
+        };
+    }, [lang, slug]);
+
+    const loadBookChapters = async (bookCode: string) => {
+        setActiveBook(bookCode);
+        try {
+            const response = await fetch(`/api/versehub/${lang}/chapters?book=${encodeURIComponent(bookCode)}`, {
+                cache: 'no-store',
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+            if (!response.ok) return;
+            const payload = await response.json();
+            setChapters(Array.isArray(payload?.chapters) ? payload.chapters : []);
+        } catch {
+            // Keep picker usable with existing chapter data.
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 text-slate-300 animate-spin" />
+                    <p className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Menyiapkan Ruang Doa...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || verses.length === 0) {
+        return (
+            <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center">
+                <div className="mb-6 h-20 w-20 rounded-full bg-surface-muted border border-border/50 flex items-center justify-center">
+                    <X className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Pasal tidak ditemukan</h1>
+                <p className="text-muted-foreground max-w-xs mb-8">
+                    Data pasal belum berhasil dimuat. Coba buka kitab lain atau muat ulang halaman ini.
+                </p>
+                <button
+                    onClick={() => router.push(`/versehub/${lang}`)}
+                    className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-bold text-background transition hover:bg-brand/90 active:scale-95 shadow-sm"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                    Kembali ke Alkitab
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-[#FDFCF9] text-slate-900 pb-20">
+            <header className="sticky top-0 z-40 border-b border-black/5 bg-[#FDFCF9]/90 backdrop-blur-xl">
+                <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 md:px-6">
+                    <button
+                        type="button"
+                        onClick={() => router.push(`/versehub/${lang}`)}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-slate-50"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </button>
+
+                    <div className="text-center">
+                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">VerseHub</p>
+                        <h1 className="mt-1 text-sm font-bold tracking-tight text-slate-900">{chapterLabel}</h1>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setPickerOpen(true)}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-slate-50"
+                    >
+                        <BookOpenText className="h-5 w-5" />
+                    </button>
+                </div>
+            </header>
+
+            <main className="mx-auto max-w-3xl px-4 py-6 md:px-6 md:py-8">
+                <section className="rounded-[32px] bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.04] md:p-7">
+                    <div className="border-b border-slate-100 pb-4">
+                        <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Bacaan Hari Ini</p>
+                        <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{chapterLabel}</h2>
+                        <p className="mt-2 text-sm text-slate-500">{verses.length} ayat tersedia untuk dibaca dan direnungkan.</p>
+                    </div>
+
+                    <div className="mt-6 space-y-5">
+                        {verses.map((verse) => (
+                            <article key={verse.key} className="rounded-[28px] bg-[#F8F8F5] px-4 py-4 ring-1 ring-black/[0.03] md:px-5">
+                                <div className="flex items-start gap-4">
+                                    <span className="mt-1 inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-[12px] font-black text-slate-500 shadow-sm ring-1 ring-black/[0.04]">
+                                        {verse.verse}
+                                    </span>
+                                    <p className="text-[17px] leading-8 text-slate-700 md:text-[18px]">{verse.text}</p>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+            </main>
+
+            <AnimatePresence>
+                {pickerOpen && (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+                        <motion.button
+                            type="button"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setPickerOpen(false)}
+                            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
+                        />
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.97, y: 12 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.97, y: 12 }}
+                            className="relative flex h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-[36px] bg-white shadow-2xl ring-1 ring-black/5"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">VerseHub</p>
+                                    <h3 className="mt-1 text-xl font-black tracking-tight text-slate-900">Koleksi Kitab</h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setPickerOpen(false)}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="flex gap-2 border-b border-slate-100 px-6 py-4">
+                                {(['ot', 'nt'] as const).map((item) => (
+                                    <button
+                                        key={item}
+                                        type="button"
+                                        onClick={() => setTab(item)}
+                                        className={cn(
+                                            'rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition',
+                                            tab === item ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
+                                        )}
+                                    >
+                                        {item === 'ot' ? 'Perjanjian Lama' : 'Perjanjian Baru'}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="grid min-h-0 flex-1 gap-0 md:grid-cols-[1.15fr,0.85fr]">
+                                <div className="min-h-0 overflow-y-auto border-b border-slate-100 p-5 md:border-b-0 md:border-r">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {books.filter((book) => book.testament === tab).map((book) => (
+                                            <button
+                                                key={book.code}
+                                                type="button"
+                                                onClick={() => loadBookChapters(book.code)}
+                                                className={cn(
+                                                    'rounded-[22px] px-4 py-4 text-left text-sm font-bold transition ring-1',
+                                                    activeBook === book.code
+                                                        ? 'bg-slate-900 text-white ring-slate-900'
+                                                        : 'bg-slate-50 text-slate-700 ring-slate-100 hover:bg-slate-100',
+                                                )}
+                                            >
+                                                {book.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="min-h-0 overflow-y-auto p-5">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Pilih Pasal</p>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {chapters.map((chapter) => (
+                                            <button
+                                                key={chapter}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!activeBook) return;
+                                                    setPickerOpen(false);
+                                                    router.push(`/versehub/${lang}/${activeBook}-${chapter}`);
+                                                }}
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                                            >
+                                                {chapter}
+                                            </button>
+                                        ))}
+                                        {chapters.length === 0 && (
+                                            <p className="text-sm text-slate-500">Pilih kitab terlebih dahulu untuk melihat daftar pasal.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+export default function UnifiedVerseHubPage() {
+    const params = useParams<{ lang: string; slug: string }>();
+    const lang = params?.lang || 'id';
+    const slug = params?.slug || '';
     const router = useRouter();
     
     // Intelligent Route Differentiation:
@@ -187,7 +478,7 @@ export default function UnifiedVerseHubPage({ params }: { params: { lang: string
         const shareData = {
             title: verse.reference,
             text: `${verse.reference}\n\n"${verse.text}"\n\nBuka di VerseHub:`,
-            url: window.location.href
+            url: getVerseShareUrl(lang, slug)
         };
 
         try {

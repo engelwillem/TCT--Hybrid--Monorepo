@@ -1,24 +1,32 @@
 "use client";
 
 import { useMemo } from "react";
+import { useAuthSession } from "@/auth/use-auth-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useCurrentUserAvatarStyle } from "@/lib/avatar-presentation";
 import { cn } from "@/lib/utils";
 import { MemberPostActionBar } from "./MemberPostActionBar";
 import { QuoteCard } from "./QuoteCard";
 import { CommunityImageCarousel } from "./CommunityImageCarousel";
+import { MessageCircle, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 
 type MemberPostCardProps = {
   className?: string;
   compact?: boolean;
+  authorId?: string | null;
   authorName?: string | null;
   authorAvatar?: string | null;
   isOfficial?: boolean;
+  isFollowingAuthor?: boolean;
+  isMutualFollow?: boolean;
+  canFollowAuthor?: boolean;
   type?: string;
   text?: string | null;
   createdAt?: string | null;
   imgSrc?: string | null;
   mediaSrcList?: string[];
-  aspectRatio?: "4:5" | "og" | "auto";
+  aspectRatio?: "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
   textPosition?: "above" | "below";
   prayLabel?: string;
   prayed?: boolean;
@@ -30,17 +38,26 @@ type MemberPostCardProps = {
   onShare: () => void | Promise<void>;
   onBookmark: () => void;
   canModerate?: boolean;
+  canDelete?: boolean;
+  onDelete?: () => void;
   onAdminHide?: () => void;
   onAdminExtend24h?: () => void;
   onAdminExpireNow?: () => void;
+  onToggleFollowAuthor?: () => void;
+  onMessageAuthor?: () => void;
+  followBusy?: boolean;
 };
 
 export function MemberPostCard({
   className,
   compact = false,
+  authorId,
   authorName,
   authorAvatar,
   isOfficial,
+  isFollowingAuthor = false,
+  isMutualFollow = false,
+  canFollowAuthor = false,
   type,
   text,
   createdAt,
@@ -58,8 +75,14 @@ export function MemberPostCard({
   onShare,
   onBookmark,
   canModerate = false,
+  canDelete = false,
+  onDelete,
   onAdminHide,
+  onToggleFollowAuthor,
+  onMessageAuthor,
+  followBusy = false,
 }: MemberPostCardProps) {
+  const { isAuthenticated } = useAuthSession();
   const postTimeLabel = useMemo(() => {
     if (!createdAt) return "Baru saja";
     const posted = new Date(createdAt);
@@ -130,6 +153,37 @@ export function MemberPostCard({
       onBookmark={onBookmark}
     />
   );
+  const headerMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted/60 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground">
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={onShare}>
+          <Share2 className="h-4 w-4" />
+          Bagikan
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onOpenComments}>
+          <MessageCircle className="h-4 w-4" />
+          Komentar
+        </DropdownMenuItem>
+        {canDelete ? (
+          <DropdownMenuItem onClick={onDelete} className="text-rose-600 focus:text-rose-600">
+            <Trash2 className="h-4 w-4" />
+            Hapus konten
+          </DropdownMenuItem>
+        ) : null}
+        {canModerate && onAdminHide ? (
+          <DropdownMenuItem onClick={onAdminHide}>
+            Sembunyikan
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+  const avatarPresentation = useCurrentUserAvatarStyle(authorAvatar, { id: authorId, name: authorName }, 44);
 
   if (isQuoteCard) {
     return (
@@ -138,6 +192,7 @@ export function MemberPostCard({
         authorName={authorName}
         className={className}
         actionSlot={actionBar}
+        headerActionSlot={headerMenu}
         compact={compact}
       />
     );
@@ -146,7 +201,7 @@ export function MemberPostCard({
   return (
     <Card
       className={cn(
-        "rounded-[32px] md:rounded-[40px] border-0 glass-card overflow-hidden transition-all duration-300 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4 tct-card-pad",
+        "rounded-[32px] md:rounded-[40px] border-0 glass-card overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4 tct-card-pad",
         className
       )}
     >
@@ -158,7 +213,12 @@ export function MemberPostCard({
               <div className="absolute -inset-1 rounded-full bg-brand/25 opacity-0 blur transition duration-500 group-hover/author:opacity-100" />
               <div className="relative h-full w-full rounded-full bg-surface-muted flex items-center justify-center overflow-hidden border border-border/60 ring-1 ring-border/60 shadow-sm transition-transform duration-500 group-hover/author:scale-105">
                 {authorAvatar ? (
-                    <img src={authorAvatar} alt={authorName ?? ""} className="h-full w-full object-cover" />
+                    <img
+                      src={authorAvatar}
+                      alt={authorName ?? ""}
+                      className={cn("h-full w-full object-cover", avatarPresentation.className)}
+                      style={avatarPresentation.style}
+                    />
                 ) : (
                     <>
                         <div className="bg-brand/15 absolute inset-0" />
@@ -173,7 +233,7 @@ export function MemberPostCard({
               <CardTitle className="text-[16px] font-black tracking-tight text-foreground group-hover/author:text-brand transition-colors">
                 {authorName ?? "Unknown"}
               </CardTitle>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{postTimeLabel}</p>
                 {isOfficial && (
                   <span className="flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-brand ring-1 ring-inset ring-brand/20">
@@ -181,37 +241,71 @@ export function MemberPostCard({
                     Official
                   </span>
                 )}
+                {canFollowAuthor && isAuthenticated ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-widest ring-1 ring-inset",
+                      isMutualFollow
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                        : isFollowingAuthor
+                          ? "bg-sky-50 text-sky-700 ring-sky-200"
+                          : "bg-slate-50 text-slate-500 ring-slate-200"
+                    )}
+                  >
+                    {isMutualFollow ? "Mutual" : isFollowingAuthor ? "Following" : "Member"}
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
-          {canModerate && (
-            <div className="flex items-center gap-1.5 opacity-40 hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2">
+            {canFollowAuthor && isAuthenticated && isMutualFollow && onMessageAuthor ? (
               <button
-                onClick={onAdminHide}
-                className="h-8 w-8 rounded-full flex items-center justify-center bg-surface-muted text-muted-foreground hover:bg-brand/10 hover:text-brand transition-colors"
+                type="button"
+                onClick={onMessageAuthor}
+                className="inline-flex min-h-9 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-3.5 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700 transition-all hover:border-emerald-300 hover:bg-emerald-100"
               >
-                <span className="text-[10px] font-black">×</span>
+                Kirim Pesan
               </button>
-            </div>
-          )}
+            ) : null}
+            {canFollowAuthor && isAuthenticated && onToggleFollowAuthor ? (
+              <button
+                type="button"
+                disabled={followBusy}
+                onClick={onToggleFollowAuthor}
+                className={cn(
+                  "inline-flex min-h-9 items-center justify-center rounded-full px-3.5 text-[10px] font-black uppercase tracking-[0.18em] transition-all",
+                  isFollowingAuthor
+                    ? "border border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100"
+                    : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                  followBusy ? "opacity-60" : ""
+                )}
+              >
+                {followBusy ? "..." : isFollowingAuthor ? "Following" : "Follow"}
+              </button>
+            ) : null}
+            {headerMenu}
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 flex flex-col gap-4">
+      <CardContent className="p-0 flex flex-col gap-5">
         {/* Text Above Layout */}
         {hasText && textPosition === "above" && !isTwitterStyle && (
-          <p className="text-[16px] leading-relaxed text-foreground font-medium px-1">
+          <p className="max-w-[42rem] px-1 text-[15px] leading-relaxed text-foreground font-medium md:text-[16px]">
             {normalizedText}
           </p>
         )}
 
         {/* Media Container */}
         {hasImage ? (
-          <CommunityImageCarousel
-            images={media}
-            altBase={authorName ? `Post by ${authorName}` : "Post image"}
-            aspectRatio={aspectRatio}
-          />
+          <div className="flex justify-center">
+            <CommunityImageCarousel
+              images={media}
+              altBase={authorName ? `Post by ${authorName}` : "Post image"}
+              aspectRatio={aspectRatio}
+            />
+          </div>
         ) : null}
 
         {/* Twitter Style Text */}
@@ -228,7 +322,7 @@ export function MemberPostCard({
 
         {/* Standard Text Below */}
         {hasText && textPosition === "below" && !isTwitterStyle && (
-          <p className="text-[16px] leading-relaxed text-foreground font-medium px-1">
+          <p className="max-w-[42rem] px-1 text-[15px] leading-relaxed text-foreground font-medium md:text-[16px]">
             {normalizedText}
           </p>
         )}

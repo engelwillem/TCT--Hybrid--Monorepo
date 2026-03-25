@@ -39,7 +39,12 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
-      const xsrfToken = await warmSanctumCsrf();
+      let xsrfToken: string | null = null;
+      try {
+        xsrfToken = await warmSanctumCsrf();
+      } catch {
+        xsrfToken = null;
+      }
 
       const endpoint = isSignup ? "/api/auth/register" : "/api/auth/login";
       const payload = isSignup
@@ -78,21 +83,28 @@ export default function LoginPage() {
       }
 
       const apiToken = data?.data?.token;
+      const resolvedUser = data?.user || data?.data?.user || null;
       if (typeof apiToken === "string" && apiToken.length > 0) {
         setAppAccessToken(apiToken, "password");
       }
-      if (data?.user) {
+      if (resolvedUser) {
         setAppAuthUser({
-          id: String(data.user.id ?? ""),
-          name: String(data.user.name ?? ""),
-          email: String(data.user.email ?? ""),
+          id: String(resolvedUser.id ?? ""),
+          name: String(resolvedUser.name ?? ""),
+          email: String(resolvedUser.email ?? ""),
+          avatarUrl:
+            typeof resolvedUser.avatarUrl === "string"
+              ? resolvedUser.avatarUrl
+              : typeof resolvedUser.avatar_url === "string"
+                ? resolvedUser.avatar_url
+                : null,
         });
       }
 
       if (data.two_factor_required) {
         router.push(data.redirect_to || "/two-factor-challenge");
       } else {
-        router.push(data.redirect_to || "/today");
+        router.push(data.redirect_to || "/renungan");
       }
     } catch (error) {
       console.error("Auth Client Error:", error);

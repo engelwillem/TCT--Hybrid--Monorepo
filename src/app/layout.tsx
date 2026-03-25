@@ -76,11 +76,9 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [DEFAULT_OG_IMAGE],
     },
     icons: {
-      icon: [
-        { url: '/favicon.svg', type: 'image/svg+xml' },
-        { url: '/favicon.ico', sizes: 'any' },
-      ],
-      shortcut: '/favicon.ico',
+      icon: '/favicon.svg',
+      shortcut: '/favicon.svg',
+      apple: '/favicon.svg',
     },
     other: {
       'app-name': APP_NAME,

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'tct.today.ritual-progress.v1';
+const LEGACY_STORAGE_KEY = STORAGE_KEY;
 
 interface PersistedTodayRitualProgress {
+  sessionScope: string;
   dayKey: string;
   reflectionText: string;
   isReflectDone: boolean;
@@ -12,6 +14,7 @@ interface PersistedTodayRitualProgress {
 }
 
 interface TodayRitualProgressState {
+  sessionScope: string;
   dayKey: string;
   reflectionText: string;
   isReflectDone: boolean;
@@ -44,8 +47,13 @@ function getJakartaDayKey(date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-function getInitialState(dayKey: string): TodayRitualProgressState {
+function buildStorageKey(sessionScope: string): string {
+  return `${STORAGE_KEY}:${sessionScope}`;
+}
+
+function getInitialState(dayKey: string, sessionScope: string): TodayRitualProgressState {
   return {
+    sessionScope,
     dayKey,
     reflectionText: '',
     isReflectDone: false,
@@ -59,9 +67,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function sanitizeProgress(
   raw: PersistedTodayRitualProgress,
-  todayKey: string
+  todayKey: string,
+  sessionScope: string
 ): TodayRitualProgressState | null {
-  if (raw.dayKey !== todayKey) {
+  if (raw.dayKey !== todayKey || raw.sessionScope !== sessionScope) {
     return null;
   }
 
@@ -71,6 +80,7 @@ function sanitizeProgress(
   const isPrayerCompleted = Boolean(raw.isPrayerCompleted) && isReflectDone;
 
   return {
+    sessionScope,
     dayKey: todayKey,
     reflectionText,
     isReflectDone,
@@ -78,35 +88,37 @@ function sanitizeProgress(
   };
 }
 
-function readPersistedProgress(todayKey: string): TodayRitualProgressState | null {
+function readPersistedProgress(todayKey: string, sessionScope: string): TodayRitualProgressState | null {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(buildStorageKey(sessionScope));
     if (!stored) {
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
       return null;
     }
 
     const parsed: unknown = JSON.parse(stored);
     if (!isRecord(parsed)) {
-      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(buildStorageKey(sessionScope));
       return null;
     }
 
     const payload: PersistedTodayRitualProgress = {
+      sessionScope: typeof parsed.sessionScope === 'string' ? parsed.sessionScope : '',
       dayKey: typeof parsed.dayKey === 'string' ? parsed.dayKey : '',
       reflectionText: typeof parsed.reflectionText === 'string' ? parsed.reflectionText : '',
       isReflectDone: Boolean(parsed.isReflectDone),
       isPrayerCompleted: Boolean(parsed.isPrayerCompleted),
     };
 
-    const sanitized = sanitizeProgress(payload, todayKey);
+    const sanitized = sanitizeProgress(payload, todayKey, sessionScope);
     if (!sanitized) {
-      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(buildStorageKey(sessionScope));
       return null;
     }
 
     return sanitized;
   } catch {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(buildStorageKey(sessionScope));
     return null;
   }
 }
@@ -116,35 +128,36 @@ function savePersistedProgress(state: TodayRitualProgressState): void {
     state.reflectionText.trim().length > 0 || state.isReflectDone || state.isPrayerCompleted;
 
   if (!hasMeaningfulProgress) {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(buildStorageKey(state.sessionScope));
     return;
   }
 
   const payload: PersistedTodayRitualProgress = {
+    sessionScope: state.sessionScope,
     dayKey: state.dayKey,
     reflectionText: state.reflectionText,
     isReflectDone: state.isReflectDone,
     isPrayerCompleted: state.isPrayerCompleted,
   };
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  window.localStorage.setItem(buildStorageKey(state.sessionScope), JSON.stringify(payload));
 }
 
-export function useTodayRitualProgress(): UseTodayRitualProgressResult {
+export function useTodayRitualProgress(sessionScope: string): UseTodayRitualProgressResult {
   const [isHydrating, setIsHydrating] = useState(true);
   const [hydrationMode, setHydrationMode] = useState<'fresh' | 'restored'>('fresh');
-  const [state, setState] = useState<TodayRitualProgressState>(() => getInitialState(getJakartaDayKey()));
+  const [state, setState] = useState<TodayRitualProgressState>(() => getInitialState(getJakartaDayKey(), sessionScope));
 
   useEffect(() => {
     const todayKey = getJakartaDayKey();
-    const persisted = readPersistedProgress(todayKey);
+    const persisted = readPersistedProgress(todayKey, sessionScope);
     const readyDelayMs = persisted ? 260 : 140;
 
     if (persisted) {
       setState(persisted);
       setHydrationMode('restored');
     } else {
-      setState(getInitialState(todayKey));
+      setState(getInitialState(todayKey, sessionScope));
       setHydrationMode('fresh');
     }
 
@@ -155,7 +168,7 @@ export function useTodayRitualProgress(): UseTodayRitualProgressResult {
     return () => {
       window.clearTimeout(timerId);
     };
-  }, []);
+  }, [sessionScope]);
 
   useEffect(() => {
     if (isHydrating) {
@@ -163,15 +176,15 @@ export function useTodayRitualProgress(): UseTodayRitualProgressResult {
     }
 
     const todayKey = getJakartaDayKey();
-    if (state.dayKey !== todayKey) {
-      const resetState = getInitialState(todayKey);
+    if (state.dayKey !== todayKey || state.sessionScope !== sessionScope) {
+      const resetState = getInitialState(todayKey, sessionScope);
       setState(resetState);
       savePersistedProgress(resetState);
       return;
     }
 
     savePersistedProgress(state);
-  }, [isHydrating, state]);
+  }, [isHydrating, sessionScope, state]);
 
   const actions = useMemo(
     () => ({

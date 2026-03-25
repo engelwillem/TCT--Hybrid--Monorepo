@@ -292,49 +292,36 @@ body {
     @apply text-[16px] leading-[1.8] text-foreground tracking-[0.01em];
   }
 
-  .reader-prose :where(p) {
-    @apply my-4;
+  /* ... other prose styles ... */
+  
+  /* Modern Scrollbars Utility */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  .reader-prose :where(ul, ol) {
-    @apply my-4 pl-6;
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
   }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full;
+  }
+}
 
-  .reader-prose :where(li) {
-    @apply my-2;
-  }
-
-  .reader-prose :where(a) {
-    @apply underline underline-offset-4 decoration-muted-foreground;
-  }
-
-  .reader-prose a[data-versehub="1"] {
-    color: hsl(var(--brand));
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .reader-prose :where(h1, h2, h3) {
-    @apply tracking-tight mt-8 mb-3 leading-snug;
-  }
-
-  .reader-prose :where(h1) {
-    @apply text-2xl font-bold tracking-[-0.03em];
-  }
-
-  .reader-prose :where(h2) {
-    @apply text-xl font-bold tracking-tight;
-  }
-
-  .reader-prose :where(h3) {
-    @apply text-lg font-bold tracking-tight;
-  }
-
-  .reader-prose :where(blockquote) {
-    @apply my-6 border-l-4 border-slate-200 pl-5 text-muted-foreground italic;
-  }
-
-  .reader-prose :where(hr) {
-    @apply my-8 border-slate-100;
-  }
+/* Global Minimalist Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200/50 rounded-full hover:bg-slate-300 transition-colors;
 }

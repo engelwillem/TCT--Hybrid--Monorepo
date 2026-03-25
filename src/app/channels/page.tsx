@@ -168,16 +168,16 @@ export default function ChannelsPage() {
                 <section className="rounded-[24px] border border-amber-200/70 bg-amber-50/70 p-4 shadow-soft">
                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Transitional Surface</p>
                     <p className="mt-2 text-sm font-semibold text-amber-900">
-                        Channels sedang diturunkan sebagai pilar utama. Untuk pengalaman inti, gunakan Paths untuk journey dan Community untuk respons.
+                        Channels sekarang menjadi pintu eksplorasi konten. Untuk progres pribadi, lanjutkan ke Journey dan gunakan Community untuk respons.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                         <Button
                             type="button"
                             variant="outline"
                             className="h-9 rounded-full border-amber-300 bg-white text-[11px] font-black uppercase tracking-widest text-amber-800 hover:bg-amber-100"
-                            onClick={() => router.push('/paths')}
+                            onClick={() => router.push('/journey')}
                         >
-                            Buka Paths
+                            Buka Journey
                         </Button>
                         <Button
                             type="button"

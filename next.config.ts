@@ -3,6 +3,11 @@ import type {NextConfig} from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
+  experimental: {
+    // Keep production builds in-process on Windows to avoid flaky worker failures.
+    webpackBuildWorker: false,
+    cpus: 1,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

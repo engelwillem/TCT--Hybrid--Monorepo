@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\DirectMessage;
 use App\Models\User;
+use App\Models\UserFollow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -55,5 +56,24 @@ class InboxThreadTest extends TestCase
             ->assertOk();
 
         $this->assertCount(20, $second->json('messages'));
+    }
+
+    public function test_thread_payload_includes_follow_relationship_state(): void
+    {
+        $me = User::factory()->create();
+        $partner = User::factory()->create();
+
+        UserFollow::query()->create([
+            'follower_id' => $me->id,
+            'followed_id' => $partner->id,
+        ]);
+
+        $response = $this->actingAs($me)
+            ->getJson(route('inbox.show', ['user' => $partner->id]))
+            ->assertOk();
+
+        $response->assertJsonPath('partner.relationship.is_following_partner', true);
+        $response->assertJsonPath('partner.relationship.is_followed_by_partner', false);
+        $response->assertJsonPath('partner.relationship.is_mutual_follow', false);
     }
 }

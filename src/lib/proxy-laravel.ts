@@ -100,14 +100,17 @@ export async function proxyLaravel(request: NextRequest, targetPath: string): Pr
       if (cookieValue) responseHeaders.set("set-cookie", cookieValue);
     }
 
-    // Ensure we always have a content-type
-    if (!responseHeaders.has("content-type")) {
+    const isBodylessStatus = [204, 205, 304].includes(response.status);
+
+    // Ensure we always have a content-type for body-carrying responses only.
+    if (!isBodylessStatus && !responseHeaders.has("content-type")) {
       responseHeaders.set("content-type", "application/json");
     }
 
     // Buffer the upstream payload before returning it.
     // Some edge runtimes are brittle when piping the original ReadableStream directly.
-    const responseBody = request.method === "HEAD" ? null : await response.arrayBuffer();
+    const responseBody =
+      request.method === "HEAD" || isBodylessStatus ? null : await response.arrayBuffer();
 
     return new NextResponse(responseBody, {
       status: response.status,

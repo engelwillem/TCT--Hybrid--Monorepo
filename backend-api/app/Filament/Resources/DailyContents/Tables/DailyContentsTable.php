@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DailyContents\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -65,7 +66,7 @@ class DailyContentsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                \Filament\Tables\Actions\Action::make('approve')
+                Action::make('approve')
                     ->label('Approve')
                     ->icon('heroicon-m-check')
                     ->color('success')

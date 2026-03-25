@@ -22,14 +22,22 @@ function readCookie(name: string): string | null {
 }
 
 export async function warmSanctumCsrf(): Promise<string | null> {
-  const response = await fetch("/api/sanctum/csrf-cookie", {
-    method: "GET",
-    credentials: "same-origin",
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch("/api/sanctum/csrf-cookie", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    throw new Error(`CSRF warmup failed with status ${response.status}`);
+    if (!response.ok) {
+      // Login/register in this app use token endpoints and can continue without Sanctum cookies.
+      console.warn(`CSRF warmup skipped with status ${response.status}`);
+      return null;
+    }
+  } catch (error) {
+    // Local Laravel may be offline during frontend-only work; don't block auth requests here.
+    console.warn("CSRF warmup skipped because the endpoint is unreachable.", error);
+    return null;
   }
 
   return readCookie("XSRF-TOKEN");
@@ -39,6 +47,7 @@ export function buildSanctumJsonHeaders(xsrfToken?: string | null): HeadersInit 
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
     ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
   };
 }

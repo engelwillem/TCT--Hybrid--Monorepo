@@ -1,7 +1,7 @@
-import { BookOpenText, House, Settings, Users, Route } from 'lucide-react';
+import { BookOpenText, House, Settings, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type UiNavId = 'today' | 'versehub' | 'paths' | 'community' | 'profile';
+export type UiNavId = 'today' | 'versehub' | 'community' | 'profile';
 
 export type UiNavItem = {
     id: UiNavId;
@@ -11,9 +11,8 @@ export type UiNavItem = {
 };
 
 export const uiNavItems: UiNavItem[] = [
-    { id: 'today', label: 'Today', icon: House, href: '/today' },
+    { id: 'today', label: 'Renungan', icon: House, href: '/renungan' },
     { id: 'versehub', label: 'VerseHub', icon: BookOpenText, href: '/versehub/id' },
-    { id: 'paths', label: 'Paths', icon: Route, href: '/paths' },
     { id: 'community', label: 'Community', icon: Users, href: '/community' },
     { id: 'profile', label: 'Profile', icon: Settings, href: '/profile' },
 ];

@@ -29,7 +29,7 @@ type MobileAppLayoutProps = {
 export default function MobileAppLayout({
     title,
     activeNavId,
-    backHref = '/today',
+    backHref = '/renungan',
     header,
     rightAction,
     desktopSidebarExtra,

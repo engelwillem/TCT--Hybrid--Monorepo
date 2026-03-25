@@ -9,6 +9,7 @@ type QuoteCardProps = {
   authorName?: string | null;
   className?: string;
   actionSlot?: ReactNode;
+  headerActionSlot?: ReactNode;
   compact?: boolean;
 };
 
@@ -26,6 +27,7 @@ export function QuoteCard({
   authorName,
   className,
   actionSlot,
+  headerActionSlot,
   compact = false,
 }: QuoteCardProps) {
   const cleanQuote = stripMarkdownPrefix(quote);
@@ -33,6 +35,11 @@ export function QuoteCard({
   return (
     <Card className={cn("rounded-[40px] bg-surface/80 shadow-card border border-border/60 overflow-hidden transition-all duration-500 hover:shadow-2xl backdrop-blur-md", className)}>
       <CardContent className={cn("relative space-y-8 flex flex-col items-center text-center", compact ? "p-10" : "p-12 md:p-16")}>
+        {headerActionSlot ? (
+          <div className="absolute right-5 top-5 z-20">
+            {headerActionSlot}
+          </div>
+        ) : null}
         {/* Decorative Quote Mark Background */}
         <div className="absolute left-6 top-8 text-brand/10 select-none -z-0">
           <svg width="180" height="180" viewBox="0 0 24 24" fill="currentColor">

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bookmark, Share2, Book } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DailyVerse } from '@/types/versehub-daily';
+import { getVerseShareUrl } from '@/lib/share';
 
 const isIos = () => typeof navigator !== 'undefined' && /iP(hone|od|ad)/.test(navigator.userAgent || '');
 
@@ -49,7 +50,7 @@ export default function DailyVerseHeroCard({
         setOrigin(window.location.origin);
     }, []);
     
-    const canonicalUrl = `${origin}${heroRefHref}`;
+    const canonicalUrl = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${origin}${heroRefHref}`;
     const quoteHeadline = heroQuote;
     const quoteSubline = 'Tetap kuat, tetap berharap, dan terus berjalan bersama Tuhan.';
     const refLine = `${heroRefLabel} • Ayat hari ini`;

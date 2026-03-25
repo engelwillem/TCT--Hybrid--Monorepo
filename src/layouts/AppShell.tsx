@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAuthSurface = pathname === "/login" || pathname === "/forgot-password" || pathname === "/reset-password";
   const isReader = pathname.includes('/versehub/');
   // Full-screen routes manage their own layout — shell provides no columns or padding
-  const isTodayRitual = pathname === '/today';
+  const isTodayRitual = pathname === '/today' || pathname === '/renungan';
   // Landing renders its own full-viewport layout
   const isFullBleed = isLanding;
 

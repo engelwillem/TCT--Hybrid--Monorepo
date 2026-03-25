@@ -11,6 +11,27 @@ use Illuminate\Support\Collection;
 
 class DirectMessageController extends Controller
 {
+    private function relationshipState(int $authUserId, int $partnerId): array
+    {
+        $authFollowsPartner = User::query()
+            ->findOrFail($authUserId)
+            ->following()
+            ->where('users.id', $partnerId)
+            ->exists();
+
+        $partnerFollowsAuth = User::query()
+            ->findOrFail($partnerId)
+            ->following()
+            ->where('users.id', $authUserId)
+            ->exists();
+
+        return [
+            'is_following_partner' => $authFollowsPartner,
+            'is_followed_by_partner' => $partnerFollowsAuth,
+            'is_mutual_follow' => $authFollowsPartner && $partnerFollowsAuth,
+        ];
+    }
+
     public function store(Request $request): JsonResponse
     {
         $auth = $request->user();
@@ -30,16 +51,21 @@ class DirectMessageController extends Controller
         }
 
         $recipient = User::query()->findOrFail($recipientId);
-        $recipientFollowsSender = $recipient
-            ->following()
-            ->where('users.id', $auth->id)
-            ->exists();
+        $relationship = $this->relationshipState((int) $auth->id, $recipientId);
+
+        if (! $relationship['is_mutual_follow']) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Kalian harus saling follow terlebih dahulu sebelum mengirim pesan.',
+                'relationship' => $relationship,
+            ], 403);
+        }
 
         $message = DirectMessage::query()->create([
             'sender_id' => $auth->id,
             'recipient_id' => $recipientId,
             'body' => trim((string) $validated['body']),
-            'approved_at' => $recipientFollowsSender ? Carbon::now() : null,
+            'approved_at' => Carbon::now(),
         ]);
 
         return response()->json([
@@ -76,6 +102,8 @@ class DirectMessageController extends Controller
         abort_unless($auth, 401);
         abort_if((int) $auth->id === (int) $user->id, 404);
 
+        $relationship = $this->relationshipState((int) $auth->id, (int) $user->id);
+
         $this->markIncomingAsRead((int) $auth->id, (int) $user->id);
         $beforeId = $request->integer('before_id');
         $limit = min(50, max(10, $request->integer('limit', 30)));
@@ -89,6 +117,7 @@ class DirectMessageController extends Controller
                 'name' => (string) $user->name,
                 'online' => $user->last_seen_at?->gte(now()->subMinutes(2)) ?? false,
                 'last_seen_at' => optional($user->last_seen_at)?->toISOString(),
+                'relationship' => $relationship,
             ],
         ]);
     }

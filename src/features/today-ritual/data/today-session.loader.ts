@@ -11,9 +11,17 @@ type LoadTodaySessionContentOptions = {
   forwardedHeaders?: HeadersInit;
 };
 
-export async function loadTodaySessionContent(
+export type LoadedTodaySession = {
+  content: TodaySessionContent;
+  diagnostics: {
+    sourceStatus: 'external' | 'fallback_only';
+    hasOfflineFallback: boolean;
+  };
+};
+
+export async function loadTodaySessionContentWithDiagnostics(
   options: LoadTodaySessionContentOptions = {}
-): Promise<TodaySessionContent> {
+): Promise<LoadedTodaySession> {
   const strictIntegrationMode = process.env.TODAY_STRICT_INTEGRATION === 'true';
   const integrationTraceMode = process.env.TODAY_INTEGRATION_TRACE === 'true';
 
@@ -103,6 +111,18 @@ export async function loadTodaySessionContent(
     }
   }
 
-  return content;
+  return {
+    content,
+    diagnostics: {
+      sourceStatus: diagnostics.sourceStatus,
+      hasOfflineFallback: diagnostics.sourceStatus === 'fallback_only',
+    },
+  };
 }
 
+export async function loadTodaySessionContent(
+  options: LoadTodaySessionContentOptions = {}
+): Promise<TodaySessionContent> {
+  const loaded = await loadTodaySessionContentWithDiagnostics(options);
+  return loaded.content;
+}

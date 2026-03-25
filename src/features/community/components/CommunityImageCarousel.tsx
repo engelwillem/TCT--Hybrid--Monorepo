@@ -1,14 +1,40 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+type MediaAspectRatio = "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
 
 type CommunityImageCarouselProps = {
   images: string[];
   altBase?: string;
-  aspectRatio?: "4:5" | "og" | "auto";
+  aspectRatio?: MediaAspectRatio;
   className?: string;
 };
+
+function getRatioClass(aspectRatio: MediaAspectRatio): string {
+  if (aspectRatio === "9:16") return "aspect-[9/16]";
+  if (aspectRatio === "4:5") return "aspect-[4/5]";
+  if (aspectRatio === "1:1") return "aspect-square";
+  if (aspectRatio === "16:9") return "aspect-video";
+  if (aspectRatio === "og") return "aspect-[1.91/1]";
+  return "aspect-[1.08/1]";
+}
+
+function getViewportWidthClass(aspectRatio: MediaAspectRatio): string {
+  if (aspectRatio === "9:16") {
+    return "mx-auto w-[min(100%,15rem)] sm:w-[min(100%,16rem)] md:w-[min(100%,20rem)] lg:w-[min(100%,24rem)]";
+  }
+  if (aspectRatio === "1:1") {
+    return "w-full max-w-[32rem] md:max-w-[36rem] lg:max-w-[40rem]";
+  }
+  if (aspectRatio === "og") {
+    return "w-full max-w-[36rem] md:max-w-[42rem] lg:max-w-[48rem]";
+  }
+  return "w-full max-w-[34rem] md:max-w-[40rem] lg:max-w-[46rem]";
+}
 
 export function CommunityImageCarousel({
   images,
@@ -18,13 +44,11 @@ export function CommunityImageCarousel({
 }: CommunityImageCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const total = images.length;
 
-  const ratioClass = useMemo(() => {
-    if (aspectRatio === "4:5") return "aspect-[4/5]";
-    if (aspectRatio === "og") return "aspect-[1.91/1]";
-    return "aspect-[1.08/1]";
-  }, [aspectRatio]);
+  const ratioClass = useMemo(() => getRatioClass(aspectRatio), [aspectRatio]);
+  const viewportWidthClass = useMemo(() => getViewportWidthClass(aspectRatio), [aspectRatio]);
 
   const updateActiveByScroll = useCallback(() => {
     const scroller = scrollerRef.current;
@@ -37,64 +61,144 @@ export function CommunityImageCarousel({
     }
   }, [activeIndex, total]);
 
+  const openViewer = (index: number) => {
+    setActiveIndex(index);
+    setViewerOpen(true);
+  };
+
+  const stepViewer = (direction: "prev" | "next") => {
+    setActiveIndex((prev) => {
+      if (direction === "prev") return Math.max(0, prev - 1);
+      return Math.min(total - 1, prev + 1);
+    });
+  };
+
   if (total === 0) return null;
 
-  if (total === 1) {
-    return (
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl ring-1 ring-border/60 bg-surface-muted",
-          ratioClass,
-          className
-        )}
-      >
-        <img
-          src={images[0]}
-          alt={altBase}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className={cn("relative", className)}>
-      <div
-        ref={scrollerRef}
-        onScroll={updateActiveByScroll}
-        className={cn(
-          "relative flex overflow-x-auto scroll-smooth snap-x snap-mandatory touch-pan-x",
-          "rounded-2xl ring-1 ring-border/60 bg-surface-muted scrollbar-hide",
-          ratioClass
+    <>
+      <div className={cn("relative", viewportWidthClass, className)}>
+        {total === 1 ? (
+          <button
+            type="button"
+            onClick={() => openViewer(0)}
+            className={cn(
+              "relative block w-full overflow-hidden rounded-2xl ring-1 ring-border/60 bg-surface-muted",
+              ratioClass
+            )}
+          >
+            <img src={images[0]} alt={altBase} className="h-full w-full object-cover" loading="lazy" />
+          </button>
+        ) : (
+          <>
+            <div
+              ref={scrollerRef}
+              onScroll={updateActiveByScroll}
+              className={cn(
+                "relative flex overflow-x-auto scroll-smooth snap-x snap-mandatory touch-pan-x rounded-2xl ring-1 ring-border/60 bg-surface-muted scrollbar-hide",
+                ratioClass
+              )}
+            >
+              {images.map((src, idx) => (
+                <button
+                  key={`${src}-${idx}`}
+                  type="button"
+                  onClick={() => openViewer(idx)}
+                  className="h-full w-full shrink-0 snap-start"
+                >
+                  <img
+                    src={src}
+                    alt={`${altBase} ${idx + 1}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    draggable={false}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center gap-1.5">
+              {images.map((_, idx) => (
+                <span
+                  key={`dot-${idx}`}
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full transition-colors duration-200",
+                    idx === activeIndex ? "bg-white/88" : "bg-white/45"
+                  )}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+          </>
         )}
-      >
-        {images.map((src, idx) => (
-          <div key={`${src}-${idx}`} className="h-full w-full shrink-0 snap-start">
-            <img
-              src={src}
-              alt={`${altBase} ${idx + 1}`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-              draggable={false}
-            />
-          </div>
-        ))}
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center gap-1.5">
-        {images.map((_, idx) => (
-          <span
-            key={`dot-${idx}`}
-            className={cn(
-              "h-1.5 w-1.5 rounded-full transition-colors duration-200",
-              idx === activeIndex ? "bg-white/88" : "bg-white/45"
-            )}
-            aria-hidden="true"
-          />
-        ))}
-      </div>
-    </div>
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="h-[100dvh] max-h-none w-screen max-w-none border-none bg-black/96 p-0 text-white">
+          <div className="relative flex h-full flex-col">
+            <div className="flex items-center justify-between px-4 py-4">
+              <span className="text-[11px] font-black uppercase tracking-[0.22em] text-white/70">
+                {activeIndex + 1} / {total}
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewerOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-6">
+              {total > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => stepViewer("prev")}
+                  disabled={activeIndex === 0}
+                  className="absolute left-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-35"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+              ) : null}
+
+              <img
+                src={images[activeIndex]}
+                alt={`${altBase} ${activeIndex + 1}`}
+                className="max-h-full max-w-full object-contain"
+              />
+
+              {total > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => stepViewer("next")}
+                  disabled={activeIndex === total - 1}
+                  className="absolute right-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-35"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              ) : null}
+            </div>
+
+            {total > 1 ? (
+              <div className="flex gap-2 overflow-x-auto px-4 pb-4 scrollbar-hide">
+                {images.map((src, idx) => (
+                  <button
+                    key={`viewer-thumb-${idx}`}
+                    type="button"
+                    onClick={() => setActiveIndex(idx)}
+                    className={cn(
+                      "relative h-20 w-16 shrink-0 overflow-hidden rounded-2xl border transition-all",
+                      idx === activeIndex ? "border-white shadow-[0_0_0_1px_rgba(255,255,255,0.25)]" : "border-white/10 opacity-70"
+                    )}
+                  >
+                    <img src={src} alt={`${altBase} thumbnail ${idx + 1}`} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
-

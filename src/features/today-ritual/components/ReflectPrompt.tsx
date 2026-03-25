@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMotionConfig } from '../hooks/useMotionConfig';
 
 interface ReflectPromptProps {
+  title?: string | null;
   placeholder: string;
   ctaLabel: string;
   sealedLabel: string;
@@ -16,6 +17,7 @@ interface ReflectPromptProps {
 }
 
 export default function ReflectPrompt({
+  title = null,
   prompt,
   placeholder,
   ctaLabel,
@@ -33,12 +35,18 @@ export default function ReflectPrompt({
   return (
     <section className="flex flex-col mt-6 px-6" aria-labelledby={`${textareaId}-heading`}>
       {/* h2: major ritual section under the h1 page title */}
-      <h2
-        id={`${textareaId}-heading`}
-        className="text-[12px] font-medium text-foreground/40 tracking-wide mb-3"
-      >
-        Refleksi
-      </h2>
+      {title ? (
+        <h2
+          id={`${textareaId}-heading`}
+          className="text-[12px] font-medium text-foreground/40 tracking-wide mb-3"
+        >
+          {title}
+        </h2>
+      ) : (
+        <span id={`${textareaId}-heading`} className="sr-only">
+          Renungan
+        </span>
+      )}
 
       {/* The prompt is the label for the textarea. Using <label> for explicit association. */}
       <label
@@ -73,13 +81,15 @@ export default function ReflectPrompt({
                 onClick={onContinue}
                 // Explicit aria-label provides full context for screen reader users
                 aria-label={isFilled ? `${ctaLabel} refleksiku` : ctaLabel}
-                className={`rounded-full px-6 py-[10px] text-[14px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                className={`group rounded-full px-6 py-[10px] text-[14px] font-medium transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   isFilled
-                    ? 'bg-black text-white active:scale-95 shadow-[0_4px_16px_rgba(0,0,0,0.12)]'
+                    ? 'bg-black text-white shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] hover:shadow-[0_22px_44px_-24px_rgba(14,165,233,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-95'
                     : 'bg-transparent text-foreground/20'
                 }`}
               >
-                {ctaLabel}
+                <span className={isFilled ? 'inline-block transition-transform duration-400 ease-out group-hover:translate-x-[1px]' : undefined}>
+                  {ctaLabel}
+                </span>
               </button>
             </div>
           </motion.div>

@@ -11,6 +11,15 @@ export function FirebaseAuthSync() {
 
     const auth = getAuth(getApps()[0]);
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      const failSync = async () => {
+        clearAppAccessToken();
+        try {
+          await signOut(auth);
+        } catch {
+          // no-op
+        }
+      };
+
       // 1. If Firebase says user is logged out
       if (!user) {
         if (typeof window !== "undefined" && window.localStorage.getItem('e2e_bypass_token')) {
@@ -45,20 +54,23 @@ export function FirebaseAuthSync() {
       // 2. If Firebase user exists, ensure sync
       try {
         const idToken = await user.getIdToken();
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 12000);
         const response = await fetch("/api/auth/firebase/sync", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
+          signal: controller.signal,
           body: JSON.stringify({ idToken }),
+        }).finally(() => {
+          window.clearTimeout(timeoutId);
         });
 
         // 3. Handle auth rejection from backend
         if (!response.ok) {
-          if (shouldInvalidateLocalSession(response.status)) {
-            // If backend rejects identity, force client logout
-            clearAppAccessToken();
-            await signOut(auth);
+          if (shouldInvalidateLocalSession(response.status) || response.status >= 400) {
+            await failSync();
           }
           return;
         }
@@ -78,10 +90,9 @@ export function FirebaseAuthSync() {
           return;
         }
 
-        // Keep the previous token if the sync payload is malformed.
-        // A broken refresh response should not feel like an instant logout.
+        await failSync();
       } catch {
-        // Keep the previous token when the backend is temporarily unreachable.
+        await failSync();
       }
     });
 

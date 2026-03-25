@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTodayRitualProgress } from './useTodayRitualProgress';
 
 const STORAGE_KEY = 'tct.today.ritual-progress.v1';
+const SESSION_SCOPE = 'member:tester@example.com';
+
+function getScopedStorageKey(sessionScope: string): string {
+  return `${STORAGE_KEY}:${sessionScope}`;
+}
 
 function getJakartaDayKey(date = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -33,8 +38,9 @@ describe('useTodayRitualProgress', () => {
   it('restores same-day progress from localStorage', async () => {
     vi.setSystemTime(new Date('2026-03-21T03:00:00.000Z'));
     localStorage.setItem(
-      STORAGE_KEY,
+      getScopedStorageKey(SESSION_SCOPE),
       JSON.stringify({
+        sessionScope: SESSION_SCOPE,
         dayKey: getJakartaDayKey(new Date('2026-03-21T03:00:00.000Z')),
         reflectionText: 'Hari ini aku menyerahkan kekuatiranku',
         isReflectDone: true,
@@ -42,7 +48,7 @@ describe('useTodayRitualProgress', () => {
       })
     );
 
-    const { result } = renderHook(() => useTodayRitualProgress());
+    const { result } = renderHook(() => useTodayRitualProgress(SESSION_SCOPE));
 
     await act(async () => {
       vi.advanceTimersByTime(300);
@@ -61,8 +67,9 @@ describe('useTodayRitualProgress', () => {
     vi.setSystemTime(dayOne);
 
     localStorage.setItem(
-      STORAGE_KEY,
+      getScopedStorageKey(SESSION_SCOPE),
       JSON.stringify({
+        sessionScope: SESSION_SCOPE,
         dayKey: getJakartaDayKey(dayOne),
         reflectionText: 'Refleksi hari ini',
         isReflectDone: true,
@@ -70,7 +77,7 @@ describe('useTodayRitualProgress', () => {
       })
     );
 
-    const { result } = renderHook(() => useTodayRitualProgress());
+    const { result } = renderHook(() => useTodayRitualProgress(SESSION_SCOPE));
 
     await act(async () => {
       vi.advanceTimersByTime(300);
@@ -97,9 +104,9 @@ describe('useTodayRitualProgress', () => {
   });
 
   it('sanitizes invalid persisted state and starts fresh', async () => {
-    localStorage.setItem(STORAGE_KEY, '{ invalid-json');
+    localStorage.setItem(getScopedStorageKey(SESSION_SCOPE), '{ invalid-json');
 
-    const { result } = renderHook(() => useTodayRitualProgress());
+    const { result } = renderHook(() => useTodayRitualProgress(SESSION_SCOPE));
 
     await act(async () => {
       vi.advanceTimersByTime(200);
@@ -109,6 +116,6 @@ describe('useTodayRitualProgress', () => {
     expect(result.current.isHydrating).toBe(false);
     expect(result.current.hydrationMode).toBe('fresh');
     expect(result.current.reflectionText).toBe('');
-    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(getScopedStorageKey(SESSION_SCOPE))).toBeNull();
   });
 });

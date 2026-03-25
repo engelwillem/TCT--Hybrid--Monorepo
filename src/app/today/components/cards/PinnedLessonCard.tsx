@@ -65,7 +65,7 @@ export default function PinnedLessonCard({ pinned }: Props) {
                             {ctaLabel}
                         </Button>
                         <Button asChild variant="outline" className="tct-pressable rounded-xl font-bold tracking-wide active:scale-95">
-                            <Link href="/paths">View Path</Link>
+                            <Link href="/journey">View Journey</Link>
                         </Button>
                     </div>
 

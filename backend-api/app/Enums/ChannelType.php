@@ -10,6 +10,7 @@ enum ChannelType: string
     case PRIVATE = 'private';
     case ARCHIVED = 'archived';
     case COMMUNITY = 'community';
+    case VERSEHUB = 'versehub';
     case VERSEHUB_DAILY = 'versehub-daily';
 
     public function label(): string
@@ -21,6 +22,7 @@ enum ChannelType: string
             self::PRIVATE => 'Privat / Terbatas',
             self::ARCHIVED => 'Arsip',
             self::COMMUNITY => 'Komunitas',
+            self::VERSEHUB => 'VerseHub',
             self::VERSEHUB_DAILY => 'VerseHub Daily',
         };
     }

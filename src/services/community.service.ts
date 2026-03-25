@@ -35,7 +35,14 @@ interface ApiPost {
   media_paths?: string[] | null;
   is_featured?: boolean;
   can_moderate?: boolean;
-  metadata?: any;
+  metadata?: {
+    media_aspect_ratio?: "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
+    text_position?: "above" | "below";
+    imageUrl?: string;
+    ref?: string;
+    reference?: string;
+    quote?: string;
+  } | null;
   createdAt?: string;
   created_at: string;
   author: {
@@ -131,7 +138,7 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
     .filter((item): item is string => Boolean(item)),
   isFeatured: Boolean(post.is_featured),
   can_moderate: Boolean(post.can_moderate),
-  metadata: post.metadata,
+  metadata: post.metadata ?? undefined,
   createdAt: post.createdAt || post.created_at,
   author: {
     id: String(post.author?.id || ""),
@@ -180,9 +187,20 @@ async function assertOk(response: Response, message: string): Promise<void> {
   throw new ApiError(`${message}: ${response.status}`, response.status);
 }
 
+async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, attempts = 2): Promise<Response> {
+  let response = await fetch(input, init);
+
+  for (let attempt = 1; attempt < attempts && response.status >= 500; attempt += 1) {
+    await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
+    response = await fetch(input, init);
+  }
+
+  return response;
+}
+
 export const CommunityService = {
   async listPosts(): Promise<{ posts: CommunityPost[]; archivePosts: CommunityPost[] }> {
-    const response = await fetch("/api/community/posts", {
+    const response = await fetchWithRetry("/api/community/posts", {
       method: "GET",
       cache: "no-store",
       headers: buildHeaders(true),
@@ -196,10 +214,18 @@ export const CommunityService = {
     };
   },
 
-  async createPost(text: string, type: string = 'user_post', images: File[] = []): Promise<CommunityPost> {
+  async createPost(
+    text: string,
+    type: string = 'user_post',
+    images: File[] = [],
+    metadata?: { media_aspect_ratio?: string }
+  ): Promise<CommunityPost> {
     const formData = new FormData();
     formData.append('text', text);
     formData.append('type', type);
+    if (metadata?.media_aspect_ratio) {
+      formData.append('metadata[media_aspect_ratio]', metadata.media_aspect_ratio);
+    }
     images.forEach((file) => {
       formData.append('images[]', file);
     });
@@ -215,6 +241,15 @@ export const CommunityService = {
     if (!payload?.data?.post) throw new ApiError("Malformed response", 502);
     
     return mapApiPost(payload.data.post);
+  },
+
+  async deletePost(postId: string): Promise<void> {
+    const response = await fetch(`/api/community/posts?postId=${encodeURIComponent(postId)}`, {
+      method: "DELETE",
+      headers: buildHeaders(true),
+    });
+
+    await assertOk(response, "Failed to delete post");
   },
 
   async toggleLike(postId: string): Promise<CommunityPost> {

@@ -3,6 +3,9 @@ export interface CommunityUser {
   name: string;
   avatarUrl?: string;
   isOfficial?: boolean;
+  isFollowing?: boolean;
+  isFollowedBy?: boolean;
+  isMutualFollow?: boolean;
 }
 
 export interface CommunityComment {
@@ -39,7 +42,7 @@ export interface CommunityPost {
     ref?: string;
     reference?: string;
     quote?: string;
-    media_aspect_ratio?: "4:5" | "og" | "auto";
+    media_aspect_ratio?: "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
     text_position?: "above" | "below";
     imageUrl?: string;
   };

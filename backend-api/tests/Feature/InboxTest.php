@@ -93,4 +93,37 @@ class InboxTest extends TestCase
 
         $this->assertSame(0, $unread);
     }
+
+    public function test_sending_message_requires_mutual_follow(): void
+    {
+        $me = User::factory()->create();
+        $partner = User::factory()->create();
+
+        UserFollow::query()->create([
+            'follower_id' => $me->id,
+            'followed_id' => $partner->id,
+        ]);
+
+        $this->actingAs($me)
+            ->postJson('/api/v1/inbox/messages', [
+                'recipient_id' => $partner->id,
+                'body' => 'Halo partner',
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('ok', false);
+
+        UserFollow::query()->create([
+            'follower_id' => $partner->id,
+            'followed_id' => $me->id,
+        ]);
+
+        $this->actingAs($me)
+            ->postJson('/api/v1/inbox/messages', [
+                'recipient_id' => $partner->id,
+                'body' => 'Halo partner',
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('message.approved', true);
+    }
 }

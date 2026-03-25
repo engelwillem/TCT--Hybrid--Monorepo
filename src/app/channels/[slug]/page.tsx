@@ -42,6 +42,7 @@ export default function WeeklyChannelIndexPage() {
     const [posts, setPosts] = useState<Post[]>([]);
     const [memberPosts, setMemberPosts] = useState<MemberPost[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!slug) return;
@@ -49,6 +50,7 @@ export default function WeeklyChannelIndexPage() {
         let isActive = true;
         const load = async () => {
             try {
+                setLoadError(null);
                 const token = getAppAccessToken();
                 const response = await fetch(`/api/channels/${slug}`, {
                     method: 'GET',
@@ -58,15 +60,19 @@ export default function WeeklyChannelIndexPage() {
                     },
                     cache: 'no-store',
                 });
-                if (!response.ok) return;
+                if (!response.ok) {
+                    throw new Error(response.status === 404 ? 'not_found' : 'fetch_failed');
+                }
                 const payload = await response.json();
                 if (!isActive) return;
 
                 setChannel(payload.channel ?? null);
                 setPosts(Array.isArray(payload.posts) ? payload.posts : []);
                 setMemberPosts(Array.isArray(payload.memberPosts) ? payload.memberPosts : []);
-            } catch {
-                // Keep UI stable when API is unreachable.
+            } catch (error) {
+                if (!isActive) return;
+                setLoadError(error instanceof Error ? error.message : 'fetch_failed');
+                setChannel(null);
             } finally {
                 if (isActive) setLoading(false);
             }
@@ -102,10 +108,32 @@ export default function WeeklyChannelIndexPage() {
         }
     };
 
-    if (loading || !channel) {
+    if (loading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="h-10 w-10 border-4 border-foreground border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (!channel) {
+        return (
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+                <div className="w-full max-w-md rounded-[32px] border border-border/60 bg-surface p-8 text-center shadow-soft">
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-muted-foreground">
+                        {loadError === 'not_found' ? 'Channel tidak ditemukan' : 'Channel belum tersedia'}
+                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                        Halaman channel belum bisa dimuat sekarang. Kembali ke katalog untuk membuka channel lain.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/channels')}
+                        className="mt-6 inline-flex rounded-full bg-foreground px-5 py-2.5 text-xs font-bold text-background shadow-soft transition hover:bg-foreground/90"
+                    >
+                        Kembali ke Channels
+                    </button>
+                </div>
             </div>
         );
     }

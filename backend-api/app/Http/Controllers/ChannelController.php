@@ -30,9 +30,13 @@ class ChannelController extends Controller
             END")
             ->get(['id', 'slug', 'title', 'description', 'cover_image_url', 'type']);
 
+        if ($channels->isEmpty()) {
+            $channels = collect($this->fallbackChannels());
+        }
+
         $sabbathChannel = $channels->firstWhere('slug', 'sabbath-school');
         $nonSabbathChannels = $channels
-            ->filter(fn (Channel $channel) => $channel->slug !== 'sabbath-school')
+            ->filter(fn ($channel) => data_get($channel, 'slug') !== 'sabbath-school')
             ->values();
 
         $quarters = SsQuarter::query()
@@ -150,5 +154,51 @@ class ChannelController extends Controller
                 'todayTarget' => $todayTarget,
             ],
         ]);
+    }
+
+    private function fallbackChannels(): array
+    {
+        return [
+            [
+                'id' => 0,
+                'slug' => 'sabbath-school',
+                'title' => 'SabbathSchool',
+                'description' => 'Pelajaran 1-13',
+                'cover_image_url' => null,
+                'type' => 'sabbath_school',
+                'members_count' => 0,
+                'is_joined' => false,
+            ],
+            [
+                'id' => 0,
+                'slug' => 'god-first',
+                'title' => 'GodFirst',
+                'description' => '(Sabtu)',
+                'cover_image_url' => null,
+                'type' => 'weekly',
+                'members_count' => 0,
+                'is_joined' => false,
+            ],
+            [
+                'id' => 0,
+                'slug' => 'faith-journey',
+                'title' => 'FaithJourney',
+                'description' => '(Sabtu)',
+                'cover_image_url' => null,
+                'type' => 'weekly',
+                'members_count' => 0,
+                'is_joined' => false,
+            ],
+            [
+                'id' => 0,
+                'slug' => 'family',
+                'title' => 'Family',
+                'description' => '(Minggu)',
+                'cover_image_url' => null,
+                'type' => 'weekly',
+                'members_count' => 0,
+                'is_joined' => false,
+            ],
+        ];
     }
 }

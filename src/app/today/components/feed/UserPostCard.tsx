@@ -6,6 +6,8 @@ import { useMemo, useState } from 'react';
 import ActionBar from '@/components/ActionBar';
 import { cn } from '@/lib/utils';
 import { CommunityService } from '@/services/community.service';
+import { getCommunityShareUrl } from '@/lib/share';
+import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
 
 export default function UserPostCard({
     id,
@@ -32,7 +34,9 @@ export default function UserPostCard({
 }) {
     const userName = payload.author?.name ?? payload.user?.name ?? 'Anonymous';
     const avatar = payload.author?.avatar_url ?? payload.user?.avatar;
+    const authorId = payload.author && 'id' in payload.author ? String((payload.author as { id?: string | number }).id ?? '') : '';
     const content = payload.text ?? payload.content ?? '';
+    const avatarPresentation = useCurrentUserAvatarStyle(avatar, { id: authorId, name: userName }, 40);
 
     const media = useMemo(() => {
         if (Array.isArray(payload.media_paths) && payload.media_paths.length > 0) {
@@ -88,7 +92,12 @@ export default function UserPostCard({
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-surface-muted flex items-center justify-center text-foreground font-bold overflow-hidden border border-border/60">
                             {avatar ? (
-                                <img src={avatar} alt={userName} className="h-full w-full object-cover" />
+                                <img
+                                    src={avatar}
+                                    alt={userName}
+                                    className={cn("h-full w-full object-cover", avatarPresentation.className)}
+                                    style={avatarPresentation.style}
+                                />
                             ) : (
                                 userName.charAt(0)
                             )}
@@ -174,12 +183,16 @@ export default function UserPostCard({
                         onPray={toggleLike}
                         onOpenComments={() => { }}
                         onShare={() => {
+                            if (!postId) return;
+                            const shareUrl = getCommunityShareUrl(postId);
                             if (navigator.share) {
                                 navigator.share({
                                     title: userName,
                                     text: content,
-                                    url: window.location.href
+                                    url: shareUrl
                                 });
+                            } else {
+                                window.open(`https://wa.me/?text=${encodeURIComponent(`${content} ${shareUrl}`)}`, '_blank', 'noopener,noreferrer');
                             }
                         }}
                         onBookmark={() => { }}

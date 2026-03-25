@@ -44,7 +44,11 @@ function buildCandidateBaseUrls(): string[] {
 
   if (explicitCandidates.length > 0) {
     const merged = [...explicitCandidates];
-    if (process.env.NODE_ENV !== "production") {
+    const needsLocalLoopbackFallback = explicitCandidates.some((candidate) =>
+      DEFAULT_LOCAL_BASES.some((localBase) => candidate.includes(new URL(localBase).hostname))
+    );
+
+    if (process.env.NODE_ENV !== "production" || needsLocalLoopbackFallback) {
       for (const localBase of DEFAULT_LOCAL_BASES) {
         if (!merged.includes(localBase)) {
           merged.push(localBase);

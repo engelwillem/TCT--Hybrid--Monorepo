@@ -1,867 +1,680 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { 
-    Search, History, Zap, Compass, Heart, 
-    MessageSquareQuote, SendHorizontal, Bookmark, Wand2, 
-    StickyNote, Highlighter, Network, ArrowRight, X, Scroll,
-    ChevronLeft, ChevronRight, Loader2, ArrowRightCircle, BookOpenText,
-    RefreshCcw
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { useAuthSession } from '@/auth/use-auth-session';
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+    ArrowRight,
+    BookHeart,
+    BookOpenText,
+    ChevronLeft,
+    Loader2,
+    MessageSquareText,
+    Sparkles,
+    X,
+} from "lucide-react";
+import AmbienceController from "@/components/versehub/AmbienceController";
+import MentorPanel from "@/components/versehub/MentorPanel";
+import { cn } from "@/lib/utils";
 
-// UI Primitives
-import { Badge } from '@/components/ui/badge';
+type Book = {
+    code: string;
+    label: string;
+    testament: "ot" | "nt";
+};
 
-// VerseHub Specific Components
-import MentorPanel from '@/components/versehub/MentorPanel';
-import EndOfChapterPrompt from '@/components/versehub/EndOfChapterPrompt';
-import SharePanel from '@/components/versehub/SharePanel';
-import { getAppAccessToken } from '@/services/app-auth-token';
-
-interface Verse {
+type Verse = {
     key: string;
     verse: number;
     text: string;
-    href: string;
-}
+};
 
-interface VerseState {
-    favorite: boolean;
-    bookmarked: boolean;
-    highlighted: boolean;
-    highlightColor: 'yellow' | 'green' | 'blue';
-    note: string;
-}
-
-interface Book {
-    code: string;
-    label: string;
-    testament: 'ot' | 'nt';
-}
+type ChapterPayload = {
+    selected_book?: string | null;
+    selected_chapter?: number | null;
+    chapters?: number[];
+    chapter_label?: string;
+    verses?: Verse[];
+};
 
 interface VersehubReaderPageProps {
     lang: string;
-    mode?: 'landing' | 'chapter';
+    mode?: "landing" | "chapter";
     initialChapterRef?: string | null;
 }
 
-const ACTION_KEY = 'versehub_actions_v2';
-
-const normalizeChapterRef = (rawRef: string): string => {
-    const raw = String(rawRef || '').trim().toLowerCase().replace(/^chapter\//, '');
-    if (!raw) return raw;
-    const parts = raw.split('-').filter(Boolean);
-    if (parts.length >= 2) {
-        return `${parts[0]}-${parts[1]}`;
-    }
-    return raw;
+type SanctuaryScene = {
+    eyebrow: string;
+    quote: string;
+    invitation: string;
+    reflection: string;
 };
 
-export function VersehubReaderPage({ lang: initialLang, mode = 'landing', initialChapterRef = null }: VersehubReaderPageProps) {
+const SANCTUARY_SCENES: SanctuaryScene[] = [
+    {
+        eyebrow: "VerseHub",
+        quote: "\"Janganlah kita jemu-jemu berbuat baik...\"",
+        invitation: "Masuk sebentar, tenangkan hati, lalu buka firman dengan ritme yang lebih pelan.",
+        reflection: "Hari ini bukan tentang buru-buru menyelesaikan bacaan, tetapi tentang memberi ruang bagi firman untuk berbicara.",
+    },
+    {
+        eyebrow: "Daily Mana",
+        quote: "\"Firman-Mu itu pelita bagi kakiku...\"",
+        invitation: "Mulai dari satu langkah kecil. Explore akan membawa Anda masuk ke kitab dan pasal yang ingin dibaca.",
+        reflection: "VerseHub dirancang seperti ruang doa digital: satu layar untuk menerima, lalu satu jalur untuk masuk lebih dalam.",
+    },
+    {
+        eyebrow: "Ruang Doa Digital",
+        quote: "\"Tinggallah di dalam Aku...\"",
+        invitation: "Pilih jalur baca, nyalakan ambience, dan biarkan scripture guide menemani saat Anda masuk ke ayat.",
+        reflection: "Koleksi kitab, ambience Lagusion, dan mentor internal bekerja sebagai satu pengalaman, bukan panel-panel yang terpisah.",
+    },
+];
+
+const fetchJsonWithTimeout = async (input: string, timeoutMs = 12000) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await fetch(input, {
+            cache: "no-store",
+            signal: controller.signal,
+            headers: {
+                Accept: "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`http_${response.status}`);
+        }
+
+        return response.json();
+    } finally {
+        window.clearTimeout(timeoutId);
+    }
+};
+
+export function VersehubReaderPage({
+    lang: initialLang,
+    mode = "landing",
+    initialChapterRef = null,
+}: VersehubReaderPageProps) {
+    const params = useParams<{ lang: string }>();
     const router = useRouter();
-    const params = useParams();
-    const searchParams = useSearchParams();
-    const lang = (params?.lang as string) || initialLang || 'id';
-    const isId = lang === 'id';
-    
-    // Auth & Basic State
-    const { isAuthenticated, isRestoring: isAuthRestoring } = useAuthSession();
-    const [isChapter, setIsChapter] = useState(mode === 'chapter');
-    const [chapter_label, setChapterLabel] = useState('');
-    const [verses, setVerses] = useState<Verse[]>([]);
-    const [books, setBooks] = useState<Book[]>([]);
-    const [activeBook, setActiveBook] = useState<string | null>(null);
-    const [bookChapters, setBookChapters] = useState<number[]>([]);
-    
-    // Progress & Scroll
-    const [progressVerse, setProgressVerse] = useState(1);
-    const [progressTotal, setProgressTotal] = useState(0);
-    const [scrollProgressPercent, setScrollProgressPercent] = useState(0);
-    
-    // Search & Suggestions
-    const [query, setQuery] = useState(searchParams.get('q') || '');
-    const [suggestOpen, setSuggestOpen] = useState(false);
-    const [suggestions, setSuggestions] = useState<any[]>([]);
-    
-    // UI Mode & Theming
-    const [readingMode, setReadingMode] = useState<'normal' | 'focus' | 'dark'>('normal');
-    const [textSize, setTextSize] = useState<0 | 1 | 2>(1);
-    
-    // Overlays & Sheets
-    const [pickerOpen, setPickerOpen] = useState(false);
-    const [tab, setTab] = useState<'ot' | 'nt'>('nt');
-    const [activeVerseKey, setActiveVerseKey] = useState<string | null>(null);
-    const [toolsOpen, setToolsOpen] = useState(false);
-    const [advancedToolsOpen, setAdvancedToolsOpen] = useState(false);
-    const [mentorOpen, setMentorOpen] = useState(false);
-    const [shareOpen, setShareOpen] = useState(false);
-    const [shareData, setShareData] = useState<any>({});
-    const [has_reflected, setHasReflected] = useState(false);
-    const [activeReflectionQuestion, setActiveReflectionQuestion] = useState('');
-    
-    // Actions & Persistence
-    const [actions, setActions] = useState<Record<string, VerseState>>({});
+    const lang = params?.lang || initialLang || "id";
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [toast, setToast] = useState<{message: string, ctaHref?: string, ctaLabel?: string} | null>(null);
-    const hasBooks = books.length > 0;
-    const otBooksCount = useMemo(() => books.filter((book) => book.testament === 'ot').length, [books]);
-    const ntBooksCount = useMemo(() => books.filter((book) => book.testament === 'nt').length, [books]);
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [exploreOpen, setExploreOpen] = useState(false);
+    const [mentorOpen, setMentorOpen] = useState(false);
+    const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
+    const [tab, setTab] = useState<"ot" | "nt">("ot");
+    const [books, setBooks] = useState<Book[]>([]);
+    const [activeBook, setActiveBook] = useState<string | null>(null);
+    const [chapters, setChapters] = useState<number[]>([]);
+    const [chapterLabel, setChapterLabel] = useState("");
+    const [verses, setVerses] = useState<Verse[]>([]);
 
-    const searchInputRef = useRef<HTMLInputElement>(null);
-    const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const suppressClickRef = useRef(false);
+    const activeScene = useMemo(() => {
+        const index = new Date().getDay() % SANCTUARY_SCENES.length;
+        return SANCTUARY_SCENES[index];
+    }, []);
 
-    const toVersehubRefHref = useCallback((ref: string) => {
-        const safeRef = String(ref || '').trim().replace(/^chapter\//, '');
-        if (!safeRef) return `/versehub/${lang}`;
-        return `/versehub/${lang}?ref=${encodeURIComponent(safeRef)}`;
-    }, [lang]);
-
-    const normalizeVersehubHref = useCallback((href: string) => {
-        const raw = String(href || '').trim();
-        if (!raw) return `/versehub/${lang}`;
-
-        const chapterFixed = raw.replace('/chapter/', '/');
-        const withOrigin = chapterFixed.startsWith('http')
-            ? chapterFixed
-            : `https://www.thechoosentalks.org${chapterFixed.startsWith('/') ? '' : '/'}${chapterFixed}`;
-
-        try {
-            const url = new URL(withOrigin);
-            const parts = url.pathname.split('/').filter(Boolean);
-            if (parts[0] === 'versehub' && parts[1]) {
-                if (!parts[2]) return `/versehub/${parts[1]}`;
-                return `/versehub/${parts[1]}?ref=${encodeURIComponent(parts.slice(2).join('/'))}`;
-            }
-            return chapterFixed;
-        } catch {
-            return chapterFixed;
-        }
-    }, [lang]);
-
-    const fetchBooks = useCallback(async () => {
-        try {
-            const res = await fetch(`/api/versehub/${lang}/books`);
-            if (!res.ok) {
-                // Graceful degradation: keep VerseHub usable even when books endpoint is down.
-                setBooks([]);
-                return;
-            }
-            const data = await res.json().catch(() => null);
-            if (Array.isArray(data?.books)) {
-                setBooks(data.books);
-                setError((prev) => (prev === 'books_fetch_failed' ? null : prev));
-            } else {
-                setBooks([]);
-            }
-        } catch (e: any) { 
-            // Keep this silent for users: landing can still run with search and chapter direct links.
-            setBooks([]);
-        }
-    }, [lang]);
-
-    const loadChapter = useCallback(async (ref: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const cleanRef = normalizeChapterRef(ref);
-            const res = await fetch(`/api/versehub/${lang}/chapter/${cleanRef}`);
-            
-            if (!res.ok) {
-                if (res.status === 404) throw new Error('chapter_not_found');
-                if (res.status === 503) {
-                    setIsChapter(false);
-                    setVerses([]);
-                    setChapterLabel('');
-                    setProgressTotal(0);
-                    setError('backend_unavailable');
-                    return;
-                }
-                throw new Error('server_error');
-            }
-
-            const data = await res.json();
-            if (data.verses) {
-                setVerses(data.verses);
-                setChapterLabel(data.chapter_label);
-                setProgressTotal(data.verses.length);
-                if (data.reflection_question) {
-                    setActiveReflectionQuestion(data.reflection_question);
-                }
-                if (data.has_reflected !== undefined) {
-                    setHasReflected(data.has_reflected);
-                }
-                setIsChapter(true);
-            } else {
-                throw new Error('invalid_payload');
-            }
-        } catch (e: any) { 
-            if (e.message !== 'chapter_not_found' && e.message !== 'backend_unavailable') {
-                console.error("VerseHub: Load chapter error", e);
-            }
-            setError(e.message);
-        } finally { 
-            setLoading(false); 
-        }
-    }, [lang]);
-
-    // Initial Load: Books & Auth
-    useEffect(() => {
-        fetchBooks();
-
-        if (mode === 'chapter' && initialChapterRef) {
-            loadChapter(initialChapterRef);
-        } else {
-            setLoading(false);
-        }
-    }, [lang, mode, initialChapterRef, fetchBooks, loadChapter]);
+    const activeBookLabel = useMemo(
+        () => books.find((book) => book.code === activeBook)?.label ?? null,
+        [activeBook, books]
+    );
 
     useEffect(() => {
-        if (mode !== 'landing') return;
-        const fromHook = searchParams.get('ref');
-        const fromWindow = typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('ref')
-            : null;
-        const rawRef = fromHook || fromWindow;
-        if (!rawRef) return;
+        let cancelled = false;
 
-        const normalized = rawRef.trim().toLowerCase();
-        if (!normalized) return;
-        const chapterRef = normalizeChapterRef(normalized);
-        const parts = normalized.split('-').filter(Boolean);
+        const load = async () => {
+            setLoading(true);
+            setError(null);
 
-        loadChapter(chapterRef).then(() => {
-            if (parts.length < 3) return;
-            window.setTimeout(() => {
-                const verseNumber = Number(parts[2]);
-                if (Number.isNaN(verseNumber)) return;
-                const el = document.getElementById(`vh-v-${verseNumber}`);
-                if (!el) return;
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        });
-    }, [mode, searchParams, loadChapter]);
-
-    // Suggestion logic
-    useEffect(() => {
-        if (!query || query.length < 2) {
-            setSuggestions([]);
-            setSuggestOpen(false);
-            return;
-        }
-
-        const timeoutId = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/versehub/${lang}/suggest?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                if (data.rich_items) {
-                    setSuggestions(data.rich_items);
-                    setSuggestOpen(data.rich_items.length > 0);
+                const booksPayload = await fetchJsonWithTimeout(`/api/versehub/${lang}/books`);
+                if (cancelled) return;
+
+                const nextBooks = Array.isArray(booksPayload?.books) ? booksPayload.books : [];
+                setBooks(nextBooks);
+
+                if (mode === "chapter" && initialChapterRef) {
+                    const chapterPayload = (await fetchJsonWithTimeout(
+                        `/api/versehub/${lang}/chapter/${initialChapterRef}`
+                    )) as ChapterPayload;
+
+                    if (cancelled) return;
+
+                    const nextBook = chapterPayload.selected_book ?? initialChapterRef.split("-")[0] ?? null;
+                    const nextVerses = Array.isArray(chapterPayload.verses) ? chapterPayload.verses : [];
+                    const nextChapters = Array.isArray(chapterPayload.chapters) ? chapterPayload.chapters : [];
+                    const nextLabel = chapterPayload.chapter_label ?? initialChapterRef;
+
+                    setActiveBook(nextBook);
+                    setChapters(nextChapters);
+                    setVerses(nextVerses);
+                    setChapterLabel(nextLabel);
+                    setSelectedVerse(nextVerses[0] ?? null);
+
+                    const matchedBook = nextBooks.find((book: Book) => book.code === nextBook);
+                    setTab(matchedBook?.testament === "nt" ? "nt" : "ot");
+                } else {
+                    setChapterLabel("VerseHub");
+                    setVerses([]);
+                    setChapters([]);
+                    setSelectedVerse(null);
                 }
-            } catch (e) {
-                setSuggestions([]);
+            } catch {
+                if (!cancelled) {
+                    setError(mode === "chapter" ? "chapter_not_found" : "books_unavailable");
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
             }
-        }, 300);
-
-        return () => clearTimeout(timeoutId);
-    }, [query, lang]);
-
-    const handleSearch = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        
-        // If there's a direct suggestion, follow it
-        const direct = suggestions.find(s => s.type === 'direct' || s.type === 'chapter' || s.type === 'book');
-        if (direct && direct.href) {
-            router.push(normalizeVersehubHref(direct.href));
-            setSuggestOpen(false);
-            setQuery('');
-            return;
-        }
-
-        // Fallback: search for whatever is in the query box
-        if (query) {
-            router.push(toVersehubRefHref(query.toLowerCase().replace(/[\s:]/g, '-')));
-            setSuggestOpen(false);
-            setQuery('');
-        }
-    };
-
-    // Chapter Loading based on Active Book
-    useEffect(() => {
-        if (!activeBook) return;
-        fetch(`/api/versehub/${lang}/chapters?book=${activeBook}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.chapters) setBookChapters(data.chapters);
-            });
-    }, [activeBook, lang]);
-
-    // Scroll Tracking Parity
-    useEffect(() => {
-        if (!isChapter || verses.length === 0) return;
-        
-        const onScroll = () => {
-            const doc = document.documentElement;
-            const maxScrollable = Math.max(doc.scrollHeight - window.innerHeight, 1);
-            const percent = Math.round(Math.min(1, window.scrollY / maxScrollable) * 100);
-            setScrollProgressPercent(percent);
-
-            const centerY = window.innerHeight * 0.36;
-            let best = 1;
-            let bestDist = Number.POSITIVE_INFINITY;
-            verses.forEach((v) => {
-                const el = document.getElementById(`vh-v-${v.verse}`);
-                if (!el) return;
-                const rect = el.getBoundingClientRect();
-                if (rect.bottom < 64 || rect.top > window.innerHeight) return;
-                const dist = Math.abs((rect.top + rect.bottom) / 2 - centerY);
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    best = v.verse;
-                }
-            });
-            setProgressVerse(best);
         };
 
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
-    }, [isChapter, verses]);
-
-    const stateFor = (key: string) => actions[key] || {
-        favorite: false, bookmarked: false, highlighted: false, highlightColor: 'yellow', note: ''
-    };
-
-    const updateVerseAction = async (key: string, patch: Partial<VerseState>, label?: string) => {
-        if (isAuthRestoring) return;
-        if (!isAuthenticated) {
-            router.push('/');
-            return;
-        }
-
-        const current = stateFor(key);
-        const next = { ...current, ...patch };
-        setActions(prev => ({ ...prev, [key]: next }));
-
-        // Real API Persistence
-        const parts = key.split('-');
-        try {
-            await fetch(`/api/versehub/${lang}/actions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getAppAccessToken()}`
-                },
-                body: JSON.stringify({
-                    book: parts[0],
-                    chapter: parts[1],
-                    verse: parts[2],
-                    ...patch
-                })
-            });
-            if (label) {
-                setToast({ 
-                    message: label, 
-                    ctaHref: '/profile', 
-                    ctaLabel: 'View Journey →' 
-                });
-                setTimeout(() => setToast(null), 3000);
-            }
-        } catch (e) { /* ignore */ }
-    };
-
-    const openVerseTools = (key: string) => {
-        setActiveVerseKey(key);
-        setToolsOpen(true);
-    };
-
-    const handlePickChapter = (bookCode: string, chapter: number) => {
-        setPickerOpen(false);
-        router.push(toVersehubRefHref(`${bookCode}-${chapter}`));
-    };
-
-    const selectedVerse = useMemo(() => verses.find(v => v.key === activeVerseKey), [verses, activeVerseKey]);
-    const hasVersehubOverlayActive = toolsOpen || mentorOpen || shareOpen || advancedToolsOpen;
-    
-    const fallback_reflection_question = 'Bagaimana ayat-ayat ini menguatkan imanmu hari ini?';
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        window.dispatchEvent(
-            new CustomEvent('tct:overlay-activity', {
-                detail: { source: 'versehub', active: hasVersehubOverlayActive },
-            }),
-        );
-
+        load();
         return () => {
-            window.dispatchEvent(
-                new CustomEvent('tct:overlay-activity', {
-                    detail: { source: 'versehub', active: false },
-                }),
-            );
+            cancelled = true;
         };
-    }, [hasVersehubOverlayActive]);
+    }, [initialChapterRef, lang, mode]);
 
-    const handlePathSelect = (_path: { slug: string }) => {
-        router.push('/paths');
+    const loadBookChapters = async (bookCode: string) => {
+        setActiveBook(bookCode);
+        try {
+            const payload = await fetchJsonWithTimeout(`/api/versehub/${lang}/chapters?book=${encodeURIComponent(bookCode)}`);
+            setChapters(Array.isArray(payload?.chapters) ? payload.chapters : []);
+        } catch {
+            setChapters([]);
+        }
+    };
+
+    const openMentorForVerse = (verse: Verse | null) => {
+        if (!verse) return;
+        setSelectedVerse(verse);
+        setExploreOpen(false);
+        setMentorOpen(true);
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center px-4">
-                <div className="w-full max-w-md rounded-[32px] border border-border/50 bg-background/80 p-7 shadow-sm">
-                    <div className="mb-5 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-2xl bg-brand/10 flex items-center justify-center">
-                            <Loader2 className="h-5 w-5 text-brand animate-spin" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-black tracking-tight text-foreground">Menyiapkan ruang baca</p>
-                            <p className="text-xs text-muted-foreground">Memuat kitab dan titik masuk VerseHub...</p>
-                        </div>
-                    </div>
-                    <div className="space-y-3 animate-pulse">
-                        <div className="h-10 rounded-2xl bg-surface-muted/70" />
-                        <div className="h-24 rounded-3xl bg-surface-muted/60" />
-                        <div className="h-10 rounded-2xl bg-surface-muted/70" />
-                    </div>
+            <div className="min-h-screen bg-[#F6F2EA] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-slate-300" />
+                    <p className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Menyiapkan Ruang Doa...</p>
                 </div>
             </div>
         );
     }
 
-    return (
-        <div className={cn(
-            "min-h-screen transition-colors duration-500",
-            readingMode === 'dark' ? "bg-background text-foreground" : "bg-background text-foreground"
-        )}>
-            <div className="mx-auto w-full max-w-3xl py-2 md:py-4">
-                <div className={cn(
-                    "sticky top-0 z-30 border-b backdrop-blur-xl transition-all",
-                    readingMode === 'dark' ? "border-border/50 bg-background/80" : "border-border/50 bg-background/80"
-                )}>
-                    <div className="flex items-center justify-between px-4 py-3.5">
-                        <button onClick={() => router.back()} className="h-10 w-10 flex items-center justify-center rounded-full bg-surface-muted border border-border/50 hover:bg-surface-elevated active:scale-90 transition-all text-muted-foreground">
-                            <ChevronLeft className="h-5 w-5" />
-                        </button>
-                        <h1 className="tct-brand-gradient text-xl font-bold tracking-tight">
-                            {chapter_label || (isId ? 'Alkitab' : 'Bible')}
-                        </h1>
-                        <button onClick={() => setPickerOpen(true)} className="flex items-center gap-2 rounded-2xl px-4 py-2 text-[10px] font-bold border border-border/50 bg-surface-muted hover:bg-surface-elevated transition-all text-foreground shadow-sm">
-                            <BookOpenText className="h-3.5 w-3.5 text-brand" />
-                            {isId ? 'Pilih Kitab' : 'Choose Book'}
-                        </button>
-                    </div>
-                    
-                    {isChapter && (
-                        <div className="px-4 pb-2 flex items-center gap-2">
-                            <div className="h-1 flex-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-brand transition-all duration-300" 
-                                    style={{ width: `${scrollProgressPercent}%` }} 
-                                />
-                            </div>
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-                                Verse {progressVerse} of {progressTotal}
-                            </span>
-                        </div>
-                    )}
+    if (error && mode === "chapter") {
+        return (
+            <div className="min-h-screen bg-[#F6F2EA] px-6 py-16 text-center text-slate-900">
+                <div className="mx-auto max-w-md rounded-[32px] bg-white/90 p-8 shadow-[0_24px_80px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-xl">
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Pasal tidak ditemukan</p>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                        Data pasal belum berhasil dimuat. Kembali ke landing VerseHub untuk memilih kitab lain.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => router.push(`/versehub/${lang}`)}
+                        className="mt-6 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800"
+                    >
+                        Kembali ke VerseHub
+                    </button>
                 </div>
+            </div>
+        );
+    }
 
-                <main className="mx-auto max-w-3xl px-4 py-8">
-                    {(error === 'fetch_error' || error === 'backend_unavailable') && !isChapter ? (
-                        <div className="rounded-[2.5rem] bg-rose-500/5 border border-rose-500/10 p-10 text-center">
-                            <div className="h-16 w-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-6 text-rose-500">
-                                <RefreshCcw size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold mb-2">VerseHub Sedang Beristirahat</h3>
-                            <p className="text-muted-foreground text-sm mb-8">
-                                {error === 'backend_unavailable'
-                                    ? 'Backend sementara belum tersedia. Coba lagi dalam beberapa saat.'
-                                    : 'Maaf, terjadi kesalahan saat mengambil data dari server.'}
-                            </p>
-                            <button 
-                                onClick={() => { setError(null); fetchBooks(); }}
-                                className="px-8 py-3 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 transition-all shadow-sm"
-                            >
-                                Coba Lagi
-                            </button>
-                        </div>
-                    ) : !isChapter ? (
-                        <section className="space-y-10">
-                            <div className="px-1 space-y-1">
-                                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground">
-                                    VerseHub
-                                </p>
-                            </div>
+    const firstBookCode = books[0]?.code ?? null;
+    const firstBookLabel = books[0]?.label ?? "kitab pertama";
+    const firstChapterHref = firstBookCode ? `/versehub/${lang}/${firstBookCode}-1` : null;
+    const mentorPreviewVerse = selectedVerse ?? verses[0] ?? null;
+    const mentorPreviewLabel = mode === "chapter" && mentorPreviewVerse
+        ? `${chapterLabel}:${mentorPreviewVerse.verse}`
+        : null;
 
-                            {/* Search Anchor */}
-                            <div className="relative group">
-                                <div className="mb-3 flex items-center justify-between">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">
-                                        Cari Cepat
-                                    </p>
-                                    <p className="text-[10px] font-semibold text-muted-foreground/80">
-                                        Contoh: mazmur 23, yoh 3:16
-                                    </p>
-                                </div>
-                                <form onSubmit={handleSearch} className="relative w-full">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <input 
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        onFocus={() => query.length >= 2 && setSuggestOpen(true)}
-                                        placeholder={isId ? "Cari kitab, pasal, atau ayat..." : "Search book, chapter, verse..."}
-                                        className="h-14 w-full rounded-3xl border border-border bg-surface pl-12 pr-4 text-sm text-foreground outline-none focus:ring-4 focus:ring-brand/10 transition-all shadow-soft"
-                                    />
-                                </form>
-
-                                        {/* Suggestions Dropdown */}
-                                        <AnimatePresence>
-                                            {suggestOpen && suggestions.length > 0 && (
-                                                <motion.div 
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: 10 }}
-                                                    className="absolute top-16 inset-x-0 z-50 bg-surface rounded-3xl border border-border shadow-premium overflow-hidden"
-                                                >
-                                                    <div className="p-2">
-                                                        {suggestions.map((item, idx) => (
-                                                            <button 
-                                                                key={idx}
-                                                                onClick={() => {
-                                                                    router.push(normalizeVersehubHref(item.href));
-                                                                    setSuggestOpen(false);
-                                                                    setQuery('');
-                                                                }}
-                                                                className="group w-full flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-surface-muted transition-colors text-left"
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className={cn(
-                                                                        "h-8 w-8 rounded-full flex items-center justify-center",
-                                                                        item.type === 'direct' ? "bg-brand/10 text-brand" : "bg-surface-muted text-muted-foreground"
-                                                                    )}>
-                                                                        {item.type === 'direct' ? <Zap size={14} /> : <BookOpenText size={14} />}
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-sm font-bold">{item.label}</p>
-                                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{item.type}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <ArrowRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-
-                                    <div className="rounded-[24px] border border-border/50 bg-surface p-4 shadow-soft">
-                                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground mb-3">
-                                            Akses Cepat
-                                        </p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                            {[
-                                                { label: "Mazmur 23", ref: "mzm-23" },
-                                                { label: "Yohanes 3", ref: "yoh-3" },
-                                                { label: "Matius 5", ref: "mat-5" },
-                                            ].map((quick) => (
-                                                <button
-                                                    key={quick.ref}
-                                                    onClick={() => router.push(toVersehubRefHref(quick.ref))}
-                                                    className="rounded-2xl border border-border/60 bg-surface px-4 py-3 text-left hover:bg-surface-muted transition-colors"
-                                                >
-                                                    <p className="text-sm font-bold text-foreground">{quick.label}</p>
-                                                    <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-1">Buka Pasal</p>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Landing Hero (Polished for iOS feel) */}
-                                    <div className="rounded-[2.5rem] p-8 sm:p-10 bg-surface border border-border/50 shadow-soft relative overflow-hidden text-foreground">
-                                        <div className="relative z-10">
-                                            <h2 className="tct-serif text-[28px] leading-tight mb-3 tracking-tight">Mulai perenungan firman.</h2>
-                                            <p className="text-muted-foreground text-[14px] font-medium mb-8 max-w-sm">Pilih Kitab untuk memulai Reading Journey.</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                <button onClick={() => {setTab('ot'); setPickerOpen(true);}} className="p-5 rounded-[1.5rem] bg-surface-muted border border-border/60 text-left hover:bg-surface-elevated transition-all group flex flex-col justify-between">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <p className="text-[10px] font-black text-amber-600/80 uppercase tracking-widest">Perjanjian Lama</p>
-                                                        <Scroll className="h-4 w-4 text-amber-600/40 group-hover:rotate-12 transition-transform" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-[17px] leading-none mb-1">Kejadian 1</p>
-                                                        <p className="text-[11px] text-muted-foreground font-medium">{otBooksCount} kitab</p>
-                                                    </div>
-                                                </button>
-                                                <button onClick={() => {setTab('nt'); setPickerOpen(true);}} className="p-5 rounded-[1.5rem] bg-surface-muted border border-border/60 text-left hover:bg-surface-elevated transition-all group flex flex-col justify-between">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <p className="text-[10px] font-black text-sky-600/80 uppercase tracking-widest">Perjanjian Baru</p>
-                                                        <ArrowRightCircle className="h-4 w-4 text-sky-600/40 group-hover:translate-x-1 transition-transform" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-[17px] leading-none mb-1">Matius 1</p>
-                                                        <p className="text-[11px] text-muted-foreground font-medium">{ntBooksCount} kitab</p>
-                                                    </div>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {!hasBooks && (
-                                        <div className="rounded-[2rem] border border-amber-500/20 bg-amber-500/5 p-6 text-center">
-                                            <p className="text-sm font-black tracking-tight text-foreground">Katalog Kitab Belum Tersedia</p>
-                                            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                                                Daftar kitab sedang disiapkan. Anda tetap bisa memakai pencarian cepat atau muat ulang beberapa saat lagi.
-                                            </p>
-                                            <button
-                                                onClick={() => { setError(null); fetchBooks(); }}
-                                                className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background px-5 py-2 text-xs font-black uppercase tracking-[0.12em] text-foreground hover:bg-surface-muted"
-                                            >
-                                                <RefreshCcw className="h-3.5 w-3.5" />
-                                                Muat Ulang Kitab
-                                            </button>
-                                        </div>
-                                    )}
-                        </section>
-                    ) : (
-                        <div className="space-y-8">
-                                    {error ? (
-                                        <div className="rounded-[2.5rem] bg-rose-500/5 border border-rose-500/10 p-10 text-center">
-                                            <div className="h-16 w-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-6 text-rose-500">
-                                                <X size={32} />
-                                            </div>
-                                            <h3 className="text-xl font-bold mb-2">Gagal Memuat Konten</h3>
-                                            <p className="text-slate-500 text-sm mb-8">Maaf, terjadi kesalahan saat mengambil data Alkitab (Status: {error}).</p>
-                                            <button 
-                                                onClick={() => window.location.reload()}
-                                                className="px-8 py-3 rounded-full bg-foreground text-background font-bold hover:bg-foreground/90 transition-all shadow-sm"
-                                            >
-                                                Coba Lagi
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            {verses.map(v => {
-                                                const state = stateFor(v.key);
-                                                return (
-                                                    <div 
-                                                        key={v.key} 
-                                                        id={`vh-v-${v.verse}`}
-                                                        className={cn(
-                                                            "group rounded-2xl px-4 py-3 transition-all relative",
-                                                            state.highlighted ? (state.highlightColor === 'green' ? 'bg-emerald-500/10' : state.highlightColor === 'blue' ? 'bg-sky-500/10' : 'bg-amber-500/10') : "hover:bg-black/[0.02] dark:hover:bg-white/[0.02]",
-                                                            activeVerseKey === v.key && "ring-1 ring-brand/30 bg-brand/5 shadow-sm"
-                                                        )}
-                                                    >
-                                                        <button 
-                                                            onClick={() => openVerseTools(v.key)}
-                                                            className="w-full text-left text-[17px] md:text-[19px] leading-relaxed font-serif"
-                                                        >
-                                                            <sup className="mr-4 text-xs font-black text-brand/40 select-none">{v.verse}</sup>
-                                                            <span className={cn(
-                                                                "transition-opacity duration-300",
-                                                                readingMode === 'dark' ? "text-slate-100" : "text-slate-800"
-                                                            )}>
-                                                                {v.text}
-                                                            </span>
-                                                        </button>
-                                                        {state.note && (
-                                                            <div className="mt-3 ml-8 pl-4 border-l-2 border-brand/30 text-sm italic text-muted-foreground">
-                                                                {state.note}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                            
-                                            {isChapter && !has_reflected && (
-                                                <EndOfChapterPrompt 
-                                                    lang={lang}
-                                                    questionText={activeReflectionQuestion || fallback_reflection_question}
-                                                    onReflect={() => {
-                                                        const question = activeReflectionQuestion || fallback_reflection_question;
-                                                        const refParam = chapter_label || 'VerseHub';
-                                                        router.push(`/community?intent=reflection&ref=${encodeURIComponent(refParam)}&text=${encodeURIComponent(question)}`);
-                                                    }}
-                                                    onPathSelect={handlePathSelect}
-                                                />
-                                            )}
-                                        </>
-                                    )}
-                        </div>
-                    )}
-                </main>
+    return (
+        <div className={cn("relative text-slate-900", mode === "landing" ? "h-screen overflow-hidden bg-[#F7F4EC]" : "min-h-screen bg-[#F7F4EC] pb-28")}>
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f1e8_38%,#f4efe6_64%,#f7f4ec_100%)]" />
+                <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-[#efe7d4]/50 blur-3xl" />
+                <div className="absolute right-[-120px] top-16 h-80 w-80 rounded-full bg-[#f1efe9]/70 blur-3xl" />
+                <div className="absolute bottom-[-120px] left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-white/60 blur-3xl" />
             </div>
 
-            {/* Picker Modal */}
+            {mode === "landing" ? (
+                <>
+                    <header className="absolute inset-x-0 top-0 z-40">
+                        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 pt-5 md:px-6">
+                            <button
+                                type="button"
+                                onClick={() => router.push("/today")}
+                                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setExploreOpen(false);
+                                    setPickerOpen(true);
+                                }}
+                                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white"
+                            >
+                                <BookOpenText className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="relative z-10 flex h-full flex-col justify-center px-6 pb-[calc(160px+env(safe-area-inset-bottom))] pt-20 text-center md:px-10">
+                        <div className="mx-auto max-w-3xl">
+                            <p className="text-[11px] font-black uppercase tracking-[0.44em] text-[#91A0C7]">{activeScene.eyebrow}</p>
+                            <motion.h1
+                                initial={{ opacity: 0, y: 18 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, ease: "easeOut" }}
+                                className="mx-auto mt-10 max-w-[12ch] font-serif text-[50px] italic leading-[1.08] tracking-[-0.04em] text-[#172042] sm:text-[64px] md:text-[78px]"
+                            >
+                                {activeScene.quote}
+                            </motion.h1>
+                            <p className="mx-auto mt-7 max-w-xl text-[15px] leading-7 text-slate-600 md:text-base">
+                                {activeScene.invitation}
+                            </p>
+                        </div>
+                    </main>
+
+                    <div className="absolute inset-x-0 bottom-[calc(96px+env(safe-area-inset-bottom))] z-40 px-4 md:px-6">
+                        <div className="mx-auto flex max-w-xl flex-col gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setExploreOpen(true)}
+                                className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-white/86 px-5 py-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-2xl transition hover:bg-white"
+                            >
+                                <span className="flex items-center gap-3">
+                                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-black/5">
+                                        <Sparkles className="h-4 w-4" />
+                                    </span>
+                                    <span>
+                                        <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Explore</span>
+                                        <span className="mt-1 block text-[15px] font-black tracking-tight text-slate-900">
+                                            Waktunya Selidiki Firman Lebih Dalam
+                                        </span>
+                                    </span>
+                                </span>
+                                <ArrowRight className="h-5 w-5 text-[#2A67FF] transition group-hover:translate-x-0.5" />
+                            </button>
+
+                            <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-2 rounded-[30px] bg-white/78 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-2xl">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setExploreOpen(false);
+                                        setPickerOpen(true);
+                                    }}
+                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50"
+                                >
+                                    <BookOpenText className="mx-auto h-4 w-4 text-slate-500" />
+                                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Kitab</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setExploreOpen(true)}
+                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50"
+                                >
+                                    <BookHeart className="mx-auto h-4 w-4 text-slate-500" />
+                                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Deep Dive</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setExploreOpen(false);
+                                        if (firstChapterHref) router.push(firstChapterHref);
+                                    }}
+                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50"
+                                >
+                                    <MessageSquareText className="mx-auto h-4 w-4 text-slate-500" />
+                                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Mulai</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <header className="sticky top-0 z-40 border-b border-black/5 bg-[#F7F4EC]/88 backdrop-blur-2xl">
+                        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 md:px-6">
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/versehub/${lang}`)}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+
+                            <div className="text-center">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#91A0C7]">VerseHub</p>
+                                <h1 className="mt-1 text-sm font-black tracking-tight text-slate-900">{chapterLabel}</h1>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setExploreOpen(false);
+                                    setPickerOpen(true);
+                                }}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white"
+                            >
+                                <BookOpenText className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="relative z-10 mx-auto max-w-4xl px-4 py-6 md:px-6 md:py-8">
+                        <section className="overflow-hidden rounded-[34px] bg-white/84 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04] backdrop-blur-2xl md:p-7">
+                            <div className="flex flex-col gap-5 border-b border-slate-100 pb-5 md:flex-row md:items-end md:justify-between">
+                                <div className="max-w-2xl">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#91A0C7]">Reader Engine</p>
+                                    <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{chapterLabel}</h2>
+                                    <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                                        Reader mode dibuat lebih utilitarian, tetapi tetap satu pengalaman dengan sanctuary VerseHub. Tekan ayat untuk membuka mentor internal.
+                                    </p>
+                                </div>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setExploreOpen(true)}
+                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-600 ring-1 ring-black/5 transition hover:bg-slate-100"
+                                    >
+                                        <Sparkles className="h-4 w-4" />
+                                        Explore
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => openMentorForVerse(mentorPreviewVerse)}
+                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-slate-800"
+                                    >
+                                        <MessageSquareText className="h-4 w-4" />
+                                        Buka Mentor
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-5 grid gap-3 md:grid-cols-[1.25fr,0.75fr]">
+                                <div className="rounded-[28px] bg-[#FBFAF6] p-4 ring-1 ring-black/[0.04]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Bacaan</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                        {verses.length} ayat siap dibaca. Tap salah satu ayat untuk membuka scripture guide internal berbasis Laravel.
+                                    </p>
+                                </div>
+                                <div className="rounded-[28px] bg-[#FBFAF6] p-4 ring-1 ring-black/[0.04]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Companion</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                        Ambience Lagusion tetap aktif di reader. Pilih vocal atau instrumental langsung dari floating audio companion.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 space-y-4">
+                                {verses.map((verse) => (
+                                    <button
+                                        key={verse.key}
+                                        type="button"
+                                        onClick={() => openMentorForVerse(verse)}
+                                        className="group block w-full rounded-[28px] bg-[#F9F7F2] px-4 py-4 text-left ring-1 ring-black/[0.03] transition hover:bg-white hover:shadow-[0_14px_40px_rgba(15,23,42,0.06)] md:px-5"
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <span className="mt-1 inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-[12px] font-black text-slate-500 shadow-sm ring-1 ring-black/[0.04]">
+                                                {verse.verse}
+                                            </span>
+                                            <div className="flex-1">
+                                                <p className="text-[17px] leading-8 text-slate-700 md:text-[18px]">{verse.text}</p>
+                                                <span className="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 transition group-hover:text-[#2A67FF]">
+                                                    <MessageSquareText className="h-3.5 w-3.5" />
+                                                    Buka mentor untuk ayat ini
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+                    </main>
+                </>
+            )}
+
+            <AnimatePresence>
+                {exploreOpen && (
+                    <div className="fixed inset-0 z-[60]">
+                        <motion.button
+                            type="button"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setExploreOpen(false)}
+                            className="absolute inset-0 bg-slate-950/35 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 40 }}
+                            transition={{ type: "spring", stiffness: 240, damping: 28 }}
+                            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl rounded-t-[36px] bg-white/96 p-6 shadow-[0_-30px_80px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-2xl md:left-1/2 md:max-w-2xl md:-translate-x-1/2"
+                        >
+                            <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-slate-200" />
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#91A0C7]">Deep Dive</p>
+                                    <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Masuk ke firman tanpa kehilangan rasa heningnya.</h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setExploreOpen(false)}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <p className="mt-4 text-sm leading-7 text-slate-600">{activeScene.reflection}</p>
+
+                            <div className="mt-6 grid gap-3 md:grid-cols-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setExploreOpen(false);
+                                        setPickerOpen(true);
+                                    }}
+                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50"
+                                >
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Koleksi Kitab</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Buka Perjanjian Lama dan Baru</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                        Masuk ke daftar kitab, lalu pilih pasal yang ingin Anda baca dengan flow yang lebih tenang.
+                                    </p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    disabled={!firstChapterHref}
+                                    onClick={() => {
+                                        if (!firstChapterHref) return;
+                                        setExploreOpen(false);
+                                        router.push(firstChapterHref);
+                                    }}
+                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Jalur Cepat</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Mulai dari {firstBookLabel} 1</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                        Cocok untuk langsung masuk ke reader utilitarian tanpa kehilangan transisi dari landing.
+                                    </p>
+                                </button>
+
+                                <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Lagusion Companion</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Vocal dan audio-only tetap tersedia</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                        Floating audio companion akan menemani bacaan Anda dengan pilihan vocal, piano, acoustic, atau instrumental.
+                                    </p>
+                                </div>
+
+                                <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Mentor Internal</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Scripture guide aktif saat ayat dibuka</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                        Mentor tidak memakai AI gateway. Ia menarik refleksi, kaitan ayat, konteks, dan study guidance dari engine Laravel internal.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <AnimatePresence>
                 {pickerOpen && (
-                    <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }} 
-                        className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm p-4"
-                    >
-                        <button className="absolute inset-0 cursor-default" onClick={() => setPickerOpen(false)} />
-                        <motion.div 
-                            initial={{ y: "100%" }} 
-                            animate={{ y: 0 }} 
-                            exit={{ y: "100%" }}
-                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden border border-white/10"
-                        >
-                            <div className="p-8">
-                                <div className="flex justify-between items-center mb-8">
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Pilih Kitab</h3>
-                                    <button onClick={() => setPickerOpen(false)} className="h-12 w-12 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white"><X size={24} /></button>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-2 mb-8 bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl">
-                                    <button onClick={() => setTab('ot')} className={cn("py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all", tab === 'ot' ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-xl" : "text-slate-400")}>Old Testament</button>
-                                    <button onClick={() => setTab('nt')} className={cn("py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all", tab === 'nt' ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-xl" : "text-slate-400")}>New Testament</button>
-                                </div>
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+                        <motion.button
+                            type="button"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setPickerOpen(false)}
+                            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
+                        />
 
-                                <div className="flex gap-8 h-[420px]">
-                                    <div className="w-1/3 overflow-y-auto space-y-1 pr-2 scrollbar-hide">
-                                        {books.filter(b => b.testament === tab).length > 0 ? (
-                                            books.filter(b => b.testament === tab).map(b => (
-                                                <button 
-                                                    key={b.code} 
-                                                    onClick={() => setActiveBook(b.code)} 
-                                                    className={cn(
-                                                        "w-full text-left px-5 py-4 rounded-2xl text-sm font-bold transition-all", 
-                                                        activeBook === b.code ? "bg-brand text-brand-foreground shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
-                                                    )}
-                                                >
-                                                    {b.label}
-                                                </button>
-                                            ))
-                                        ) : (
-                                            <div className="p-4 text-center text-slate-400 font-medium text-[10px] uppercase tracking-widest mt-10">
-                                                Belum ada data kitab.
-                                            </div>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.97, y: 12 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.97, y: 12 }}
+                            className="relative flex h-[82vh] w-full max-w-2xl flex-col overflow-hidden rounded-[36px] bg-white shadow-2xl ring-1 ring-black/5"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#91A0C7]">VerseHub</p>
+                                    <h3 className="mt-1 text-xl font-black tracking-tight text-slate-900">Koleksi Kitab</h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setPickerOpen(false)}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div className="flex gap-2 border-b border-slate-100 px-6 py-4">
+                                {(["ot", "nt"] as const).map((item) => (
+                                    <button
+                                        key={item}
+                                        type="button"
+                                        onClick={() => setTab(item)}
+                                        className={cn(
+                                            "rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition",
+                                            tab === item ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                                         )}
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto grid grid-cols-4 gap-3 content-start pb-10 scrollbar-hide">
-                                        {bookChapters.length > 0 ? bookChapters.map(ch => (
-                                            <button 
-                                                key={ch} 
-                                                onClick={() => handlePickChapter(activeBook!, ch)} 
-                                                className="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-lg font-black text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 hover:scale-105 active:scale-90 transition-all border border-black/5 dark:border-white/5"
+                                    >
+                                        {item === "ot" ? "Perjanjian Lama" : "Perjanjian Baru"}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="grid min-h-0 flex-1 gap-0 md:grid-cols-[1.15fr,0.85fr]">
+                                <div className="min-h-0 overflow-y-auto border-b border-slate-100 p-5 md:border-b-0 md:border-r">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {books.filter((book) => book.testament === tab).map((book) => (
+                                            <button
+                                                key={book.code}
+                                                type="button"
+                                                onClick={() => loadBookChapters(book.code)}
+                                                className={cn(
+                                                    "rounded-[22px] px-4 py-4 text-left text-sm font-bold transition ring-1",
+                                                    activeBook === book.code
+                                                        ? "bg-slate-900 text-white ring-slate-900"
+                                                        : "bg-slate-50 text-slate-700 ring-slate-100 hover:bg-slate-100"
+                                                )}
                                             >
-                                                {ch}
+                                                {book.label}
                                             </button>
-                                        )) : (
-                                            <div className="col-span-full flex flex-col items-center justify-center h-full text-slate-300">
-                                                <Compass size={48} strokeWidth={1} className="mb-4" />
-                                                <p className="text-sm font-bold uppercase tracking-widest">Pilih Kitab Dulu</p>
-                                                <p className="mt-1 text-[11px] text-slate-400 text-center">Setelah kitab dipilih, daftar pasal akan muncul di sini.</p>
-                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="min-h-0 overflow-y-auto p-5">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">
+                                        {activeBookLabel ? `Pilih Pasal ${activeBookLabel}` : "Pilih Pasal"}
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {chapters.map((chapter) => (
+                                            <button
+                                                key={chapter}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!activeBook) return;
+                                                    setPickerOpen(false);
+                                                    setExploreOpen(false);
+                                                    router.push(`/versehub/${lang}/${activeBook}-${chapter}`);
+                                                }}
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                                            >
+                                                {chapter}
+                                            </button>
+                                        ))}
+                                        {chapters.length === 0 && (
+                                            <p className="text-sm text-slate-500">Pilih kitab terlebih dahulu untuk melihat daftar pasal.</p>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </motion.div>
-                    </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
 
-            {/* Verse Action Sheet (Mobile) */}
-            <AnimatePresence>
-                {toolsOpen && selectedVerse && (
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 backdrop-blur-sm"
-                    >
-                        <button className="absolute inset-0 cursor-default" onClick={() => setToolsOpen(false)} />
-                        <motion.div 
-                            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[2.5rem] p-6 shadow-2xl"
-                            style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
-                        >
-                            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-6" />
-                            <div className="mb-5">
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.16em] mb-2">Aksi Ayat</p>
-                                <p className="text-xs font-black text-brand uppercase tracking-[0.12em] mb-2">{chapter_label}:{selectedVerse.verse}</p>
-                                <p className="text-[15px] leading-relaxed font-serif text-slate-700 dark:text-slate-200 italic max-h-28 overflow-y-auto pr-1">
-                                    "{selectedVerse.text}"
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <button 
-                                    onClick={() => { setToolsOpen(false); setMentorOpen(true); }}
-                                    className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500 text-slate-950 font-bold text-sm active:scale-95 transition-all shadow-lg shadow-amber-500/20"
-                                >
-                                    <Wand2 size={18} />
-                                    Mentor
-                                </button>
-                                <button 
-                                    onClick={() => { setToolsOpen(false); setShareOpen(true); setShareData({ title: `${chapter_label}:${selectedVerse.verse}`, subtitle: selectedVerse.text, url: window.location.href, ogImageUrl: `/api/versehub/og/${selectedVerse.key}.png` }); }}
-                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
-                                >
-                                    <SendHorizontal size={18} />
-                                    Share
-                                </button>
-                                <button 
-                                    onClick={() => updateVerseAction(selectedVerse.key, { favorite: !stateFor(selectedVerse.key).favorite }, 'Disimpan di Favorites')}
-                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
-                                >
-                                    <Heart size={18} className={cn(stateFor(selectedVerse.key).favorite && "fill-rose-500 text-rose-500")} />
-                                    Favorites
-                                </button>
-                                <button 
-                                    onClick={() => updateVerseAction(selectedVerse.key, { bookmarked: !stateFor(selectedVerse.key).bookmarked }, 'Bookmark diperbarui')}
-                                    className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 font-bold text-sm active:scale-95 transition-all"
-                                >
-                                    <Bookmark size={18} className={cn(stateFor(selectedVerse.key).bookmarked && "fill-sky-500 text-sky-500")} />
-                                    Bookmark
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Auxiliary Overlays */}
-            {mentorOpen && selectedVerse && (
+            {mentorOpen && mentorPreviewVerse && mentorPreviewLabel && (
                 <MentorPanel
-                    verseRef={selectedVerse.key}
+                    verseRef={mentorPreviewVerse.key}
                     lang={lang}
-                    verseText={selectedVerse.text}
-                    verseLabel={`${chapter_label}:${selectedVerse.verse}`}
-                    isAuthenticated={isAuthenticated}
+                    verseText={mentorPreviewVerse.text}
+                    verseLabel={mentorPreviewLabel}
+                    isAuthenticated={true}
                     onClose={() => setMentorOpen(false)}
                 />
             )}
-            
-            {shareOpen && (
-                <SharePanel 
-                    {...shareData} 
-                    lang={lang} 
-                    isOpen={shareOpen} 
-                    onClose={() => setShareOpen(false)} 
-                />
+
+            <AmbienceController
+                className={cn(
+                    "z-[70]",
+                    mode === "landing"
+                        ? "bottom-[calc(98px+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-8"
+                        : "bottom-[calc(88px+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-8"
+                )}
+                isDucking={exploreOpen || pickerOpen || mentorOpen}
+                activeMoodKey={mode === "landing" ? "hopeful" : "daily"}
+                dayIndex={new Date().getDay()}
+                onMenuOpen={(isOpen) => {
+                    if (isOpen) {
+                        setExploreOpen(false);
+                    }
+                }}
+            />
+
+            {error && mode === "landing" && (
+                <div className="pointer-events-none absolute left-1/2 top-24 z-40 -translate-x-1/2 px-4">
+                    <div className="rounded-full bg-white/85 px-4 py-2 text-[11px] font-bold text-slate-500 shadow-sm ring-1 ring-black/5 backdrop-blur-xl">
+                        Koneksi kitab sedang tidak stabil, tetapi sanctuary VerseHub tetap siap dipakai.
+                    </div>
+                </div>
             )}
 
-            {/* Toast System */}
-            <AnimatePresence>
-                {toast && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full bg-slate-900 text-white text-xs font-bold shadow-2xl flex items-center gap-4"
-                    >
-                        <span>{toast.message}</span>
-                        {toast.ctaHref && (
-                            <button onClick={() => router.push(toast.ctaHref!)} className="text-brand hover:underline">{toast.ctaLabel}</button>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {mode === "landing" && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-24 bg-gradient-to-t from-[#F7F4EC] to-transparent" />
+            )}
         </div>
     );
 }

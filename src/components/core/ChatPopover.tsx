@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAppAccessToken } from '@/services/app-auth-token';
+import { Bell } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type InboxTab = 'primary' | 'general' | 'requests';
 
@@ -42,7 +44,21 @@ function formatLastSeen(iso: string | null | undefined): string {
     return `last seen ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-export default function ChatPopover({ className }: { className?: string }) {
+export default function ChatPopover({
+    className,
+    triggerMode = 'inbox',
+    iconClassName,
+    iconStrokeWidth,
+    badgeMode = 'count',
+    badgeClassName,
+}: {
+    className?: string;
+    triggerMode?: 'inbox' | 'notification';
+    iconClassName?: string;
+    iconStrokeWidth?: number;
+    badgeMode?: 'count' | 'dot';
+    badgeClassName?: string;
+}) {
     const router = useRouter();
     // Assuming props are passed through a provider or global state in a real Next app
     // For this bridge, we fetch them dynamically
@@ -226,24 +242,35 @@ export default function ChatPopover({ className }: { className?: string }) {
         }
     };
 
+    const token = getAppAccessToken();
+    const isLoggedIn = !!token;
+
     const counts = liveInbox.counts ?? { primary: 0, general: 0, requests: 0 };
     const unreadCount = Number(liveInbox.unreadCount ?? 0);
     const tabItems = (liveInbox.tabs?.[tab] ?? []) as InboxItem[];
+    const showBadge = isLoggedIn && unreadCount > 0;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <button
                     className={cn(
-                        'relative flex h-12 w-12 items-center justify-center rounded-full bg-white/80 dark:bg-slate-900/80 shadow-soft backdrop-blur-md ring-1 ring-black/[0.04] dark:ring-white/[0.08]',
+                        'relative flex h-11 w-11 items-center justify-center rounded-full bg-white/70 backdrop-blur-xl shadow-sm ring-1 ring-black/[0.04] transition-all active:scale-95',
                         className,
                     )}
-                    aria-label="Open inbox"
+                    aria-label={triggerMode === 'notification' ? 'Buka notifikasi' : 'Buka inbox'}
                 >
-                    <IconMessage className="h-5 w-5 text-muted-foreground" />
-                    {unreadCount > 0 ? (
-                        <span className="absolute right-2 top-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-brand-foreground">
-                            {unreadCount}
+                    <Bell className={cn('h-5 w-5 text-slate-600', iconClassName)} />
+                    {showBadge ? (
+                        <span
+                            className={cn(
+                                badgeMode === 'dot'
+                                    ? 'absolute right-2.5 top-2.5 inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white'
+                                    : 'absolute -right-1 -top-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#0088CC] px-1 text-[10px] font-black text-white shadow-md border-2 border-white',
+                                badgeClassName,
+                            )}
+                        >
+                            {badgeMode === 'count' ? unreadCount : null}
                         </span>
                     ) : null}
                 </button>
@@ -251,147 +278,216 @@ export default function ChatPopover({ className }: { className?: string }) {
 
             <PopoverContent
                 align="end"
-                className="w-[460px] max-w-[95vw] border-white/15 bg-slate-900/80 p-4 shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
+                className="w-[340px] max-w-[95vw] mt-3 bg-white/98 backdrop-blur-3xl p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.18)] rounded-[32px] border-none ring-1 ring-black/[0.04] overflow-hidden"
             >
-                <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <p className="text-sm font-semibold text-white">Inbox</p>
-                            <p className="text-xs text-white/55">
-                                Announcement & messages
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            disabled={busyKey === 'mark-all' || unreadCount <= 0}
-                            onClick={() => void markAllRead()}
-                            className="rounded-full border border-white/15 px-3 py-1.5 text-[11px] font-medium text-white/85 hover:bg-white/10 disabled:opacity-50"
+                {!isLoggedIn ? (
+                    /* Guest State: iOS Native Precision Refinement */
+                    <div className="flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-500">
+                        {/* Icon Container: The 24px Rule (mb-6) */}
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                            className="mb-8 flex h-16 w-16 items-center justify-center rounded-[20px] bg-slate-50 text-[#0088CC]"
                         >
-                            {busyKey === 'mark-all' ? '...' : 'Mark all read'}
-                        </button>
+                            <Bell className="h-7 w-7 stroke-[1.5]" />
+                        </motion.div>
+                        
+                        {/* Headline: Precise Typography (text-[20px]) */}
+                        <motion.h3
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-[20px] font-bold tracking-[-0.02em] text-slate-900"
+                        >
+                            Stay in the Loop
+                        </motion.h3>
+
+                        {/* Body: High Legibility (8px Gap / mt-2) */}
+                        <motion.p
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="mt-2 text-[15px] font-medium leading-[1.5] text-slate-500 max-w-[85%] mx-auto"
+                        >
+                            Sign in to see your latest messages and stay connected.
+                        </motion.p>
+
+                        {/* Actions: The 32px Rule (mt-12) */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.5 }}
+                            className="mt-12 flex w-full flex-col items-center gap-5"
+                        >
+                            <button
+                                onClick={() => router.push('/login')}
+                                className="h-[48px] w-full rounded-full bg-[#0088CC] px-6 text-[15px] font-semibold text-white transition-all hover:bg-[#0077BB] active:scale-[0.97]"
+                            >
+                                Sign In
+                            </button>
+                            
+                            <button
+                                onClick={() => router.push('/register')}
+                                className="text-[15px] font-semibold text-[#0088CC] hover:text-[#0077BB] transition-colors"
+                            >
+                                Create Account
+                            </button>
+                        </motion.div>
                     </div>
+                ) : (
+                    /* Authenticated State */
+                    <div className="flex flex-col h-full max-h-[580px]">
+                        {/* Compact Header */}
+                        <div className="flex items-center justify-between px-6 py-5">
+                            <p className="text-[17px] font-bold text-slate-900 tracking-tight">Notifikasi</p>
+                        </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-xs font-medium uppercase tracking-wide text-white/50">
-                            Announcement (Admin)
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-white">
-                            For Chosen People
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-white/65">
-                            Welcome to The Choose n Talks! Silahkan cek pesan admin di inbox.
-                        </p>
-                    </div>
-
-                    <SegmentedTabs
-                        options={[
-                            { id: 'primary', label: `Primary (${counts.primary ?? 0})` },
-                            { id: 'general', label: `General (${counts.general ?? 0})` },
-                            { id: 'requests', label: `Requests (${counts.requests ?? 0})` },
-                        ]}
-                        activeId={tab}
-                        onChange={(id) => setTab(id as InboxTab)}
-                    />
-
-                    <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-                        {tabItems.length === 0 ? (
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                                <p className="text-sm font-medium text-white">No messages</p>
-                                <p className="mt-1 text-xs text-white/60">
-                                    Belum ada percakapan di tab ini.
+                        <div className="overflow-y-auto scrollbar-hide flex-1">
+                            {/* Integrated Announcement */}
+                            <div className="px-6 py-4 bg-slate-50/40 border-y border-slate-50">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-[#0088CC]">
+                                        Sistem
+                                    </p>
+                                </div>
+                                <p className="text-[12px] font-semibold text-slate-800 leading-tight">
+                                    Selamat datang di The Choose n Talks!
+                                </p>
+                                <p className="mt-1 text-[11px] leading-relaxed text-slate-500 line-clamp-2">
+                                    Jelajahi fiturrenungan dan diskusi iman bersama komunitas.
                                 </p>
                             </div>
-                        ) : (
-                            tabItems.map((item) => {
-                                const partnerId = item.partner?.id;
-                                const followBusy = busyKey === `follow:${partnerId}`;
-                                const approveBusy = busyKey === `approve:${item.message_id}`;
-                                const sendBusy = busyKey === `send:${partnerId}`;
-                                const following = Boolean(item.is_following_partner);
 
-                                return (
-                                    <div
-                                        key={item.message_id}
-                                        className={cn(
-                                            'rounded-2xl border border-white/10 bg-white/5 p-3',
-                                            item.is_unread ? 'ring-1 ring-brand/30' : null,
-                                        )}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <p className="text-sm font-medium text-white">
-                                                    {item.partner?.name ?? 'Unknown'}
-                                                </p>
-                                                <p className="mt-0.5 text-[11px] text-white/50">
-                                                    {item.partner?.online
-                                                        ? 'online'
-                                                        : formatLastSeen(item.partner?.last_seen_at)}
-                                                </p>
-                                                <p className="mt-1 text-xs text-white/60">
-                                                    {item.preview || 'No content'}
-                                                </p>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                disabled={followBusy}
-                                                onClick={() => void toggleFollow(partnerId)}
-                                                className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white/85 hover:bg-white/10 disabled:opacity-60"
-                                            >
-                                                {followBusy ? '...' : following ? 'Unfollow' : 'Follow'}
-                                            </button>
-                                        </div>
+                            {/* Minimal Navigation */}
+                            <div className="px-4 py-3">
+                                <SegmentedTabs
+                                    options={[
+                                        { id: 'primary', label: `Utama` },
+                                        { id: 'general', label: `Umum` },
+                                        { id: 'requests', label: `Req` },
+                                    ]}
+                                    activeId={tab}
+                                    onChange={(id) => setTab(id as InboxTab)}
+                                />
+                            </div>
 
-                                        {item.can_approve ? (
-                                            <div className="mt-2 flex justify-end">
-                                                <button
-                                                    type="button"
-                                                    disabled={approveBusy}
-                                                    onClick={() => void approveRequest(item.message_id)}
-                                                    className="rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-white/20 disabled:opacity-60"
-                                                >
-                                                    {approveBusy ? 'Approving...' : 'Approve request'}
-                                                </button>
-                                            </div>
-                                        ) : null}
-
-                                        <div className="mt-2 flex items-center gap-2">
-                                            <input
-                                                value={draftByPartner[partnerId] ?? ''}
-                                                onChange={(e) =>
-                                                    setDraftByPartner((prev) => ({
-                                                        ...prev,
-                                                        [partnerId]: e.target.value,
-                                                    }))
-                                                }
-                                                placeholder="Write message..."
-                                                className="h-9 w-full rounded-xl border border-white/15 bg-white/5 px-3 text-xs text-white placeholder:text-white/45 outline-none"
-                                            />
-                                            <button
-                                                type="button"
-                                                disabled={sendBusy}
-                                                onClick={() => void sendMessage(partnerId)}
-                                                className="rounded-xl bg-white/15 px-3 py-2 text-[11px] font-semibold text-white hover:bg-white/20 disabled:opacity-60"
-                                            >
-                                                {sendBusy ? '...' : 'Send'}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => router.push(`/inbox/${partnerId}`)}
-                                                className="rounded-xl border border-white/15 px-3 py-2 text-[11px] font-semibold text-white/85 hover:bg-white/10"
-                                            >
-                                                Open
-                                            </button>
-                                        </div>
+                            {/* Content List: Pure & Clean */}
+                            <div className="divide-y divide-slate-50/60">
+                                {tabItems.length === 0 ? (
+                                    <div className="py-16 text-center">
+                                        <p className="text-[12px] font-bold text-slate-300 uppercase tracking-widest">Kosong</p>
                                     </div>
-                                );
-                            })
-                        )}
+                                ) : (
+                                    tabItems.map((item) => {
+                                        const partnerId = item.partner?.id;
+                                        const followBusy = busyKey === `follow:${partnerId}`;
+                                        const approveBusy = busyKey === `approve:${item.message_id}`;
+                                        const following = Boolean(item.is_following_partner);
+
+                                        return (
+                                            <button
+                                                key={item.message_id}
+                                                onClick={() => {
+                                                    setOpen(false);
+                                                    router.push(`/inbox/${partnerId}`);
+                                                }}
+                                                className="w-full flex items-start gap-3.5 px-6 py-4 text-left transition-all hover:bg-slate-50/50 active:bg-slate-100/50 group"
+                                            >
+                                                <div className="relative flex-none">
+                                                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[14px] font-bold text-slate-500 ring-1 ring-black/[0.02]">
+                                                        {(item.partner?.name ?? '?').slice(0, 1).toUpperCase()}
+                                                    </div>
+                                                    {item.partner?.online && (
+                                                        <div className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500" />
+                                                    )}
+                                                </div>
+
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className={cn(
+                                                            "text-[14.5px] truncate tracking-tight",
+                                                            item.is_unread ? "font-bold text-slate-900" : "font-medium text-slate-700"
+                                                        )}>
+                                                            {item.partner?.name ?? 'Unknown'}
+                                                        </p>
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            <p className="text-[10px] font-bold text-slate-400">
+                                                                {item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                            </p>
+                                                            {item.is_unread && (
+                                                                <div className="h-1.5 w-1.5 rounded-full bg-[#0088CC]" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <p className={cn(
+                                                        "mt-0.5 text-[13px] line-clamp-2 leading-snug",
+                                                        item.is_unread ? "font-medium text-slate-600" : "text-slate-400"
+                                                    )}>
+                                                        {item.preview || 'Sapa mereka sekarang...'}
+                                                    </p>
+
+                                                    {/* Hover Actions */}
+                                                    <div className="mt-2.5 flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <p 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                void toggleFollow(partnerId);
+                                                            }}
+                                                            className={cn(
+                                                                "text-[10px] font-black uppercase tracking-widest cursor-pointer hover:text-slate-900",
+                                                                following ? "text-slate-400" : "text-[#0088CC]"
+                                                            )}
+                                                        >
+                                                            {followBusy ? '...' : following ? 'Unfollow' : 'Follow'}
+                                                        </p>
+                                                        {item.can_approve && (
+                                                            <p 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    void approveRequest(item.message_id);
+                                                                }}
+                                                                className="text-[10px] font-black uppercase tracking-widest text-emerald-500 cursor-pointer hover:text-emerald-700"
+                                                            >
+                                                                {approveBusy ? '...' : 'Approve'}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Clean Footer Actions */}
+                        <div className="px-6 py-5 bg-white border-t border-slate-50 flex flex-col items-center gap-3">
+                            <button
+                                type="button"
+                                disabled={busyKey === 'mark-all' || unreadCount <= 0}
+                                onClick={() => void markAllRead()}
+                                className="text-[12px] font-bold text-[#0088CC] hover:underline disabled:opacity-30"
+                            >
+                                Tandai Semua Terbaca
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setOpen(false);
+                                    router.push('/inbox');
+                                }}
+                                className="text-[12px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                Buka Semua Pesan
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
             </PopoverContent>
 
             {toast ? (
-                <div className="fixed left-1/2 top-6 z-[90] -translate-x-1/2 rounded-full bg-slate-900/90 px-4 py-2 text-xs font-semibold text-white shadow-lg ring-1 ring-white/20 backdrop-blur-md">
+                <div className="fixed left-1/2 top-10 z-[100] -translate-x-1/2 rounded-full bg-slate-900/95 px-5 py-2.5 text-[11px] font-black text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500">
                     {toast}
                 </div>
             ) : null}

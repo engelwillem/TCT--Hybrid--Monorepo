@@ -1,6 +1,13 @@
-
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="110" fill="black"/>
-  <text x="256" y="310" font-size="260" text-anchor="middle" fill="white" font-family="Helvetica, Arial, sans-serif">T</text>
-  <circle cx="360" cy="340" r="22" fill="white"/>
+  <defs>
+    <linearGradient id="gradT" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38E0FF"/>
+      <stop offset="100%" stop-color="#00A9D6"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="116" y="150" width="280" height="70" rx="14" fill="url(#gradT)" />
+  <rect x="221" y="150" width="70" height="220" rx="14" fill="url(#gradT)" />
+
+  <circle cx="380" cy="350" r="26" fill="url(#gradT)" />
 </svg>

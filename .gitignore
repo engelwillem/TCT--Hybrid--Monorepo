@@ -5,6 +5,7 @@ backend-api/.composer-cache/
 
 # Build outputs and local caches
 .next/
+.next-stale-*/
 .vite/
 .tmp/
 .npm-cache/
@@ -22,6 +23,7 @@ build/
 .env.test.local
 .env.production.local
 backend-api/.env
+backend-api/.env.testing
 backend-api/.env.*.local
 backend-api/database/database.sqlite
 auth.json
@@ -31,6 +33,11 @@ auth.json
 # Logs and temporary debug artifacts
 *.log
 *.tmp
+tmp/
+.tmp/
+test-results/
+.tmp-*
+tmp-*
 run_temp*.txt
 run_temp*.json
 temp_line.txt
@@ -53,56 +60,72 @@ backend-api/full_test_output.txt
 backend-api/step_failures.txt
 backend-api/test_output.txt
 
-# Release bundles and local installers
-build.tar.gz
-build.tar.gz.sha256
-deliverable-*.zip
-deliverable-final-*.zip
-thechoosentalksbeta_origin.zip
+# Local Audit, Reports, and Prompts (Keep Local Only)
+docs/CORE/PROMPT WEB TCT TERBARU/
+docs/core/PROMPT WEB TCT TERBARU/
+docs/CORE/Development/Gambar Referensi/
+docs/QA Full Audit/
+docs/audit/
+docs/quarantine/
+docs/archive/
+docs/legacy/
+docs/*.zip
+docs/*.rar
+docs/*.xlsx
+docs/*.pdf
+*.zip
+*.rar
+*.7z
+*.tar.gz
 *.vsix
+deliverables/
+deliverable-*.zip
+TCT--Hybrid--Monorepo.zip
 
-# Visual audit artifacts kept only in docs archives when needed
-*_verify_*.png
-verify_*.png
-rollback_*.png
-today_guest_verify_*.png
-browser_tab_logo_*.png
-favicon_logo_*.png
-community_layouts_showcase_*.png
-landing_page_refinement*.png
-landing_page_refined*.png
-spiritual_journey_overhaul_*.png
+# Specific Backend Root Logs
+backend-api/*.txt
+backend-api/step_failures*.txt
+backend-api/test_output*.txt
+
+# Developer Utility Scripts
+create_git_zip.py
+verify_patch_v5.py
+audit_*.py
+test_*.py
+dev_output*.txt
+tsc_output*.txt
+routes_list*.txt
 
 # Tooling and editor state
 .vscode/
 .idea/
 .modified
 .firebase/
-
-# Firebase Studio workspace metadata must stay in repo root
-!.idx/
-!.idx/**
+.gemini/
+.agent/
+.agents/
+.next/
+.next-stale-*/
+.vite/
+.playwright-mcp/
+.idx/
+! .idx/
+! .idx/**
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Documentation boundaries
-docs/archive/**
-!docs/archive/README.md
-docs/quarantine/**
-!docs/quarantine/README.md
-docs/QA Full Audit.zip
-docs/QA Full Audit/quarantine/**
-!docs/QA Full Audit/quarantine/README.md
-docs/STRUKTUR DOCS.md
-docs/core/architecture/laravel-hybrid/0. AUDIT MATRIX.md
-TCT--Laravel--Legacy-main/File
-docs/TCT--Laravel--Legacy-main.zip
-dev_output.txt
-tsc_output_2.txt
-tsc_output.txt
-dev_output_2.txt
-routes_list_2.txt
-dev_output_3.txt
-routes_list.txt
+# Laravel Specific
+backend-api/.env
+backend-api/storage/*.key
+backend-api/database/*.sqlite
+backend-api/public/storage
+backend-api/public/hot
+backend-api/public/build
+backend-api/vendor/
+backend-api/.phpunit.result.cache
+
+# Application Specific Cleanup
+public/og/*.png
+!public/og/README.md

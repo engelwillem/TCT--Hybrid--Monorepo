@@ -5,6 +5,7 @@ import { Bookmark, Heart, MessageCircle, Share2 } from 'lucide-react';
 import AppIcon from '@/components/system/AppIcon';
 import { motion } from 'framer-motion';
 import { useAuthSession } from '@/auth/use-auth-session';
+import { useRouter } from 'next/navigation';
 
 export type ActionBarProps = {
     postType?: string;
@@ -35,6 +36,7 @@ export default function ActionBar({
     className,
     splitSave = false,
 }: ActionBarProps) {
+    const router = useRouter();
     const { isAuthenticated, isRestoring } = useAuthSession();
 
     const triggerHaptic = (type: 'light' | 'medium' = 'light') => {
@@ -50,8 +52,7 @@ export default function ActionBar({
             return;
         }
         if (!isAuthenticated) {
-            // Redirect to landing if unauthorized interaction is attempted
-            window.location.assign('/');
+            router.push('/login');
             return;
         }
 

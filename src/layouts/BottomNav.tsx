@@ -44,11 +44,11 @@ export default function FloatingBottomNav({
         <nav
             aria-label="Primary"
             className={cn(
-                // Shell: very clean frosted glass — no grain, no complex multi-shadow
-                'relative mx-auto w-full max-w-[392px] rounded-[28px]',
-                'border border-black/[0.06] bg-white/80 backdrop-blur-2xl',
-                'shadow-[0_16px_40px_-16px_rgba(0,0,0,0.18),0_4px_12px_-6px_rgba(0,0,0,0.06)]',
-                'px-1.5 pb-1.5 pt-1',
+                // Slightly wider shell keeps /renungan aligned with the more generous nav feel used elsewhere.
+                'relative mx-auto w-[calc(100vw-28px)] max-w-[420px] rounded-[30px]',
+                'border border-black/[0.06] bg-white/84 backdrop-blur-3xl',
+                'shadow-[0_24px_52px_-20px_rgba(15,23,42,0.22),0_10px_22px_-14px_rgba(15,23,42,0.08)]',
+                'px-2 pb-2 pt-1.5',
                 className,
             )}
         >
@@ -76,8 +76,8 @@ export default function FloatingBottomNav({
                             onMouseEnter={() => onPrefetch?.(item.id)}
                             onTouchStart={() => onPrefetch?.(item.id)}
                             className={cn(
-                                'relative inline-flex min-h-[60px] flex-col items-center justify-center gap-1',
-                                'rounded-2xl px-2 pb-1.5 pt-1.5 transition-all duration-250 ease-out',
+                                'relative inline-flex min-h-[64px] flex-col items-center justify-center gap-1.5',
+                                'rounded-[20px] px-2 pb-2 pt-2 transition-all duration-250 ease-out',
                             )}
                             aria-label={item.label}
                             aria-current={isActive ? 'page' : undefined}
@@ -86,7 +86,7 @@ export default function FloatingBottomNav({
                             {isActive && (
                                 <span
                                     aria-hidden="true"
-                                    className="absolute inset-0 rounded-2xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06]"
+                                    className="absolute inset-0 rounded-[20px] bg-white shadow-[0_10px_24px_-16px_rgba(15,23,42,0.42)] ring-1 ring-black/[0.06]"
                                 />
                             )}
 
@@ -102,7 +102,7 @@ export default function FloatingBottomNav({
                             />
                             <span
                                 className={cn(
-                                    'relative z-[1] text-[10px] font-medium leading-none tracking-[0.01em] transition-colors duration-250',
+                                    'relative z-[1] text-[10.5px] font-medium leading-none tracking-[0.01em] transition-colors duration-250',
                                     isActive ? 'text-foreground font-semibold' : 'text-foreground/40',
                                 )}
                             >

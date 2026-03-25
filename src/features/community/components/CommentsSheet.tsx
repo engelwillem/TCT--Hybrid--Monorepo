@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommunityComment } from "../types";
 import { CommunityService } from "@/services/community.service";
+import { useCurrentUserAvatarStyle } from "@/lib/avatar-presentation";
 import { Send, Loader2, X, Reply, AlertTriangle } from "lucide-react";
 
 interface CommentsSheetProps {
@@ -90,6 +91,17 @@ export function CommentsSheet({ isOpen, onOpenChange, postId, onCommentsUpdated 
     inputRef.current?.focus();
   };
 
+  const CurrentUserCommentAvatar = ({ src, authorId, authorName }: { src?: string | null; authorId?: string | null; authorName?: string | null }) => {
+    const avatarPresentation = useCurrentUserAvatarStyle(src, { id: authorId, name: authorName }, 36);
+    return (
+      <AvatarImage
+        src={src || undefined}
+        className={avatarPresentation.className}
+        style={avatarPresentation.style}
+      />
+    );
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-[32px] p-0 sm:max-w-md mx-auto outline-none border-none bg-surface/95 backdrop-blur-xl shadow-2xl flex flex-col">
@@ -118,7 +130,11 @@ export function CommentsSheet({ isOpen, onOpenChange, postId, onCommentsUpdated 
               comments.map((comment) => (
                 <div key={comment.id} className="flex gap-3 group animate-in slide-in-from-bottom-2 fade-in">
                   <Avatar className="w-9 h-9 shrink-0 ring-1 ring-border/50">
-                    <AvatarImage src={comment.author.avatarUrl} />
+                    <CurrentUserCommentAvatar
+                      src={comment.author.avatarUrl}
+                      authorId={comment.author.id}
+                      authorName={comment.author.name}
+                    />
                     <AvatarFallback className="bg-brand/10 text-brand text-xs font-black uppercase">
                       {comment.author.name[0]}
                     </AvatarFallback>

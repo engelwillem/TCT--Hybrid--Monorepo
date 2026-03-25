@@ -7,6 +7,8 @@ use App\Services\VerseHubMentorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class VerseHubReaderController extends Controller
@@ -28,6 +30,15 @@ class VerseHubReaderController extends Controller
 
     public function getBooksApi(string $lang): JsonResponse
     {
+        if (! $this->hasLocalBibleData($lang)) {
+            $fallbackBooks = $this->fetchRemoteReaderJson("api/v1/versehub/{$lang}/books");
+            if (is_array($fallbackBooks['books'] ?? null)) {
+                return response()->json(['books' => $fallbackBooks['books']]);
+            }
+
+            return response()->json(['books' => $this->buildBooks(array_keys(config('versehub_books.'.$lang, [])))]);
+        }
+
         $codes = $this->availableBookCodesCanonical($lang);
         $books = $this->buildBooks($codes);
 
@@ -36,6 +47,13 @@ class VerseHubReaderController extends Controller
 
     public function getChapterContentApi(string $lang, string $ref): JsonResponse
     {
+        if (! $this->hasLocalBibleData($lang)) {
+            $fallback = $this->fetchRemoteReaderJson("api/v1/versehub/{$lang}/chapter/{$ref}");
+            if (is_array($fallback) && is_array($fallback['verses'] ?? null)) {
+                return response()->json($fallback);
+            }
+        }
+
         $bookCodes = $this->availableBookCodesCanonical($lang);
         $parsedRef = $this->parseChapterRef($ref);
         if (! $parsedRef) {
@@ -60,6 +78,13 @@ class VerseHubReaderController extends Controller
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
         if ($lang === 'en') {
             return redirect()->to('/versehub/id');
+        }
+
+        if (! $this->hasLocalBibleData($lang)) {
+            $fallbackBooks = $this->fetchRemoteReaderJson("api/v1/versehub/{$lang}/books");
+            if (is_array($fallbackBooks['books'] ?? null)) {
+                return response()->json(['books' => $fallbackBooks['books']]);
+            }
         }
 
         $bookCodes = $this->availableBookCodesCanonical($lang);
@@ -89,6 +114,14 @@ class VerseHubReaderController extends Controller
 
     public function chapters(string $lang, Request $request)
     {
+        if (! $this->hasLocalBibleData($lang)) {
+            $book = Str::lower(trim((string) $request->query('book', '')));
+            $fallback = $this->fetchRemoteReaderJson("api/v1/versehub/{$lang}/chapters?book=".rawurlencode($book));
+            if (is_array($fallback['chapters'] ?? null)) {
+                return response()->json($fallback);
+            }
+        }
+
         $book = Str::lower(trim((string) $request->query('book', '')));
         $book = $this->resolveIdBookCode($book) ?? $book;
         if ($book === '') {
@@ -275,5 +308,49 @@ class VerseHubReaderController extends Controller
         sort($normalized);
 
         return $normalized;
+    }
+
+    private function hasLocalBibleData(string $lang): bool
+    {
+        return Cache::remember(
+            "versehub:reader:has-local-data:{$lang}",
+            now()->addMinutes(5),
+            fn (): bool => BibleVerse::query()
+                ->where('provider', 'ayt')
+                ->where('lang', $lang)
+                ->exists()
+        );
+    }
+
+    private function fetchRemoteReaderJson(string $path): array
+    {
+        $baseUrl = rtrim((string) env('VERSEHUB_READER_FALLBACK_BASE_URL', 'https://api.thechoosentalks.org'), '/');
+        if ($baseUrl === '') {
+            return [];
+        }
+
+        return Cache::remember(
+            'versehub:reader:fallback:'.md5($baseUrl.'/'.$path),
+            now()->addMinutes(15),
+            function () use ($baseUrl, $path): array {
+                try {
+                    $http = Http::timeout(12)->acceptJson();
+                    if (app()->environment('local')) {
+                        $http = $http->withoutVerifying();
+                    }
+
+                    $response = $http->get($baseUrl.'/'.ltrim($path, '/'));
+                    if (! $response->ok()) {
+                        return [];
+                    }
+
+                    $data = $response->json();
+
+                    return is_array($data) ? $data : [];
+                } catch (\Throwable) {
+                    return [];
+                }
+            }
+        );
     }
 }

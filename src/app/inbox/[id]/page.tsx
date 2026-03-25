@@ -22,6 +22,11 @@ type Partner = {
     name: string;
     online: boolean;
     last_seen_at?: string | null;
+    relationship?: {
+        is_following_partner?: boolean;
+        is_followed_by_partner?: boolean;
+        is_mutual_follow?: boolean;
+    };
 };
 
 type Paging = {
@@ -40,6 +45,7 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [followBusy, setFollowBusy] = useState(false);
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const lastMessageIdRef = useRef<number | null>(null);
@@ -104,6 +110,10 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
         const token = getAppAccessToken();
         const body = text.trim();
         if (!token || !body || !partner || sending) return;
+        if (!partner.relationship?.is_mutual_follow) {
+            showToast('Kalian harus saling follow sebelum bisa mengirim pesan.', 'error');
+            return;
+        }
 
         setSending(true);
         const optimisticId = Date.now();
@@ -162,6 +172,44 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
         }
     };
 
+    const handleToggleFollow = async () => {
+        const token = getAppAccessToken();
+        if (!token || !partner || followBusy) return;
+
+        setFollowBusy(true);
+        try {
+            const response = await fetch(`/api/users/${partner.id}/follow`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({}),
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload?.ok !== true) {
+                throw new Error(payload?.message || 'Gagal memperbarui follow.');
+            }
+
+            setPartner((prev) => prev ? {
+                ...prev,
+                relationship: {
+                    ...prev.relationship,
+                    is_following_partner: Boolean(payload?.following),
+                    is_mutual_follow: Boolean(payload?.following) && Boolean(prev.relationship?.is_followed_by_partner),
+                },
+            } : prev);
+
+            showToast(payload?.following ? 'Berhasil follow member.' : 'Follow dilepas.');
+        } catch (err: any) {
+            showToast(err?.message || 'Gagal memperbarui follow.', 'error');
+        } finally {
+            setFollowBusy(false);
+        }
+    };
+
     if (!partner) {
         if (loading) {
             return (
@@ -193,82 +241,114 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
 
     return (
         <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
-            {/* Thread Header Parity */}
-            <header className="flex-none bg-surface/80 backdrop-blur-md border-b border-border/50 px-4 py-3 z-10 shadow-sm">
-                <div className="mx-auto max-w-2xl flex items-center justify-between">
+            {/* Thread Header: Minimal & Glassy */}
+            <header className="flex-none sticky top-0 z-30 bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] px-4 py-2">
+                <div className="mx-auto max-w-2xl flex items-center justify-between h-12">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => router.push('/inbox')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated transition-all active:scale-90">
-                            <ArrowLeft className="h-5 w-5 text-foreground" />
+                        <button onClick={() => router.push('/inbox')} className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-slate-100 transition-all active:scale-90">
+                            <ArrowLeft className="h-5.5 w-5.5 text-slate-800" />
                         </button>
                         <div className="flex items-center gap-3">
                             <div className="relative">
-                                <div className="h-10 w-10 rounded-2xl bg-surface-muted border border-border/50 flex items-center justify-center text-brand font-black">
+                                <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-[14px] text-slate-500 font-bold ring-1 ring-black/[0.03]">
                                     {partner.name.slice(0, 1).toUpperCase()}
                                 </div>
                                 {partner.online && (
-                                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background ring-1 ring-emerald-500/20" />
+                                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
                                 )}
                             </div>
-                            <div>
-                                <p className="font-bold text-[15px] text-foreground leading-tight">{partner?.name}</p>
+                            <div className="min-w-0">
+                                <p className="font-bold text-[15px] text-slate-900 leading-tight truncate">{partner?.name}</p>
                                 <p className={cn(
-                                    "text-[10px] font-bold uppercase tracking-widest",
-                                    partner?.online ? "text-emerald-500" : "text-muted-foreground"
+                                    "text-[10px] font-bold uppercase tracking-wider",
+                                    partner?.online ? "text-emerald-500" : "text-slate-400"
                                 )}>
                                     {partner?.online ? 'Online' : 'Offline'}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <button className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-surface-elevated text-muted-foreground">
-                        <MoreVertical className="h-5 w-5" />
+                    <button
+                        type="button"
+                        disabled={followBusy}
+                        onClick={() => void handleToggleFollow()}
+                        className={cn(
+                            "inline-flex min-h-9 items-center justify-center rounded-full px-3.5 text-[10px] font-black uppercase tracking-[0.18em] transition-all",
+                            partner?.relationship?.is_following_partner
+                                ? "border border-sky-200 bg-sky-50 text-sky-700"
+                                : "border border-slate-200 bg-white text-slate-700",
+                            followBusy ? "opacity-60" : ""
+                        )}
+                    >
+                        {followBusy ? '...' : partner?.relationship?.is_following_partner ? 'Following' : 'Follow'}
                     </button>
                 </div>
             </header>
 
             <main 
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth scrollbar-hide bg-background"
+                className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide bg-[#F8F9FA]"
             >
-                <div className="mx-auto max-w-2xl space-y-4 pt-4 pb-10">
+                <div className="mx-auto max-w-2xl pt-2 pb-24">
+                    {!partner.relationship?.is_mutual_follow ? (
+                        <div className="mb-4 rounded-[22px] border border-sky-200/80 bg-sky-50/80 px-4 py-3 text-[12px] font-medium leading-5 text-sky-800">
+                            Kalian harus saling follow terlebih dahulu sebelum bisa saling mengirim pesan.
+                        </div>
+                    ) : null}
                     <AnimatePresence initial={false}>
-                        {messages.map((m) => (
-                            <motion.div 
-                                key={m.id}
-                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                className={cn("flex w-full", m.is_mine ? "justify-end" : "justify-start")}
-                            >
-                                <div className={cn(
-                                    "max-w-[85%] px-5 py-3.5 rounded-[28px] shadow-sm text-[15px] leading-relaxed relative",
-                                    m.is_mine
-                                        ? "bg-foreground text-background rounded-br-none"
-                                        : "bg-surface text-foreground ring-1 ring-border/50 rounded-bl-none"
-                                )}>
-                                    <p className="font-medium whitespace-pre-wrap">{m.body}</p>
-                                    <div className={cn(
-                                        "flex items-center justify-end gap-1.5 mt-1.5 opacity-50",
-                                        m.is_mine ? "text-background" : "text-muted-foreground"
-                                    )}>
-                                        <p className="text-[9px] font-bold uppercase tracking-widest">
-                                            {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                        </p>
-                                        {m.is_mine && (
-                                            <CheckCheck className={cn("h-3 w-3", m.read_at ? "text-brand" : "text-background")} />
-                                        )}
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                        {messages.map((m, idx) => {
+                            const showDate = idx === 0 || (m.created_at && messages[idx-1].created_at && 
+                                new Date(m.created_at!).toDateString() !== new Date(messages[idx-1].created_at!).toDateString());
+
+                            return (
+                                <React.Fragment key={m.id}>
+                                    {showDate && (
+                                        <div className="sticky top-0 z-20 flex justify-center py-4 pointer-events-none">
+                                            <span className="bg-white/60 backdrop-blur-lg px-4 py-1.5 rounded-full text-[12px] font-bold text-slate-500 shadow-sm ring-1 ring-black/[0.04]">
+                                                {new Date(m.created_at!).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+                                        className={cn("flex w-full mb-2", m.is_mine ? "justify-end" : "justify-start")}
+                                    >
+                                        <div className={cn(
+                                            "max-w-[80%] px-4 py-2.5 shadow-sm text-[15.5px] leading-relaxed relative flex flex-col transition-all active:scale-[0.995]",
+                                            m.is_mine
+                                                ? "bg-[#0088CC] text-white rounded-[20px] rounded-br-[4px]"
+                                                : "bg-white text-[#1C1C1C] ring-1 ring-black/[0.03] rounded-[20px] rounded-bl-[4px]"
+                                        )}>
+                                            <p className="whitespace-pre-wrap font-regular">
+                                                {m.body}
+                                            </p>
+                                            <div className={cn(
+                                                "flex items-center justify-end gap-1 mt-1 self-end",
+                                                m.is_mine ? "text-white/60" : "text-slate-400/80"
+                                            )}>
+                                                <p className="text-[10px] font-medium tracking-tight">
+                                                    {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </p>
+                                                {m.is_mine && (
+                                                    <CheckCheck className={cn("h-3 w-3", m.read_at ? "text-emerald-300" : "text-white/30")} />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </React.Fragment>
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
             </main>
 
-            {/* Composer Parity */}
-            <footer className="flex-none bg-surface/80 backdrop-blur-md p-4 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-border/50">
-                <div className="mx-auto max-w-2xl flex items-end gap-3">
-                    <div className="flex-1 bg-surface-muted rounded-[28px] border border-border/50 px-4 py-2 flex items-end gap-2">
-                        <button className="h-10 w-10 flex-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+            {/* Composer: Clean, Capsule & Floating with smooth focus */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pointer-events-none">
+                <div className="mx-auto max-w-2xl w-full flex items-end gap-3 pointer-events-auto">
+                    <div className="flex-1 bg-white/95 backdrop-blur-xl rounded-[28px] border border-black/[0.03] px-3.5 py-1.5 flex items-end gap-1 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] ring-[#0088CC]/0 focus-within:ring-2 focus-within:ring-[#0088CC]/60 transition-all duration-300">
+                        <button className="h-10 w-10 flex-none flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
                             <Smile className="h-5.5 w-5.5" />
                         </button>
                         <textarea
@@ -281,25 +361,27 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                                 }
                             }}
                             placeholder="Tulis pesan..."
-                            className="w-full bg-transparent border-none focus:ring-0 text-[15px] py-2.5 resize-none max-h-32 min-h-[44px] font-medium placeholder:text-muted-foreground/50 text-foreground"
+                            className="w-full bg-transparent border-none focus:ring-0 text-[15.5px] py-2.5 resize-none max-h-36 min-h-[46px] font-medium placeholder:text-slate-300 text-slate-900"
                             rows={1}
                         />
-                        <button className="h-10 w-10 flex-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                         <button className="h-10 w-10 flex-none flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
                             <ImageIcon className="h-5.5 w-5.5" />
                         </button>
                     </div>
                     <button
                         onClick={() => void handleSend()}
-                        disabled={!text.trim() || sending}
+                        disabled={!text.trim() || sending || !partner.relationship?.is_mutual_follow}
                         className={cn(
-                            "h-13 w-13 flex items-center justify-center rounded-full transition-all active:scale-90 shadow-soft",
-                            text.trim() ? "bg-foreground text-background" : "bg-surface-muted text-muted-foreground/30 shadow-none border border-border/50"
+                            "h-12 w-12 flex items-center justify-center rounded-full transition-all active:scale-95 shadow-lg",
+                            text.trim() && partner.relationship?.is_mutual_follow
+                                ? "bg-[#0088CC] text-white shadow-[#0088CC]/30"
+                                : "bg-white text-slate-200 shadow-none border border-black/[0.02]"
                         )}
                     >
                         {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5.5 w-5.5 fill-current" />}
                     </button>
                 </div>
-            </footer>
+            </div>
 
             {/* Global Toast Parity */}
             <AnimatePresence>

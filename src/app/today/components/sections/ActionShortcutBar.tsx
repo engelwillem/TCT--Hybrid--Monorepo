@@ -17,8 +17,8 @@ const actions = [
     },
     {
         icon: Route,
-        label: 'Paths',
-        href: '/paths',
+        label: 'Journey',
+        href: '/journey',
     },
     {
         icon: Inbox,

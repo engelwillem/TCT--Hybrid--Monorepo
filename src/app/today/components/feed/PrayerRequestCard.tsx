@@ -5,6 +5,7 @@ import { Heart, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { CommunityService } from '@/services/community.service';
+import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
 
 export default function PrayerRequestCard({
     id,
@@ -26,6 +27,7 @@ export default function PrayerRequestCard({
 }) {
     const userName = payload.author?.name ?? payload.user?.name ?? 'Anonymous';
     const avatar = payload.author?.avatar_url ?? payload.user?.avatar;
+    const authorId = payload.author && 'id' in payload.author ? String((payload.author as { id?: string | number }).id ?? '') : '';
     const requestText = payload.text ?? payload.request ?? '';
     const initialPrays = payload.stats?.pray_count ?? payload.prayCount ?? 0;
     const commentCount = payload.stats?.comments_count ?? payload.commentCount ?? 0;
@@ -34,6 +36,7 @@ export default function PrayerRequestCard({
 
     const [prayed, setPrayed] = useState(interactions?.is_prayed ?? false);
     const [count, setCount] = useState(initialPrays);
+    const avatarPresentation = useCurrentUserAvatarStyle(avatar, { id: authorId, name: userName }, 40);
 
     const togglePray = async () => {
         if (!postId) return;
@@ -67,7 +70,12 @@ export default function PrayerRequestCard({
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-surface-muted flex items-center justify-center text-foreground font-bold border border-border/60">
                             {avatar ? (
-                                <img src={avatar} alt={userName} className="h-full w-full rounded-full object-cover" />
+                                <img
+                                    src={avatar}
+                                    alt={userName}
+                                    className={cn("h-full w-full rounded-full object-cover", avatarPresentation.className)}
+                                    style={avatarPresentation.style}
+                                />
                             ) : (
                                 userName.charAt(0)
                             )}

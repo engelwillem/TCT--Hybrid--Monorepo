@@ -52,7 +52,7 @@ class CommunityApiController extends Controller
             ->orderByDesc('created_at')
             ->limit(120)
             ->get()
-            ->map(fn (MemberPost $post) => $this->serializePost($post))
+            ->map(fn (MemberPost $post) => $this->serializePost($post, $user))
             ->values();
 
         return response()->json([
@@ -71,10 +71,12 @@ class CommunityApiController extends Controller
 
         $validated = $request->validate([
             'text' => ['required_without:images', 'nullable', 'string', 'max:5000'],
-            'type' => ['nullable', 'string', 'in:user_post,prayer_request,reflection,testimony'],
+            'type' => ['nullable', 'string', 'in:user_post,prayer_request,reflection,testimony,quote'],
             'images' => ['nullable', 'array', 'max:5'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-            'imageUrl' => ['nullable', 'url', 'max:2048'], // For backward compatibility
+            'imageUrl' => ['nullable', 'url', 'max:2048'],
+            'metadata' => ['nullable', 'array'],
+            'metadata.media_aspect_ratio' => ['nullable', 'string', 'in:9:16,4:5,1:1,16:9,og,auto']
         ]);
 
         $mediaPaths = [];
@@ -86,7 +88,6 @@ class CommunityApiController extends Controller
             }
         }
 
-        // If no files but imageUrl provided
         if (empty($mediaPaths) && $request->filled('imageUrl')) {
             $mediaPaths[] = $request->input('imageUrl');
         }
@@ -97,6 +98,7 @@ class CommunityApiController extends Controller
             'text' => trim((string) ($validated['text'] ?? '')),
             'image_path' => $mediaPaths[0] ?? null,
             'media_paths' => ! empty($mediaPaths) ? $mediaPaths : null,
+            'metadata' => $validated['metadata'] ?? null,
             'expires_at' => Carbon::now()->addDays(7),
         ]);
 
@@ -104,7 +106,7 @@ class CommunityApiController extends Controller
 
         return response()->json([
             'data' => [
-                'post' => $this->serializePost($fresh),
+                'post' => $this->serializePost($fresh, $user),
             ],
         ], 201);
     }
@@ -122,7 +124,7 @@ class CommunityApiController extends Controller
         return response()->json([
             'data' => [
                 'status' => $added ? 'added' : 'removed',
-                'post' => $this->serializePost($fresh),
+                'post' => $this->serializePost($fresh, $user),
             ],
         ]);
     }
@@ -154,7 +156,27 @@ class CommunityApiController extends Controller
         return response()->json([
             'data' => [
                 'status' => $status,
-                'post' => $this->serializePost($fresh),
+                'post' => $this->serializePost($fresh, $user),
+            ],
+        ]);
+    }
+
+    public function destroy(MemberPost $memberPost): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+        abort_unless($user->is_admin || (int) $memberPost->user_id === (int) $user->id, 403);
+
+        $memberPost->forceFill([
+            'hidden_at' => now(),
+            'hidden_by' => $user->id,
+        ])->save();
+
+        return response()->json([
+            'data' => [
+                'status' => 'removed',
+                'id' => (string) $memberPost->id,
             ],
         ]);
     }
@@ -244,8 +266,19 @@ class CommunityApiController extends Controller
             ->findOrFail($postId);
     }
 
-    private function serializePost(MemberPost $post): array
+    private function serializePost(MemberPost $post, ?User $viewer = null): array
     {
+        $author = $post->user;
+        $viewerId = (int) ($viewer?->id ?? 0);
+        $authorId = (int) ($author?->id ?? 0);
+        $isFollowingAuthor = false;
+        $isFollowedByAuthor = false;
+
+        if ($viewerId > 0 && $authorId > 0 && $viewerId !== $authorId) {
+            $isFollowingAuthor = $viewer->following()->where('users.id', $authorId)->exists();
+            $isFollowedByAuthor = $author->following()->where('users.id', $viewerId)->exists();
+        }
+
         return [
             'id' => (string) $post->id,
             'type' => (string) ($post->type->value ?? 'user_post'),
@@ -254,10 +287,13 @@ class CommunityApiController extends Controller
             'mediaPaths' => $post->media_paths,
             'createdAt' => $post->created_at?->diffForHumans(),
             'author' => [
-                'id' => (string) ($post->user?->id ?? ''),
-                'name' => (string) ($post->user?->name ?? 'Member'),
-                'avatarUrl' => $post->user?->getFilamentAvatarUrl(),
-                'isOfficial' => (bool) ($post->user?->is_admin ?? false),
+                'id' => (string) ($author?->id ?? ''),
+                'name' => (string) ($author?->name ?? 'Member'),
+                'avatarUrl' => $author?->getFilamentAvatarUrl(),
+                'isOfficial' => (bool) ($author?->is_admin ?? false),
+                'isFollowing' => $isFollowingAuthor,
+                'isFollowedBy' => $isFollowedByAuthor,
+                'isMutualFollow' => $isFollowingAuthor && $isFollowedByAuthor,
             ],
             'counts' => [
                 'likes' => (int) ($post->pray_count ?? 0),
@@ -266,6 +302,8 @@ class CommunityApiController extends Controller
             ],
             'isLiked' => (bool) ($post->is_prayed_by_me ?? false),
             'isBookmarked' => (bool) ($post->is_bookmarked_by_me ?? false),
+            'metadata' => $post->metadata,
+            'can_moderate' => (bool) ($viewer?->is_admin ?? false),
         ];
     }
 
@@ -286,10 +324,6 @@ class CommunityApiController extends Controller
         ];
     }
 
-    /**
-     * Keep /storage/<path> readable on shared-hosting environments where public/storage
-     * is a real directory (not a symlink to storage/app/public).
-     */
     private function syncPublicMediaMirror(string $relativePath): void
     {
         try {
@@ -313,5 +347,3 @@ class CommunityApiController extends Controller
         }
     }
 }
-
-

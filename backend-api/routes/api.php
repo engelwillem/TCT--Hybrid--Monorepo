@@ -82,6 +82,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
         Route::post('/community/posts/{memberPost}/bookmark', [CommunityApiController::class, 'toggleBookmark']);
+        Route::delete('/community/posts/{memberPost}', [CommunityApiController::class, 'destroy']);
 
         Route::post('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'upsert'])
             ->whereIn('lang', ['id', 'en']);

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal } from "lucide-react";
 import { CommunityPost, CommunityComment, CommunityUser } from "../types";
+import { useCurrentUserAvatarStyle } from "@/lib/avatar-presentation";
 import { cn } from "@/lib/utils";
 import { CommentsSheet } from "./CommentsSheet";
 
@@ -22,13 +23,21 @@ interface PostCardProps {
 export function PostCard({ post, comments, onAddComment, onLike, onBookmark, currentUser }: PostCardProps) {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const commentsCount = Math.max(post.counts.comments, comments.length);
+  const avatarPresentation = useCurrentUserAvatarStyle(post.author.avatarUrl, {
+    id: post.author.id,
+    name: post.author.name,
+  }, 40);
 
   return (
     <>
       <Card className="mb-4 overflow-hidden border border-border/70 bg-surface/80 shadow-card ring-1 ring-border/40 backdrop-blur-md transition-all duration-300 hover:bg-surface-elevated hover:ring-border/70">
         <CardHeader className="p-4 flex-row items-center gap-3 space-y-0">
           <Avatar className="w-10 h-10 border-2 border-border/60 shadow-sm ring-2 ring-background">
-            <AvatarImage src={post.author.avatarUrl} />
+            <AvatarImage
+              src={post.author.avatarUrl}
+              className={avatarPresentation.className}
+              style={avatarPresentation.style}
+            />
             <AvatarFallback>{post.author.name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">

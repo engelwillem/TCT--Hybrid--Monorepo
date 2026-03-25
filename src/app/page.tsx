@@ -15,62 +15,52 @@ export default function HomePage() {
     <div className="relative min-h-screen bg-[#FAFCFF] flex flex-col items-center justify-center px-6 font-sans selection:bg-black/10">
       
       {/* Subtle texture */}
-      <div className="pointer-events-none fixed inset-0 bg-[url('/grain.png')] opacity-[0.03] mix-blend-multiply" aria-hidden="true" />
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.04] mix-blend-multiply"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 1px 1px, rgba(15,23,42,0.12) 1px, transparent 0)',
+          backgroundSize: '18px 18px',
+        }}
+        aria-hidden="true"
+      />
 
       {/* Centered content — one viewport, no scroll */}
-      <main className="relative z-10 flex flex-col items-center text-center w-full max-w-[340px]">
+      <main className="relative z-10 flex flex-col items-center text-center w-full max-w-[340px] py-12">
         
         {/* Brand — SVG logo + quiet text */}
-        <div className="flex flex-col items-center mb-10 pt-4">
+        <div className="flex flex-col items-center mb-16 pt-4">
           <TCTLogo className="w-12 h-12 mb-5 drop-shadow-sm opacity-95" />
-          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-foreground/35">
+          <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-foreground/35">
             The Chosen Talks
           </p>
         </div>
 
         {/* Headline — one thought, not a pitch */}
-        <h1 className="tct-serif text-[38px] leading-[1.15] tracking-tight text-foreground/90 mb-4">
-          Renungan harian Kristen<br />untuk memulai hari ini.
+        <h1 className="tct-serif text-[40px] leading-[1.1] tracking-tight text-foreground/90 mb-6">
+          Renungan harian<br />
+          sebelum memulai hari.
         </h1>
 
-        <p className="text-[15px] leading-[1.65] text-foreground/55 mb-12 font-medium">
-          Terima firman, renungkan ayat harian,<br />dan berdoa bersama komunitas iman.
+        <p className="text-[16px] leading-[1.6] text-foreground/55 mb-14 font-medium italic">
+          Terima Firman, Renungkan ayat harian,<br />
+          Berdoa & Diskusi Iman Dengan Komunitas.
         </p>
 
         {/* Primary CTA */}
         <Link
-          href="/today"
-          className="w-full max-w-[280px] rounded-full bg-foreground text-background py-[14px] text-[15px] font-semibold tracking-wide transition-all active:scale-[0.97] hover:opacity-90"
+          href="/renungan"
+          className="w-full max-w-[300px] rounded-full bg-black text-white py-[17px] text-[16px] font-bold tracking-tight shadow-2xl shadow-black/20 transition-all active:scale-[0.98] hover:bg-black/90"
         >
-          Lanjut sebagai Guest
+          Lanjut ke Halaman Renungan
         </Link>
 
         {/* Secondary — very quiet auth */}
-        <div className="mt-8 flex items-center gap-4 text-[12px] text-foreground/40 font-medium">
+        <div className="mt-10 flex items-center gap-6 text-[13px] text-foreground/40 font-medium pb-20">
           <Link href="/login?intent=signup" className="hover:text-foreground/70 transition-colors">Daftar</Link>
           <span aria-hidden="true" className="opacity-30">·</span>
           <Link href="/login" className="hover:text-foreground/70 transition-colors">Login</Link>
         </div>
-
-        <nav aria-label="Link utama" className="mt-10 w-full max-w-[320px]">
-          <ul className="grid gap-3 text-left text-[13px]">
-            <li>
-              <Link href="/today" className="block rounded-2xl border border-black/[0.06] bg-white/80 px-4 py-3 text-foreground/75 transition-colors hover:text-foreground">
-                Renungan harian dan doa di Today
-              </Link>
-            </li>
-            <li>
-              <Link href="/versehub/id" className="block rounded-2xl border border-black/[0.06] bg-white/80 px-4 py-3 text-foreground/75 transition-colors hover:text-foreground">
-                Baca dan renungkan ayat Alkitab di VerseHub
-              </Link>
-            </li>
-            <li>
-              <Link href="/community" className="block rounded-2xl border border-black/[0.06] bg-white/80 px-4 py-3 text-foreground/75 transition-colors hover:text-foreground">
-                Bergabung dengan komunitas iman di Community
-              </Link>
-            </li>
-          </ul>
-        </nav>
 
       </main>
     </div>

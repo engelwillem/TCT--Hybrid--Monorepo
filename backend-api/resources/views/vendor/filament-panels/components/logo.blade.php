@@ -12,6 +12,7 @@
     ]);
 
     $logoStyles = "height: {$brandLogoHeight}";
+    $brandTextStyles = 'display: inline-flex; align-items: center; line-height: 1.15; padding-block: 0.125rem;';
 @endphp
 
 @capture($content, $logo, $isDarkMode = false)
@@ -41,6 +42,7 @@
                 $attributes->class([
                     $getLogoClasses($isDarkMode),
                 ])
+                ->style([$brandTextStyles])
             }}
         >
             {{ $brandName }}

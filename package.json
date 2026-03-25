@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
+    "dev:tailscale": "next dev --turbopack -H 0.0.0.0 -p 9002",
     "dev:backend": "composer --working-dir backend-api dev",
     "dev:backend:serve": "php backend-api/artisan serve --host=127.0.0.1 --port=8000",
+    "dev:backend:tailscale": "php backend-api/artisan serve --host=0.0.0.0 --port=8000",
     "dev:studio": "next dev -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
@@ -17,6 +19,10 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
+    "zip:website": "python scripts/create_main_website_zip.py",
+    "zip:website:clean": "python scripts/create_main_website_zip.py --clean",
+    "zip:website:reveal": "python scripts/create_main_website_zip.py --reveal",
+    "zip:website:clean:reveal": "python scripts/create_main_website_zip.py --clean --reveal",
     "today:ready": "composer --working-dir backend-api today:ready",
     "today:ready:full": "npm run today:ready && npm run typecheck && npm run test:e2e -- tests/today.smoke.spec.ts",
     "smoke:prod": "powershell -ExecutionPolicy Bypass -File scripts/smoke-production.ps1"
@@ -78,4 +84,3 @@
     "vitest": "^4.1.0"
   }
 }
-

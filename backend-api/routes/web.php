@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\StudyPathController;
 use App\Http\Controllers\VerseHubController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -34,10 +35,14 @@ Route::post('/versehub/{lang}/{ref}/mentor/ask', [VerseHubController::class, 'me
     ->whereIn('lang', ['id', 'en'])
     ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
 
-Route::get('/versehub/{lang}/study', [VerseHubController::class, 'studyPaths'])
+Route::get('/versehub/{lang}/{ref}/mentor/og.png', [VerseHubController::class, 'mentorOgImage'])
+    ->whereIn('lang', ['id', 'en'])
+    ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
+
+Route::get('/versehub/{lang}/study', [StudyPathController::class, 'index'])
     ->whereIn('lang', ['id', 'en']);
 
-Route::get('/versehub/{lang}/study/{slug}/og.png', [VerseHubController::class, 'studyPathOgImage'])
+Route::get('/versehub/{lang}/study/{slug}/og.png', [StudyPathController::class, 'ogImage'])
     ->whereIn('lang', ['id', 'en']);
 
 Route::redirect('/admin', '/admintalk/login', 302);

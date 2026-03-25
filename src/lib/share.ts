@@ -6,6 +6,14 @@ export function getCanonicalUrl(path: string): string {
   return `https://www.thechoosentalks.org${normalizedPath}`;
 }
 
+export function getVerseShareUrl(lang: string, slug: string): string {
+  return getCanonicalUrl(`/versehub/${lang}/share/${encodeURIComponent(slug)}`);
+}
+
+export function getCommunityShareUrl(postId: string): string {
+  return getCanonicalUrl(`/community/posts/${encodeURIComponent(postId)}/share`);
+}
+
 export function buildTodayShareText(url: string): string {
   return `Aku menemukan ruang teduh hari ini.\nKalau kamu mau, kamu bisa memulainya dari sini: ${url}`;
 }
@@ -25,4 +33,3 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     return false;
   }
 }
-

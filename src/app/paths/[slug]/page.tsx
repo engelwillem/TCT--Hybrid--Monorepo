@@ -53,8 +53,8 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
         return (
             <MobileAppLayout
                 title="Memuat..."
-                activeNavId="paths"
-                backHref="/paths"
+                activeNavId="versehub"
+                backHref="/journey"
                 className="md:max-w-none bg-background text-foreground min-h-screen"
             >
                 <div className="flex h-screen items-center justify-center text-muted-foreground">Memuat perjalanan...</div>
@@ -66,17 +66,17 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
         return (
             <MobileAppLayout
                 title="Perjalanan Tidak Ditemukan"
-                activeNavId="paths"
-                backHref="/paths"
+                activeNavId="versehub"
+                backHref="/journey"
                 className="md:max-w-none bg-background text-foreground min-h-screen"
             >
                 <div className="flex h-screen flex-col items-center pt-32 text-center px-4">
                     <p className="text-muted-foreground mb-4">Perjalanan ini tidak dapat ditemukan atau gagal dimuat dari server.</p>
                     <button 
-                        onClick={() => router.push('/paths')}
+                        onClick={() => router.push('/journey')}
                         className="bg-surface hover:bg-surface-elevated transition-all text-foreground font-medium px-6 py-3 rounded-full text-sm shadow-sm ring-1 ring-border/50"
                     >
-                        Kembali ke Paths
+                        Kembali ke Journey
                     </button>
                 </div>
             </MobileAppLayout>
@@ -98,8 +98,8 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
     return (
         <MobileAppLayout
             title={title}
-            activeNavId="paths"
-            backHref="/paths"
+            activeNavId="versehub"
+            backHref="/journey"
             className="md:max-w-none bg-background text-foreground min-h-screen"
         >
             <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-2">
@@ -242,10 +242,10 @@ export default function JourneyDetailPage({ params }: { params: Promise<{ slug: 
                         className="mt-12 text-center"
                     >
                         <button 
-                            onClick={() => router.push('/paths')}
+                            onClick={() => router.push('/journey')}
                             className="bg-surface hover:bg-surface-elevated transition-all text-foreground font-medium px-6 py-3 rounded-full text-sm shadow-sm ring-1 ring-border/50"
                         >
-                            Jelajahi Perjalanan Lainnya
+                            Kembali ke Journey
                         </button>
                     </motion.div>
                 )}

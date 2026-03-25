@@ -11,6 +11,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Get;
+use Filament\Schemas\Components\Actions\Action;
 use Filament\Schemas\Schema;
 
 class DailyContentForm
@@ -53,7 +54,6 @@ class DailyContentForm
                             ->columnSpanFull(),
                     ]),
 
-                // 1. Today's Verse Payload
                 Section::make('Verse Details')
                     ->visible(fn (Get $get) => $get('content_type') === 'today_verse')
                     ->schema([
@@ -87,7 +87,6 @@ class DailyContentForm
                             ->helperText('Wajib portrait 9:16. Disarankan 1080x1920.'),
                     ]),
 
-                // 2. Quote Payload
                 Section::make('Quote Details')
                     ->visible(fn (Get $get) => $get('content_type') === 'quote_of_day')
                     ->schema([
@@ -101,7 +100,6 @@ class DailyContentForm
                             ->required(),
                     ]),
 
-                // 3. Reflection Prompt Payload
                 Section::make('Reflection Details')
                     ->visible(fn (Get $get) => $get('content_type') === 'reflection_prompt')
                     ->schema([
@@ -110,7 +108,7 @@ class DailyContentForm
                             ->rows(3)
                             ->required()
                             ->hintAction(
-                                \Filament\Forms\Components\Actions\Action::make('ai_suggest')
+                                Action::make('ai_suggest')
                                     ->label('✨ AI Suggest')
                                     ->action(function ($set, $get) {
                                         $assistant = app(\App\Services\AI\AIContentAssistant::class);
@@ -125,7 +123,6 @@ class DailyContentForm
                             ),
                     ]),
 
-                // 4. Prayer Prompt Payload
                 Section::make('Prayer Details')
                     ->visible(fn (Get $get) => $get('content_type') === 'prayer_prompt')
                     ->schema([
@@ -137,7 +134,7 @@ class DailyContentForm
                             ->placeholder('e.g., Kekuatan dan Perlindungan')
                             ->required()
                             ->hintAction(
-                                \Filament\Forms\Components\Actions\Action::make('ai_suggest_prayer')
+                                Action::make('ai_suggest_prayer')
                                     ->label('✨ AI Suggest')
                                     ->action(function ($set, $get) {
                                         $assistant = app(\App\Services\AI\AIContentAssistant::class);
@@ -152,7 +149,6 @@ class DailyContentForm
                             ),
                     ]),
 
-                // 5. Community Highlight Payload
                 Section::make('Highlight Details')
                     ->visible(fn (Get $get) => $get('content_type') === 'community_highlight')
                     ->schema([

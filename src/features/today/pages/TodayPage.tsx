@@ -52,7 +52,7 @@ export function TodayPage() {
   const quickActions = [
     { label: "Community", icon: PlusCircle, href: "/community", color: "bg-blue-500/10 text-blue-600", desc: "Bagikan inspirasi" },
     { label: "VerseHub", icon: BookOpen, href: "/versehub/id", color: "bg-teal-500/10 text-teal-600", desc: "Baca firman" },
-    { label: "Paths", icon: Route, href: "/paths", color: "bg-purple-500/10 text-purple-600", desc: "Perjalanan rohani" },
+    { label: "Journey", icon: Route, href: "/journey", color: "bg-purple-500/10 text-purple-600", desc: "Riwayat dan progres rohani" },
     { label: "Inbox", icon: Inbox, href: "/inbox", color: "bg-orange-500/10 text-orange-600", desc: "Pesan masuk" },
   ];
 

@@ -15,21 +15,20 @@ import {
     Sparkles,
     Loader2,
     AlertTriangle,
-    Key,
-    Lock,
-    QrCode,
     RefreshCw,
     X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MobileAppLayout from '@/layouts/MobileAppLayout';
-import DarkCard from '@/components/core/DarkCard';
 import AccordionCard from '@/components/core/AccordionCard';
 import PrimaryCTA from '@/components/core/PrimaryCTA';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { clearAppAccessToken, getAppAccessToken } from '@/services/app-auth-token';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
+import { clearAppAccessToken, getAppAccessToken, setAppAccessToken, setAppAuthUser } from '@/services/app-auth-token';
+import { DEFAULT_SAVED_AVATAR_TRANSFORM, loadSavedAvatarTransform, saveAvatarTransform } from '@/lib/avatar-presentation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type OpsGatewayData = {
@@ -57,10 +56,28 @@ type ApiProfilePayload = {
     };
 };
 
+type FirebaseSyncPayload = {
+    data?: {
+        token?: string;
+        user?: {
+            id?: string | number;
+            name?: string;
+            email?: string;
+            avatarUrl?: string | null;
+            avatar_url?: string | null;
+        };
+    };
+};
+
 type AvatarTransform = {
     x: number;
     y: number;
     scale: number;
+};
+
+type AvatarImageSize = {
+    width: number;
+    height: number;
 };
 
 const DEFAULT_AVATAR_TRANSFORM: AvatarTransform = {
@@ -73,6 +90,13 @@ const AVATAR_TRANSFORM_LIMIT = {
     offset: 42,
     minScale: 1,
     maxScale: 1.6,
+};
+
+const AVATAR_EDITOR_VIEWPORT = 280;
+const AVATAR_EDITOR_LIMIT = {
+    offset: 180,
+    minScale: 1,
+    maxScale: 3,
 };
 
 const API_BASE_FALLBACK = 'https://api.thechoosentalks.org';
@@ -213,10 +237,90 @@ function clampTransform(next: AvatarTransform): AvatarTransform {
     };
 }
 
+function clampEditorTransform(next: AvatarTransform): AvatarTransform {
+    const offset = AVATAR_EDITOR_LIMIT.offset;
+    return {
+        x: Math.max(-offset, Math.min(offset, Number(next.x) || 0)),
+        y: Math.max(-offset, Math.min(offset, Number(next.y) || 0)),
+        scale: Math.max(AVATAR_EDITOR_LIMIT.minScale, Math.min(AVATAR_EDITOR_LIMIT.maxScale, Number(next.scale) || 1)),
+    };
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('Gagal membaca file.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function loadImageDimensions(source: string): Promise<AvatarImageSize> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({
+            width: img.naturalWidth || img.width,
+            height: img.naturalHeight || img.height,
+        });
+        img.onerror = () => reject(new Error('Gagal memuat dimensi gambar.'));
+        img.src = source;
+    });
+}
+
+async function cropAvatarFile(
+    source: string,
+    fileName: string,
+    transform: AvatarTransform,
+    imageSize?: AvatarImageSize | null,
+): Promise<File> {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Gagal memuat gambar untuk crop.'));
+        img.src = source;
+    });
+
+    const outputSize = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas crop tidak tersedia.');
+
+    const naturalWidth = imageSize?.width || image.naturalWidth;
+    const naturalHeight = imageSize?.height || image.naturalHeight;
+    const containScale = Math.min(outputSize / naturalWidth, outputSize / naturalHeight);
+    const finalScale = containScale * transform.scale;
+    const drawWidth = naturalWidth * finalScale;
+    const drawHeight = naturalHeight * finalScale;
+    const movementRatio = outputSize / AVATAR_EDITOR_VIEWPORT;
+    const drawX = (outputSize - drawWidth) / 2 + (transform.x * movementRatio);
+    const drawY = (outputSize - drawHeight) / 2 + (transform.y * movementRatio);
+
+    ctx.clearRect(0, 0, outputSize, outputSize);
+    ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.92);
+    });
+
+    if (!blob) throw new Error('Gagal membuat hasil crop avatar.');
+
+    const safeBaseName = fileName.replace(/\.[^.]+$/, '') || 'avatar';
+    return new File([blob], `${safeBaseName}-avatar.jpg`, { type: 'image/jpeg' });
+}
+
 export default function ProfilePage() {
     const router = useRouter();
     const { user: authUser } = useUser();
-    const { status: authStatus, isAuthenticated } = useAuthSession();
+    const {
+        status: authStatus,
+        isAuthenticated,
+        profileName,
+        profileEmail,
+        avatarUrl: sessionAvatarUrl,
+    } = useAuthSession();
     
     // UI States
     const [loading, setLoading] = useState(true);
@@ -224,14 +328,23 @@ export default function ProfilePage() {
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const avatarPreviewBlobRef = useRef<string | null>(null);
+    const avatarEditorDragRef = useRef<{ pointerId: number; startX: number; startY: number; origin: AvatarTransform } | null>(null);
     const [avatarTransform, setAvatarTransform] = useState<AvatarTransform>(DEFAULT_AVATAR_TRANSFORM);
+    const [avatarEditorOpen, setAvatarEditorOpen] = useState(false);
+    const [avatarEditorBusy, setAvatarEditorBusy] = useState(false);
+    const [avatarEditorSource, setAvatarEditorSource] = useState<string | null>(null);
+    const [avatarEditorFile, setAvatarEditorFile] = useState<File | null>(null);
+    const [avatarEditorImageSize, setAvatarEditorImageSize] = useState<AvatarImageSize | null>(null);
+    const [avatarEditorTransform, setAvatarEditorTransform] = useState<AvatarTransform>(DEFAULT_AVATAR_TRANSFORM);
+    const [avatarControlsOpen, setAvatarControlsOpen] = useState(false);
+    const [avatarTransformDirty, setAvatarTransformDirty] = useState(false);
 
     // Profile States
     const [user, setUser] = useState({
-        name: authUser?.displayName || '',
-        email: authUser?.email || '',
-        avatarUrl: null as string | null,
-        avatarCandidates: [] as string[],
+        name: profileName || authUser?.displayName || '',
+        email: profileEmail || authUser?.email || '',
+        avatarUrl: sessionAvatarUrl || null,
+        avatarCandidates: buildAvatarCandidates(sessionAvatarUrl || authUser?.photoURL || null),
         is_admin: false,
         email_verified_at: null as string | null,
     });
@@ -282,7 +395,134 @@ export default function ProfilePage() {
     const transformStorageKey = `tct.profile.avatarTransform:${user.email || 'guest'}`;
 
     const updateAvatarTransform = (updater: (prev: AvatarTransform) => AvatarTransform) => {
-        setAvatarTransform((prev) => clampTransform(updater(prev)));
+        setAvatarTransform((prev) => {
+            const next = clampTransform(updater(prev));
+            setAvatarTransformDirty(true);
+            return next;
+        });
+    };
+
+    const updateAvatarEditorTransform = (updater: (prev: AvatarTransform) => AvatarTransform) => {
+        setAvatarEditorTransform((prev) => clampEditorTransform(updater(prev)));
+    };
+
+    const handleAvatarEditorPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (!avatarEditorSource || avatarEditorBusy) return;
+        avatarEditorDragRef.current = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            origin: avatarEditorTransform,
+        };
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    const handleAvatarEditorPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+        const activeDrag = avatarEditorDragRef.current;
+        if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
+        const deltaX = event.clientX - activeDrag.startX;
+        const deltaY = event.clientY - activeDrag.startY;
+        setAvatarEditorTransform(clampEditorTransform({
+            ...activeDrag.origin,
+            x: activeDrag.origin.x + deltaX,
+            y: activeDrag.origin.y + deltaY,
+        }));
+    };
+
+    const handleAvatarEditorPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+        const activeDrag = avatarEditorDragRef.current;
+        if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
+        avatarEditorDragRef.current = null;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+    };
+
+    const syncFirebaseAccessToken = async (forceRefresh = false): Promise<string | null> => {
+        if (!authUser || authUser.isAnonymous || typeof authUser.getIdToken !== 'function') {
+            return null;
+        }
+
+        try {
+            const idToken = await authUser.getIdToken(forceRefresh);
+            const response = await fetch('/api/auth/firebase/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ idToken }),
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const payload = (await response.json().catch(() => null)) as FirebaseSyncPayload | null;
+            const token = typeof payload?.data?.token === 'string' ? payload.data.token.trim() : '';
+            if (!token) {
+                return null;
+            }
+
+            setAppAccessToken(token, 'firebase');
+            const syncedUser = payload?.data?.user;
+            if (syncedUser) {
+                setAppAuthUser({
+                    id: syncedUser.id != null ? String(syncedUser.id) : undefined,
+                    name: syncedUser.name || undefined,
+                    email: syncedUser.email || undefined,
+                    avatarUrl: typeof syncedUser.avatarUrl === 'string'
+                        ? syncedUser.avatarUrl
+                        : typeof syncedUser.avatar_url === 'string'
+                            ? syncedUser.avatar_url
+                            : null,
+                });
+            }
+
+            return token;
+        } catch {
+            return null;
+        }
+    };
+
+    const ensureApiAccessToken = async (forceRefresh = false): Promise<string | null> => {
+        if (!forceRefresh) {
+            const token = getAppAccessToken();
+            if (token) return token;
+        }
+
+        return syncFirebaseAccessToken(forceRefresh);
+    };
+
+    const fetchWithApiAuth = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response | null> => {
+        const makeRequest = async (token: string) => {
+            const headers = new Headers(init.headers);
+            headers.set('Accept', headers.get('Accept') || 'application/json');
+            headers.set('Authorization', `Bearer ${token}`);
+            return fetch(input, {
+                ...init,
+                headers,
+            });
+        };
+
+        let token = await ensureApiAccessToken();
+        if (!token) {
+            return null;
+        }
+
+        let response = await makeRequest(token);
+        if (response.status !== 401) {
+            return response;
+        }
+
+        clearAppAccessToken();
+        token = await ensureApiAccessToken(true);
+        if (!token) {
+            return response;
+        }
+
+        response = await makeRequest(token);
+        return response;
     };
 
     useEffect(() => {
@@ -303,7 +543,10 @@ export default function ProfilePage() {
             return;
         }
 
-        const authAvatarCandidates = buildAvatarCandidates(authUser?.photoURL || null);
+        const authAvatarCandidates = dedupeCandidates([
+            ...buildAvatarCandidates(sessionAvatarUrl || null),
+            ...buildAvatarCandidates(authUser?.photoURL || null),
+        ]);
         if (authAvatarCandidates.length > 0) {
             setUser((prev) => ({
                 ...prev,
@@ -312,37 +555,28 @@ export default function ProfilePage() {
             }));
         }
 
-        const token = getAppAccessToken();
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
         let isActive = true;
         const loadProfile = async () => {
             try {
-                const response = await fetch('/api/profile', {
+                const response = await fetchWithApiAuth('/api/profile', {
                     method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
                     cache: 'no-store',
                 });
-                if (!response.ok) return;
+                if (!response?.ok) return;
 
                 const payload = (await response.json()) as ApiProfilePayload;
                 const apiUser = payload?.data?.user;
                 if (!isActive || !apiUser) return;
                 const avatarCandidates = dedupeCandidates([
+                    ...buildAvatarCandidates(sessionAvatarUrl || null),
                     ...buildAvatarCandidates(authUser?.photoURL || null),
                     ...buildAvatarCandidates(apiUser.avatar_url || null),
                 ]);
                 if (!isActive) return;
 
                 const nextUser = {
-                    name: apiUser.name || authUser?.displayName || '',
-                    email: apiUser.email || authUser?.email || '',
+                    name: apiUser.name || profileName || authUser?.displayName || '',
+                    email: apiUser.email || profileEmail || authUser?.email || '',
                     avatarUrl: avatarCandidates[0] || null,
                     avatarCandidates,
                     is_admin: Boolean(apiUser.is_admin),
@@ -350,6 +584,12 @@ export default function ProfilePage() {
                 };
 
                 setUser(nextUser);
+                setAppAuthUser({
+                    id: typeof apiUser.id === 'string' ? apiUser.id : undefined,
+                    name: nextUser.name,
+                    email: nextUser.email,
+                    avatarUrl: nextUser.avatarUrl,
+                });
                 if (payload?.data && 'opsGateway' in payload.data) {
                     setOpsGateway(payload.data.opsGateway || null);
                 }
@@ -370,7 +610,7 @@ export default function ProfilePage() {
 
         loadProfile();
         return () => { isActive = false; };
-    }, [authStatus, isAuthenticated, authUser?.displayName, authUser?.email, authUser?.photoURL]);
+    }, [authStatus, isAuthenticated, authUser?.displayName, authUser?.email, authUser?.photoURL, profileEmail, profileName, sessionAvatarUrl]);
 
     useEffect(() => {
         return () => {
@@ -383,48 +623,27 @@ export default function ProfilePage() {
     useEffect(() => {
         if (typeof window === 'undefined') return;
         try {
-            const raw = window.localStorage.getItem(transformStorageKey);
-            if (!raw) {
-                setAvatarTransform(DEFAULT_AVATAR_TRANSFORM);
-                return;
-            }
-            const parsed = JSON.parse(raw) as Partial<AvatarTransform>;
-            setAvatarTransform(clampTransform({
-                x: Number(parsed?.x ?? 0),
-                y: Number(parsed?.y ?? 0),
-                scale: Number(parsed?.scale ?? 1),
-            }));
+            const saved = loadSavedAvatarTransform(user.email || 'guest');
+            setAvatarTransform(clampTransform(saved));
+            setAvatarTransformDirty(false);
         } catch {
             setAvatarTransform(DEFAULT_AVATAR_TRANSFORM);
+            setAvatarTransformDirty(false);
         }
     }, [transformStorageKey]);
 
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            window.localStorage.setItem(transformStorageKey, JSON.stringify(clampTransform(avatarTransform)));
-        } catch {
-            // ignore local persistence error
-        }
-    }, [avatarTransform, transformStorageKey]);
-
-    useEffect(() => {
         let isActive = true;
         const fetchSummary = async () => {
-            const token = getAppAccessToken();
-            if (!token) {
+            const response = await fetchWithApiAuth('/api/versehub/id/actions/summary?limit=3&sort=recent', {
+                method: 'GET',
+            });
+            if (!response?.ok) {
                 if (isActive) setJourneyBadge(0);
                 return;
             }
             try {
-                const res = await fetch('/api/versehub/id/actions/summary?limit=3&sort=recent', {
-                    headers: { 
-                        Accept: 'application/json',
-                        Authorization: `Bearer ${token}`
-                    },
-                });
-                if (!res.ok) return;
-                const json = await res.json();
+                const json = await response.json();
                 const counts = json?.counts || {};
                 const total = Number(counts.favorites || 0) + Number(counts.bookmarks || 0) + Number(counts.notes || 0);
                 if (isActive) setJourneyBadge(total);
@@ -454,8 +673,8 @@ export default function ProfilePage() {
         router.push('/login');
     };
 
-    const handleAvatarUpload = async (file: File) => {
-        const token = getAppAccessToken();
+    const uploadAvatarFile = async (file: File) => {
+        const token = await ensureApiAccessToken();
         if (!token) return;
 
         const previousAvatarUrl = user.avatarUrl;
@@ -487,14 +706,18 @@ export default function ProfilePage() {
         formData.append('_method', 'PATCH');
 
         try {
-            const response = await fetch('/api/profile', {
+            const response = await fetchWithApiAuth('/api/profile', {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: formData,
             });
+            if (!response) {
+                rollbackAvatar();
+                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                return;
+            }
 
             const payload = await response.json().catch(() => null);
 
@@ -521,6 +744,11 @@ export default function ProfilePage() {
                             avatarUrl: renderableAvatar,
                             avatarCandidates: dedupeCandidates([renderableAvatar, ...mergedCandidates]),
                         }));
+                        setAppAuthUser({
+                            name: user.name,
+                            email: user.email,
+                            avatarUrl: renderableAvatar,
+                        });
                         if (avatarPreviewBlobRef.current) {
                             URL.revokeObjectURL(avatarPreviewBlobRef.current);
                             avatarPreviewBlobRef.current = null;
@@ -547,23 +775,81 @@ export default function ProfilePage() {
         }
     };
 
+    const handleAvatarSelection = async (file: File) => {
+        try {
+            const source = await readFileAsDataUrl(file);
+            const dimensions = await loadImageDimensions(source);
+            setAvatarEditorFile(file);
+            setAvatarEditorSource(source);
+            setAvatarEditorImageSize(dimensions);
+            setAvatarEditorTransform(DEFAULT_AVATAR_TRANSFORM);
+            setAvatarEditorOpen(true);
+        } catch {
+            showToast('Gagal membaca file foto.', 'error');
+            if (avatarInputRef.current) {
+                avatarInputRef.current.value = '';
+            }
+        }
+    };
+
+    const closeAvatarEditor = () => {
+        setAvatarEditorOpen(false);
+        setAvatarEditorBusy(false);
+        setAvatarEditorFile(null);
+        setAvatarEditorSource(null);
+        setAvatarEditorImageSize(null);
+        setAvatarEditorTransform(DEFAULT_AVATAR_TRANSFORM);
+        avatarEditorDragRef.current = null;
+        if (avatarInputRef.current) {
+            avatarInputRef.current.value = '';
+        }
+    };
+
+    const commitAvatarCrop = async () => {
+        if (!avatarEditorSource || !avatarEditorFile) return;
+
+        setAvatarEditorBusy(true);
+        try {
+            const croppedFile = await cropAvatarFile(
+                avatarEditorSource,
+                avatarEditorFile.name,
+                avatarEditorTransform,
+                avatarEditorImageSize,
+            );
+            closeAvatarEditor();
+            setAvatarTransform(DEFAULT_AVATAR_TRANSFORM);
+            saveAvatarTransform(user.email || 'guest', DEFAULT_SAVED_AVATAR_TRANSFORM);
+            setAvatarTransformDirty(false);
+            await uploadAvatarFile(croppedFile);
+        } catch {
+            setAvatarEditorBusy(false);
+            showToast('Gagal memproses crop avatar.', 'error');
+        }
+    };
+
+    const handleSaveAvatarTransform = () => {
+        saveAvatarTransform(user.email || 'guest', clampTransform(avatarTransform));
+        setAvatarTransformDirty(false);
+        showToast('Posisi foto disimpan');
+    };
+
     const handleProfileSave = async (event: React.FormEvent) => {
         event.preventDefault();
-        const token = getAppAccessToken();
-        if (!token) return;
-
         setProfileBusy(true);
         setProfileErrors({});
         try {
-            const response = await fetch('/api/profile', {
+            const response = await fetchWithApiAuth('/api/profile', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(profileData),
             });
+            if (!response) {
+                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                return;
+            }
 
             if (!response.ok) {
                 const payload = await response.json().catch(() => ({}));
@@ -578,14 +864,22 @@ export default function ProfilePage() {
             const payload = await response.json();
             const nextAvatarCandidates = buildAvatarCandidates(payload?.data?.avatar_url || user.avatarUrl);
             showToast('Profil berhasil disimpan');
+            const nextName = payload?.data?.name ?? user.name;
+            const nextEmail = payload?.data?.email ?? user.email;
+            const nextAvatarUrl = nextAvatarCandidates[0] || user.avatarUrl;
             setUser(prev => ({
                 ...prev,
-                name: payload?.data?.name ?? prev.name,
-                email: payload?.data?.email ?? prev.email,
+                name: nextName,
+                email: nextEmail,
                 email_verified_at: payload?.data?.email_verified_at ?? prev.email_verified_at,
-                avatarUrl: nextAvatarCandidates[0] || prev.avatarUrl,
+                avatarUrl: nextAvatarUrl,
                 avatarCandidates: nextAvatarCandidates.length > 0 ? nextAvatarCandidates : prev.avatarCandidates,
             }));
+            setAppAuthUser({
+                name: nextName,
+                email: nextEmail,
+                avatarUrl: nextAvatarUrl,
+            });
         } catch {
             showToast('Terjadi gangguan sistem', 'error');
         } finally {
@@ -595,18 +889,14 @@ export default function ProfilePage() {
 
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = getAppAccessToken();
-        if (!token) return;
-
         setPasswordBusy(true);
         setPasswordErrors({});
         try {
-            const response = await fetch('/api/profile/password', {
+            const response = await fetchWithApiAuth('/api/profile/password', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     current_password: passwordData.current,
@@ -614,6 +904,10 @@ export default function ProfilePage() {
                     password_confirmation: passwordData.confirm,
                 }),
             });
+            if (!response) {
+                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                return;
+            }
 
             if (response.ok) {
                 setPasswordData({ current: '', new: '', confirm: '' });
@@ -634,21 +928,23 @@ export default function ProfilePage() {
     };
 
     const handleTwoFactorSetup = async () => {
-        const token = getAppAccessToken();
-        if (!token || !twoFactorPassword) return;
+        if (!twoFactorPassword) return;
 
         setTwoFactorBusy(true);
         setTwoFactorError(null);
         try {
-            const response = await fetch('/api/profile/two-factor/setup', {
+            const response = await fetchWithApiAuth('/api/profile/two-factor/setup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ current_password: twoFactorPassword }),
             });
+            if (!response) {
+                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                return;
+            }
 
             if (response.ok) {
                 const payload = await response.json();
@@ -656,7 +952,11 @@ export default function ProfilePage() {
                 setTwoFactorStep('setup');
             } else {
                 const error = await response.json().catch(() => ({}));
-                setTwoFactorError(error?.errors?.current_password?.[0] || error.message || 'Password tidak valid');
+                setTwoFactorError(
+                    response.status === 401
+                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
+                        : error?.errors?.current_password?.[0] || error.message || 'Password tidak valid'
+                );
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
@@ -666,24 +966,26 @@ export default function ProfilePage() {
     };
 
     const handleTwoFactorConfirm = async () => {
-        const token = getAppAccessToken();
-        if (!token || !twoFactorCode) return;
+        if (!twoFactorCode) return;
 
         setTwoFactorBusy(true);
         setTwoFactorError(null);
         try {
-            const response = await fetch('/api/profile/two-factor/confirm', {
+            const response = await fetchWithApiAuth('/api/profile/two-factor/confirm', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ 
                     current_password: twoFactorPassword,
                     code: twoFactorCode 
                 }),
             });
+            if (!response) {
+                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                return;
+            }
 
             if (response.ok) {
                 setTwoFactor({ enabled: true, recoveryCodesRemaining: 8 });
@@ -694,7 +996,11 @@ export default function ProfilePage() {
                 showToast('2FA Berhasil diaktifkan');
             } else {
                 const error = await response.json().catch(() => ({}));
-                setTwoFactorError(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode OTP tidak valid');
+                setTwoFactorError(
+                    response.status === 401
+                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
+                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode OTP tidak valid'
+                );
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
@@ -704,23 +1010,25 @@ export default function ProfilePage() {
     };
 
     const handleTwoFactorDisable = async () => {
-        const token = getAppAccessToken();
-        if (!token || !twoFactorCode) return;
+        if (!twoFactorCode) return;
 
         setTwoFactorBusy(true);
         try {
-            const response = await fetch('/api/profile/two-factor', {
+            const response = await fetchWithApiAuth('/api/profile/two-factor', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ 
                     current_password: twoFactorPassword,
                     code: twoFactorCode 
                 }),
             });
+            if (!response) {
+                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                return;
+            }
 
             if (response.ok) {
                 setTwoFactor({ enabled: false, recoveryCodesRemaining: 0 });
@@ -730,7 +1038,11 @@ export default function ProfilePage() {
                 showToast('2FA Dinonaktifkan');
             } else {
                 const error = await response.json().catch(() => ({}));
-                setTwoFactorError(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode tidak valid');
+                setTwoFactorError(
+                    response.status === 401
+                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
+                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode tidak valid'
+                );
             }
         } catch {
             setTwoFactorError('Gagal menonaktifkan 2FA');
@@ -740,24 +1052,26 @@ export default function ProfilePage() {
     };
 
     const handleRegenerateCodes = async () => {
-        const token = getAppAccessToken();
-        if (!token || !twoFactorPassword || !twoFactorCode) return;
+        if (!twoFactorPassword || !twoFactorCode) return;
 
         setTwoFactorBusy(true);
         setTwoFactorError(null);
         try {
-            const response = await fetch('/api/profile/two-factor/recovery-codes', {
+            const response = await fetchWithApiAuth('/api/profile/two-factor/recovery-codes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ 
                     current_password: twoFactorPassword,
                     code: twoFactorCode 
                 }),
             });
+            if (!response) {
+                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                return;
+            }
 
             if (response.ok) {
                 const payload = await response.json();
@@ -768,7 +1082,11 @@ export default function ProfilePage() {
                 showToast('Recovery codes baru dibuat');
             } else {
                 const error = await response.json().catch(() => ({}));
-                setTwoFactorError(error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes');
+                setTwoFactorError(
+                    response.status === 401
+                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
+                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes'
+                );
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
@@ -778,21 +1096,23 @@ export default function ProfilePage() {
     };
 
     const handleDeleteAccount = async () => {
-        const token = getAppAccessToken();
         const password = window.prompt('HAPUS AKUN PERMANEN\n\nTindakan ini tidak bisa dibatalkan!\nMasukkan password Anda untuk meneruskan penghapusan:');
-        if (!password || !token) return;
+        if (!password) return;
 
         setDeleteBusy(true);
         try {
-            const response = await fetch('/api/profile', {
+            const response = await fetchWithApiAuth('/api/profile', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ password }), // Using method spooling proxy logic for current_password mapping if required by backend.
             });
+            if (!response) {
+                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                return;
+            }
             if (response.ok) {
                 logout(); // Initiates redirect
             } else {
@@ -807,10 +1127,16 @@ export default function ProfilePage() {
     };
 
     const firstName = user.name.split(' ')[0];
+    const openSection = (sectionId: string) => {
+        if (typeof document === 'undefined') return;
+        const target = document.getElementById(sectionId);
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     if (authStatus === 'restoring' || loading) {
         return (
-            <MobileAppLayout title="Profile" activeNavId="profile" backHref="/today">
+            <MobileAppLayout title="Profile" activeNavId="profile" backHref="/renungan">
                 <div className="mx-auto max-w-[640px] px-4 py-10">
                     <div className="rounded-[2rem] border border-border/50 bg-surface/70 p-8 flex items-center gap-3">
                         <Loader2 className="h-5 w-5 animate-spin text-brand" />
@@ -823,18 +1149,11 @@ export default function ProfilePage() {
 
     if (!isAuthenticated) {
         return (
-            <MobileAppLayout title="Profile" activeNavId="profile" backHref="/today">
+            <MobileAppLayout title="Profile" activeNavId="profile" backHref="/renungan">
                 <div className="mx-auto max-w-[640px] px-4 py-10">
-                    <div className="rounded-[2rem] border border-border/50 bg-surface/70 p-8 space-y-3">
-                        <p className="text-lg font-bold tracking-tight text-foreground">Masuk untuk membuka profil.</p>
-                        <p className="text-sm text-muted-foreground">Anda tetap bisa membaca konten publik tanpa login.</p>
-                        <Button
-                            type="button"
-                            onClick={() => router.replace('/login?next=/profile')}
-                            className="rounded-full px-6"
-                        >
-                            Masuk
-                        </Button>
+                    <div className="rounded-[2rem] border border-border/50 bg-surface/70 p-8 flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-brand" />
+                        <p className="text-sm font-medium text-foreground/80">Mengalihkan ke login...</p>
                     </div>
                 </div>
             </MobileAppLayout>
@@ -845,7 +1164,7 @@ export default function ProfilePage() {
         <MobileAppLayout
             title="Profile"
             activeNavId="profile"
-            backHref="/today"
+            backHref="/renungan"
             rightAction={
                 <Popover>
                     <PopoverTrigger asChild>
@@ -912,65 +1231,122 @@ export default function ProfilePage() {
                             >
                                 <Camera className="h-4 w-4" />
                             </button>
-                            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarUpload(e.target.files[0])} />
+                            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleAvatarSelection(e.target.files[0])} />
                         </div>
 
                         {currentAvatarSrc && (
-                            <div className="mt-5 w-full max-w-[320px] rounded-2xl border border-border/50 bg-surface-muted/40 px-3 py-3">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 text-left px-1">
-                                    Posisi Foto
-                                </p>
-                                <div className="mt-2 grid grid-cols-3 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y - 6 }))}
-                                        className="col-start-2 rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Atas
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x - 6 }))}
-                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Kiri
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAvatarTransform(DEFAULT_AVATAR_TRANSFORM)}
-                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Reset
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x + 6 }))}
-                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Kanan
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y + 6 }))}
-                                        className="col-start-2 rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Bawah
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, scale: prev.scale + 0.04 }))}
-                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Zoom +
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, scale: prev.scale - 0.04 }))}
-                                        className="rounded-xl border border-border/60 bg-background/70 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-background"
-                                    >
-                                        Zoom -
-                                    </button>
-                                </div>
+                            <div className="mt-5 w-full max-w-[340px] rounded-[2rem] border border-border/50 bg-surface-muted/40 text-left overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setAvatarControlsOpen((prev) => !prev)}
+                                    className="flex w-full items-center justify-between gap-3 px-4 py-4"
+                                >
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+                                        Posisi Foto
+                                    </p>
+                                    <ChevronRight
+                                        className={cn(
+                                            "h-4 w-4 text-muted-foreground transition-transform",
+                                            avatarControlsOpen ? "rotate-90" : "rotate-0"
+                                        )}
+                                    />
+                                </button>
+
+                                {avatarControlsOpen && (
+                                    <div className="border-t border-border/50 p-4">
+                                        <div className="grid gap-4 sm:grid-cols-[1fr_1.15fr]">
+                                            <div className="rounded-[1.5rem] border border-border/50 bg-background/70 p-3">
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y - 6 }))}
+                                                        className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        Atas
+                                                    </button>
+                                                    <div />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x - 6 }))}
+                                                        className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        Kiri
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAvatarTransform(DEFAULT_AVATAR_TRANSFORM)}
+                                                        className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        Reset
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x + 6 }))}
+                                                        className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        Kanan
+                                                    </button>
+                                                    <div />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y + 6 }))}
+                                                        className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        Bawah
+                                                    </button>
+                                                    <div />
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-[1.5rem] border border-border/50 bg-background/70 p-3">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">Zoom</p>
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-brand">
+                                                        {Math.round(avatarTransform.scale * 100)}%
+                                                    </span>
+                                                </div>
+                                                <div className="mt-4 flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, scale: prev.scale - 0.04 }))}
+                                                        className="h-10 w-10 rounded-xl border border-border/60 bg-surface text-sm font-black text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <Slider
+                                                        value={[avatarTransform.scale]}
+                                                        min={AVATAR_TRANSFORM_LIMIT.minScale}
+                                                        max={AVATAR_TRANSFORM_LIMIT.maxScale}
+                                                        step={0.01}
+                                                        onValueChange={([value]) => setAvatarTransform((prev) => clampTransform({ ...prev, scale: value }))}
+                                                        className="flex-1"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateAvatarTransform((prev) => ({ ...prev, scale: prev.scale + 0.04 }))}
+                                                        className="h-10 w-10 rounded-xl border border-border/60 bg-surface text-sm font-black text-foreground/80 hover:bg-surface-elevated"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 flex items-center justify-between gap-3">
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                                                {avatarTransformDirty ? 'Perubahan belum disimpan' : 'Posisi foto tersimpan'}
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                onClick={handleSaveAvatarTransform}
+                                                disabled={!avatarTransformDirty}
+                                                className="rounded-full px-5 text-[10px] font-black uppercase tracking-[0.16em]"
+                                            >
+                                                Save
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -980,17 +1356,19 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="mt-6">
-                            <div className={cn(
-                                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] border",
-                                user.email_verified_at ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                            )}>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] border bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
-                                <span>{user.email_verified_at ? 'Verified Account' : 'Guest Session'}</span>
+                                <span>Verified</span>
                             </div>
+                            {user.is_admin ? (
+                                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-brand">
+                                    <ShieldCheck className="h-3.5 w-3.5" />
+                                    <span>Admin Access</span>
+                                </div>
+                            ) : null}
                         </div>
                     </div>
                 </div>
-
                 <div className="space-y-4">
                     {user.is_admin && opsGateway && (
                         <AccordionCard title="Gateway Operasional" className="border-brand/20 bg-brand/5">
@@ -1021,6 +1399,7 @@ export default function ProfilePage() {
                         </AccordionCard>
                     )}
 
+                    <div id="profile-journey">
                     <AccordionCard title="Your Spiritual Journey">
                         <div className="pt-2 space-y-4">
                             <button 
@@ -1049,7 +1428,9 @@ export default function ProfilePage() {
                             </p>
                         </div>
                     </AccordionCard>
+                    </div>
 
+                    <div id="profile-personal">
                     <AccordionCard title="Informasi Personal">
                         <form className="space-y-6 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-3">
@@ -1072,7 +1453,9 @@ export default function ProfilePage() {
                             </div>
                         </form>
                     </AccordionCard>
+                    </div>
 
+                    <div id="profile-password">
                     <AccordionCard title="Keamanan & Password">
                         <form className="space-y-6 pt-2" onSubmit={handlePasswordUpdate}>
                             <div className="space-y-3">
@@ -1096,7 +1479,9 @@ export default function ProfilePage() {
                             </Button>
                         </form>
                     </AccordionCard>
+                    </div>
 
+                    <div id="profile-2fa">
                     <AccordionCard title="Two-Factor Authentication">
                         <div className="space-y-6 pt-2">
                             <div className="p-5 rounded-[28px] bg-surface border border-border/50 shadow-soft backdrop-blur-md flex items-center justify-between">
@@ -1240,6 +1625,7 @@ export default function ProfilePage() {
                             )}
                         </div>
                     </AccordionCard>
+                    </div>
 
                     <div className="pt-12 text-center space-y-10">
                         <button 
@@ -1251,13 +1637,127 @@ export default function ProfilePage() {
                             <span className="text-[10px] font-black uppercase tracking-[0.3em]">{deleteBusy ? 'Menghapus...' : 'Hapus Akun Permanen'}</span>
                         </button>
                         
-                        <div className="flex flex-col items-center gap-4 opacity-20">
-                             <div className="h-px w-12 bg-foreground" />
-                             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground">TCT HYBRID MONOREPO</p>
+                    </div>
+                    </div>
+            </div>
+
+            <Dialog open={avatarEditorOpen} onOpenChange={(open) => (!open ? closeAvatarEditor() : null)}>
+                <DialogContent className="max-w-[720px] rounded-[2rem] border-border/60 bg-background p-0 overflow-hidden">
+                    <DialogHeader className="border-b border-border/50 px-6 py-5 text-left">
+                        <DialogTitle className="text-xl font-black tracking-tight text-foreground">Atur Crop Avatar</DialogTitle>
+                        <DialogDescription className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                            Geser foto ke area yang Anda inginkan. Hasil crop ini yang akan disimpan sebagai avatar, jadi tidak ada crop otomatis yang memotong bagian penting.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-6 px-6 py-6 md:grid-cols-[minmax(0,1fr)_240px]">
+                        <div className="space-y-4">
+                            {(() => {
+                                const imageWidth = avatarEditorImageSize?.width || AVATAR_EDITOR_VIEWPORT;
+                                const imageHeight = avatarEditorImageSize?.height || AVATAR_EDITOR_VIEWPORT;
+                                const containScale = Math.min(
+                                    AVATAR_EDITOR_VIEWPORT / imageWidth,
+                                    AVATAR_EDITOR_VIEWPORT / imageHeight,
+                                );
+                                const previewWidth = imageWidth * containScale;
+                                const previewHeight = imageHeight * containScale;
+
+                                return (
+                            <div
+                                className={cn(
+                                    "relative mx-auto h-[280px] w-[280px] overflow-hidden rounded-[2.5rem] border border-border/60 bg-surface shadow-soft",
+                                    avatarEditorBusy ? "pointer-events-none opacity-70" : "cursor-grab active:cursor-grabbing",
+                                )}
+                                onPointerDown={handleAvatarEditorPointerDown}
+                                onPointerMove={handleAvatarEditorPointerMove}
+                                onPointerUp={handleAvatarEditorPointerUp}
+                                onPointerCancel={handleAvatarEditorPointerUp}
+                            >
+                                <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_55%,rgba(15,23,42,0.08)_100%)]" />
+                                <div className="pointer-events-none absolute inset-[18px] rounded-[2rem] border border-white/70 shadow-[inset_0_0_0_999px_rgba(255,255,255,0.05)]" />
+                                {avatarEditorSource ? (
+                                    <img
+                                        src={avatarEditorSource}
+                                        alt="Preview crop avatar"
+                                        className="absolute left-1/2 top-1/2 select-none"
+                                        draggable={false}
+                                        style={{
+                                            width: `${previewWidth}px`,
+                                            height: `${previewHeight}px`,
+                                            maxWidth: 'none',
+                                            transform: `translate(calc(-50% + ${avatarEditorTransform.x}px), calc(-50% + ${avatarEditorTransform.y}px)) scale(${avatarEditorTransform.scale})`,
+                                            transformOrigin: 'center center',
+                                        }}
+                                    />
+                                ) : null}
+                            </div>
+                                );
+                            })()}
+                            <p className="text-center text-xs font-medium leading-relaxed text-muted-foreground">
+                                Seluruh foto ditampilkan dulu. Tarik atau zoom hanya jika Anda memang ingin memotong area tertentu.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 rounded-[1.75rem] border border-border/50 bg-surface-muted/40 p-4">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Zoom Crop</p>
+                                <div className="mt-3 flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, scale: prev.scale - 0.05 }))}
+                                        className="h-10 w-10 rounded-xl border border-border/60 bg-background text-sm font-black text-foreground/80 hover:bg-surface"
+                                        disabled={avatarEditorBusy}
+                                    >
+                                        -
+                                    </button>
+                                    <Slider
+                                        value={[avatarEditorTransform.scale]}
+                                        min={AVATAR_EDITOR_LIMIT.minScale}
+                                        max={AVATAR_EDITOR_LIMIT.maxScale}
+                                        step={0.01}
+                                        onValueChange={([value]) => setAvatarEditorTransform((prev) => clampEditorTransform({ ...prev, scale: value }))}
+                                        className="flex-1"
+                                        disabled={avatarEditorBusy}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, scale: prev.scale + 0.05 }))}
+                                        className="h-10 w-10 rounded-xl border border-border/60 bg-background text-sm font-black text-foreground/80 hover:bg-surface"
+                                        disabled={avatarEditorBusy}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Geser Presisi</p>
+                                <div className="mt-3 grid grid-cols-3 gap-2">
+                                    <div />
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, y: prev.y - 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Atas</button>
+                                    <div />
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, x: prev.x - 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Kiri</button>
+                                    <button type="button" onClick={() => setAvatarEditorTransform(DEFAULT_AVATAR_TRANSFORM)} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Reset</button>
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, x: prev.x + 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Kanan</button>
+                                    <div />
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, y: prev.y + 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Bawah</button>
+                                    <div />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+
+                    <DialogFooter className="border-t border-border/50 bg-background px-6 py-5">
+                        <Button type="button" variant="outline" onClick={closeAvatarEditor} disabled={avatarEditorBusy} className="rounded-full">
+                            Batal
+                        </Button>
+                        <Button type="button" onClick={commitAvatarCrop} disabled={avatarEditorBusy || !avatarEditorSource} className="rounded-full">
+                            {avatarEditorBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Simpan Crop Avatar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Global Toast Parity */}
             <AnimatePresence>

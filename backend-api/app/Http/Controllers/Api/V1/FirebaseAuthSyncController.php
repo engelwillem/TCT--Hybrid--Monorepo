@@ -55,15 +55,38 @@ class FirebaseAuthSyncController extends Controller
         $photoUrl = trim((string) ($remoteUser['photoUrl'] ?? ''));
         $emailVerified = (bool) ($remoteUser['emailVerified'] ?? false);
 
-        $user = User::query()
-            ->where('firebase_uid', $firebaseUid)
-            ->when($email !== '', fn ($query) => $query->orWhere('email', $email))
-            ->first();
-
         $generatedEmail = false;
         if ($email === '') {
             $email = "{$firebaseUid}@firebase.local";
             $generatedEmail = true;
+        }
+
+        $normalizedEmail = Str::lower($email);
+
+        $user = User::query()
+            ->where('firebase_uid', $firebaseUid)
+            ->first();
+
+        if (! $user && ! $generatedEmail) {
+            $emailMatchedUser = User::query()
+                ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+                ->first();
+
+            if ($emailMatchedUser) {
+                if (! $emailVerified) {
+                    return response()->json([
+                        'message' => 'Firebase email must be verified before linking to an existing account.',
+                    ], 403);
+                }
+
+                if ($emailMatchedUser->firebase_uid && $emailMatchedUser->firebase_uid !== $firebaseUid) {
+                    return response()->json([
+                        'message' => 'This email is already linked to another Firebase identity.',
+                    ], 409);
+                }
+
+                $user = $emailMatchedUser;
+            }
         }
 
         if (! $user) {
@@ -88,9 +111,9 @@ class FirebaseAuthSyncController extends Controller
                 $dirty = true;
             }
 
-            if (! $generatedEmail && $email !== '' && $email !== $user->email) {
+            if (! $generatedEmail && $email !== '' && ! str($email)->lower()->exactly(Str::lower((string) $user->email))) {
                 $emailTaken = User::query()
-                    ->where('email', $email)
+                    ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
                     ->where('id', '!=', $user->id)
                     ->exists();
 

@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import ActionBar from '@/components/ActionBar';
 import { useUser } from '@/firebase/auth/use-user';
 import { useEffect, useMemo, useState } from 'react';
+import { getVerseShareUrl } from '@/lib/share';
 
 export type FeaturedVerse = {
     ref: string;
@@ -121,7 +122,7 @@ export default function VerseHubFeaturedCard({
     }, [reactionKey, liked, bookmarked]);
 
     const onShare = async () => {
-        const url = `${shareOrigin}${verseHref}`;
+        const url = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${shareOrigin}${verseHref}`;
         const title = verse?.reference || 'VerseHub';
 
         try {
