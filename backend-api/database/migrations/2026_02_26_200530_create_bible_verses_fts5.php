@@ -9,7 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Legacy SQLite-only migration kept as a no-op after MySQL parity cutover.
+        // Legacy SQLite-only migration kept as a no-op after MariaDB parity cutover.
     }
 
     /**

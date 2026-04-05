@@ -8,25 +8,35 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('member_post_comments', 'reply_to_comment_id')) {
+            return;
+        }
+
         Schema::table('member_post_comments', function (Blueprint $table) {
-            if (! Schema::hasColumn('member_post_comments', 'reply_to_comment_id')) {
-                $table->foreignId('reply_to_comment_id')
-                    ->nullable()
-                    ->after('user_id')
-                    ->constrained('member_post_comments')
-                    ->nullOnDelete();
-                $table->index(['member_post_id', 'reply_to_comment_id'], 'member_post_comments_parent_idx');
-            }
+            $table->unsignedBigInteger('reply_to_comment_id')
+                ->nullable()
+                ->after('user_id');
+        });
+
+        Schema::table('member_post_comments', function (Blueprint $table) {
+            $table->index(['member_post_id', 'reply_to_comment_id'], 'member_post_comments_parent_idx');
+            $table->foreign('reply_to_comment_id')
+                ->references('id')
+                ->on('member_post_comments')
+                ->nullOnDelete();
         });
     }
 
     public function down(): void
     {
+        if (! Schema::hasColumn('member_post_comments', 'reply_to_comment_id')) {
+            return;
+        }
+
         Schema::table('member_post_comments', function (Blueprint $table) {
-            if (Schema::hasColumn('member_post_comments', 'reply_to_comment_id')) {
-                $table->dropIndex('member_post_comments_parent_idx');
-                $table->dropConstrainedForeignId('reply_to_comment_id');
-            }
+            $table->dropForeign(['reply_to_comment_id']);
+            $table->dropIndex('member_post_comments_parent_idx');
+            $table->dropColumn('reply_to_comment_id');
         });
     }
 };
