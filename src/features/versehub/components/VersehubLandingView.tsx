@@ -127,29 +127,23 @@ export function VersehubLandingView({
                                 <Sparkles className="h-4 w-4" />
                             </span>
                             <span>
-                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Explore</span>
+                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Pilihan Harian</span>
                                 <span className="mt-1 block text-[15px] font-black tracking-tight text-slate-900">
-                                    Waktunya Selidiki Firman Lebih Dalam
+                                    Saran Bacaan Hari Ini
                                 </span>
                             </span>
                         </span>
                         <ArrowRight className="h-5 w-5 text-[#2A67FF] transition group-hover:translate-x-0.5" />
                     </button>
 
-                    <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-2 rounded-[30px] bg-white/78 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-2xl">
-                        <button type="button" onClick={onOpenPicker} className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95">
-                            <BookOpenText className="mx-auto h-4 w-4 text-slate-500" />
-                            <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Kitab</span>
-                        </button>
-                        <button type="button" onClick={onOpenExplore} className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95">
-                            <BookHeart className="mx-auto h-4 w-4 text-slate-500" />
-                            <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Deep Dive</span>
-                        </button>
-                        <button type="button" onClick={onStartFirstChapter} className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95">
-                            <MessageSquareText className="mx-auto h-4 w-4 text-slate-500" />
-                            <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Mulai</span>
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={onOpenPicker}
+                        className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                    >
+                        <BookOpenText className="h-4 w-4" />
+                        Pilih dari daftar kitab
+                    </button>
 
                     {firstChapterHref ? (
                         <p className="text-center text-[11px] text-slate-500">

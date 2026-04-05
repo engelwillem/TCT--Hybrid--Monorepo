@@ -155,50 +155,20 @@ export function VersehubReaderView({
             <main ref={(node) => { scrollViewportRef.current = node; }} className="relative z-10 flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
                 <div className="mx-auto max-w-4xl pb-[calc(180px+env(safe-area-inset-bottom,24px))]">
                     <section className="overflow-hidden rounded-[34px] bg-white/84 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04] backdrop-blur-2xl md:p-7">
-                        <div className="flex flex-col gap-5 border-b border-slate-100 pb-5 md:flex-row md:items-end md:justify-between">
-                            <div className="max-w-2xl">
-                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#91A0C7]">Reader Engine</p>
-                                <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{chapterLabel}</h2>
-                                <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                                    Reader mode kini menyelipkan ritme refleksi di tengah bacaan supaya perjalanan pasal terasa lebih seperti sanctuary, bukan sekadar scroll teks.
-                                </p>
-                            </div>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                                <button
-                                    type="button"
-                                    onClick={onOpenExplore}
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-slate-800"
-                                >
-                                    <Sparkles className="h-3.5 w-3.5" />
-                                    Explore
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={onOpenPicker}
-                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-600 transition hover:bg-slate-200"
-                                >
-                                    <BookOpenText className="h-3.5 w-3.5" />
-                                    Ganti Pasal
-                                </button>
+                        <div className="flex flex-col items-center justify-center border-b border-black/5 pb-10 pt-4 text-center">
+                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#91A0C7]/80">Pasal Bacaan</p>
+                            <h2 className="mt-3 font-serif text-[42px] italic leading-[1.1] tracking-[-0.03em] text-[#172042] md:text-[54px]">{chapterLabel}</h2>
+                            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                                <span className="inline-flex items-center rounded-full bg-slate-100/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ring-1 ring-black/5">
+                                    {verses.length} Ayat
+                                </span>
+                                <span className="inline-flex items-center rounded-full bg-sky-50/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-sky-600 ring-1 ring-sky-200/50">
+                                    Mood: {activeMood}
+                                </span>
                             </div>
                         </div>
 
-                        <div className="mt-5 grid gap-3 md:grid-cols-[1.25fr,0.75fr]">
-                            <div className="rounded-[28px] bg-[#FBFAF6] p-4 ring-1 ring-black/[0.04]">
-                                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Bacaan</p>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                    {verses.length} ayat siap dibaca. VerseHub akan menyisipkan ruang hening di momen-momen penting sepanjang pasal.
-                                </p>
-                            </div>
-                            <div className="rounded-[28px] bg-[#FBFAF6] p-4 ring-1 ring-black/[0.04]">
-                                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Mood Aktif</p>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                    Sanctuary menyesuaikan suasana baca dengan mood <span className="font-semibold text-slate-700">{activeMood}</span>.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 space-y-4" style={{ paddingBottom: readerContentPadding }}>
+                        <div className="mt-10 space-y-4" style={{ paddingBottom: readerContentPadding }}>
                             {verses.map((verse) => {
                                 const reflectionKey = `reflection-${verse.key}`;
                                 const hasReflectionBreak = reflectionBreaks.some((item) => item.key === verse.key);
