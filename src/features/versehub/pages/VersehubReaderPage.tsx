@@ -434,6 +434,22 @@ export function VersehubReaderPage({
     }, [overlay, audioMenuOpen]);
 
     useEffect(() => {
+        const isAnyOverlayActive = overlay !== null || ogOpen;
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("tct:overlay-activity", {
+                detail: { source: "versehub", active: isAnyOverlayActive }
+            }));
+        }
+        return () => {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("tct:overlay-activity", {
+                    detail: { source: "versehub", active: false }
+                }));
+            }
+        };
+    }, [overlay, ogOpen]);
+
+    useEffect(() => {
         return () => {
             if (audioPlaybackStartedAtRef.current === null) return;
             const durationSeconds = Math.max(1, Math.round((Date.now() - audioPlaybackStartedAtRef.current) / 1000));
@@ -966,7 +982,7 @@ export function VersehubReaderPage({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 40 }}
                             transition={{ type: "spring", stiffness: 240, damping: 28 }}
-                            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl rounded-t-[36px] bg-white/96 p-6 shadow-[0_-30px_80px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-2xl md:left-1/2 md:max-w-2xl md:-translate-x-1/2"
+                            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl rounded-t-[36px] bg-white/96 px-6 pt-6 pb-[calc(24px+env(safe-area-inset-bottom,24px))] shadow-[0_-30px_80px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-2xl md:left-1/2 md:max-w-2xl md:-translate-x-1/2 md:pb-6"
                         >
                             <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-slate-200" />
                             <div className="flex items-start justify-between gap-4">

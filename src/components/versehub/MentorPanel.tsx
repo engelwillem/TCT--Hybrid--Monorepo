@@ -571,7 +571,7 @@ export default function MentorPanel({
                 </div>
 
                 {/* Footer disclaimer — always shown */}
-                <div className="shrink-0 border-t border-slate-100 px-5 py-3">
+                <div className="shrink-0 border-t border-slate-100 px-5 pt-3 pb-[calc(14px+env(safe-area-inset-bottom,24px))] md:pb-3">
                     <p className="text-center text-[9px] leading-relaxed text-slate-400">
                         Scripture Guide adalah panduan belajar berbasis teks Alkitab —<br />
                         bukan manusia, bukan otoritas teologis resmi.
