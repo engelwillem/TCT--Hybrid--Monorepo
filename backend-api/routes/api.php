@@ -17,6 +17,7 @@ use App\Http\Controllers\StudyPathController;
 use App\Http\Controllers\UserFollowController;
 use App\Http\Controllers\VersehubActionController;
 use App\Http\Controllers\VerseHubController;
+use App\Http\Controllers\VerseHubEventController;
 use App\Http\Controllers\VerseHubLibraryController;
 use App\Http\Controllers\VerseHubReaderController;
 use App\Http\Controllers\VerseHubReflectionController;
@@ -63,6 +64,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/versehub/{lang}/chapter/{ref}', [VerseHubReaderController::class, 'getChapterContentApi'])
         ->whereIn('lang', ['id', 'en']);
     Route::get('/versehub/{lang}/suggest', [VerseHubLibraryController::class, 'suggest'])
+        ->whereIn('lang', ['id', 'en']);
+    Route::post('/versehub/{lang}/events', [VerseHubEventController::class, 'store'])
         ->whereIn('lang', ['id', 'en']);
 
     Route::get('/versehub/{lang}/{ref}/mentor', [VerseHubController::class, 'mentorInsights'])

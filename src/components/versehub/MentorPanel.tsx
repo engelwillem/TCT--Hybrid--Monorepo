@@ -71,6 +71,8 @@ interface MentorPanelProps {
     isAuthenticated: boolean;
     /** Active mood for context */
     activeMood: string;
+    /** Optional user reflection from chapter reading flow */
+    userReflection?: string | null;
     onClose: () => void;
 }
 
@@ -83,6 +85,7 @@ export default function MentorPanel({
     verseLabel,
     isAuthenticated,
     activeMood,
+    userReflection = null,
     onClose,
 }: MentorPanelProps) {
     const [tab, setTab] = useState<Tab>('reflect');
@@ -105,8 +108,9 @@ export default function MentorPanel({
             mood: activeMood,
             intent: 'deep_study',
             screen_context: 'versehub_reader',
+            user_reflection: userReflection,
         }),
-        [activeMood]
+        [activeMood, userReflection]
     );
 
     const moodLead = useMemo(() => {

@@ -4,18 +4,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-    ArrowRight,
-    BookHeart,
-    BookOpenText,
     Bookmark,
     ChevronLeft,
     Heart,
     Loader2,
-    Plus,
     MessageSquare,
     MessageSquareText,
     Send,
-    Sparkles,
     X,
 } from "lucide-react";
 import { useAuthSession } from "@/auth/use-auth-session";
@@ -24,89 +19,18 @@ import MentorPanel from "@/components/versehub/MentorPanel";
 import { cn } from "@/lib/utils";
 import { getAppAccessToken } from "@/services/app-auth-token";
 import { getVerseShareUrl } from "@/lib/share";
-
-type Book = {
-    code: string;
-    label: string;
-    testament: "ot" | "nt";
-};
-
-type Verse = {
-    key: string;
-    verse: number;
-    text: string;
-};
-
-type ChapterPayload = {
-    selected_book?: string | null;
-    selected_chapter?: number | null;
-    chapters?: number[];
-    chapter_label?: string;
-    verses?: Verse[];
-};
-
-type VerseData = {
-    ref: string;
-    reference: string;
-    text: string;
-    translation_name: string | null;
-    provider: string | null;
-    og_image_url: string;
-    canonical_url: string;
-};
+import { trackVersehubEvent } from "@/features/versehub/analytics";
+import { VersehubLandingView } from "@/features/versehub/components/VersehubLandingView";
+import { VersehubReaderView } from "@/features/versehub/components/VersehubReaderView";
+import { VersehubControlCenter, type ControlCenterItem } from "@/features/versehub/components/VersehubControlCenter";
+import { buildTodayDateLabel, landingContentPadding, readerContentPadding, SANCTUARY_SCENES } from "@/features/versehub/constants";
+import type { Book, ChapterPayload, OverlayType, Verse, VerseData } from "@/features/versehub/types";
 
 interface VersehubReaderPageProps {
     lang: string;
     mode?: "landing" | "chapter" | "verse";
     initialChapterRef?: string | null;
     initialVerseRef?: string | null;
-}
-
-type OverlayType = "explore" | "picker" | "mentor" | "audio" | null;
-
-type SanctuaryScene = {
-    eyebrow: string;
-    quote: string;
-    invitation: string;
-    reflection: string;
-};
-
-const SANCTUARY_SCENES: SanctuaryScene[] = [
-    {
-        eyebrow: "VerseHub",
-        quote: "\"Janganlah kita jemu-jemu berbuat baik...\"",
-        invitation: "Masuk sebentar, tenangkan hati, lalu buka firman dengan ritme yang lebih pelan.",
-        reflection: "Hari ini bukan tentang buru-buru menyelesaikan bacaan, tetapi tentang memberi ruang bagi firman untuk berbicara.",
-    },
-    {
-        eyebrow: "Daily Mana",
-        quote: "\"Firman-Mu itu pelita bagi kakiku...\"",
-        invitation: "Mulai dari satu langkah kecil. Explore akan membawa Anda masuk ke kitab dan pasal yang ingin dibaca.",
-        reflection: "VerseHub dirancang seperti ruang doa digital: satu layar untuk menerima, lalu satu jalur untuk masuk lebih dalam.",
-    },
-    {
-        eyebrow: "Ruang Doa Digital",
-        quote: "\"Tinggallah di dalam Aku...\"",
-        invitation: "Pilih jalur baca, nyalakan ambience, dan biarkan scripture guide menemani saat Anda masuk ke ayat.",
-        reflection: "Koleksi kitab, ambience Lagusion, dan mentor internal bekerja sebagai satu pengalaman, bukan panel-panel yang terpisah.",
-    },
-];
-
-const landingContentPadding = "calc(180px + env(safe-area-inset-bottom, 24px))";
-const readerContentPadding = "calc(180px + env(safe-area-inset-bottom, 24px))";
-
-function buildTodayDateLabel(): string {
-    try {
-        return new Intl.DateTimeFormat("id-ID", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            timeZone: "Asia/Jakarta",
-        }).format(new Date()).toUpperCase();
-    } catch {
-        return "HARI INI";
-    }
 }
 
 const fetchJsonWithTimeout = async (input: string, timeoutMs = 12000) => {
@@ -140,10 +64,9 @@ export function VersehubReaderPage({
 }: VersehubReaderPageProps) {
     const params = useParams<{ lang: string }>();
     const router = useRouter();
-    const { identity, status: authStatus, isAuthenticated: isSessionAuthenticated } = useAuthSession();
+    const { identity, status: authStatus, isAuthenticated } = useAuthSession();
     const lang = params?.lang || initialLang || "id";
     const accessToken = typeof window !== "undefined" ? getAppAccessToken() : null;
-    const isAuthenticated = Boolean(accessToken);
     const isLandingMode = mode === "landing";
     const isChapterMode = mode === "chapter";
     const isVerseMode = mode === "verse";
@@ -153,6 +76,7 @@ export function VersehubReaderPage({
     const [overlay, setOverlay] = useState<OverlayType>(null);
     const [activeMood, setActiveMood] = useState<string>(isLandingMode ? "hopeful" : "daily");
     const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
+    const [selectedVerseReflection, setSelectedVerseReflection] = useState<string | null>(null);
     const [tab, setTab] = useState<"ot" | "nt">("ot");
     const [books, setBooks] = useState<Book[]>([]);
     const [activeBook, setActiveBook] = useState<string | null>(null);
@@ -168,14 +92,29 @@ export function VersehubReaderPage({
     const [controlCenterOpen, setControlCenterOpen] = useState(false);
     const [audioMenuOpen, setAudioMenuOpen] = useState(false);
     const [isChromeVisible, setIsChromeVisible] = useState(true);
+    const [lastVisitedChapterHref, setLastVisitedChapterHref] = useState<string | null>(null);
+    const [lastVisitedChapterLabel, setLastVisitedChapterLabel] = useState<string | null>(null);
+    const [chapterReflectionQuestion, setChapterReflectionQuestion] = useState("Apa satu hal yang sedang Tuhan tekankan di hatimu dari bacaan ini?");
+    const [reflectionDrafts, setReflectionDrafts] = useState<Record<string, string>>({});
+    const [completedReflections, setCompletedReflections] = useState<Record<string, boolean>>({});
+    const [chapterCompletionReflection, setChapterCompletionReflection] = useState("");
+    const [hasReachedChapterEnd, setHasReachedChapterEnd] = useState(false);
+    const [isSavingChapterReflection, setIsSavingChapterReflection] = useState(false);
+    const [chapterReflectionSaved, setChapterReflectionSaved] = useState(false);
+    const [chapterReflectionError, setChapterReflectionError] = useState<string | null>(null);
+    const [isSharingInsight, setIsSharingInsight] = useState(false);
+    const [shareInsightError, setShareInsightError] = useState<string | null>(null);
     const scrollViewportRef = React.useRef<HTMLElement | null>(null);
     const lastScrollTopRef = React.useRef(0);
     const scrollIdleTimerRef = React.useRef<number | null>(null);
+    const audioPlaybackStartedAtRef = React.useRef<number | null>(null);
 
     const activeScene = useMemo(() => {
+        const moodMatchedScene = SANCTUARY_SCENES.find((scene) => scene.moodTag === activeMood);
+        if (moodMatchedScene) return moodMatchedScene;
         const index = new Date().getDay() % SANCTUARY_SCENES.length;
         return SANCTUARY_SCENES[index];
-    }, []);
+    }, [activeMood]);
 
     const verseSegments = useMemo(
         () => (initialVerseRef ? initialVerseRef.split(/[-_.]/) : []),
@@ -205,8 +144,8 @@ export function VersehubReaderPage({
     const liveDateLabel = useMemo(() => buildTodayDateLabel(), []);
     const sanctuaryTitle = isLandingMode ? "VerseHub" : isVerseMode ? verseData?.reference ?? chapterLabel : chapterLabel;
     const shouldShowChrome = isLandingMode || isChromeVisible || overlay !== null || controlCenterOpen || audioMenuOpen;
-    const floatingMenuItems = useMemo(() => {
-        const items = [
+    const floatingMenuItems = useMemo<ControlCenterItem[]>(() => {
+        const items: ControlCenterItem[] = [
             {
                 key: "explore",
                 label: "Explore",
@@ -253,6 +192,38 @@ export function VersehubReaderPage({
     }, [mentorPreviewLabel, mentorPreviewVerse]);
 
     useEffect(() => {
+        if (typeof window === "undefined") return;
+        const storedMood = window.localStorage.getItem("tct:versehub:last-active-mood");
+        const storedChapterHref = window.localStorage.getItem("tct:versehub:last-visited-book");
+        const storedChapterLabel = window.localStorage.getItem("tct:versehub:last-visited-book-label");
+
+        if (storedMood) {
+            setActiveMood(storedMood);
+        }
+        if (storedChapterHref) {
+            setLastVisitedChapterHref(storedChapterHref);
+        }
+        if (storedChapterLabel) {
+            setLastVisitedChapterLabel(storedChapterLabel);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        window.localStorage.setItem("tct:versehub:last-active-mood", activeMood);
+    }, [activeMood]);
+
+    useEffect(() => {
+        setReflectionDrafts({});
+        setCompletedReflections({});
+        setChapterCompletionReflection("");
+        setHasReachedChapterEnd(false);
+        setChapterReflectionSaved(false);
+        setChapterReflectionError(null);
+        setShareInsightError(null);
+    }, [initialChapterRef, lang, mode]);
+
+    useEffect(() => {
         let cancelled = false;
 
         const load = async () => {
@@ -282,8 +253,16 @@ export function VersehubReaderPage({
                     setChapters(nextChapters);
                     setVerses(nextVerses);
                     setChapterLabel(nextLabel);
+                    setChapterReflectionQuestion(
+                        chapterPayload.reflection_question
+                            ?? "Apa satu hal yang sedang Tuhan tekankan di hatimu dari bacaan ini?"
+                    );
                     setSelectedVerse(nextVerses[0] ?? null);
                     setVerseData(null);
+                    setHasReachedChapterEnd(false);
+                    setChapterReflectionSaved(Boolean(chapterPayload.has_reflected));
+                    setChapterReflectionError(null);
+                    setShareInsightError(null);
 
                     const matchedBook = nextBooks.find((book: Book) => book.code === nextBook);
                     setTab(matchedBook?.testament === "nt" ? "nt" : "ot");
@@ -313,7 +292,15 @@ export function VersehubReaderPage({
                     setChapters(nextChapters);
                     setVerses(nextVerses);
                     setChapterLabel(nextLabel);
+                    setChapterReflectionQuestion(
+                        chapterData?.reflection_question
+                            ?? "Apa satu hal yang sedang Tuhan tekankan di hatimu dari bacaan ini?"
+                    );
                     setSelectedVerse(nextSelectedVerse);
+                    setHasReachedChapterEnd(false);
+                    setChapterReflectionSaved(Boolean(chapterData?.has_reflected));
+                    setChapterReflectionError(null);
+                    setShareInsightError(null);
 
                     const matchedBook = nextBooks.find((book: Book) => book.code === nextBook);
                     setTab(matchedBook?.testament === "nt" ? "nt" : "ot");
@@ -323,6 +310,7 @@ export function VersehubReaderPage({
                     setChapters([]);
                     setSelectedVerse(null);
                     setVerseData(null);
+                    setChapterReflectionQuestion("Apa satu hal yang sedang Tuhan tekankan di hatimu dari bacaan ini?");
                 }
             } catch {
                 if (!cancelled) {
@@ -380,6 +368,20 @@ export function VersehubReaderPage({
     }, [accessToken, initialVerseRef, isAuthenticated, isVerseMode, lang, verseBookCode, verseChapterNumber]);
 
     useEffect(() => {
+        if (typeof window === "undefined") return;
+        if ((!isChapterMode && !isVerseMode) || !chapterLabel) return;
+
+        const href = isChapterMode
+            ? (initialChapterRef ? `/versehub/${lang}/${initialChapterRef}` : activeBook ? `/versehub/${lang}/${activeBook}` : null)
+            : chapterRouteFromVerse;
+        if (!href) return;
+        window.localStorage.setItem("tct:versehub:last-visited-book", href);
+        window.localStorage.setItem("tct:versehub:last-visited-book-label", chapterLabel);
+        setLastVisitedChapterHref(href);
+        setLastVisitedChapterLabel(chapterLabel);
+    }, [activeBook, chapterLabel, chapterRouteFromVerse, initialChapterRef, isChapterMode, isVerseMode, lang]);
+
+    useEffect(() => {
         if (!isLandingMode || typeof window === "undefined") return;
 
         const autoOpen = window.sessionStorage.getItem("tct:versehub:auto-open");
@@ -431,6 +433,22 @@ export function VersehubReaderPage({
         }
     }, [overlay, audioMenuOpen]);
 
+    useEffect(() => {
+        return () => {
+            if (audioPlaybackStartedAtRef.current === null) return;
+            const durationSeconds = Math.max(1, Math.round((Date.now() - audioPlaybackStartedAtRef.current) / 1000));
+            void trackVersehubEvent(lang, "versehub_audio_toggle", {
+                persona: "reader",
+                meta: {
+                    action: "stop",
+                    mood: activeMood,
+                    duration_seconds: durationSeconds,
+                    source: "cleanup",
+                },
+            });
+        };
+    }, [lang]);
+
     const loadBookChapters = async (bookCode: string) => {
         setActiveBook(bookCode);
         try {
@@ -441,10 +459,123 @@ export function VersehubReaderPage({
         }
     };
 
-    const openMentorForVerse = (verse: Verse | null) => {
+    const openMentorForVerse = (verse: Verse | null, userReflection?: string | null) => {
         if (!verse) return;
         setSelectedVerse(verse);
+        setSelectedVerseReflection(userReflection ?? null);
         setOverlay("mentor");
+    };
+
+    const handleMoodQuickStart = async (moodKey: string) => {
+        setActiveMood(moodKey);
+        setOverlay("explore");
+        await trackVersehubEvent(lang, "versehub_mood_click", {
+            persona: "landing",
+            meta: {
+                mood: moodKey,
+                source: "quick_start",
+            },
+        });
+    };
+
+    const handleReflectionChange = (key: string, value: string) => {
+        setReflectionDrafts((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const handleReflectionComplete = async (key: string) => {
+        const answer = reflectionDrafts[key]?.trim() ?? "";
+        if (answer.length < 3) return;
+
+        setCompletedReflections((prev) => ({ ...prev, [key]: true }));
+        await trackVersehubEvent(lang, "versehub_reflection_complete", {
+            persona: "reader",
+            meta: {
+                scope: "chapter_break",
+                chapter: chapterLabel,
+                reflection_length: answer.length,
+            },
+        });
+    };
+
+    const handleSaveChapterReflection = async () => {
+        if (!isAuthenticated) {
+            router.push(`/login?next=${encodeURIComponent(`/versehub/${lang}/${initialChapterRef ?? ""}`)}`);
+            return;
+        }
+
+        const token = getAppAccessToken();
+        if (!token || !initialChapterRef) {
+            setChapterReflectionError("Sesi login tidak ditemukan. Silakan masuk kembali.");
+            return;
+        }
+
+        const composedBreakReflection = Object.entries(completedReflections)
+            .filter(([, isDone]) => isDone)
+            .map(([key]) => reflectionDrafts[key]?.trim())
+            .filter((item): item is string => Boolean(item));
+        const finalReflection = chapterCompletionReflection.trim();
+        const answerText = [
+            ...composedBreakReflection,
+            finalReflection ? `Ringkasan akhir:\n${finalReflection}` : null,
+        ]
+            .filter(Boolean)
+            .join("\n\n");
+
+        if (answerText.trim().length < 3) {
+            setChapterReflectionError("Tuliskan sedikit refleksi dulu sebelum menyimpannya ke arsip.");
+            return;
+        }
+
+        setIsSavingChapterReflection(true);
+        setChapterReflectionError(null);
+
+        try {
+            const response = await fetch(`/api/versehub/${lang}/reflections`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    verse_ref: initialChapterRef,
+                    question_text: chapterReflectionQuestion,
+                    answer_text: answerText,
+                    is_private: true,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("save_failed");
+            }
+
+            setChapterReflectionSaved(true);
+        } catch {
+            setChapterReflectionError("Belum bisa menyimpan perenungan pasal ini ke arsip.");
+        } finally {
+            setIsSavingChapterReflection(false);
+        }
+    };
+
+    const handleShareInsight = async () => {
+        const baseReflection = chapterCompletionReflection.trim();
+        const fallbackInsight = Object.entries(completedReflections)
+            .filter(([, isDone]) => isDone)
+            .map(([key]) => reflectionDrafts[key]?.trim())
+            .find(Boolean);
+        const insight = baseReflection || fallbackInsight || `Saya baru selesai membaca ${chapterLabel} di VerseHub.`;
+
+        setIsSharingInsight(true);
+        setShareInsightError(null);
+
+        try {
+            const text = `${insight}\n\n${chapterLabel}`;
+            router.push(`/community?intent=reflection&text=${encodeURIComponent(text)}`);
+        } catch {
+            setShareInsightError("Belum bisa membuka Community sekarang.");
+        } finally {
+            setIsSharingInsight(false);
+        }
     };
 
     const handleLike = async () => {
@@ -617,213 +748,65 @@ export function VersehubReaderPage({
             </div>
 
             {isLandingMode && (
-                <>
-                    <motion.header
-                        initial={false}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                        className="absolute inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top,0px)]"
-                    >
-                        <div className="mx-auto flex max-w-4xl items-start justify-between gap-4 px-6 pt-5 md:px-6">
-                            <button
-                                type="button"
-                                onClick={() => router.push("/today")}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/82 text-sky-600 ring-1 ring-black/5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.28)] backdrop-blur-xl transition hover:bg-white active:scale-95"
-                            >
-                                <ChevronLeft className="h-5 w-5" />
-                            </button>
-
-                            <div className="ml-auto flex max-w-[24rem] flex-col text-right">
-                                <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40">
-                                    {liveDateLabel}
-                                </span>
-                                <h1 className="text-[22px] font-semibold leading-[1.22] tracking-[-0.01em] text-foreground/95 md:text-[25px]">
-                                    Selamat datang kembali,
-                                </h1>
-                                {memberName ? (
-                                    <p className="mt-1 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em] text-foreground/80 md:text-[18px]">
-                                        {memberName}
-                                    </p>
-                                ) : (
-                                    <p className="mt-1 text-[13px] font-medium leading-[1.45] tracking-[0.01em] text-foreground/60 md:text-[14px]">
-                                        Chosen People
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </motion.header>
-
-                    <main className="relative z-10 flex flex-1 flex-col justify-center px-6 pt-20 text-center md:px-10" style={{ paddingBottom: landingContentPadding }}>
-                        <div className="mx-auto max-w-3xl">
-                            <p className="text-[11px] font-black uppercase tracking-[0.44em] text-[#91A0C7]">{activeScene.eyebrow}</p>
-                            <motion.h1
-                                initial={{ opacity: 0, y: 18 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                className="mx-auto mt-10 max-w-[12ch] font-serif text-[50px] italic leading-[1.08] tracking-[-0.04em] text-[#172042] sm:text-[64px] md:text-[78px]"
-                            >
-                                {activeScene.quote}
-                            </motion.h1>
-                            <p className="mx-auto mt-7 max-w-xl text-[15px] leading-7 text-slate-600 md:text-base">
-                                {activeScene.invitation}
-                            </p>
-                        </div>
-                    </main>
-
-                    <div className="absolute inset-x-0 z-40 px-4 md:px-6" style={{ bottom: "calc(96px + env(safe-area-inset-bottom, 24px))" }}>
-                        <div className="mx-auto flex max-w-xl flex-col gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setOverlay("explore")}
-                                className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-white/86 px-5 py-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-2xl transition hover:bg-white active:scale-[0.98]"
-                            >
-                                <span className="flex items-center gap-3">
-                                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-black/5">
-                                        <Sparkles className="h-4 w-4" />
-                                    </span>
-                                    <span>
-                                        <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Explore</span>
-                                        <span className="mt-1 block text-[15px] font-black tracking-tight text-slate-900">
-                                            Waktunya Selidiki Firman Lebih Dalam
-                                        </span>
-                                    </span>
-                                </span>
-                                <ArrowRight className="h-5 w-5 text-[#2A67FF] transition group-hover:translate-x-0.5" />
-                            </button>
-
-                            <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-2 rounded-[30px] bg-white/78 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-2xl">
-                                <button type="button" onClick={() => setOverlay("picker")} className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95">
-                                    <BookOpenText className="mx-auto h-4 w-4 text-slate-500" />
-                                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Kitab</span>
-                                </button>
-                                <button type="button" onClick={() => setOverlay("explore")} className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95">
-                                    <BookHeart className="mx-auto h-4 w-4 text-slate-500" />
-                                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Deep Dive</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setOverlay(null);
-                                        if (firstChapterHref) router.push(firstChapterHref);
-                                    }}
-                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95"
-                                >
-                                    <MessageSquareText className="mx-auto h-4 w-4 text-slate-500" />
-                                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Mulai</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </>
+                <VersehubLandingView
+                    activeScene={activeScene}
+                    landingContentPadding={landingContentPadding}
+                    firstChapterHref={firstChapterHref}
+                    firstBookLabel={firstBookLabel}
+                    continueReadingHref={lastVisitedChapterHref}
+                    continueReadingLabel={lastVisitedChapterLabel}
+                    onContinueReading={() => {
+                        if (lastVisitedChapterHref) {
+                            router.push(lastVisitedChapterHref);
+                        }
+                    }}
+                    onBackToday={() => router.push("/today")}
+                    onOpenPicker={() => setOverlay("picker")}
+                    onOpenExplore={() => setOverlay("explore")}
+                    onQuickStartMood={handleMoodQuickStart}
+                    onStartFirstChapter={() => {
+                        setOverlay(null);
+                        if (firstChapterHref) router.push(firstChapterHref);
+                    }}
+                    liveDateLabel={liveDateLabel}
+                    memberName={memberName}
+                    activeMood={activeMood}
+                />
             )}
 
             {isChapterMode && (
-                <>
-                    <motion.header
-                        initial={false}
-                        animate={shouldShowChrome ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                        className={cn(
-                            "relative z-40 border-b border-black/5 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,243,234,0.72))] backdrop-blur-2xl",
-                            !shouldShowChrome && "pointer-events-none"
-                        )}
-                    >
-                        <div className="mx-auto flex max-w-4xl items-start justify-between gap-4 px-6 py-4">
-                            <button
-                                type="button"
-                                onClick={() => router.push(`/versehub/${lang}`)}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/82 text-sky-600 ring-1 ring-black/5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.28)] backdrop-blur-xl transition hover:bg-white active:scale-95"
-                            >
-                                <ChevronLeft className="h-5 w-5" />
-                            </button>
-
-                            <div className="ml-auto flex max-w-[24rem] flex-col text-right">
-                                <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40">
-                                    {liveDateLabel}
-                                </span>
-                                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#91A0C7]">
-                                    EKSPLORASI FIRMAN HARI INI
-                                </p>
-                                <h1 className="mt-2 text-[22px] font-semibold leading-[1.22] tracking-[-0.01em] text-foreground/95 md:text-[25px]">
-                                    {memberName ? `${memberName}, ${sanctuaryTitle}` : sanctuaryTitle}
-                                </h1>
-                            </div>
-                        </div>
-                    </motion.header>
-
-                    <main ref={(node) => { scrollViewportRef.current = node; }} className="relative z-10 flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
-                        <div className="mx-auto max-w-4xl pb-[calc(180px+env(safe-area-inset-bottom,24px))]">
-                            <section className="overflow-hidden rounded-[34px] bg-white/84 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04] backdrop-blur-2xl md:p-7">
-                                <div className="flex flex-col gap-5 border-b border-slate-100 pb-5 md:flex-row md:items-end md:justify-between">
-                                    <div className="max-w-2xl">
-                                        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#91A0C7]">Reader Engine</p>
-                                        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{chapterLabel}</h2>
-                                        <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                                            Reader mode dibuat lebih utilitarian, tetapi tetap satu pengalaman dengan sanctuary VerseHub. Tekan ayat untuk membuka mentor internal.
-                                        </p>
-                                    </div>
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setOverlay("explore")}
-                                            className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-slate-800"
-                                        >
-                                            <Sparkles className="h-3.5 w-3.5" />
-                                            Explore
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setOverlay("picker")}
-                                            className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-600 transition hover:bg-slate-200"
-                                        >
-                                            <BookOpenText className="h-3.5 w-3.5" />
-                                            Ganti Pasal
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="mt-5 grid gap-3 md:grid-cols-[1.25fr,0.75fr]">
-                                    <div className="rounded-[28px] bg-[#FBFAF6] p-4 ring-1 ring-black/[0.04]">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Bacaan</p>
-                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                            {verses.length} ayat siap dibaca. Tap salah satu ayat untuk membuka scripture guide internal berbasis Laravel.
-                                        </p>
-                                    </div>
-                                    <div className="rounded-[28px] bg-[#FBFAF6] p-4 ring-1 ring-black/[0.04]">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Companion</p>
-                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                            Ambience Lagusion tetap aktif di reader. Pilih vocal atau instrumental langsung dari floating audio companion.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="mt-6 space-y-4" style={{ paddingBottom: readerContentPadding }}>
-                                    {verses.map((verse) => (
-                                        <button
-                                            key={verse.key}
-                                            type="button"
-                                            onClick={() => openMentorForVerse(verse)}
-                                            className="group block w-full rounded-[28px] bg-[#F9F7F2] px-4 py-4 text-left ring-1 ring-black/[0.03] transition hover:bg-white hover:shadow-[0_14px_40px_rgba(15,23,42,0.06)] md:px-5"
-                                        >
-                                            <div className="flex items-start gap-4">
-                                                <span className="mt-1 inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-[12px] font-black text-slate-500 shadow-sm ring-1 ring-black/[0.04]">
-                                                    {verse.verse}
-                                                </span>
-                                            <div className="flex-1">
-                                                <p className="text-[20px] leading-[1.85] text-slate-800/95 md:text-[23px]">{verse.text}</p>
-                                                    <span className="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 transition group-hover:text-[#2A67FF]">
-                                                        <MessageSquareText className="h-3.5 w-3.5" />
-                                                        Buka mentor untuk ayat ini
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-                        </div>
-                    </main>
-                </>
+                <VersehubReaderView
+                    chapterLabel={chapterLabel}
+                    sanctuaryTitle={sanctuaryTitle}
+                    memberName={memberName}
+                    liveDateLabel={liveDateLabel}
+                    verses={verses}
+                    shouldShowChrome={shouldShowChrome}
+                    readerContentPadding={readerContentPadding}
+                    activeMood={activeMood}
+                    chapterReflectionQuestion={chapterReflectionQuestion}
+                    chapterCompletionReflection={chapterCompletionReflection}
+                    chapterCompletionSaved={chapterReflectionSaved}
+                    isSavingChapterReflection={isSavingChapterReflection}
+                    isSharingInsight={isSharingInsight}
+                    reflectionError={chapterReflectionError}
+                    shareInsightError={shareInsightError}
+                    hasReachedChapterEnd={hasReachedChapterEnd}
+                    scrollViewportRef={scrollViewportRef}
+                    reflectionDrafts={reflectionDrafts}
+                    completedReflections={completedReflections}
+                    onBack={() => router.push(`/versehub/${lang}`)}
+                    onOpenPicker={() => setOverlay("picker")}
+                    onOpenExplore={() => setOverlay("explore")}
+                    onOpenReflectionsJournal={() => router.push(`/versehub/${lang}/reflections`)}
+                    onOpenVerseMentor={(verse, userReflection) => openMentorForVerse(verse, userReflection)}
+                    onReflectionChange={handleReflectionChange}
+                    onReflectionComplete={handleReflectionComplete}
+                    onCompletionReflectionChange={setChapterCompletionReflection}
+                    onSaveChapterReflection={handleSaveChapterReflection}
+                    onShareInsight={handleShareInsight}
+                    onReachedChapterEnd={() => setHasReachedChapterEnd(true)}
+                />
             )}
 
             {isVerseMode && verseData && (
@@ -1184,37 +1167,11 @@ export function VersehubReaderPage({
                     verseText={mentorPreviewVerse.text}
                     verseLabel={mentorPreviewLabel}
                     activeMood={mentorMood}
+                    userReflection={selectedVerseReflection}
                     isAuthenticated={true}
                     onClose={() => setOverlay(null)}
                 />
             )}
-
-            <AnimatePresence>
-                {controlCenterOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10, transition: { duration: 0.18 } }}
-                        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                        className="fixed bottom-[calc(92px+env(safe-area-inset-bottom,24px))] right-4 z-[74] flex flex-col items-end gap-2 md:right-8"
-                    >
-                        {floatingMenuItems.map((item, index) => (
-                            <motion.button
-                                key={item.key}
-                                type="button"
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 8 }}
-                                transition={{ duration: 0.26, delay: index * 0.03 }}
-                                onClick={item.onClick}
-                                className="rounded-full bg-white/88 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-700 backdrop-blur-2xl ring-1 ring-black/5 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)] transition hover:bg-white"
-                            >
-                                {item.label}
-                            </motion.button>
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
             <AmbienceController
                 className={cn(
@@ -1237,24 +1194,44 @@ export function VersehubReaderPage({
                         }
                     }
                 }}
+                onPlaybackStateChange={({ isPlaying, trackTitle, moodKey }) => {
+                    if (isPlaying) {
+                        audioPlaybackStartedAtRef.current = Date.now();
+                        void trackVersehubEvent(lang, "versehub_audio_toggle", {
+                            persona: "reader",
+                            meta: {
+                                action: "play",
+                                mood: moodKey,
+                                track_title: trackTitle,
+                            },
+                        });
+                        return;
+                    }
+
+                    if (audioPlaybackStartedAtRef.current === null) {
+                        return;
+                    }
+
+                    const durationSeconds = Math.max(1, Math.round((Date.now() - audioPlaybackStartedAtRef.current) / 1000));
+                    audioPlaybackStartedAtRef.current = null;
+                    void trackVersehubEvent(lang, "versehub_audio_toggle", {
+                        persona: "reader",
+                        meta: {
+                            action: "stop",
+                            mood: moodKey,
+                            track_title: trackTitle,
+                            duration_seconds: durationSeconds,
+                        },
+                    });
+                }}
             />
 
-            <motion.button
-                type="button"
-                initial={false}
-                animate={shouldShowChrome ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                onClick={() => setControlCenterOpen((prev) => !prev)}
-                className={cn(
-                    "fixed bottom-[calc(20px+env(safe-area-inset-bottom,24px))] right-4 z-[75] flex h-14 w-14 items-center justify-center rounded-full bg-white/88 text-slate-700 backdrop-blur-2xl ring-1 ring-black/5 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)] transition hover:bg-white md:right-8",
-                    !shouldShowChrome && "pointer-events-none"
-                )}
-                aria-label={controlCenterOpen ? "Close control center" : "Open control center"}
-            >
-                <motion.div animate={{ rotate: controlCenterOpen ? 45 : 0 }} transition={{ duration: 0.28 }}>
-                    <Plus className="h-5 w-5" />
-                </motion.div>
-            </motion.button>
+            <VersehubControlCenter
+                isVisible={shouldShowChrome}
+                isOpen={controlCenterOpen}
+                items={floatingMenuItems}
+                onToggle={() => setControlCenterOpen((prev) => !prev)}
+            />
 
             {error && isLandingMode && (
                 <div className="pointer-events-none absolute left-1/2 top-24 z-40 -translate-x-1/2 px-4">
@@ -1265,7 +1242,7 @@ export function VersehubReaderPage({
             )}
 
             {isLandingMode && (
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-24 bg-gradient-to-t from-[#F7F4EC] to-transparent" />
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-24 bg-gradient-to-t from-[#f7f3ea] to-transparent" />
             )}
 
             <AnimatePresence>

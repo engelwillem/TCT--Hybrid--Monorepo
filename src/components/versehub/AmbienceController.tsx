@@ -122,6 +122,12 @@ interface AmbienceControllerProps {
     onMenuOpen?: (isOpen: boolean) => void;
     menuOpen?: boolean;
     hideTrigger?: boolean;
+    onPlaybackStateChange?: (payload: {
+        isPlaying: boolean;
+        trackTitle: string;
+        trackUrl: string;
+        moodKey: string;
+    }) => void;
 }
 
 const WaveformIndicator = () => (
@@ -137,7 +143,16 @@ const WaveformIndicator = () => (
     </div>
 );
 
-export default function AmbienceController({ className, isDucking = false, activeMoodKey = 'daily', dayIndex = 0, onMenuOpen, menuOpen, hideTrigger = false }: AmbienceControllerProps) {
+export default function AmbienceController({
+    className,
+    isDucking = false,
+    activeMoodKey = 'daily',
+    dayIndex = 0,
+    onMenuOpen,
+    menuOpen,
+    hideTrigger = false,
+    onPlaybackStateChange,
+}: AmbienceControllerProps) {
     const audioA = useRef<HTMLAudioElement | null>(null);
     const audioB = useRef<HTMLAudioElement | null>(null);
     
@@ -172,6 +187,7 @@ export default function AmbienceController({ className, isDucking = false, activ
     const activeEngineRef = useRef<'A' | 'B'>('A');
     const pendingPlayRef = useRef(false);
     const volumeDirectionRef = useRef<{ A: 'idle' | 'up' | 'down'; B: 'idle' | 'up' | 'down' }>({ A: 'idle', B: 'idle' });
+    const hasReportedPlaybackRef = useRef(false);
 
     const getEngine = (engine: 'A' | 'B') => (engine === 'A' ? audioA.current : audioB.current);
     const resolvedMenuOpen = menuOpen ?? isMenuOpen;
@@ -374,6 +390,21 @@ export default function AmbienceController({ className, isDucking = false, activ
             window.removeEventListener('keydown', retryPlayback);
         };
     }, [requiresUserGesture, hasPlayableTarget]);
+
+    useEffect(() => {
+        if (!onPlaybackStateChange) return;
+        if (!hasReportedPlaybackRef.current) {
+            hasReportedPlaybackRef.current = true;
+            return;
+        }
+
+        onPlaybackStateChange({
+            isPlaying,
+            trackTitle: targetedTrack.title,
+            trackUrl: targetedTrack.url,
+            moodKey: currentMoodContextKey,
+        });
+    }, [currentMoodContextKey, isPlaying, onPlaybackStateChange, targetedTrack.title, targetedTrack.url]);
 
     // RequestAnimationFrame Volume & Crossfade Loop
     useEffect(() => {
