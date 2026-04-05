@@ -9,6 +9,7 @@ import DesktopSidebarNav from "@/layouts/DesktopSidebar";
 import { cn } from "@/lib/utils";
 import { getUiNavItems } from "@/lib/navigation";
 import { TCTLogo } from "@/components/brand/TCTLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -158,11 +159,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             {/* Mobile Brand Header */}
             {!isLanding && !isAuthSurface && !isTodayRitual && !isReader && (
-              <div className="md:hidden flex items-center justify-center gap-2 mb-4 mt-0 opacity-[0.65]">
-                  <TCTLogo className="w-4 h-4 drop-shadow-sm" />
-                  <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-foreground mt-0.5">
-                      The Chosen Talks
-                  </p>
+              <div className="md:hidden flex items-center justify-between mb-4 mt-0">
+                  <div className="flex items-center gap-2 opacity-[0.65]">
+                      <TCTLogo className="w-4 h-4 drop-shadow-sm" />
+                      <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-foreground mt-0.5">
+                          The Chosen Talks
+                      </p>
+                  </div>
+                  <ThemeToggle />
               </div>
             )}
 

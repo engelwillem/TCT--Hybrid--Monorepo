@@ -131,3 +131,4 @@ backend-api/.phpunit.result.cache
 # Application Specific Cleanup
 public/og/*.png
 !public/og/README.md
+current_versehub.png

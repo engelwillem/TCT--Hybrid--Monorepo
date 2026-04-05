@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { FirebaseAuthSync } from '@/components/FirebaseAuthSync';
 import { getPrimarySiteUrl, isPrimaryProductionDeployment } from '@/lib/seo';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 const APP_NAME = 'The Chosen Talks';
 const TAGLINE = 'The Chosen People';
@@ -94,13 +95,15 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="font-sans antialiased tct-body" suppressHydrationWarning>
-        <FirebaseClientProvider>
-          <FirebaseAuthSync />
-          <AppShell>
-            {children}
-          </AppShell>
-          <Toaster />
-        </FirebaseClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <FirebaseClientProvider>
+            <FirebaseAuthSync />
+            <AppShell>
+              {children}
+            </AppShell>
+            <Toaster />
+          </FirebaseClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

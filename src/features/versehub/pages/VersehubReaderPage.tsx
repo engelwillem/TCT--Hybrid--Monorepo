@@ -697,7 +697,7 @@ export function VersehubReaderPage({
 
     if (loading) {
         return (
-            <div className="theme-versehub-dark flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] text-[var(--vh-text-primary)] transition-colors duration-500">
+            <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] text-[var(--vh-text-primary)] transition-colors duration-500">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="h-10 w-10 animate-spin text-[var(--vh-text-muted)]" />
                     <p className="text-[12px] font-black uppercase tracking-[0.2em] text-[var(--vh-text-muted)]">Menyiapkan Ruang Doa...</p>
@@ -708,7 +708,7 @@ export function VersehubReaderPage({
 
     if (error && isChapterMode) {
         return (
-            <div className="theme-versehub-dark flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] px-6 py-16 text-center text-[var(--vh-text-primary)]">
+            <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] px-6 py-16 text-center text-[var(--vh-text-primary)]">
                 <div className="mx-auto max-w-md rounded-[32px] bg-[var(--vh-surface)]/80 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.4)] ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
                     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--vh-text-muted)]">Pasal tidak ditemukan</p>
                     <p className="mt-3 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
@@ -728,7 +728,7 @@ export function VersehubReaderPage({
 
     if (error && isVerseMode) {
         return (
-            <div className="theme-versehub-dark flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] px-6 py-16 text-center text-[var(--vh-text-primary)]">
+            <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] px-6 py-16 text-center text-[var(--vh-text-primary)]">
                 <div className="mx-auto max-w-md rounded-[32px] bg-[var(--vh-surface)]/80 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.4)] ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
                     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--vh-text-muted)]">Ayat tidak ditemukan</p>
                     <p className="mt-3 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
@@ -747,7 +747,7 @@ export function VersehubReaderPage({
     }
 
     return (
-        <div className="theme-versehub-dark relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-[var(--vh-bg)] text-[var(--vh-text-primary)] selection:bg-[var(--vh-accent)]/30">
+        <div className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-[var(--vh-bg)] text-[var(--vh-text-primary)] selection:bg-[var(--vh-accent)]/30">
             <div
                 className="pointer-events-none fixed inset-0 z-0 opacity-[0.05]"
                 style={{
@@ -861,19 +861,19 @@ export function VersehubReaderPage({
                     <main ref={(node) => { scrollViewportRef.current = node; }} className="relative z-10 flex-1 overflow-y-auto px-4 py-6 md:px-6 md:py-8">
                         <div className="mx-auto max-w-3xl pb-[calc(180px+env(safe-area-inset-bottom,24px))]">
                             <div className="space-y-8">
-                                <section className="rounded-[34px] bg-white/84 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04] backdrop-blur-2xl md:p-7">
+                                <section className="glass-panel rounded-[34px] p-5 md:p-7">
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
                                             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#91A0C7]">Verse Focus</p>
-                                            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{verseData.reference}</h2>
-                                            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                                            <h2 className="mt-2 text-3xl font-black tracking-tight text-foreground">{verseData.reference}</h2>
+                                            <p className="mt-3 text-sm leading-relaxed text-foreground/60">
                                                 Ayat tunggal ini tetap berada dalam ekosistem reader VerseHub, jadi Anda bisa bookmark, share, dan kembali ke chapter tanpa kehilangan konteks.
                                             </p>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => router.push(chapterRouteFromVerse)}
-                                            className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-600 transition hover:bg-slate-200"
+                                            className="inline-flex items-center gap-2 rounded-full bg-foreground/5 dark:bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60 transition hover:bg-foreground/10"
                                         >
                                             <MessageSquareText className="h-3.5 w-3.5" />
                                             Reader
@@ -881,7 +881,7 @@ export function VersehubReaderPage({
                                     </div>
                                 </section>
 
-                                <section className="group overflow-hidden rounded-[40px] bg-white/84 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04] backdrop-blur-2xl md:p-5">
+                                <section className="glass-panel group overflow-hidden rounded-[40px] p-4 md:p-5">
                                     <div className="overflow-hidden rounded-[24px] ring-1 ring-black/[0.04] md:rounded-[32px]">
                                         <img
                                             src={verseData.og_image_url}
@@ -893,7 +893,7 @@ export function VersehubReaderPage({
                                     </div>
                                 </section>
 
-                                <section className="overflow-hidden rounded-[40px] bg-white/84 shadow-[0_24px_60px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.04] backdrop-blur-2xl">
+                                <section className="glass-panel overflow-hidden rounded-[40px]">
                                     <div className="p-5 md:p-7">
                                         <blockquote className="relative">
                                             <div className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 text-slate-400/10" aria-hidden>
@@ -982,18 +982,18 @@ export function VersehubReaderPage({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 40 }}
                             transition={{ type: "spring", stiffness: 240, damping: 28 }}
-                            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl rounded-t-[36px] bg-white/96 px-6 pt-6 pb-[calc(24px+env(safe-area-inset-bottom,24px))] shadow-[0_-30px_80px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-2xl md:left-1/2 md:max-w-2xl md:-translate-x-1/2 md:pb-6"
+                            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl rounded-t-[36px] glass-panel px-6 pt-6 pb-[calc(24px+env(safe-area-inset-bottom,24px))] shadow-[0_-30px_80px_rgba(15,23,42,0.18)] md:left-1/2 md:max-w-2xl md:-translate-x-1/2 md:pb-6"
                         >
-                            <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-slate-200" />
+                            <div className="mx-auto mb-5 h-1.5 w-14 rounded-full bg-foreground/10" />
                             <div className="flex items-start justify-between gap-4">
                                 <div>
                                     <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#91A0C7]">Deep Dive</p>
-                                    <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Masuk ke firman tanpa kehilangan rasa heningnya.</h3>
+                                    <h3 className="mt-2 text-2xl font-black tracking-tight text-foreground">Masuk ke firman tanpa kehilangan rasa heningnya.</h3>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setOverlay(null)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 active:scale-90"
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-foreground/5 text-foreground/50 transition hover:bg-foreground/10 active:scale-90"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>

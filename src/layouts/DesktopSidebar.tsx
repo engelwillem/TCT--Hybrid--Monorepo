@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { TCTLogo } from '@/components/brand/TCTLogo';
 import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type NavItem = {
     id: string;
@@ -58,7 +59,10 @@ export default function DesktopSidebarNav({
     return (
         <aside
             className={cn(
-                'flex flex-col gap-2 rounded-3xl bg-white/60 backdrop-blur-xl border border-black/[0.04] p-5',
+                'flex flex-col gap-2 rounded-3xl p-5',
+                'bg-white/60 dark:bg-[hsl(240_5%_8%/0.6)]',
+                'backdrop-blur-xl',
+                'border border-black/[0.04] dark:border-white/[0.04]',
                 className,
             )}
             style={{ position: 'sticky', top: '2rem', alignSelf: 'start' }}
@@ -83,8 +87,8 @@ export default function DesktopSidebarNav({
                             className={cn(
                                 'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-[14px] font-medium transition-all duration-200',
                                 isActive
-                                    ? 'bg-black/[0.05] text-foreground'
-                                    : 'text-foreground/45 hover:text-foreground/80 hover:bg-black/[0.025]',
+                                    ? 'bg-black/[0.05] dark:bg-white/[0.06] text-foreground'
+                                    : 'text-foreground/45 hover:text-foreground/80 hover:bg-black/[0.025] dark:hover:bg-white/[0.04]',
                             )}
                         >
                             <AppIcon
@@ -102,9 +106,9 @@ export default function DesktopSidebarNav({
                 })}
             </nav>
 
-            <div className="mt-4 pt-4 border-t border-black/[0.04]">
+            <div className="mt-4 pt-4 border-t border-black/[0.04] dark:border-white/[0.04]">
                 <div className="flex items-center gap-3 px-2">
-                    <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-black/[0.06] text-[12px] font-semibold text-foreground/70">
+                    <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.06] text-[12px] font-semibold text-foreground/70">
                         {resolvedAvatarUrl ? (
                             <img
                                 src={resolvedAvatarUrl}
@@ -116,7 +120,7 @@ export default function DesktopSidebarNav({
                             resolvedInitials
                         )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-medium text-foreground/80">
                             {resolvedName}
                         </p>
@@ -124,6 +128,7 @@ export default function DesktopSidebarNav({
                             {isGuest ? 'Chosen People' : (userEmail || 'Chosen People')}
                         </p>
                     </div>
+                    <ThemeToggle />
                 </div>
             </div>
         </aside>
