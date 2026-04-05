@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Share2, ExternalLink, PenLine, X, Zap, Sparkles, Heart, Bookmark as BookmarkIcon, History } from 'lucide-react';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { cn } from '@/lib/utils';
-import { getAppAccessToken } from '@/services/app-auth-token';
 
 type ActivityItem = {
     id: string;
@@ -160,6 +161,7 @@ function computeStreak(items: ActivityItem[]): number {
 export default function SpiritualJourneyPage() {
     const params = useParams();
     const router = useRouter();
+    const { isAuthenticated, isRestoring } = useAuthSession();
     const lang = params?.lang as string || 'id';
     const isId = lang === 'id';
 
@@ -169,6 +171,7 @@ export default function SpiritualJourneyPage() {
     const [activeTab, setActiveTab] = useState('all');
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = useState('');
+    const [authRequired, setAuthRequired] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const toLabel = (book: string) => {
@@ -196,18 +199,31 @@ export default function SpiritualJourneyPage() {
         let active = true;
 
         const loadJourney = async () => {
+            if (isRestoring) {
+                return;
+            }
+
+            if (!isAuthenticated) {
+                if (!active) return;
+                setAuthRequired(true);
+                setLocalItems([]);
+                setLoading(false);
+                return;
+            }
+
             try {
-                const token = getAppAccessToken();
-                const response = await fetch(`/api/versehub/${lang}/actions/summary?limit=200&sort=recent`, {
-                    headers: {
-                        Accept: 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                const response = await fetchWithAppAuth(`/api/versehub/${lang}/actions/summary?limit=200&sort=recent`, {
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
 
                 if (!active) return;
                 if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        setAuthRequired(true);
+                        setLocalItems([]);
+                        return;
+                    }
                     const payload = (await response.json().catch(() => ({}))) as JourneySummaryResponse;
                     setErrorMessage(payload?.message || (isId ? 'Gagal memuat perjalanan rohani.' : 'Failed to load spiritual journey.'));
                     setLocalItems([]);
@@ -237,6 +253,7 @@ export default function SpiritualJourneyPage() {
                     this_week: thisWeek,
                     growth_percent: 0,
                 });
+                setAuthRequired(false);
                 setErrorMessage(null);
             } catch {
                 if (!active) return;
@@ -251,7 +268,7 @@ export default function SpiritualJourneyPage() {
         return () => {
             active = false;
         };
-    }, [isId, lang]);
+    }, [isAuthenticated, isId, isRestoring, lang]);
 
     const filteredItems = useMemo(() => {
         const byTab = localItems.filter((row) => {
@@ -362,6 +379,22 @@ export default function SpiritualJourneyPage() {
                     {loading ? (
                         <div className="space-y-4">
                             {[1, 2, 3].map((i) => <div key={i} className="h-28 bg-surface-muted rounded-[28px] animate-pulse" />)}
+                        </div>
+                    ) : authRequired ? (
+                        <div className="rounded-[28px] border border-amber-200 bg-amber-50 p-6 text-center text-amber-900">
+                            <h3 className="text-lg font-black">{isId ? 'Login diperlukan' : 'Login required'}</h3>
+                            <p className="mt-2 text-sm leading-relaxed">
+                                {isId
+                                    ? 'Journey rohanimu tersimpan per akun. Masuk untuk melihat favorit, bookmark, dan catatan ayatmu.'
+                                    : 'Your spiritual journey is stored per account. Sign in to view saved favorites, bookmarks, and notes.'}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/login?next=${encodeURIComponent(`/versehub/${lang}/my-spiritual-journey`)}`)}
+                                className="mt-5 inline-flex rounded-full bg-amber-900 px-5 py-2.5 text-xs font-bold text-amber-50 shadow-sm transition hover:bg-amber-950"
+                            >
+                                {isId ? 'Login' : 'Sign in'}
+                            </button>
                         </div>
                     ) : errorMessage ? (
                         <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">

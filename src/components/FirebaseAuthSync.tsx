@@ -78,14 +78,14 @@ export function FirebaseAuthSync() {
         const payload = await response.json().catch(() => null);
         const token = payload?.data?.token;
         if (typeof token === "string" && token.length > 0) {
-          setAppAccessToken(token, "firebase");
+          setAppAccessToken(token, "firebase", "session");
           if (payload?.data?.user) {
             setAppAuthUser({
               id: String(payload.data.user.id ?? ""),
               name: String(payload.data.user.name ?? ""),
               email: String(payload.data.user.email ?? ""),
               avatarUrl: typeof payload.data.user.avatarUrl === "string" ? payload.data.user.avatarUrl : null,
-            });
+            }, "session");
           }
           return;
         }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -8,8 +9,8 @@ import {
     X, BookOpen, PenLine, ArrowRight,
     LayoutGrid, List
 } from 'lucide-react';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { cn } from '@/lib/utils';
-import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Reflection = {
     id: string;
@@ -36,6 +37,7 @@ type ReflectionsApiResponse = {
 export default function ReflectionsJournalPage() {
     const params = useParams();
     const router = useRouter();
+    const { isAuthenticated, isRestoring } = useAuthSession();
     const lang = params?.lang as string || 'id';
     const isId = lang === 'id';
 
@@ -49,8 +51,11 @@ export default function ReflectionsJournalPage() {
         let active = true;
 
         const loadReflections = async () => {
-            const token = getAppAccessToken();
-            if (!token) {
+            if (isRestoring) {
+                return;
+            }
+
+            if (!isAuthenticated) {
                 if (!active) return;
                 setAuthRequired(true);
                 setLoading(false);
@@ -58,11 +63,8 @@ export default function ReflectionsJournalPage() {
             }
 
             try {
-                const response = await fetch(`/api/versehub/${lang}/reflections`, {
-                    headers: {
-                        Accept: 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
+                const response = await fetchWithAppAuth(`/api/versehub/${lang}/reflections`, {
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
 
@@ -98,7 +100,7 @@ export default function ReflectionsJournalPage() {
         return () => {
             active = false;
         };
-    }, [isId, lang]);
+    }, [isAuthenticated, isId, isRestoring, lang]);
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-20 selection:bg-brand/30">

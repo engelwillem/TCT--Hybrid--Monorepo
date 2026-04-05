@@ -1,15 +1,10 @@
-import { getAppAccessToken } from "./app-auth-token";
+import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 import type { SpiritualState } from "@/app/today/components/sections/StateChips";
 
 function getHeaders() {
-  const token = getAppAccessToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
+  return buildAppAuthHeaders({
+    contentType: "application/json",
+  });
 }
 
 export async function submitSpiritualState(state: SpiritualState): Promise<void> {

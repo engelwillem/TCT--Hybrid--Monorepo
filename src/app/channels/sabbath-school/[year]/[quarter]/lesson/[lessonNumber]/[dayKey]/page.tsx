@@ -15,8 +15,9 @@ import {
     BookOpen,
     ArrowLeft
 } from 'lucide-react';
+import { buildAppAuthHeaders } from '@/lib/app-auth-fetch';
+import { sanitizeRichHtml } from '@/lib/safe-rich-text';
 import { cn } from '@/lib/utils';
-import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Day = {
     day_key: string;
@@ -44,6 +45,7 @@ export default function SabbathSchoolDayPage() {
     const [liked, setLiked] = useState(false);
     const [bookmarked, setBookmarked] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
+    const sanitizedContent = useMemo(() => sanitizeRichHtml(day?.content), [day?.content]);
 
     useEffect(() => {
         if (!year || !quarter || !lessonNumber || !dayKey) return;
@@ -51,13 +53,9 @@ export default function SabbathSchoolDayPage() {
         let isActive = true;
         const load = async () => {
             try {
-                const token = getAppAccessToken();
                 const response = await fetch(`/api/sabbath-school/${year}/${quarter}/lesson/${lessonNumber}/${dayKey}`, {
                     method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
                 if (!response.ok) return;
@@ -129,7 +127,7 @@ export default function SabbathSchoolDayPage() {
                 {/* Reader Content Parity */}
                 <article className="px-6 py-10 md:px-12 max-w-none">
                     <div 
-                        dangerouslySetInnerHTML={{ __html: day.content }} 
+                        dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
                         className="reader-prose text-[17px] leading-relaxed text-foreground/80 space-y-6 selection:bg-brand/20"
                     />
                 </article>

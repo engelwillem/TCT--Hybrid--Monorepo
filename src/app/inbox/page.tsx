@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { clearAppAccessToken, getAppAccessToken, shouldInvalidateLocalSession } from "@/services/app-auth-token";
+import { useAuthSession } from "@/auth/use-auth-session";
+import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import MobileAppLayout from "@/layouts/MobileAppLayout";
 import SegmentedTabs from "@/components/core/SegmentedTabs";
 
@@ -50,6 +51,7 @@ type InboxTab = "primary" | "general" | "requests";
 
 export default function InboxPage() {
   const router = useRouter();
+  const { isAuthenticated, isRestoring } = useAuthSession();
   const [inbox, setInbox] = useState<InboxPayload>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<InboxTab>("primary");
@@ -64,28 +66,24 @@ export default function InboxPage() {
   };
 
   const fetchInbox = async (showLoader = false) => {
-    const token = getAppAccessToken();
-    if (!token) {
+    if (isRestoring) return;
+    if (!isAuthenticated) {
+      setInbox({});
       setLoading(false);
       return;
     }
 
     if (showLoader) setLoading(true);
     try {
-      const response = await fetch("/api/inbox", {
+      const response = await fetchWithAppAuth("/api/inbox", {
         method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         cache: "no-store",
       });
 
       if (response.ok) {
         const payload = await response.json();
         setInbox(payload.inbox ?? {});
-      } else if (shouldInvalidateLocalSession(response.status)) {
-        clearAppAccessToken();
+      } else if (response.status === 401) {
         setInbox({});
       }
     } catch {
@@ -96,10 +94,21 @@ export default function InboxPage() {
   };
 
   useEffect(() => {
+    if (isRestoring) {
+      setLoading(true);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setInbox({});
+      setLoading(false);
+      return;
+    }
+
     void fetchInbox(true);
     const interval = setInterval(() => void fetchInbox(), 7000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated, isRestoring]);
 
   const formatTime = (iso: string | null) => {
     if (!iso) return "";
@@ -142,18 +151,13 @@ export default function InboxPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    const token = getAppAccessToken();
-    if (!token || busyKey) return;
+    if (!isAuthenticated || busyKey) return;
 
     setBusyKey(`approve:${messageId}`);
     try {
-      const res = await fetch(`/api/inbox/messages/${messageId}/approve`, {
+      const res = await fetchWithAppAuth(`/api/inbox/messages/${messageId}/approve`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: buildAppAuthHeaders({ contentType: "application/json" }),
         body: JSON.stringify({}),
       });
 
@@ -187,7 +191,7 @@ export default function InboxPage() {
     );
   }
 
-  if (!loading && !getAppAccessToken()) {
+  if (!loading && !isAuthenticated) {
     return (
       <MobileAppLayout title="Inbox" activeNavId="home" backHref="/renungan">
         <div className="mx-auto flex min-h-[70vh] w-full max-w-[640px] items-center px-4 py-10">

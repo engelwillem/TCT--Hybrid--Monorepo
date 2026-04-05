@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { TCTLogo } from '@/components/brand/TCTLogo';
+import { TrackedLink } from '@/components/analytics/TrackedLink';
 
 export const metadata: Metadata = {
   title: 'Renungan Harian Kristen untuk Menerima Firman dan Berdoa',
@@ -48,12 +49,15 @@ export default function HomePage() {
         </p>
 
         {/* Primary CTA */}
-        <Link
+        <TrackedLink
           href="/renungan"
+          eventName="landing_cta_click"
+          surface="landing"
+          meta={{ target: "/renungan" }}
           className="w-full max-w-[300px] rounded-full bg-black text-white py-[17px] text-[16px] font-bold tracking-tight shadow-2xl shadow-black/20 transition-all active:scale-[0.98] hover:bg-black/90"
         >
           Lanjut ke Halaman Renungan
-        </Link>
+        </TrackedLink>
 
         {/* Secondary — very quiet auth */}
         <div className="mt-10 flex items-center gap-6 text-[13px] text-foreground/40 font-medium pb-20">

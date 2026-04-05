@@ -2,10 +2,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState, use } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Send, MoreVertical, Smile, Image as ImageIcon, ArrowLeft, Loader2, CheckCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { useAuthSession } from '@/auth/use-auth-session';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Message = {
@@ -36,6 +38,7 @@ type Paging = {
 
 export default function InboxThreadPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
+    const { isAuthenticated, isRestoring } = useAuthSession();
     const { id: partnerIdStr } = use(params);
     const partnerId = Number(partnerIdStr);
 
@@ -56,20 +59,17 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     };
 
     const fetchThread = async (showLoader = false) => {
-        const token = getAppAccessToken();
-        if (!token || !Number.isFinite(partnerId)) {
+        if (isRestoring) return;
+        if (!isAuthenticated || !Number.isFinite(partnerId)) {
+            setPartner(null);
             if (showLoader) setLoading(false);
             return;
         }
 
         if (showLoader) setLoading(true);
         try {
-            const response = await fetch(`/api/inbox/${partnerId}`, {
+            const response = await fetchWithAppAuth(`/api/inbox/${partnerId}`, {
                 method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
                 cache: 'no-store',
             });
 
@@ -100,16 +100,26 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     };
 
     useEffect(() => {
+        if (isRestoring) {
+            setLoading(true);
+            return;
+        }
+
+        if (!isAuthenticated) {
+            setPartner(null);
+            setLoading(false);
+            return;
+        }
+
         void fetchThread(true);
         // Polling parity: 7s
         const interval = setInterval(() => void fetchThread(), 7000);
         return () => clearInterval(interval);
-    }, [partnerId]);
+    }, [isAuthenticated, isRestoring, partnerId]);
 
     const handleSend = async () => {
-        const token = getAppAccessToken();
         const body = text.trim();
-        if (!token || !body || !partner || sending) return;
+        if (!isAuthenticated || !body || !partner || sending) return;
         if (!partner.relationship?.is_mutual_follow) {
             showToast('Kalian harus saling follow sebelum bisa mengirim pesan.', 'error');
             return;
@@ -135,13 +145,9 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
         }, 10);
 
         try {
-            const response = await fetch('/api/inbox/messages', {
+            const response = await fetchWithAppAuth('/api/inbox/messages', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
                 body: JSON.stringify({
                     recipient_id: partner.id,
                     body,
@@ -173,18 +179,13 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
     };
 
     const handleToggleFollow = async () => {
-        const token = getAppAccessToken();
-        if (!token || !partner || followBusy) return;
+        if (!isAuthenticated || !partner || followBusy) return;
 
         setFollowBusy(true);
         try {
-            const response = await fetch(`/api/users/${partner.id}/follow`, {
+            const response = await fetchWithAppAuth(`/api/users/${partner.id}/follow`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
                 body: JSON.stringify({}),
             });
 
@@ -216,6 +217,26 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
                 <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-4">
                     <Loader2 className="h-10 w-10 text-brand animate-spin" />
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Secure Connection...</p>
+                </div>
+            );
+        }
+
+        if (!isAuthenticated) {
+            return (
+                <div className="fixed inset-0 bg-background flex flex-col items-center justify-center gap-6 text-center px-4">
+                    <AlertTriangle className="h-12 w-12 text-muted-foreground/30" />
+                    <div className="space-y-2">
+                        <h2 className="text-xl font-black text-foreground">Login untuk buka percakapan</h2>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
+                            Session chat hanya tersedia untuk member yang sedang login.
+                        </p>
+                    </div>
+                    <Link
+                        href={`/login?next=${encodeURIComponent(`/inbox/${partnerId}`)}`}
+                        className="px-6 py-3 mt-4 bg-foreground text-background rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+                    >
+                        Login
+                    </Link>
                 </div>
             );
         }

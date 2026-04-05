@@ -1,10 +1,11 @@
 import SegmentedTabs from '@/components/core/SegmentedTabs';
 import { IconMessage } from '@/components/icons/AppIcons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -60,6 +61,7 @@ export default function ChatPopover({
     badgeClassName?: string;
 }) {
     const router = useRouter();
+    const { isAuthenticated, isRestoring } = useAuthSession();
     // Assuming props are passed through a provider or global state in a real Next app
     // For this bridge, we fetch them dynamically
     const [tab, setTab] = useState<InboxTab>('primary');
@@ -76,15 +78,11 @@ export default function ChatPopover({
     };
 
     const refreshInbox = async () => {
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         try {
-            const res = await fetch('/api/inbox', {
-                headers: { 
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+            const res = await fetchWithAppAuth('/api/inbox', {
+                headers: buildAppAuthHeaders(),
             });
             const json = await res.json();
             const data = (json?.inbox ?? emptyInbox()) as NonNullable<SharedInbox>;
@@ -101,7 +99,7 @@ export default function ChatPopover({
     };
 
     useEffect(() => {
-        if (!open) return;
+        if (!open || isRestoring || !isAuthenticated) return;
 
         void refreshInbox();
         const id = window.setInterval(() => {
@@ -109,22 +107,17 @@ export default function ChatPopover({
         }, 7000);
 
         return () => window.clearInterval(id);
-    }, [open]);
+    }, [isAuthenticated, isRestoring, open]);
 
     const toggleFollow = async (partnerId: number) => {
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         const key = `follow:${partnerId}`;
         setBusyKey(key);
         try {
-            const res = await fetch(`/api/users/${partnerId}/follow`, {
+            const res = await fetchWithAppAuth(`/api/users/${partnerId}/follow`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
                 body: JSON.stringify({}),
             });
 
@@ -144,19 +137,14 @@ export default function ChatPopover({
     };
 
     const approveRequest = async (messageId: number) => {
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         const key = `approve:${messageId}`;
         setBusyKey(key);
         try {
-            const res = await fetch(`/api/inbox/messages/${messageId}/approve`, {
+            const res = await fetchWithAppAuth(`/api/inbox/messages/${messageId}/approve`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
                 body: JSON.stringify({}),
             });
 
@@ -177,20 +165,15 @@ export default function ChatPopover({
     };
 
     const sendMessage = async (partnerId: number) => {
-        const token = getAppAccessToken();
         const body = String(draftByPartner[partnerId] ?? '').trim();
-        if (!token || !body) return;
+        if (!isAuthenticated || !body) return;
 
         const key = `send:${partnerId}`;
         setBusyKey(key);
         try {
-            const res = await fetch('/api/inbox/messages', {
+            const res = await fetchWithAppAuth('/api/inbox/messages', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
                 body: JSON.stringify({
                     recipient_id: partnerId,
                     body,
@@ -214,18 +197,13 @@ export default function ChatPopover({
     };
 
     const markAllRead = async () => {
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         setBusyKey('mark-all');
         try {
-            const res = await fetch('/api/inbox/read-all', {
+            const res = await fetchWithAppAuth('/api/inbox/read-all', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
                 body: JSON.stringify({}),
             });
             const json = await res.json();
@@ -242,8 +220,7 @@ export default function ChatPopover({
         }
     };
 
-    const token = getAppAccessToken();
-    const isLoggedIn = !!token;
+    const isLoggedIn = isAuthenticated;
 
     const counts = liveInbox.counts ?? { primary: 0, general: 0, requests: 0 };
     const unreadCount = Number(liveInbox.unreadCount ?? 0);

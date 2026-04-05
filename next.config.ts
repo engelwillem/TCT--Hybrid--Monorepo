@@ -8,12 +8,6 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: false,
     cpus: 1,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {

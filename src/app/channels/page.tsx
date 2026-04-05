@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, ChevronRight, MoveRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 
 type Channel = {
     id: number;
@@ -61,6 +62,7 @@ const shortDate = (value?: string | null): string => {
 
 export default function ChannelsPage() {
     const router = useRouter();
+    const { isAuthenticated } = useAuthSession();
     const [channels, setChannels] = useState<Channel[]>([]);
     const [sabbathSchool, setSabbathSchool] = useState<SabbathPayload | null>(null);
     const [selectedQuarterId, setSelectedQuarterId] = useState<number>(0);
@@ -70,13 +72,9 @@ export default function ChannelsPage() {
         let isActive = true;
         const load = async () => {
             try {
-                const token = getAppAccessToken();
                 const response = await fetch('/api/channels', {
                     method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
                 if (!response.ok) return;
@@ -101,16 +99,12 @@ export default function ChannelsPage() {
     }, []);
 
     const handleMembershipToggle = async (channelSlug: string) => {
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         try {
-            const response = await fetch(`/api/channels/${channelSlug}/membership`, {
+            const response = await fetchWithAppAuth(`/api/channels/${channelSlug}/membership`, {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders(),
             });
             if (!response.ok) return;
 
@@ -166,9 +160,9 @@ export default function ChannelsPage() {
 
             <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
                 <section className="rounded-[24px] border border-amber-200/70 bg-amber-50/70 p-4 shadow-soft">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Transitional Surface</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Ruang Belajar</p>
                     <p className="mt-2 text-sm font-semibold text-amber-900">
-                        Channels sekarang menjadi pintu eksplorasi konten. Untuk progres pribadi, lanjutkan ke Journey dan gunakan Community untuk respons.
+                        Channels mengumpulkan kelas, pelajaran aktif, dan pintu masuk ke ritme belajar iman. Gunakan Journey untuk jalur pribadi dan Community untuk respons bersama.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                         <Button
@@ -177,7 +171,7 @@ export default function ChannelsPage() {
                             className="h-9 rounded-full border-amber-300 bg-white text-[11px] font-black uppercase tracking-widest text-amber-800 hover:bg-amber-100"
                             onClick={() => router.push('/journey')}
                         >
-                            Buka Journey
+                            Lanjutkan Journey
                         </Button>
                         <Button
                             type="button"

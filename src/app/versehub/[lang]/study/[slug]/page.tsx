@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, CheckCircle2, Circle, Play, ArrowRight, Info, Share2, X, Clock, BookOpen } from 'lucide-react';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { cn } from '@/lib/utils';
 import SharePanel from '@/components/versehub/SharePanel';
-import { getAppAccessToken } from '@/services/app-auth-token';
 
 interface Step {
     id: number;
@@ -32,6 +33,7 @@ interface StudyPath {
 export default function StudyPathShowPage() {
     const params = useParams();
     const router = useRouter();
+    const { isAuthenticated } = useAuthSession();
     const lang = params?.lang as string || 'id';
     const slug = params?.slug as string;
     const isId = lang === 'id';
@@ -46,13 +48,9 @@ export default function StudyPathShowPage() {
         let isActive = true;
         const load = async () => {
             try {
-                const token = getAppAccessToken();
                 const response = await fetch(`/api/study-paths/${lang}/${slug}`, {
                     method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
                 if (!response.ok) return;
@@ -73,17 +71,13 @@ export default function StudyPathShowPage() {
     }, [lang, slug]);
 
     const handleCompleteStep = async (stepId: number) => {
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         setProcessingStep(stepId);
         try {
-            const response = await fetch(`/api/study-paths/${lang}/${slug}/complete/${stepId}`, {
+            const response = await fetchWithAppAuth(`/api/study-paths/${lang}/${slug}/complete/${stepId}`, {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders(),
             });
             if (!response.ok) return;
 

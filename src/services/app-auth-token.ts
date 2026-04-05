@@ -1,14 +1,18 @@
 const APP_ACCESS_TOKEN_KEY = "tct_app_access_token";
 const APP_AUTH_SOURCE_KEY = "tct_app_auth_source";
 const APP_AUTH_USER_KEY = "tct_app_auth_user";
+const APP_AUTH_PERSISTENCE_KEY = "tct_app_auth_persistence";
 
 export type AppAuthSource = "firebase" | "password" | "unknown";
+export type AppAuthPersistence = "session" | "local";
 export type AppAuthUser = {
   id?: string;
   name?: string;
   email?: string;
   avatarUrl?: string | null;
 };
+
+type BrowserStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 function isLikelySanctumToken(token: string): boolean {
   // Laravel Sanctum plain text token format: "{id}|{secret}"
@@ -21,6 +25,46 @@ function isLocalDevRuntime(): boolean {
   return host === "localhost" || host === "127.0.0.1";
 }
 
+function getSessionStorage(): BrowserStorage | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage;
+}
+
+function getLocalStorage(): BrowserStorage | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage;
+}
+
+function getPersistenceOrder(): Array<{ persistence: AppAuthPersistence; storage: BrowserStorage | null }> {
+  return [
+    { persistence: "session", storage: getSessionStorage() },
+    { persistence: "local", storage: getLocalStorage() },
+  ];
+}
+
+function removeKeyFromAllStorages(key: string): void {
+  for (const entry of getPersistenceOrder()) {
+    entry.storage?.removeItem(key);
+  }
+}
+
+function normalizePersistence(raw: string | null | undefined): AppAuthPersistence | null {
+  return raw === "session" || raw === "local" ? raw : null;
+}
+
+function getPreferredPersistence(): AppAuthPersistence {
+  for (const entry of getPersistenceOrder()) {
+    const value = normalizePersistence(entry.storage?.getItem(APP_AUTH_PERSISTENCE_KEY));
+    if (value) return value;
+  }
+
+  return "session";
+}
+
+function getStorageForPersistence(persistence: AppAuthPersistence): BrowserStorage | null {
+  return persistence === "local" ? getLocalStorage() : getSessionStorage();
+}
+
 export function getAppAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   const bypass = window.localStorage.getItem("e2e_bypass_token");
@@ -28,22 +72,25 @@ export function getAppAccessToken(): string | null {
     return bypass.trim();
   }
 
-  const raw = window.localStorage.getItem(APP_ACCESS_TOKEN_KEY);
-  if (!raw) return null;
+  for (const entry of getPersistenceOrder()) {
+    const raw = entry.storage?.getItem(APP_ACCESS_TOKEN_KEY);
+    if (!raw) continue;
 
-  const token = raw.trim();
-  if (!token || token === "null" || token === "undefined") {
-    window.localStorage.removeItem(APP_ACCESS_TOKEN_KEY);
-    return null;
+    const token = raw.trim();
+    if (!token || token === "null" || token === "undefined") {
+      entry.storage?.removeItem(APP_ACCESS_TOKEN_KEY);
+      continue;
+    }
+
+    if (!isLikelySanctumToken(token)) {
+      entry.storage?.removeItem(APP_ACCESS_TOKEN_KEY);
+      continue;
+    }
+
+    return token;
   }
 
-  if (!isLikelySanctumToken(token)) {
-    // Cleanup legacy/invalid token formats to prevent noisy unauthorized requests.
-    window.localStorage.removeItem(APP_ACCESS_TOKEN_KEY);
-    return null;
-  }
-
-  return token;
+  return null;
 }
 
 export function hasAppAccessToken(): boolean {
@@ -55,28 +102,40 @@ export function shouldInvalidateLocalSession(status: number): boolean {
 }
 
 export function getAppAuthSource(): AppAuthSource {
-  if (typeof window === "undefined") return "unknown";
-  const raw = window.localStorage.getItem(APP_AUTH_SOURCE_KEY);
-  if (raw === "firebase" || raw === "password") return raw;
+  for (const entry of getPersistenceOrder()) {
+    const raw = entry.storage?.getItem(APP_AUTH_SOURCE_KEY);
+    if (raw === "firebase" || raw === "password") return raw;
+  }
   return "unknown";
 }
 
 export function getAppAuthUser(): AppAuthUser | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(APP_AUTH_USER_KEY);
-  if (!raw) return null;
 
-  try {
-    const parsed = JSON.parse(raw) as AppAuthUser;
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch {
-    window.localStorage.removeItem(APP_AUTH_USER_KEY);
-    return null;
+  for (const entry of getPersistenceOrder()) {
+    const raw = entry.storage?.getItem(APP_AUTH_USER_KEY);
+    if (!raw) continue;
+
+    try {
+      const parsed = JSON.parse(raw) as AppAuthUser;
+      if (!parsed || typeof parsed !== "object") {
+        entry.storage?.removeItem(APP_AUTH_USER_KEY);
+        continue;
+      }
+      return parsed;
+    } catch {
+      entry.storage?.removeItem(APP_AUTH_USER_KEY);
+    }
   }
+
+  return null;
 }
 
-export function setAppAuthUser(user: AppAuthUser): void {
+export function hasAppAuthenticatedSession(): boolean {
+  return Boolean(getAppAccessToken() || getAppAuthUser());
+}
+
+export function setAppAuthUser(user: AppAuthUser, persistence?: AppAuthPersistence): void {
   if (typeof window === "undefined") return;
   const normalized: AppAuthUser = {
     id: typeof user.id === "string" ? user.id : undefined,
@@ -84,20 +143,40 @@ export function setAppAuthUser(user: AppAuthUser): void {
     email: typeof user.email === "string" ? user.email : undefined,
     avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : null,
   };
-  window.localStorage.setItem(APP_AUTH_USER_KEY, JSON.stringify(normalized));
+  const targetPersistence = persistence ?? getPreferredPersistence();
+  const targetStorage = getStorageForPersistence(targetPersistence);
+  if (!targetStorage) return;
+
+  removeKeyFromAllStorages(APP_AUTH_USER_KEY);
+  targetStorage.setItem(APP_AUTH_USER_KEY, JSON.stringify(normalized));
 }
 
-export function setAppAccessToken(token: string, source: AppAuthSource = "unknown"): void {
+export function setAppAccessToken(
+  token: string,
+  source: AppAuthSource = "unknown",
+  persistence: AppAuthPersistence = "session"
+): void {
   if (typeof window === "undefined") return;
   const clean = token.trim();
   if (!clean) return;
-  window.localStorage.setItem(APP_ACCESS_TOKEN_KEY, clean);
-  window.localStorage.setItem(APP_AUTH_SOURCE_KEY, source);
+
+  const targetStorage = getStorageForPersistence(persistence);
+  if (!targetStorage) return;
+
+  removeKeyFromAllStorages(APP_ACCESS_TOKEN_KEY);
+  removeKeyFromAllStorages(APP_AUTH_SOURCE_KEY);
+  removeKeyFromAllStorages(APP_AUTH_PERSISTENCE_KEY);
+
+  const sessionStorage = getSessionStorage();
+  sessionStorage?.setItem(APP_ACCESS_TOKEN_KEY, clean);
+  targetStorage.setItem(APP_AUTH_SOURCE_KEY, source);
+  targetStorage.setItem(APP_AUTH_PERSISTENCE_KEY, persistence);
 }
 
 export function clearAppAccessToken(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(APP_ACCESS_TOKEN_KEY);
-  window.localStorage.removeItem(APP_AUTH_SOURCE_KEY);
-  window.localStorage.removeItem(APP_AUTH_USER_KEY);
+  removeKeyFromAllStorages(APP_ACCESS_TOKEN_KEY);
+  removeKeyFromAllStorages(APP_AUTH_SOURCE_KEY);
+  removeKeyFromAllStorages(APP_AUTH_USER_KEY);
+  removeKeyFromAllStorages(APP_AUTH_PERSISTENCE_KEY);
 }

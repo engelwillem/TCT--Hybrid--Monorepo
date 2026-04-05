@@ -1,18 +1,13 @@
-import { getAppAccessToken } from "./app-auth-token";
+import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 
 function getLang() {
   return typeof window !== 'undefined' ? (localStorage.getItem('tct_lang') || 'id') : 'id';
 }
 
 function getHeaders() {
-  const token = getAppAccessToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
+  return buildAppAuthHeaders({
+    contentType: "application/json",
+  });
 }
 
 export async function getStudyPaths() {

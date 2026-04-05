@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { setAppAccessToken, setAppAuthUser } from "@/services/app-auth-token";
 import { buildSanctumJsonHeaders, warmSanctumCsrf } from "@/lib/sanctum-csrf";
+import { trackFunnelEvent } from "@/lib/funnel-analytics";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,6 +40,16 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
+      if (isSignup) {
+        void trackFunnelEvent("signup_start", {
+          surface: "auth",
+          meta: {
+            mode: "signup",
+            intent: "account_create",
+          },
+        });
+      }
+
       let xsrfToken: string | null = null;
       try {
         xsrfToken = await warmSanctumCsrf();
@@ -85,9 +96,11 @@ export default function LoginPage() {
       const apiToken = data?.data?.token;
       const resolvedUser = data?.user || data?.data?.user || null;
       if (typeof apiToken === "string" && apiToken.length > 0) {
-        setAppAccessToken(apiToken, "password");
+        const persistence = remember ? "local" : "session";
+        setAppAccessToken(apiToken, "password", persistence);
       }
       if (resolvedUser) {
+        const persistence = remember ? "local" : "session";
         setAppAuthUser({
           id: String(resolvedUser.id ?? ""),
           name: String(resolvedUser.name ?? ""),
@@ -98,12 +111,19 @@ export default function LoginPage() {
               : typeof resolvedUser.avatar_url === "string"
                 ? resolvedUser.avatar_url
                 : null,
-        });
+        }, persistence);
       }
 
       if (data.two_factor_required) {
         router.push(data.redirect_to || "/two-factor-challenge");
       } else {
+        void trackFunnelEvent(isSignup ? "signup_success" : "login_success", {
+          surface: "auth",
+          meta: {
+            mode: isSignup ? "signup" : "login",
+            redirect_to: data.redirect_to || "/renungan",
+          },
+        });
         router.push(data.redirect_to || "/renungan");
       }
     } catch (error) {

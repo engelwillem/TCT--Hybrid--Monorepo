@@ -17,7 +17,7 @@ import { useAuthSession } from "@/auth/use-auth-session";
 import AmbienceController from "@/components/versehub/AmbienceController";
 import MentorPanel from "@/components/versehub/MentorPanel";
 import { cn } from "@/lib/utils";
-import { getAppAccessToken } from "@/services/app-auth-token";
+import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { getVerseShareUrl } from "@/lib/share";
 import { trackVersehubEvent } from "@/features/versehub/analytics";
 import { VersehubLandingView } from "@/features/versehub/components/VersehubLandingView";
@@ -66,7 +66,6 @@ export function VersehubReaderPage({
     const router = useRouter();
     const { identity, status: authStatus, isAuthenticated } = useAuthSession();
     const lang = params?.lang || initialLang || "id";
-    const accessToken = typeof window !== "undefined" ? getAppAccessToken() : null;
     const isLandingMode = mode === "landing";
     const isChapterMode = mode === "chapter";
     const isVerseMode = mode === "verse";
@@ -343,15 +342,12 @@ export function VersehubReaderPage({
     ]);
 
     useEffect(() => {
-        if (!isAuthenticated || !isVerseMode || !initialVerseRef || !accessToken || !verseBookCode || !verseChapterNumber) {
+        if (!isAuthenticated || !isVerseMode || !initialVerseRef || !verseBookCode || !verseChapterNumber) {
             return;
         }
 
-        fetch(`/api/versehub/${lang}/actions?book=${verseBookCode}&chapter=${verseChapterNumber}`, {
-            headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${accessToken}`,
-            },
+        fetchWithAppAuth(`/api/versehub/${lang}/actions?book=${verseBookCode}&chapter=${verseChapterNumber}`, {
+            headers: buildAppAuthHeaders(),
         })
             .then((response) => {
                 if (response.status === 401 || response.status === 403) return null;
@@ -365,7 +361,7 @@ export function VersehubReaderPage({
                 }
             })
             .catch(() => undefined);
-    }, [accessToken, initialVerseRef, isAuthenticated, isVerseMode, lang, verseBookCode, verseChapterNumber]);
+    }, [initialVerseRef, isAuthenticated, isVerseMode, lang, verseBookCode, verseChapterNumber]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -519,8 +515,7 @@ export function VersehubReaderPage({
             return;
         }
 
-        const token = getAppAccessToken();
-        if (!token || !initialChapterRef) {
+        if (!initialChapterRef) {
             setChapterReflectionError("Sesi login tidak ditemukan. Silakan masuk kembali.");
             return;
         }
@@ -546,13 +541,11 @@ export function VersehubReaderPage({
         setChapterReflectionError(null);
 
         try {
-            const response = await fetch(`/api/versehub/${lang}/reflections`, {
+            const response = await fetchWithAppAuth(`/api/versehub/${lang}/reflections`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders({
+                    contentType: "application/json",
+                }),
                 body: JSON.stringify({
                     verse_ref: initialChapterRef,
                     question_text: chapterReflectionQuestion,
@@ -601,24 +594,17 @@ export function VersehubReaderPage({
             return;
         }
 
-        const token = getAppAccessToken();
-        if (!token) {
-            router.push("/login");
-            return;
-        }
-
         const nextLiked = !liked;
         const previousLiked = liked;
         setLiked(nextLiked);
         setLikeCount((prev) => (nextLiked ? prev + 1 : prev - 1));
 
         try {
-            const response = await fetch(`/api/versehub/${lang}/actions`, {
+            const response = await fetchWithAppAuth(`/api/versehub/${lang}/actions`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders({
+                    contentType: "application/json",
+                }),
                 body: JSON.stringify({
                     book: verseBookCode,
                     chapter: verseChapterNumber,
@@ -641,24 +627,17 @@ export function VersehubReaderPage({
             return;
         }
 
-        const token = getAppAccessToken();
-        if (!token) {
-            router.push("/login");
-            return;
-        }
-
         const nextBookmarked = !bookmarked;
         const previousBookmarked = bookmarked;
         setBookmarked(nextBookmarked);
         setBookmarkCount((prev) => (nextBookmarked ? prev + 1 : prev - 1));
 
         try {
-            const response = await fetch(`/api/versehub/${lang}/actions`, {
+            const response = await fetchWithAppAuth(`/api/versehub/${lang}/actions`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders({
+                    contentType: "application/json",
+                }),
                 body: JSON.stringify({
                     book: verseBookCode,
                     chapter: verseChapterNumber,

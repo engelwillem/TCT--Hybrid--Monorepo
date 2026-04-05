@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Share2, Users, MessageSquare, Heart, Bookmark } from 'lucide-react';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import { sanitizeRichHtml } from '@/lib/safe-rich-text';
 import { cn } from '@/lib/utils';
-import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Post = {
     title: string;
@@ -23,6 +25,7 @@ type MemberPost = {
 export default function WeeklyChannelPostPage() {
     const params = useParams();
     const router = useRouter();
+    const { isAuthenticated } = useAuthSession();
     const slugParam = params?.slug;
     const dateParam = params?.date;
     const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
@@ -37,6 +40,7 @@ export default function WeeklyChannelPostPage() {
     const [memberPosts, setMemberPosts] = useState<MemberPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [liked, setLiked] = useState(false);
+    const sanitizedContent = useMemo(() => sanitizeRichHtml(post?.content), [post?.content]);
 
     useEffect(() => {
         if (!slug || !date) return;
@@ -44,13 +48,9 @@ export default function WeeklyChannelPostPage() {
         let isActive = true;
         const load = async () => {
             try {
-                const token = getAppAccessToken();
                 const response = await fetch(`/api/channels/${slug}/${date}`, {
                     method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
                 if (!response.ok) return;
@@ -80,16 +80,12 @@ export default function WeeklyChannelPostPage() {
 
     const handleMembershipToggle = async () => {
         if (!slug || !channel) return;
-        const token = getAppAccessToken();
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         try {
-            const response = await fetch(`/api/channels/${slug}/membership`, {
+            const response = await fetchWithAppAuth(`/api/channels/${slug}/membership`, {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: buildAppAuthHeaders(),
             });
             if (!response.ok) return;
             const payload = await response.json();
@@ -150,7 +146,7 @@ export default function WeeklyChannelPostPage() {
                         </h1>
                         {post.content ? (
                             <div
-                                dangerouslySetInnerHTML={{ __html: post.content }}
+                                dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                                 className="reader-prose text-[17px] leading-relaxed text-foreground/80 space-y-6"
                             />
                         ) : (

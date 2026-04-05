@@ -6,7 +6,8 @@
  */
 
 import { CommunityPost, CommunityComment } from "@/features/community/types";
-import { getAppAccessToken, clearAppAccessToken, shouldInvalidateLocalSession } from "@/services/app-auth-token";
+import { clearAppAccessToken, shouldInvalidateLocalSession } from "@/services/app-auth-token";
+import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 
 class ApiError extends Error {
   constructor(
@@ -174,21 +175,13 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
 });
 
 const buildHeaders = (needsAuth = false): HeadersInit => {
-  let headers: HeadersInit = {
-    Accept: "application/json",
-  };
-
-  if (needsAuth) {
-    const token = getAppAccessToken();
-    if (token) {
-      headers = {
-        ...headers,
-        Authorization: `Bearer ${token}`,
-      };
-    }
+  if (!needsAuth) {
+    return {
+      Accept: "application/json",
+    };
   }
 
-  return headers;
+  return buildAppAuthHeaders();
 };
 
 function handleAuthFailure(status: number) {

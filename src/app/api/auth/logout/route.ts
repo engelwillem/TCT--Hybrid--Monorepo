@@ -6,5 +6,5 @@ import { proxyLaravel } from "@/lib/proxy-laravel";
  * Revokes the Sanctum token in Laravel database.
  */
 export async function POST(request: NextRequest) {
-  return proxyLaravel(request, "/api/v1/auth/logout");
+  return proxyLaravel(request, "/api/v1/auth/logout", { sessionCookieAction: "clear" });
 }

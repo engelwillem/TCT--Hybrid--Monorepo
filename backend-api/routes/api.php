@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelMembershipController;
 use App\Http\Controllers\DirectMessageController;
+use App\Http\Controllers\FunnelAnalyticsController;
 use App\Http\Controllers\InboxController;
 use App\Http\Controllers\InboxThreadController;
 use App\Http\Controllers\ProfileController;
@@ -33,6 +34,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/reset-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'resetPassword']);
 
     Route::get('/today', [TodayApiController::class, 'show']);
+    Route::post('/analytics/funnel', [FunnelAnalyticsController::class, 'store']);
 
     Route::post('/auth/firebase/sync', [FirebaseAuthSyncController::class, 'sync']);
     Route::get('/avatar/{user}', [ProfileController::class, 'avatar']);

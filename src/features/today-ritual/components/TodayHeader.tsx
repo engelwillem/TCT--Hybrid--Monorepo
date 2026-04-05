@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Bell, Inbox } from 'lucide-react';
 import { useAuthSession } from '@/auth/use-auth-session';
 import ChatPopover from '@/components/core/ChatPopover';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -42,7 +42,7 @@ export default function TodayHeader({
   isAuthRestoring = false,
 }: TodayHeaderProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthSession();
+  const { isAuthenticated, isRestoring } = useAuthSession();
   const m = useMotionConfig();
   const primaryGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
   const [liveDateLabel, setLiveDateLabel] = useState(() => buildTodayDateLabel(dateLabel));
@@ -55,6 +55,10 @@ export default function TodayHeader({
   }, [dateLabel]);
 
   useEffect(() => {
+    if (isRestoring) {
+      return;
+    }
+
     if (!isAuthenticated) {
       setInboxUnreadDot(false);
       return;
@@ -63,18 +67,9 @@ export default function TodayHeader({
     let cancelled = false;
 
     const refreshInboxSignal = async () => {
-      const token = getAppAccessToken();
-      if (!token) {
-        if (!cancelled) setInboxUnreadDot(false);
-        return;
-      }
-
       try {
-        const response = await fetch('/api/inbox', {
-          headers: {
-            Accept: 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await fetchWithAppAuth('/api/inbox', {
+          headers: buildAppAuthHeaders(),
         });
         if (!response.ok) {
           if (!cancelled) setInboxUnreadDot(false);
@@ -97,7 +92,7 @@ export default function TodayHeader({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isRestoring]);
 
   const iconButtonClassName =
     'group relative flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-sky-600 ring-1 ring-sky-200/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] backdrop-blur-[10px] transition-all duration-300 hover:bg-slate-900/12 hover:ring-slate-900/8 hover:shadow-[0_14px_34px_-24px_rgba(15,23,42,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70';

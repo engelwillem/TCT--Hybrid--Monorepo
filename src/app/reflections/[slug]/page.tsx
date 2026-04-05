@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, use } from 'react';
+import { useAuthSession } from '@/auth/use-auth-session';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Lock, Share2 } from 'lucide-react';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 
 type ReflectionItem = {
     id: string | number;
@@ -36,6 +37,7 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
     const { slug } = use(params);
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { isAuthenticated, isRestoring } = useAuthSession();
     const lang = searchParams.get('lang') || 'id';
     const isId = lang === 'id';
 
@@ -48,8 +50,11 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
         let active = true;
 
         const loadDetail = async () => {
-            const token = getAppAccessToken();
-            if (!token) {
+            if (isRestoring) {
+                return;
+            }
+
+            if (!isAuthenticated) {
                 if (!active) return;
                 setAuthRequired(true);
                 setLoading(false);
@@ -57,11 +62,8 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
             }
 
             try {
-                const response = await fetch(`/api/versehub/${lang}/reflections`, {
-                    headers: {
-                        Accept: 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
+                const response = await fetchWithAppAuth(`/api/versehub/${lang}/reflections`, {
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
 
@@ -98,7 +100,7 @@ export default function ReflectionDetailPage({ params }: { params: Promise<{ slu
         return () => {
             active = false;
         };
-    }, [isId, lang, slug]);
+    }, [isAuthenticated, isId, isRestoring, lang, slug]);
 
     const chapterHref = useMemo(() => {
         if (!reflection?.verse_ref) return `/versehub/${lang}`;

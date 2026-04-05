@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronRight, CalendarDays, BookOpen, ArrowLeft } from 'lucide-react';
+import { buildAppAuthHeaders } from '@/lib/app-auth-fetch';
 import { cn } from '@/lib/utils';
-import { getAppAccessToken } from '@/services/app-auth-token';
 
 type Day = {
     day_key: string;
@@ -33,13 +33,9 @@ export default function SabbathSchoolLessonPage() {
         let isActive = true;
         const load = async () => {
             try {
-                const token = getAppAccessToken();
                 const response = await fetch(`/api/sabbath-school/${year}/${quarter}/lesson/${lessonNumber}`, {
                     method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
+                    headers: buildAppAuthHeaders(),
                     cache: 'no-store',
                 });
                 if (!response.ok) return;

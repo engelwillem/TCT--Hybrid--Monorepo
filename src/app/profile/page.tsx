@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
+import { buildAppAuthHeaders } from '@/lib/app-auth-fetch';
 import { clearAppAccessToken, getAppAccessToken, setAppAccessToken, setAppAuthUser } from '@/services/app-auth-token';
 import { DEFAULT_SAVED_AVATAR_TRANSFORM, loadSavedAvatarTransform, saveAvatarTransform } from '@/lib/avatar-presentation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -485,43 +486,39 @@ export default function ProfilePage() {
         }
     };
 
-    const ensureApiAccessToken = async (forceRefresh = false): Promise<string | null> => {
-        if (!forceRefresh) {
-            const token = getAppAccessToken();
-            if (token) return token;
-        }
-
-        return syncFirebaseAccessToken(forceRefresh);
-    };
-
     const fetchWithApiAuth = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response | null> => {
-        const makeRequest = async (token: string) => {
+        const makeRequest = async (includeBearerFallback = false) => {
             const headers = new Headers(init.headers);
             headers.set('Accept', headers.get('Accept') || 'application/json');
-            headers.set('Authorization', `Bearer ${token}`);
+            if (includeBearerFallback) {
+                const token = getAppAccessToken();
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`);
+                }
+            }
             return fetch(input, {
                 ...init,
                 headers,
             });
         };
 
-        let token = await ensureApiAccessToken();
-        if (!token) {
-            return null;
-        }
-
-        let response = await makeRequest(token);
+        let response = await makeRequest(false);
         if (response.status !== 401) {
             return response;
         }
 
-        clearAppAccessToken();
-        token = await ensureApiAccessToken(true);
-        if (!token) {
-            return response;
+        if (authUser && !authUser.isAnonymous) {
+            await syncFirebaseAccessToken(true);
+            response = await makeRequest(false);
+            if (response.status !== 401) {
+                return response;
+            }
         }
 
-        response = await makeRequest(token);
+        response = await makeRequest(true);
+        if (response.status === 401) {
+            clearAppAccessToken();
+        }
         return response;
     };
 
@@ -654,19 +651,13 @@ export default function ProfilePage() {
     }, []);
 
     const logout = async () => {
-        const token = getAppAccessToken();
-        if (token) {
-            try {
-                await fetch('/api/auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json',
-                    },
-                });
-            } catch {
-                // ignore backend logout failure, still clear local session
-            }
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: buildAppAuthHeaders(),
+            });
+        } catch {
+            // ignore backend logout failure, still clear local session
         }
 
         clearAppAccessToken();
@@ -674,9 +665,6 @@ export default function ProfilePage() {
     };
 
     const uploadAvatarFile = async (file: File) => {
-        const token = await ensureApiAccessToken();
-        if (!token) return;
-
         const previousAvatarUrl = user.avatarUrl;
         const previousAvatarCandidates = user.avatarCandidates;
 

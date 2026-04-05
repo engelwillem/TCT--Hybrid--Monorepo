@@ -17,19 +17,21 @@ Platform konten rohani premium berbasis arsitektur decoupled:
 
 ## Struktur Aplikasi
 
-- `/` -> Landing Page Premium (Hero & Sticky Features)
-- `/today` -> Dashboard Harian (Quick Access & Inspiration)
-- `/community` -> Feed Komunitas & Interaksi
-- `/versehub` -> Bible Reader Modern
-- `/channels` -> Program Pembinaan Iman (Sabbath School, dll.)
+- `/` -> Landing Page utama
+- `/renungan` -> Ritual renungan harian utama
+- `/today` -> Legacy route yang me-redirect ke `/renungan`
+- `/community` -> Feed komunitas dan interaksi
+- `/versehub` -> Bible reader modern
+- `/channels` -> Ruang belajar dan program pembinaan
+- `/paths` -> Study paths / journey terstruktur
 
 ## Desain & Estetika
 
-- **Theme**: Deep Space (Slate-950)
-- **Visual**: Glassmorphism, Animated Glow Orbs, Radial Gradients.
-- **Typography**: 
-  - Headings: `Instrument Serif`
-  - Body: `Inter`
+- **Theme aktif**: Light editorial spiritual
+- **Visual**: Soft gradients, elevated cards, subtle texture
+- **Typography**:
+  - Headings: serif brand styles (`tct-serif`)
+  - Body: sans UI stack proyek
 
 ## Pengembangan Lokal
 
@@ -56,7 +58,7 @@ npm run dev:studio
 ```
 
 Catatan:
-- Jika `LARAVEL_API_BASE_URL` belum tersedia, UI tetap bisa render karena service layer memakai fallback mock saat API gagal.
+- Jika `LARAVEL_API_BASE_URL` belum tersedia, beberapa surface tetap bisa render memakai fallback yang aman untuk pengembangan lokal.
 - Untuk mode production decoupled penuh, backend Laravel harus aktif dan `LARAVEL_API_BASE_URL` harus mengarah ke backend tersebut.
 
 ## Deployment

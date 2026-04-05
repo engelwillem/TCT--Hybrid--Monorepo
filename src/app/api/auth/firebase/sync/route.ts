@@ -2,5 +2,5 @@ import { NextRequest } from "next/server";
 import { proxyLaravel } from "@/lib/proxy-laravel";
 
 export async function POST(request: NextRequest) {
-  return proxyLaravel(request, "/api/v1/auth/firebase/sync");
+  return proxyLaravel(request, "/api/v1/auth/firebase/sync", { sessionCookieAction: "set-from-token" });
 }

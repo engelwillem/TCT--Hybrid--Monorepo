@@ -9,6 +9,7 @@ import { fetchTodaySessionRaw, isTodaySessionUsingExpectedLocalFallback } from '
 type LoadTodaySessionContentOptions = {
   previewDate?: string | null;
   forwardedHeaders?: HeadersInit;
+  strictIntegration?: boolean;
 };
 
 export type LoadedTodaySession = {
@@ -22,7 +23,7 @@ export type LoadedTodaySession = {
 export async function loadTodaySessionContentWithDiagnostics(
   options: LoadTodaySessionContentOptions = {}
 ): Promise<LoadedTodaySession> {
-  const strictIntegrationMode = process.env.TODAY_STRICT_INTEGRATION === 'true';
+  const strictIntegrationMode = options.strictIntegration ?? process.env.TODAY_STRICT_INTEGRATION === 'true';
   const integrationTraceMode = process.env.TODAY_INTEGRATION_TRACE === 'true';
 
   let rawSession = null;

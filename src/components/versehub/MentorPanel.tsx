@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from 'react';
-import { getAppAccessToken } from '@/services/app-auth-token';
+import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 
 interface MentorInsights {
     reflection_questions?: string[];
@@ -137,14 +137,10 @@ export default function MentorPanel({
     function ensureInsights() {
         if (insightsFetched || insightsLoading) return;
         setInsightsLoading(true);
-        const token = getAppAccessToken();
-        const headers: HeadersInit = {
-            Accept: 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
 
-        fetch(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor`, {
-            headers,
+        fetchWithAppAuth(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor`, {
+            headers: buildAppAuthHeaders(),
+            cache: 'no-store',
         })
             .then((r) => (r.ok ? r.json() : null))
             .then((json) => {
@@ -172,8 +168,7 @@ export default function MentorPanel({
         e.preventDefault();
         const q = question.trim();
         if (!q || askLoading) return;
-        const token = getAppAccessToken();
-        if (!token) {
+        if (!isAuthenticated) {
             setAskError('Sesi login tidak ditemukan. Silakan login ulang.');
             return;
         }
@@ -182,13 +177,9 @@ export default function MentorPanel({
         setAskResult(null);
         setAskError(null);
 
-        fetch(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor/ask`, {
+        fetchWithAppAuth(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor/ask`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
+            headers: buildAppAuthHeaders({ contentType: 'application/json' }),
             body: JSON.stringify({ 
                 question: q,
                 verse_id: verseRef,

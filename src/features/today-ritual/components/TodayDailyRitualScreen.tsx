@@ -14,6 +14,7 @@ import TodayHeader from './TodayHeader';
 import ReceiveVerse from './ReceiveVerse';
 import ReflectPrompt from './ReflectPrompt';
 import TodayShareActionBar from './TodayShareActionBar';
+import { trackFunnelEvent } from '@/lib/funnel-analytics';
 
 interface TodayDailyRitualScreenProps {
   sessionContent: TodaySessionContent;
@@ -133,6 +134,15 @@ export default function TodayDailyRitualScreen({
       }
 
       const updatedPost = await CommunityService.toggleBookmark(ensuredPostId);
+      if (updatedPost.isBookmarked) {
+        void trackFunnelEvent('reflection_bookmark', {
+          surface: 'renungan',
+          meta: {
+            post_id: ensuredPostId,
+            source: 'today_share_action_bar',
+          },
+        });
+      }
       return updatedPost.isBookmarked;
     } catch {
       setBookmarkError('Belum bisa menyimpan renunganmu ke Bookmarks sekarang.');
@@ -147,6 +157,12 @@ export default function TodayDailyRitualScreen({
       return;
     }
 
+    void trackFunnelEvent('renungan_start', {
+      surface: 'renungan',
+      meta: {
+        source: 'start_cta',
+      },
+    });
     setHasStarted(true);
   };
 
@@ -167,10 +183,24 @@ export default function TodayDailyRitualScreen({
       return;
     }
 
+    void trackFunnelEvent('renungan_complete', {
+      surface: 'renungan',
+      meta: {
+        source: 'prayer_submit',
+        has_reflection_text: reflectionText.trim().length > 0,
+      },
+    });
     completePrayer();
   };
 
   const handleContinueToVersehub = () => {
+    void trackFunnelEvent('continue_to_versehub', {
+      surface: 'renungan',
+      meta: {
+        target: '/versehub/id',
+        mode: 'explore',
+      },
+    });
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem('tct:versehub:auto-open', 'explore');
     }

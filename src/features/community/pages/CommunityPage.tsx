@@ -19,7 +19,8 @@ import { cn } from "@/lib/utils";
 import { CommunityService } from "@/services/community.service";
 import { useAuthSession } from "@/auth/use-auth-session";
 import { buildWhatsAppShareUrl, copyToClipboard, getCommunityShareUrl } from "@/lib/share";
-import { getAppAccessToken, getAppAuthUser } from "@/services/app-auth-token";
+import { getAppAuthUser } from "@/services/app-auth-token";
+import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 import {
   COMMUNITY_ARCHIVE_CATEGORIES,
   type CommunityArchiveCategory,
@@ -519,11 +520,9 @@ export function CommunityPage() {
       try {
         const response = await fetch(`/api/users/${authorId}/follow`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${getAppAccessToken() || ""}`,
-          },
+          headers: buildAppAuthHeaders({
+            contentType: "application/json",
+          }),
           body: JSON.stringify({}),
         });
 
