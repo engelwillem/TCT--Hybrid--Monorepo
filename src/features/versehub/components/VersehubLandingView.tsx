@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, BookHeart, BookOpenText, ChevronLeft, MessageSquareText, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpenText, ChevronLeft, Sparkles } from "lucide-react";
 import { MOOD_QUICK_STARTS } from "@/features/versehub/constants";
 import { MoodQuickStart } from "@/features/versehub/components/MoodQuickStart";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { SanctuaryScene } from "@/features/versehub/types";
 
 interface VersehubLandingViewProps {
@@ -50,13 +51,16 @@ export function VersehubLandingView({
                 className="absolute inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top,0px)]"
             >
                 <div className="mx-auto flex max-w-4xl items-start justify-between gap-4 px-6 pt-5 md:px-6">
-                    <button
-                        type="button"
-                        onClick={onBackToday}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--vh-surface)]/60 text-[var(--vh-accent)] ring-1 ring-[var(--vh-border)] shadow-[0_18px_36px_-26px_rgba(0,0,0,0.5)] backdrop-blur-xl transition hover:bg-[var(--vh-surface)]/80 active:scale-95"
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onBackToday}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--vh-surface)]/60 text-[var(--vh-accent)] ring-1 ring-[var(--vh-border)] shadow-[0_18px_36px_-26px_rgba(0,0,0,0.5)] backdrop-blur-xl transition hover:bg-[var(--vh-surface)]/80 active:scale-95"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <ThemeToggle className="h-11 w-11" />
+                    </div>
 
                     <div className="ml-auto flex max-w-[24rem] flex-col text-right">
                         <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--vh-text-muted)]">
@@ -86,7 +90,10 @@ export function VersehubLandingView({
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
                         className="mx-auto mt-10 max-w-[12ch] font-serif text-[50px] italic leading-[1.08] tracking-[-0.04em] text-white sm:text-[64px] md:text-[78px]"
-                        style={{ textShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
+                        style={{
+                            color: "var(--vh-text-primary)",
+                            textShadow: "0 10px 30px rgba(15, 23, 42, 0.22)",
+                        }}
                     >
                         {activeScene.quote}
                     </motion.h1>
@@ -141,7 +148,7 @@ export function VersehubLandingView({
                                 <button
                                     type="button"
                                     onClick={onOpenExplore}
-                                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-white/5 hover:text-[var(--vh-text-primary)]"
+                                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-[var(--vh-surface)]/40 hover:text-[var(--vh-text-primary)]"
                                 >
                                     <Sparkles className="h-3.5 w-3.5" />
                                     Mood Harian
@@ -152,7 +159,7 @@ export function VersehubLandingView({
                         <button
                             type="button"
                             onClick={onOpenPicker}
-                            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-white/5 hover:text-[var(--vh-text-primary)]"
+                            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-[var(--vh-surface)]/40 hover:text-[var(--vh-text-primary)]"
                         >
                             <BookOpenText className="h-3.5 w-3.5" />
                             Daftar Kitab

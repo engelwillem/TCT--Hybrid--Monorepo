@@ -60,9 +60,9 @@ export default function DesktopSidebarNav({
         <aside
             className={cn(
                 'flex flex-col gap-2 rounded-3xl p-5',
-                'bg-white/60 dark:bg-[hsl(240_5%_8%/0.6)]',
+                'bg-white/60 dark:bg-[hsl(var(--surface-elevated)/0.72)]',
                 'backdrop-blur-xl',
-                'border border-black/[0.04] dark:border-white/[0.04]',
+                'border border-black/[0.04] dark:border-white/[0.06]',
                 className,
             )}
             style={{ position: 'sticky', top: '2rem', alignSelf: 'start' }}

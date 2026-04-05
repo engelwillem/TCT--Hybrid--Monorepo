@@ -756,9 +756,9 @@ export function VersehubReaderPage({
                 }}
             />
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_top,rgba(22,22,24,0.8)_0%,#0A0A0B_60%)]" />
-                <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-[#2A67FF]/[0.03] blur-[120px]" />
-                <div className="absolute bottom-[-20%] left-[-10%] h-[400px] w-[400px] rounded-full bg-white/[0.015] blur-[100px]" />
+                <div className="absolute inset-x-0 top-0 h-full" style={{ backgroundImage: "var(--vh-canvas-gradient)" }} />
+                <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full blur-[120px]" style={{ backgroundColor: "var(--vh-orb-primary)" }} />
+                <div className="absolute bottom-[-20%] left-[-10%] h-[400px] w-[400px] rounded-full blur-[100px]" style={{ backgroundColor: "var(--vh-orb-secondary)" }} />
                 <div className="absolute left-[12%] top-[28%] h-56 w-56 rounded-full bg-[var(--vh-accent)]/[0.01] blur-3xl" />
             </div>
 
@@ -999,17 +999,17 @@ export function VersehubReaderPage({
                                 </button>
                             </div>
 
-                            <p className="mt-4 text-sm leading-7 text-slate-600">{activeScene.reflection}</p>
+                            <p className="mt-4 text-sm leading-7 text-foreground/65">{activeScene.reflection}</p>
 
                             <div className="mt-6 grid gap-3 md:grid-cols-2">
                                 <button
                                     type="button"
                                     onClick={() => setOverlay("picker")}
-                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50 active:scale-[0.98]"
+                                    className="rounded-[26px] bg-[var(--vh-surface)]/80 p-4 text-left ring-1 ring-[var(--vh-border)] transition hover:bg-[var(--vh-surface)] active:scale-[0.98]"
                                 >
-                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Koleksi Kitab</p>
-                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Buka Perjanjian Lama dan Baru</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Koleksi Kitab</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-[var(--vh-text-primary)]">Buka Perjanjian Lama dan Baru</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
                                         Masuk ke daftar kitab, lalu pilih pasal yang ingin Anda baca dengan flow yang lebih tenang.
                                     </p>
                                 </button>
@@ -1022,26 +1022,26 @@ export function VersehubReaderPage({
                                         setOverlay(null);
                                         router.push(firstChapterHref);
                                     }}
-                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
+                                    className="rounded-[26px] bg-[var(--vh-surface)]/80 p-4 text-left ring-1 ring-[var(--vh-border)] transition hover:bg-[var(--vh-surface)] disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
                                 >
-                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Jalur Cepat</p>
-                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Mulai dari {firstBookLabel} 1</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Jalur Cepat</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-[var(--vh-text-primary)]">Mulai dari {firstBookLabel} 1</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
                                         Cocok untuk langsung masuk ke reader utilitarian tanpa kehilangan transisi dari landing.
                                     </p>
                                 </button>
 
-                                <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Lagusion Companion</p>
-                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Vocal dan audio-only tetap tersedia</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                <div className="rounded-[26px] bg-[var(--vh-surface)]/80 p-4 text-left ring-1 ring-[var(--vh-border)]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Lagusion Companion</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-[var(--vh-text-primary)]">Vocal dan audio-only tetap tersedia</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
                                         Floating audio companion akan menemani bacaan Anda dengan pilihan vocal, piano, acoustic, atau instrumental.
                                     </p>
                                 </div>
 
-                                <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Atur Atmosfer</p>
-                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Pilih Mood Saat Ini</p>
+                                <div className="rounded-[26px] bg-[var(--vh-surface)]/80 p-4 text-left ring-1 ring-[var(--vh-border)]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Atur Atmosfer</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-[var(--vh-text-primary)]">Pilih Mood Saat Ini</p>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {[
                                             { key: "hopeful", label: "Cahaya" },
@@ -1054,7 +1054,9 @@ export function VersehubReaderPage({
                                                 onClick={() => setActiveMood(mood.key)}
                                                 className={cn(
                                                     "rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition",
-                                                    activeMood === mood.key ? "bg-slate-900 text-white" : "bg-white text-slate-500 ring-1 ring-black/5 hover:bg-slate-50"
+                                                    activeMood === mood.key
+                                                        ? "bg-[var(--vh-accent)] text-white"
+                                                        : "bg-[var(--vh-surface-elevated)] text-[var(--vh-text-secondary)] ring-1 ring-[var(--vh-border)] hover:bg-[var(--vh-surface)]"
                                                 )}
                                             >
                                                 {mood.label}
@@ -1063,10 +1065,10 @@ export function VersehubReaderPage({
                                     </div>
                                 </div>
 
-                                <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Mentor Internal</p>
-                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Scripture guide aktif saat ayat dibuka</p>
-                                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                <div className="rounded-[26px] bg-[var(--vh-surface)]/80 p-4 text-left ring-1 ring-[var(--vh-border)]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Mentor Internal</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-[var(--vh-text-primary)]">Scripture guide aktif saat ayat dibuka</p>
+                                    <p className="mt-2 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
                                         Mentor menarik refleksi, kaitan ayat, konteks, dan study guidance dari engine Laravel internal dengan metadata penuh.
                                     </p>
                                 </div>
@@ -1092,23 +1094,23 @@ export function VersehubReaderPage({
                             initial={{ opacity: 0, scale: 0.97, y: 12 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.97, y: 12 }}
-                            className="relative flex h-[min(82dvh,760px)] w-full max-w-2xl flex-col overflow-hidden rounded-[36px] bg-white shadow-2xl ring-1 ring-black/5"
+                            className="relative flex h-[min(82dvh,760px)] w-full max-w-2xl flex-col overflow-hidden rounded-[36px] bg-[var(--vh-surface)] shadow-2xl ring-1 ring-[var(--vh-border)]"
                         >
-                            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+                            <div className="flex items-center justify-between border-b border-[var(--vh-topbar-border)] px-6 py-5">
                                 <div>
                                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#91A0C7]">VerseHub</p>
-                                    <h3 className="mt-1 text-xl font-black tracking-tight text-slate-900">Koleksi Kitab</h3>
+                                    <h3 className="mt-1 text-xl font-black tracking-tight text-[var(--vh-text-primary)]">Koleksi Kitab</h3>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setOverlay(null)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 active:scale-90"
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--vh-surface-elevated)] text-[var(--vh-text-secondary)] transition hover:bg-[var(--vh-surface)] active:scale-90"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
 
-                            <div className="flex gap-2 border-b border-slate-100 px-6 py-4">
+                            <div className="flex gap-2 border-b border-[var(--vh-topbar-border)] px-6 py-4">
                                 {(["ot", "nt"] as const).map((item) => (
                                     <button
                                         key={item}
@@ -1116,7 +1118,9 @@ export function VersehubReaderPage({
                                         onClick={() => setTab(item)}
                                         className={cn(
                                             "rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition",
-                                            tab === item ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                            tab === item
+                                                ? "bg-[var(--vh-accent)] text-white"
+                                                : "bg-[var(--vh-surface-elevated)] text-[var(--vh-text-secondary)] hover:bg-[var(--vh-surface)]"
                                         )}
                                     >
                                         {item === "ot" ? "Perjanjian Lama" : "Perjanjian Baru"}
@@ -1125,7 +1129,7 @@ export function VersehubReaderPage({
                             </div>
 
                             <div className="grid min-h-0 flex-1 gap-0 md:grid-cols-[1.15fr,0.85fr]">
-                                <div className="min-h-0 overflow-y-auto border-b border-slate-100 p-5 text-slate-900 md:border-b-0 md:border-r">
+                                <div className="min-h-0 overflow-y-auto border-b border-[var(--vh-topbar-border)] p-5 text-[var(--vh-text-primary)] md:border-b-0 md:border-r">
                                     <div className="grid grid-cols-2 gap-3">
                                         {books.filter((book) => book.testament === tab).map((book) => (
                                             <button
@@ -1135,8 +1139,8 @@ export function VersehubReaderPage({
                                                 className={cn(
                                                     "rounded-[22px] px-4 py-4 text-left text-sm font-bold transition ring-1",
                                                     activeBook === book.code
-                                                        ? "bg-slate-900 text-white ring-slate-900"
-                                                        : "bg-slate-50 text-slate-700 ring-slate-100 hover:bg-slate-100"
+                                                        ? "bg-[var(--vh-accent)] text-white ring-[var(--vh-accent)]"
+                                                        : "bg-[var(--vh-surface-elevated)] text-[var(--vh-text-secondary)] ring-[var(--vh-border)] hover:bg-[var(--vh-surface)]"
                                                 )}
                                             >
                                                 {book.label}
@@ -1146,7 +1150,7 @@ export function VersehubReaderPage({
                                 </div>
 
                                 <div className="min-h-0 overflow-y-auto p-5">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">
                                         {activeBookLabel ? `Pilih Pasal ${activeBookLabel}` : "Pilih Pasal"}
                                     </p>
                                     <div className="mt-4 flex flex-wrap gap-2">
@@ -1159,13 +1163,13 @@ export function VersehubReaderPage({
                                                     setOverlay(null);
                                                     router.push(`/versehub/${lang}/${activeBook}-${chapter}`);
                                                 }}
-                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--vh-surface-elevated)] text-sm font-bold text-[var(--vh-text-primary)] transition hover:bg-[var(--vh-surface)]"
                                             >
                                                 {chapter}
                                             </button>
                                         ))}
                                         {chapters.length === 0 && (
-                                            <p className="text-sm text-slate-500">Pilih kitab terlebih dahulu untuk melihat daftar pasal.</p>
+                                            <p className="text-sm text-[var(--vh-text-secondary)]">Pilih kitab terlebih dahulu untuk melihat daftar pasal.</p>
                                         )}
                                     </div>
                                 </div>
@@ -1250,14 +1254,14 @@ export function VersehubReaderPage({
 
             {error && isLandingMode && (
                 <div className="pointer-events-none absolute left-1/2 top-24 z-40 -translate-x-1/2 px-4">
-                    <div className="rounded-full bg-white/85 px-4 py-2 text-[11px] font-bold text-slate-500 shadow-sm ring-1 ring-black/5 backdrop-blur-xl">
+                    <div className="rounded-full bg-[var(--vh-surface)]/85 px-4 py-2 text-[11px] font-bold text-[var(--vh-text-secondary)] shadow-sm ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
                         Koneksi kitab sedang tidak stabil, tetapi sanctuary VerseHub tetap siap dipakai.
                     </div>
                 </div>
             )}
 
             {isLandingMode && (
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-24 bg-gradient-to-t from-[#f7f3ea] to-transparent" />
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-24 bg-gradient-to-t from-[var(--vh-bg)]/80 to-transparent" />
             )}
 
             <AnimatePresence>
