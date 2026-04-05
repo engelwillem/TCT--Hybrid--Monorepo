@@ -103,54 +103,61 @@ export function VersehubLandingView({
             </main>
 
             <div className="absolute inset-x-0 z-40 px-4 md:px-6" style={{ bottom: "calc(96px + env(safe-area-inset-bottom, 24px))" }}>
-                <div className="mx-auto flex max-w-xl flex-col gap-3">
+                <div className="mx-auto flex max-w-[360px] flex-col gap-3">
                     {continueReadingHref && continueReadingLabel ? (
                         <button
                             type="button"
                             onClick={onContinueReading}
-                            className="group mx-auto inline-flex min-h-[64px] w-full max-w-[360px] items-center justify-between rounded-full bg-[var(--vh-surface)]/60 px-5 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.3)] ring-1 ring-[var(--vh-border)] backdrop-blur-2xl transition hover:bg-[var(--vh-surface)]/80 active:scale-[0.98]"
+                            className="group mx-auto inline-flex min-h-[64px] w-full items-center justify-between rounded-full bg-[var(--vh-surface)]/80 px-5 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.3)] ring-1 ring-[var(--vh-border)] backdrop-blur-2xl transition hover:bg-[var(--vh-surface)] active:scale-[0.98]"
                         >
                             <span>
-                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Continue Reading</span>
-                                <span className="mt-1 block text-[14px] font-black tracking-tight text-[var(--vh-text-primary)]">{continueReadingLabel}</span>
+                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Lanjutkan Membaca</span>
+                                <span className="mt-1 block text-[15px] font-black tracking-tight text-[var(--vh-text-primary)]">{continueReadingLabel}</span>
                             </span>
-                            <ArrowRight className="h-5 w-5 text-[var(--vh-accent)]" />
+                            <ArrowRight className="h-5 w-5 text-[var(--vh-accent)] transition group-hover:translate-x-0.5" />
                         </button>
-                    ) : null}
-
-                    <button
-                        type="button"
-                        onClick={onOpenExplore}
-                        className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-[var(--vh-surface)]/80 px-5 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.3)] ring-1 ring-[var(--vh-border)] backdrop-blur-2xl transition hover:bg-[var(--vh-surface)] active:scale-[0.98]"
-                    >
-                        <span className="flex items-center gap-3">
-                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-[var(--vh-text-secondary)] ring-1 ring-[var(--vh-border)]">
-                                <Sparkles className="h-4 w-4 text-[var(--vh-accent)]/80 group-hover:text-[var(--vh-accent)] transition-colors" />
-                            </span>
-                            <span>
-                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Pilihan Harian</span>
-                                <span className="mt-1 block text-[15px] font-black tracking-tight text-[var(--vh-text-primary)]">
-                                    Saran Bacaan Hari Ini
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={onOpenExplore}
+                            className="group mx-auto inline-flex min-h-[64px] w-full items-center justify-between rounded-full bg-[var(--vh-surface)]/80 px-5 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.3)] ring-1 ring-[var(--vh-border)] backdrop-blur-2xl transition hover:bg-[var(--vh-surface)] active:scale-[0.98]"
+                        >
+                            <span className="flex items-center gap-3">
+                                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-[var(--vh-text-secondary)] ring-1 ring-[var(--vh-border)]">
+                                    <Sparkles className="h-4 w-4 text-[var(--vh-accent)]/80 transition-colors group-hover:text-[var(--vh-accent)]" />
+                                </span>
+                                <span>
+                                    <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Pilihan Harian</span>
+                                    <span className="mt-1 block text-[15px] font-black tracking-tight text-[var(--vh-text-primary)]">Saran Bacaan Hari Ini</span>
                                 </span>
                             </span>
-                        </span>
-                        <ArrowRight className="h-5 w-5 text-[var(--vh-accent)] transition group-hover:translate-x-0.5" />
-                    </button>
+                            <ArrowRight className="h-5 w-5 text-[var(--vh-accent)] transition group-hover:translate-x-0.5" />
+                        </button>
+                    )}
 
-                    <button
-                        type="button"
-                        onClick={onOpenPicker}
-                        className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-white/5 hover:text-[var(--vh-text-primary)]"
-                    >
-                        <BookOpenText className="h-4 w-4" />
-                        Pilih dari daftar kitab
-                    </button>
-
-                    {firstChapterHref ? (
-                        <p className="text-center text-[11px] text-[var(--vh-text-muted)] mt-2">
-                            Jalur cepat tersedia dari <span className="font-semibold text-[var(--vh-text-secondary)]">{firstBookLabel} 1</span>
-                        </p>
-                    ) : null}
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                        {continueReadingHref && continueReadingLabel && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={onOpenExplore}
+                                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-white/5 hover:text-[var(--vh-text-primary)]"
+                                >
+                                    <Sparkles className="h-3.5 w-3.5" />
+                                    Mood Harian
+                                </button>
+                                <span className="h-1 w-1 rounded-full bg-white/10" />
+                            </>
+                        )}
+                        <button
+                            type="button"
+                            onClick={onOpenPicker}
+                            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-white/5 hover:text-[var(--vh-text-primary)]"
+                        >
+                            <BookOpenText className="h-3.5 w-3.5" />
+                            Daftar Kitab
+                        </button>
+                    </div>
                 </div>
             </div>
         </>
