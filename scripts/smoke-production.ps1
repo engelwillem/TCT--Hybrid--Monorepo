@@ -1,19 +1,48 @@
 param(
     [string]$BaseUrl = "https://www.thechoosentalks.org",
-    [string]$OutFile = ""
+    [string]$OutFile = "",
+    [int]$TimeoutSec = 20
 )
 
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+
+function Join-SmokeUrl {
+    param(
+        [string]$RootUrl,
+        [string]$Path
+    )
+
+    $trimmedRoot = $RootUrl.TrimEnd("/")
+    if ([string]::IsNullOrWhiteSpace($Path) -or $Path -eq "/") {
+        return "$trimmedRoot/"
+    }
+
+    return "$trimmedRoot$Path"
+}
 
 function Invoke-SmokeCheck {
     param(
         [string]$Url,
         [int[]]$ExpectedStatus = @(200),
-        [switch]$ExpectJson
+        [switch]$ExpectJson,
+        [int]$RequestTimeoutSec = 20
     )
 
     try {
-        $res = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 45
+        $headers = @{
+            "Cache-Control" = "no-cache"
+        }
+        if ($ExpectJson) {
+            $headers["Accept"] = "application/json"
+        }
+
+        $res = Invoke-WebRequest `
+            -Uri $Url `
+            -UseBasicParsing `
+            -TimeoutSec $RequestTimeoutSec `
+            -MaximumRetryCount 0 `
+            -Headers $headers
         $status = [int]$res.StatusCode
         $ok = $ExpectedStatus -contains $status
         $preview = ""
@@ -58,13 +87,17 @@ $targets = @(
     @{ path = "/api/community/posts"; json = $true },
     @{ path = "/api/versehub/id/books"; json = $true },
     @{ path = "/api/versehub/id/chapter/mzm-23-1"; json = $true },
-    @{ path = "/favicon.png"; json = $false }
+    @{ path = "/favicon.svg"; json = $false }
 )
 
 $results = @()
 foreach ($target in $targets) {
-    $fullUrl = "$BaseUrl$($target.path)"
-    $results += Invoke-SmokeCheck -Url $fullUrl -ExpectedStatus @(200) -ExpectJson:([bool]$target.json)
+    $fullUrl = Join-SmokeUrl -RootUrl $BaseUrl -Path $target.path
+    $results += Invoke-SmokeCheck `
+        -Url $fullUrl `
+        -ExpectedStatus @(200) `
+        -ExpectJson:([bool]$target.json) `
+        -RequestTimeoutSec $TimeoutSec
 }
 
 $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -73,6 +106,7 @@ $lines += "# Production Smoke Check"
 $lines += ""
 $lines += "- Time: $timestamp"
 $lines += "- Base URL: $BaseUrl"
+$lines += "- Timeout per request: ${TimeoutSec}s"
 $lines += ""
 $lines += "| URL | Status | Result |"
 $lines += "| --- | ---: | --- |"
