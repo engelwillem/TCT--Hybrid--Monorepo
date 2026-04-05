@@ -14,6 +14,10 @@
     "build": "next build",
     "build:with-encoded-chunk-mirror": "next build && node scripts/mirror-encoded-next-chunks.mjs",
     "start": "next start",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:reset": "docker compose down -v",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
@@ -80,7 +84,7 @@
     "@types/react-dom": "^19.0.3",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.1",
-    "typescript": "^5.7.3",
+    "typescript": "5.9.3",
     "vitest": "^4.1.0"
   }
 }

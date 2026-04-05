@@ -1,0 +1,17 @@
+.git
+.github
+.next
+.next-stale-*
+.npm-cache
+.playwright-mcp
+.tmp
+.idx
+node_modules
+backend-api/vendor
+backend-api/node_modules
+backend-api/storage/logs
+backend-api/bootstrap/cache/*.php
+test-results
+tmp
+deliverables
+docs

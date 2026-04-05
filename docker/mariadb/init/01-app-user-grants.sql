@@ -1,0 +1,7 @@
+CREATE DATABASE IF NOT EXISTS `thechoosentalks`;
+
+CREATE USER IF NOT EXISTS 'tct'@'%' IDENTIFIED BY 'tct';
+ALTER USER 'tct'@'%' IDENTIFIED BY 'tct';
+GRANT ALL PRIVILEGES ON `thechoosentalks`.* TO 'tct'@'%';
+
+FLUSH PRIVILEGES;

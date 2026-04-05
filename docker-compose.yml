@@ -1,0 +1,106 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: tct-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: thechoosentalks
+      MARIADB_USER: tct
+      MARIADB_PASSWORD: tct
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-proot"]
+      start_period: 5m
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: tct-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: tct-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: tct-backend
+    restart: unless-stopped
+    working_dir: /workspace/backend-api
+    env_file:
+      - ${BACKEND_ENV_FILE:-backend-api/.env.docker}
+    volumes:
+      - .:/workspace
+      - backend_vendor:/workspace/backend-api/vendor
+      - ./backend-api/.env.docker:/workspace/backend-api/.env:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/v1/community/posts"]
+      start_period: 10m
+      interval: 20s
+      timeout: 5s
+      retries: 10
+    command: ["bash", "/workspace/docker/backend/start.sh"]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: tct-frontend
+    restart: unless-stopped
+    working_dir: /workspace
+    env_file:
+      - ${FRONTEND_ENV_FILE:-.env.docker}
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - .:/workspace
+      - frontend_node_modules:/workspace/node_modules
+      - frontend_next:/workspace/.next
+      - ./.env.docker:/workspace/.env.local:ro
+    ports:
+      - "9002:9002"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9002"]
+      start_period: 10m
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    command: ["bash", "/workspace/docker/frontend/start.sh"]
+
+volumes:
+  mariadb_data:
+  redis_data:
+  backend_vendor:
+  frontend_node_modules:
+  frontend_next:
