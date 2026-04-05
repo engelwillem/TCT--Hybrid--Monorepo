@@ -681,10 +681,10 @@ export function VersehubReaderPage({
 
     if (loading) {
         return (
-            <div className="flex min-h-[100dvh] items-center justify-center bg-[#F6F2EA]">
+            <div className="theme-versehub-dark flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] text-[var(--vh-text-primary)] transition-colors duration-500">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-slate-300" />
-                    <p className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">Menyiapkan Ruang Doa...</p>
+                    <Loader2 className="h-10 w-10 animate-spin text-[var(--vh-text-muted)]" />
+                    <p className="text-[12px] font-black uppercase tracking-[0.2em] text-[var(--vh-text-muted)]">Menyiapkan Ruang Doa...</p>
                 </div>
             </div>
         );
@@ -692,16 +692,16 @@ export function VersehubReaderPage({
 
     if (error && isChapterMode) {
         return (
-            <div className="flex min-h-[100dvh] items-center justify-center bg-[#F6F2EA] px-6 py-16 text-center text-slate-900">
-                <div className="mx-auto max-w-md rounded-[32px] bg-white/90 p-8 shadow-[0_24px_80px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-xl">
-                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Pasal tidak ditemukan</p>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-500">
+            <div className="theme-versehub-dark flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] px-6 py-16 text-center text-[var(--vh-text-primary)]">
+                <div className="mx-auto max-w-md rounded-[32px] bg-[var(--vh-surface)]/80 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.4)] ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--vh-text-muted)]">Pasal tidak ditemukan</p>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
                         Data pasal belum berhasil dimuat. Kembali ke landing VerseHub untuk memilih kitab lain.
                     </p>
                     <button
                         type="button"
                         onClick={() => router.push(`/versehub/${lang}`)}
-                        className="mt-6 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800"
+                        className="mt-6 inline-flex rounded-full bg-white px-5 py-2.5 text-xs font-bold text-black shadow-sm transition hover:bg-white/90"
                     >
                         Kembali ke VerseHub
                     </button>
@@ -712,16 +712,16 @@ export function VersehubReaderPage({
 
     if (error && isVerseMode) {
         return (
-            <div className="flex min-h-[100dvh] items-center justify-center bg-[#F6F2EA] px-6 py-16 text-center text-slate-900">
-                <div className="mx-auto max-w-md rounded-[32px] bg-white/90 p-8 shadow-[0_24px_80px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-xl">
-                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Ayat tidak ditemukan</p>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-500">
+            <div className="theme-versehub-dark flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] px-6 py-16 text-center text-[var(--vh-text-primary)]">
+                <div className="mx-auto max-w-md rounded-[32px] bg-[var(--vh-surface)]/80 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.4)] ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
+                    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--vh-text-muted)]">Ayat tidak ditemukan</p>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--vh-text-secondary)]">
                         Ayat yang Anda cari belum berhasil dimuat. Anda masih bisa kembali ke chapter reader tanpa kehilangan suasana VerseHub.
                     </p>
                     <button
                         type="button"
                         onClick={() => router.push(chapterRouteFromVerse)}
-                        className="mt-6 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800"
+                        className="mt-6 inline-flex rounded-full bg-white px-5 py-2.5 text-xs font-bold text-black shadow-sm transition hover:bg-white/90"
                     >
                         Kembali ke Reader
                     </button>
@@ -731,20 +731,19 @@ export function VersehubReaderPage({
     }
 
     return (
-        <div className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-[#FAFCFF] text-slate-900 selection:bg-black/10">
+        <div className="theme-versehub-dark relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-[var(--vh-bg)] text-[var(--vh-text-primary)] selection:bg-[var(--vh-accent)]/30">
             <div
-                className="pointer-events-none fixed inset-0 z-0 opacity-[0.03] mix-blend-multiply"
+                className="pointer-events-none fixed inset-0 z-0 opacity-[0.05]"
                 style={{
-                    backgroundImage: "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.12) 1px, transparent 0)",
-                    backgroundSize: "18px 18px",
+                    backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)",
+                    backgroundSize: "24px 24px",
                 }}
             />
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_top,#ffffff_0%,#f8f6ef_36%,#f5efe4_66%,#f7f3ea_100%)]" />
-                <div className="absolute -left-24 top-20 h-80 w-80 rounded-full bg-[#eef7ff]/70 blur-3xl" />
-                <div className="absolute right-[-96px] top-0 h-80 w-80 rounded-full bg-[#f6eadb]/75 blur-3xl" />
-                <div className="absolute bottom-[-100px] left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-white/60 blur-3xl" />
-                <div className="absolute left-[12%] top-[28%] h-56 w-56 rounded-full bg-[#fff7ed]/55 blur-3xl" />
+                <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_top,rgba(22,22,24,0.8)_0%,#0A0A0B_60%)]" />
+                <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-[#2A67FF]/[0.03] blur-[120px]" />
+                <div className="absolute bottom-[-20%] left-[-10%] h-[400px] w-[400px] rounded-full bg-white/[0.015] blur-[100px]" />
+                <div className="absolute left-[12%] top-[28%] h-56 w-56 rounded-full bg-[var(--vh-accent)]/[0.01] blur-3xl" />
             </div>
 
             {isLandingMode && (

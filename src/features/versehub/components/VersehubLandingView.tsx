@@ -53,24 +53,24 @@ export function VersehubLandingView({
                     <button
                         type="button"
                         onClick={onBackToday}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/82 text-sky-600 ring-1 ring-black/5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.28)] backdrop-blur-xl transition hover:bg-white active:scale-95"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--vh-surface)]/60 text-[var(--vh-accent)] ring-1 ring-[var(--vh-border)] shadow-[0_18px_36px_-26px_rgba(0,0,0,0.5)] backdrop-blur-xl transition hover:bg-[var(--vh-surface)]/80 active:scale-95"
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </button>
 
                     <div className="ml-auto flex max-w-[24rem] flex-col text-right">
-                        <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40">
+                        <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--vh-text-muted)]">
                             {liveDateLabel}
                         </span>
-                        <h1 className="text-[22px] font-semibold leading-[1.22] tracking-[-0.01em] text-foreground/95 md:text-[25px]">
+                        <h1 className="text-[22px] font-semibold leading-[1.22] tracking-[-0.01em] text-[var(--vh-text-primary)] md:text-[25px]">
                             Selamat datang kembali,
                         </h1>
                         {memberName ? (
-                            <p className="mt-1 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em] text-foreground/80 md:text-[18px]">
+                            <p className="mt-1 text-[16px] font-semibold leading-[1.35] tracking-[-0.01em] text-[var(--vh-text-secondary)] md:text-[18px]">
                                 {memberName}
                             </p>
                         ) : (
-                            <p className="mt-1 text-[13px] font-medium leading-[1.45] tracking-[0.01em] text-foreground/60 md:text-[14px]">
+                            <p className="mt-1 text-[13px] font-medium leading-[1.45] tracking-[0.01em] text-[var(--vh-text-muted)] md:text-[14px]">
                                 Chosen People
                             </p>
                         )}
@@ -80,16 +80,17 @@ export function VersehubLandingView({
 
             <main className="relative z-10 flex flex-1 flex-col justify-center px-6 pt-20 text-center md:px-10" style={{ paddingBottom: landingContentPadding }}>
                 <div className="mx-auto max-w-3xl">
-                    <p className="text-[11px] font-black uppercase tracking-[0.44em] text-[#91A0C7]">{activeScene.eyebrow}</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.44em] text-[var(--vh-text-muted)]">{activeScene.eyebrow}</p>
                     <motion.h1
                         initial={{ opacity: 0, y: 18 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
-                        className="mx-auto mt-10 max-w-[12ch] font-serif text-[50px] italic leading-[1.08] tracking-[-0.04em] text-[#172042] sm:text-[64px] md:text-[78px]"
+                        className="mx-auto mt-10 max-w-[12ch] font-serif text-[50px] italic leading-[1.08] tracking-[-0.04em] text-white sm:text-[64px] md:text-[78px]"
+                        style={{ textShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
                     >
                         {activeScene.quote}
                     </motion.h1>
-                    <p className="mx-auto mt-7 max-w-xl text-[15px] leading-7 text-slate-600 md:text-base">
+                    <p className="mx-auto mt-7 max-w-xl text-[15px] leading-7 text-[var(--vh-text-secondary)] md:text-base">
                         {activeScene.invitation}
                     </p>
 
@@ -107,47 +108,47 @@ export function VersehubLandingView({
                         <button
                             type="button"
                             onClick={onContinueReading}
-                            className="group mx-auto inline-flex min-h-[64px] w-full max-w-[360px] items-center justify-between rounded-full bg-white/76 px-5 py-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-2xl transition hover:bg-white active:scale-[0.98]"
+                            className="group mx-auto inline-flex min-h-[64px] w-full max-w-[360px] items-center justify-between rounded-full bg-[var(--vh-surface)]/60 px-5 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.3)] ring-1 ring-[var(--vh-border)] backdrop-blur-2xl transition hover:bg-[var(--vh-surface)]/80 active:scale-[0.98]"
                         >
                             <span>
-                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Continue Reading</span>
-                                <span className="mt-1 block text-[14px] font-black tracking-tight text-slate-900">{continueReadingLabel}</span>
+                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Continue Reading</span>
+                                <span className="mt-1 block text-[14px] font-black tracking-tight text-[var(--vh-text-primary)]">{continueReadingLabel}</span>
                             </span>
-                            <ArrowRight className="h-5 w-5 text-[#2A67FF]" />
+                            <ArrowRight className="h-5 w-5 text-[var(--vh-accent)]" />
                         </button>
                     ) : null}
 
                     <button
                         type="button"
                         onClick={onOpenExplore}
-                        className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-white/86 px-5 py-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-2xl transition hover:bg-white active:scale-[0.98]"
+                        className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-[var(--vh-surface)]/80 px-5 py-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.3)] ring-1 ring-[var(--vh-border)] backdrop-blur-2xl transition hover:bg-[var(--vh-surface)] active:scale-[0.98]"
                     >
                         <span className="flex items-center gap-3">
-                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-black/5">
-                                <Sparkles className="h-4 w-4" />
+                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-[var(--vh-text-secondary)] ring-1 ring-[var(--vh-border)]">
+                                <Sparkles className="h-4 w-4 text-[var(--vh-accent)]/80 group-hover:text-[var(--vh-accent)] transition-colors" />
                             </span>
                             <span>
-                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Pilihan Harian</span>
-                                <span className="mt-1 block text-[15px] font-black tracking-tight text-slate-900">
+                                <span className="block text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">Pilihan Harian</span>
+                                <span className="mt-1 block text-[15px] font-black tracking-tight text-[var(--vh-text-primary)]">
                                     Saran Bacaan Hari Ini
                                 </span>
                             </span>
                         </span>
-                        <ArrowRight className="h-5 w-5 text-[#2A67FF] transition group-hover:translate-x-0.5" />
+                        <ArrowRight className="h-5 w-5 text-[var(--vh-accent)] transition group-hover:translate-x-0.5" />
                     </button>
 
                     <button
                         type="button"
                         onClick={onOpenPicker}
-                        className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                        className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-semibold text-[var(--vh-text-muted)] transition hover:bg-white/5 hover:text-[var(--vh-text-primary)]"
                     >
                         <BookOpenText className="h-4 w-4" />
                         Pilih dari daftar kitab
                     </button>
 
                     {firstChapterHref ? (
-                        <p className="text-center text-[11px] text-slate-500">
-                            Jalur cepat tersedia dari <span className="font-semibold text-slate-700">{firstBookLabel} 1</span>
+                        <p className="text-center text-[11px] text-[var(--vh-text-muted)] mt-2">
+                            Jalur cepat tersedia dari <span className="font-semibold text-[var(--vh-text-secondary)]">{firstBookLabel} 1</span>
                         </p>
                     ) : null}
                 </div>

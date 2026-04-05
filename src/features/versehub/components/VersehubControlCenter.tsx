@@ -43,7 +43,7 @@ export function VersehubControlCenter({
                                 exit={{ opacity: 0, y: 8 }}
                                 transition={{ duration: 0.26, delay: index * 0.03 }}
                                 onClick={item.onClick}
-                                className="rounded-full bg-white/88 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-700 backdrop-blur-2xl ring-1 ring-black/5 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)] transition hover:bg-white"
+                                className="min-h-[44px] rounded-full bg-[var(--vh-surface)]/80 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-[var(--vh-text-primary)] backdrop-blur-2xl ring-1 ring-[var(--vh-border)] shadow-[0_18px_40px_-30px_rgba(0,0,0,0.5)] transition hover:bg-[var(--vh-surface)]"
                             >
                                 {item.label}
                             </motion.button>
@@ -59,7 +59,7 @@ export function VersehubControlCenter({
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 onClick={onToggle}
                 className={cn(
-                    "fixed bottom-[calc(20px+env(safe-area-inset-bottom,24px))] right-4 z-[75] flex h-14 w-14 items-center justify-center rounded-full bg-white/88 text-slate-700 backdrop-blur-2xl ring-1 ring-black/5 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.28)] transition hover:bg-white md:right-8",
+                    "fixed bottom-[calc(20px+env(safe-area-inset-bottom,24px))] right-4 z-[75] flex h-14 w-14 items-center justify-center rounded-full bg-[var(--vh-surface)]/90 text-[var(--vh-text-primary)] backdrop-blur-2xl ring-1 ring-[var(--vh-border)] shadow-[0_18px_40px_-30px_rgba(0,0,0,0.5)] transition hover:bg-[var(--vh-surface)] md:right-8",
                     !isVisible && "pointer-events-none"
                 )}
                 aria-label={isOpen ? "Close control center" : "Open control center"}
