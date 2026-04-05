@@ -43,6 +43,8 @@ interface VersehubReaderPageProps {
     initialChapterRef?: string | null;
 }
 
+type OverlayType = "explore" | "picker" | "mentor" | "audio" | null;
+
 type SanctuaryScene = {
     eyebrow: string;
     quote: string;
@@ -105,9 +107,8 @@ export function VersehubReaderPage({
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [pickerOpen, setPickerOpen] = useState(false);
-    const [exploreOpen, setExploreOpen] = useState(false);
-    const [mentorOpen, setMentorOpen] = useState(false);
+    const [overlay, setOverlay] = useState<OverlayType>(null);
+    const [activeMood, setActiveMood] = useState<string>(mode === "landing" ? "hopeful" : "daily");
     const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
     const [tab, setTab] = useState<"ot" | "nt">("ot");
     const [books, setBooks] = useState<Book[]>([]);
@@ -194,8 +195,7 @@ export function VersehubReaderPage({
     const openMentorForVerse = (verse: Verse | null) => {
         if (!verse) return;
         setSelectedVerse(verse);
-        setExploreOpen(false);
-        setMentorOpen(true);
+        setOverlay("mentor");
     };
 
     if (loading) {
@@ -238,12 +238,15 @@ export function VersehubReaderPage({
         : null;
 
     return (
-        <div className={cn("relative text-slate-900", mode === "landing" ? "h-screen overflow-hidden bg-[#F7F4EC]" : "min-h-screen bg-[#F7F4EC] pb-28")}>
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f1e8_38%,#f4efe6_64%,#f7f4ec_100%)]" />
-                <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-[#efe7d4]/50 blur-3xl" />
-                <div className="absolute right-[-120px] top-16 h-80 w-80 rounded-full bg-[#f1efe9]/70 blur-3xl" />
-                <div className="absolute bottom-[-120px] left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-white/60 blur-3xl" />
+        <div className={cn(
+            "relative flex flex-col min-h-screen text-slate-900 bg-[#F7F4EC] transition-colors duration-700",
+            mode === "landing" ? "h-screen overflow-hidden" : ""
+        )}>
+            <div className="pointer-events-none absolute inset-0 overflow-hidden transform-gpu will-change-transform">
+                <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f1e8_38%,#f4efe6_64%,#f7f4ec_100%)]" />
+                <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-[#efe7d4]/50 blur-3xl transform-gpu" />
+                <div className="absolute right-[-120px] top-16 h-80 w-80 rounded-full bg-[#f1efe9]/70 blur-3xl transform-gpu" />
+                <div className="absolute bottom-[-120px] left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-white/60 blur-3xl transform-gpu" />
             </div>
 
             {mode === "landing" ? (
@@ -253,26 +256,23 @@ export function VersehubReaderPage({
                             <button
                                 type="button"
                                 onClick={() => router.push("/today")}
-                                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white"
+                                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white active:scale-95"
                             >
                                 <ChevronLeft className="h-5 w-5" />
                             </button>
 
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setExploreOpen(false);
-                                    setPickerOpen(true);
-                                }}
-                                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white"
+                                onClick={() => setOverlay("picker")}
+                                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/85 text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white active:scale-95"
                             >
                                 <BookOpenText className="h-5 w-5" />
                             </button>
                         </div>
                     </header>
 
-                    <main className="relative z-10 flex h-full flex-col justify-center px-6 pb-[calc(160px+env(safe-area-inset-bottom))] pt-20 text-center md:px-10">
-                        <div className="mx-auto max-w-3xl">
+                    <main className="relative z-10 flex flex-1 flex-col justify-center px-6 pt-20 text-center md:px-10" style={{ paddingBottom: 'calc(220px + env(safe-area-inset-bottom))' }}>
+                        <div className="mx-auto max-w-3xl transform-gpu">
                             <p className="text-[11px] font-black uppercase tracking-[0.44em] text-[#91A0C7]">{activeScene.eyebrow}</p>
                             <motion.h1
                                 initial={{ opacity: 0, y: 18 }}
@@ -292,8 +292,8 @@ export function VersehubReaderPage({
                         <div className="mx-auto flex max-w-xl flex-col gap-3">
                             <button
                                 type="button"
-                                onClick={() => setExploreOpen(true)}
-                                className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-white/86 px-5 py-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-2xl transition hover:bg-white"
+                                onClick={() => setOverlay("explore")}
+                                className="group mx-auto inline-flex min-h-[72px] w-full max-w-[360px] items-center justify-between rounded-full bg-white/86 px-5 py-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.1)] ring-1 ring-black/5 backdrop-blur-2xl transition hover:bg-white transform-gpu will-change-transform active:scale-[0.98]"
                             >
                                 <span className="flex items-center gap-3">
                                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-500 ring-1 ring-black/5">
@@ -312,19 +312,16 @@ export function VersehubReaderPage({
                             <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-2 rounded-[30px] bg-white/78 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.08)] ring-1 ring-black/5 backdrop-blur-2xl">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setExploreOpen(false);
-                                        setPickerOpen(true);
-                                    }}
-                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50"
+                                    onClick={() => setOverlay("picker")}
+                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95"
                                 >
                                     <BookOpenText className="mx-auto h-4 w-4 text-slate-500" />
                                     <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Kitab</span>
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setExploreOpen(true)}
-                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50"
+                                    onClick={() => setOverlay("explore")}
+                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95"
                                 >
                                     <BookHeart className="mx-auto h-4 w-4 text-slate-500" />
                                     <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Deep Dive</span>
@@ -332,10 +329,10 @@ export function VersehubReaderPage({
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setExploreOpen(false);
+                                        setOverlay(null);
                                         if (firstChapterHref) router.push(firstChapterHref);
                                     }}
-                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50"
+                                    className="rounded-[22px] px-3 py-3 text-center transition hover:bg-slate-50 active:scale-95"
                                 >
                                     <MessageSquareText className="mx-auto h-4 w-4 text-slate-500" />
                                     <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Mulai</span>
@@ -351,7 +348,7 @@ export function VersehubReaderPage({
                             <button
                                 type="button"
                                 onClick={() => router.push(`/versehub/${lang}`)}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white"
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white active:scale-95"
                             >
                                 <ChevronLeft className="h-5 w-5" />
                             </button>
@@ -363,11 +360,8 @@ export function VersehubReaderPage({
 
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setExploreOpen(false);
-                                    setPickerOpen(true);
-                                }}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white"
+                                onClick={() => setOverlay("picker")}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm ring-1 ring-black/5 transition hover:bg-white active:scale-95"
                             >
                                 <BookOpenText className="h-5 w-5" />
                             </button>
@@ -387,8 +381,8 @@ export function VersehubReaderPage({
                                 <div className="grid gap-2 sm:grid-cols-2">
                                     <button
                                         type="button"
-                                        onClick={() => setExploreOpen(true)}
-                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-600 ring-1 ring-black/5 transition hover:bg-slate-100"
+                                        onClick={() => setOverlay("explore")}
+                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-600 ring-1 ring-black/5 transition hover:bg-slate-100 active:scale-95"
                                     >
                                         <Sparkles className="h-4 w-4" />
                                         Explore
@@ -396,7 +390,7 @@ export function VersehubReaderPage({
                                     <button
                                         type="button"
                                         onClick={() => openMentorForVerse(mentorPreviewVerse)}
-                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-slate-800"
+                                        className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-slate-800 active:scale-95"
                                     >
                                         <MessageSquareText className="h-4 w-4" />
                                         Buka Mentor
@@ -419,13 +413,13 @@ export function VersehubReaderPage({
                                 </div>
                             </div>
 
-                            <div className="mt-6 space-y-4">
+                            <div className="mt-6 space-y-4" style={{ paddingBottom: 'calc(280px + env(safe-area-inset-bottom))' }}>
                                 {verses.map((verse) => (
                                     <button
                                         key={verse.key}
                                         type="button"
                                         onClick={() => openMentorForVerse(verse)}
-                                        className="group block w-full rounded-[28px] bg-[#F9F7F2] px-4 py-4 text-left ring-1 ring-black/[0.03] transition hover:bg-white hover:shadow-[0_14px_40px_rgba(15,23,42,0.06)] md:px-5"
+                                        className="group block w-full rounded-[28px] bg-[#F9F7F2] px-4 py-4 text-left ring-1 ring-black/[0.03] transition hover:bg-white hover:shadow-[0_14px_40px_rgba(15,23,42,0.06)] md:px-5 transform-gpu"
                                     >
                                         <div className="flex items-start gap-4">
                                             <span className="mt-1 inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-[12px] font-black text-slate-500 shadow-sm ring-1 ring-black/[0.04]">
@@ -448,14 +442,14 @@ export function VersehubReaderPage({
             )}
 
             <AnimatePresence>
-                {exploreOpen && (
+                {overlay === "explore" && (
                     <div className="fixed inset-0 z-[60]">
                         <motion.button
                             type="button"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setExploreOpen(false)}
+                            onClick={() => setOverlay(null)}
                             className="absolute inset-0 bg-slate-950/35 backdrop-blur-sm"
                         />
                         <motion.div
@@ -473,8 +467,8 @@ export function VersehubReaderPage({
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setExploreOpen(false)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
+                                    onClick={() => setOverlay(null)}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 active:scale-90"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
@@ -485,11 +479,8 @@ export function VersehubReaderPage({
                             <div className="mt-6 grid gap-3 md:grid-cols-2">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setExploreOpen(false);
-                                        setPickerOpen(true);
-                                    }}
-                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50"
+                                    onClick={() => setOverlay("picker")}
+                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50 active:scale-[0.98]"
                                 >
                                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Koleksi Kitab</p>
                                     <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Buka Perjanjian Lama dan Baru</p>
@@ -503,10 +494,10 @@ export function VersehubReaderPage({
                                     disabled={!firstChapterHref}
                                     onClick={() => {
                                         if (!firstChapterHref) return;
-                                        setExploreOpen(false);
+                                        setOverlay(null);
                                         router.push(firstChapterHref);
                                     }}
-                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04] transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
                                 >
                                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Jalur Cepat</p>
                                     <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Mulai dari {firstBookLabel} 1</p>
@@ -524,10 +515,34 @@ export function VersehubReaderPage({
                                 </div>
 
                                 <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Atur Atmosfer</p>
+                                    <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Pilih Mood Saat Ini</p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {[
+                                            { key: 'hopeful', label: 'Cahaya' },
+                                            { key: 'anxious', label: 'Ketenangan' },
+                                            { key: 'weary', label: 'Lelah' },
+                                            { key: 'grateful', label: 'Syukur' }
+                                        ].map((m) => (
+                                            <button
+                                                key={m.key}
+                                                onClick={() => setActiveMood(m.key)}
+                                                className={cn(
+                                                    "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition",
+                                                    activeMood === m.key ? "bg-slate-900 text-white" : "bg-white text-slate-500 ring-1 ring-black/5 hover:bg-slate-50"
+                                                )}
+                                            >
+                                                {m.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-[26px] bg-[#FBFAF6] p-4 text-left ring-1 ring-black/[0.04]">
                                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Mentor Internal</p>
                                     <p className="mt-2 text-lg font-black tracking-tight text-slate-900">Scripture guide aktif saat ayat dibuka</p>
                                     <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                        Mentor tidak memakai AI gateway. Ia menarik refleksi, kaitan ayat, konteks, dan study guidance dari engine Laravel internal.
+                                        Mentor menarik refleksi, kaitan ayat, konteks, dan study guidance dari engine Laravel internal dengan metadata penuh.
                                     </p>
                                 </div>
                             </div>
@@ -537,14 +552,14 @@ export function VersehubReaderPage({
             </AnimatePresence>
 
             <AnimatePresence>
-                {pickerOpen && (
+                {overlay === "picker" && (
                     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
                         <motion.button
                             type="button"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setPickerOpen(false)}
+                            onClick={() => setOverlay(null)}
                             className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
                         />
 
@@ -561,8 +576,8 @@ export function VersehubReaderPage({
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setPickerOpen(false)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
+                                    onClick={() => setOverlay(null)}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 active:scale-90"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
@@ -585,7 +600,7 @@ export function VersehubReaderPage({
                             </div>
 
                             <div className="grid min-h-0 flex-1 gap-0 md:grid-cols-[1.15fr,0.85fr]">
-                                <div className="min-h-0 overflow-y-auto border-b border-slate-100 p-5 md:border-b-0 md:border-r">
+                                <div className="min-h-0 overflow-y-auto border-b border-slate-100 p-5 md:border-b-0 md:border-r text-slate-900">
                                     <div className="grid grid-cols-2 gap-3">
                                         {books.filter((book) => book.testament === tab).map((book) => (
                                             <button
@@ -616,8 +631,7 @@ export function VersehubReaderPage({
                                                 type="button"
                                                 onClick={() => {
                                                     if (!activeBook) return;
-                                                    setPickerOpen(false);
-                                                    setExploreOpen(false);
+                                                    setOverlay(null);
                                                     router.push(`/versehub/${lang}/${activeBook}-${chapter}`);
                                                 }}
                                                 className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
@@ -636,14 +650,15 @@ export function VersehubReaderPage({
                 )}
             </AnimatePresence>
 
-            {mentorOpen && mentorPreviewVerse && mentorPreviewLabel && (
+            {overlay === "mentor" && mentorPreviewVerse && mentorPreviewLabel && (
                 <MentorPanel
                     verseRef={mentorPreviewVerse.key}
                     lang={lang}
                     verseText={mentorPreviewVerse.text}
                     verseLabel={mentorPreviewLabel}
+                    activeMood={activeMood}
                     isAuthenticated={true}
-                    onClose={() => setMentorOpen(false)}
+                    onClose={() => setOverlay(null)}
                 />
             )}
 
@@ -654,12 +669,14 @@ export function VersehubReaderPage({
                         ? "bottom-[calc(98px+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-8"
                         : "bottom-[calc(88px+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-8"
                 )}
-                isDucking={exploreOpen || pickerOpen || mentorOpen}
-                activeMoodKey={mode === "landing" ? "hopeful" : "daily"}
+                isDucking={!!overlay}
+                activeMoodKey={activeMood}
                 dayIndex={new Date().getDay()}
                 onMenuOpen={(isOpen) => {
                     if (isOpen) {
-                        setExploreOpen(false);
+                        setOverlay("audio");
+                    } else if (overlay === "audio") {
+                        setOverlay(null);
                     }
                 }}
             />

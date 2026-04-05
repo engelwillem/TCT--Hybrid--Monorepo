@@ -69,6 +69,8 @@ interface MentorPanelProps {
     verseLabel: string;
     /** Whether the current user is authenticated (affects Ask tab) */
     isAuthenticated: boolean;
+    /** Active mood for context */
+    activeMood: string;
     onClose: () => void;
 }
 
@@ -80,6 +82,7 @@ export default function MentorPanel({
     verseText,
     verseLabel,
     isAuthenticated,
+    activeMood,
     onClose,
 }: MentorPanelProps) {
     const [tab, setTab] = useState<Tab>('reflect');
@@ -154,7 +157,13 @@ export default function MentorPanel({
                 Accept: 'application/json',
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ question: q }),
+            body: JSON.stringify({ 
+                question: q,
+                context: 'versehub_reader',
+                mood: activeMood,
+                verse_id: verseRef,
+                intent: 'deep_study'
+            }),
         })
             .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
             .then((json) => {
