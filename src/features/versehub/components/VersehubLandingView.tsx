@@ -78,8 +78,8 @@ export function VersehubLandingView({
                 </div>
             </motion.header>
 
-            <main className="relative z-10 flex flex-1 flex-col justify-center px-6 pt-20 text-center md:px-10" style={{ paddingBottom: landingContentPadding }}>
-                <div className="mx-auto max-w-3xl">
+            <main className="relative z-10 flex flex-1 flex-col overflow-y-auto px-6 text-center md:px-10" style={{ paddingBottom: landingContentPadding }}>
+                <div className="m-auto w-full max-w-3xl py-24 md:py-32">
                     <p className="text-[11px] font-black uppercase tracking-[0.44em] text-[var(--vh-text-muted)]">{activeScene.eyebrow}</p>
                     <motion.h1
                         initial={{ opacity: 0, y: 18 }}

@@ -2,7 +2,7 @@
 
 import type { MoodQuickStartOption, SanctuaryScene } from "./types";
 
-export const landingContentPadding = "calc(180px + env(safe-area-inset-bottom, 24px))";
+export const landingContentPadding = "calc(240px + env(safe-area-inset-bottom, 24px))";
 export const readerContentPadding = "calc(180px + env(safe-area-inset-bottom, 24px))";
 
 export const SANCTUARY_SCENES: SanctuaryScene[] = [
