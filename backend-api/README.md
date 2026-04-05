@@ -22,7 +22,8 @@ php artisan serve
 
 ## Environment Notes
 
-- This workspace is MySQL/MariaDB-only for local, CI, and production parity.
+- This workspace is MariaDB-only for local parity and MariaDB-targeted for production parity.
+- Laravel tetap memakai `DB_CONNECTION=mysql` karena konektor PDO/Laravel untuk MariaDB kompatibel lewat driver tersebut.
 - Keep `.env` in the shared deploy path on cPanel, not in git.
 - Set `CORS_ALLOWED_ORIGINS` to the frontend origins that call `/api/v1/*`.
 - Set `FIREBASE_PROJECT_ID` and `FIREBASE_WEB_API_KEY` only when Firebase sync is enabled.

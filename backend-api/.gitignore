@@ -2,6 +2,7 @@
 /vendor
 /.composer-cache
 /.env
+/.env.docker
 /.env.*.local
 /public/build
 /public/hot

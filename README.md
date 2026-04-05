@@ -2,7 +2,7 @@
 
 Platform konten rohani premium berbasis arsitektur decoupled:
 - Next.js sebagai frontend edge-ready.
-- Laravel sebagai backend API + MySQL.
+- Laravel sebagai backend API + MariaDB.
 - Firebase sebagai authentication dan real-time service.
 
 ## Tech Stack Utama
@@ -62,7 +62,7 @@ Catatan:
 ## Deployment
 
 - **Frontend Next.js**: Tencent Serverless Pages (atau platform serverless lain).
-- **Backend Laravel**: cPanel (PHP/Apache + MySQL).
+- **Backend Laravel**: cPanel (PHP/Apache + MariaDB).
 - **Auth/Realtime**: Firebase.
 
 ## Lisensi

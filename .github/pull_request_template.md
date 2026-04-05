@@ -15,4 +15,5 @@
 - [ ] No mock-only fallback introduced for production paths
 - [ ] Deploy impact checked:
   - [ ] cPanel backend deploy path
-  - [ ] Tencent Edge frontend deploy trigger
+  - [ ] Frontend platform deploy path
+  - [ ] Frontend production smoke workflow run or queued

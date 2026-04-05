@@ -18,11 +18,13 @@ build/
 
 # Environment and secrets
 .env
+.env.docker
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 backend-api/.env
+backend-api/.env.docker
 backend-api/.env.testing
 backend-api/.env.*.local
 backend-api/database/database.sqlite
