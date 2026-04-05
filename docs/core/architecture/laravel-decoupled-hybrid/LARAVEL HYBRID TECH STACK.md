@@ -4,10 +4,10 @@ Saya telah membuat dokumen strategi baru untuk Anda: TECH_STACK_PROPOSAL.md.
 
 Ringkasannya:
 
-Laravel (cPanel): Tetap menjadi "Otak" yang mengelola MySQL database dan logika bisnis berat.
+Laravel (cPanel): Tetap menjadi "Otak" yang mengelola database MariaDB dan logika bisnis berat.
 Next.js (Tencent Serverless Pages): Menjadi "Wajah" premium yang sangat cepat karena di-cache di edge server (dekat dengan user).
 Firebase: Tetap menjadi "Jantung" untuk Real-time Chat (Firestore) dan Authentication.
-MySQL (cPanel): Tetap menjadi tempat penyimpanan data utama yang aman.
+MariaDB (cPanel): Tetap menjadi tempat penyimpanan data utama yang aman.
 Strategi ini disebut Decoupled Architecture. Dengan ini, Next.js Anda akan memiliki performa maksimal tanpa membebani server cPanel Anda.
 
 
@@ -20,11 +20,11 @@ To achieve the best performance while maintaining your preferred technologies, w
 ### 1. Backend: Laravel (The Brain)
 *   **Hosting**: cPanel (Standard PHP/Apache).
 *   **Role**: REST API.
-*   **Database**: MySQL (Relational data, Verses, Users).
+*   **Database**: MariaDB (Relational data, Verses, Users).
 *   **Responsibility**:
     *   Data Validation & Business Logic.
     *   Server-side Firebase Token Verification.
-    *   Heavy MySQL queries.
+    *   Heavy MariaDB queries.
 
 ### 2. Frontend: Next.js (The Face)
 *   **Hosting**: **Tencent Serverless Pages (TCB)**.
@@ -45,13 +45,13 @@ To achieve the best performance while maintaining your preferred technologies, w
 ## 🔄 Interaction Flow
 
 1.  **User Login**: User signs in via Firebase on the **Next.js** frontend.
-2.  **Auth Sync**: Next.js sends the Firebase Token to **Laravel**. Laravel verifies the user and creates/updates the record in **MySQL**.
+2.  **Auth Sync**: Next.js sends the Firebase Token to **Laravel**. Laravel verifies the user and creates/updates the record in **MariaDB**.
 3.  **Data Fetching**: Next.js fetches premium content (e.g., Today's Bible Verse) from the **Laravel API**.
 4.  **Real-time**: For community chat, Next.js talks directly to **Firestore** for 0ms latency.
 
 ## 🚀 Why this works?
 *   **Premium Speed**: Tencent Serverless puts your Next.js app on the edge (closer to users in Asia/Global).
-*   **Reliability**: Laravel on cPanel is rock-solid for handling MySQL and complex PHP logic.
+*   **Reliability**: Laravel on cPanel is rock-solid for handling MariaDB and complex PHP logic.
 *   **Modern DevX**: You get the best of both worlds—Laravel's ecosystem and Next.js's UI excellence.
 
 ---

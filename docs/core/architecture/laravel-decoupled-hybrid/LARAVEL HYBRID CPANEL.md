@@ -10,9 +10,9 @@ cPanel's "Setup Node.js App" (Phusion Passenger) works best with a **Standalone 
 - **Styling**: Tailwind CSS v4 for fast, modern styling.
 
 ## 2. Backend & Data Strategy: The Hybrid Model
-Since you want Firebase but have a MySQL database on cPanel:
+Since you want Firebase but have a MariaDB database on cPanel:
 
-- **MySQL (cPanel)**: Keep this for large relational data (Bible Verses, User Profiles, History). Use **Prisma** to connect to it from Next.js API Routes.
+- **MariaDB (cPanel)**: Keep this for large relational data (Bible Verses, User Profiles, History). Use **Prisma** to connect to it from Next.js API Routes.
 - **Firebase Studio**:
     - **Authentication**: Use Firebase Auth for social login (Google/Email).
     - **Firestore**: Use for real-time features (Community Chat, Live Notifications).
@@ -21,7 +21,7 @@ Since you want Firebase but have a MySQL database on cPanel:
 
 ## 3. Communication Layer (Bridge)
 - **Environment Variables**: Managed via cPanel's Node.js App interface (replaces your `.env` file).
-- **Database Connection**: Next.js will connect to `localhost:3306` (MySQL) directly since they live on the same cPanel server.
+- **Database Connection**: Next.js will connect to `localhost:3306` (MariaDB) directly since they live on the same cPanel server.
 
 ## 4. Deployment Workflow (CI/CD)
 To maintain the "Zero-Downtime" logic we built in your `deploy.sh`:

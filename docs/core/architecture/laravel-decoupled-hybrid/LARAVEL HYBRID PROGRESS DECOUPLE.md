@@ -12,7 +12,7 @@ Arsitektur decoupled sudah mulai terpasang dan bukan lagi sekadar wacana.
 - Backend Laravel sudah memiliki API v1 untuk `today`, `community`, dan `auth/firebase/sync`.
 - Firebase client config dan auth sync ke backend sudah ada.
 - Community service frontend sudah API-first; fallback mock kini dibatasi pada alur baca.
-- Firestore real-time dan sinkronisasi data lanjutan ke Laravel/MySQL belum terlihat sebagai alur produksi yang lengkap.
+- Firestore real-time dan sinkronisasi data lanjutan ke Laravel/MariaDB belum terlihat sebagai alur produksi yang lengkap.
 
 ## Yang Sudah Ada di Repo
 
@@ -119,7 +119,7 @@ Tetapi dari audit ini belum terlihat:
 - community feed yang benar-benar baca dari koleksi Firestore aktif
 - comment stream real-time via `onSnapshot`
 - write post/comment/reaction ke Firestore sebagai jalur utama UX instan
-- sinkronisasi Firestore event ke Laravel/MySQL
+- sinkronisasi Firestore event ke Laravel/MariaDB
 
 Kesimpulan:
 
@@ -133,7 +133,7 @@ Belum ditemukan alur berikut:
 - Cloud Function untuk back-sync engagement Firestore ke Laravel
 - queue/job Laravel yang konsumsi event dari Firebase
 - webhook sinkronisasi dua arah
-- persistence metrics terjadwal dari Firestore ke MySQL
+- persistence metrics terjadwal dari Firestore ke MariaDB
 
 Kesimpulan:
 
@@ -166,7 +166,7 @@ Referensi dari repo `e:\thechoosentalksbeta` menunjukkan pola produksi cPanel ya
 - release path `~/deploy/apps/thechoosentalks`
 - shared env di `~/deploy/apps/thechoosentalks/shared/.env`
 - backend Laravel menjadi origin data utama
-- MySQL cPanel adalah target database produksi
+- MariaDB cPanel adalah target database produksi
 - deploy script lama memvalidasi `DB_CONNECTION`, `DB_DATABASE`, dan `DB_HOST` sebelum migrasi
 
 Penyesuaian yang sudah dilakukan di repo ini:
@@ -180,8 +180,9 @@ Implikasi teknis:
 
 - parity lokal ke produksi harus dipikirkan sebagai parity origin, parity env, dan parity database boundary
 - Tencent Pages hanya frontend host
-- source of truth backend tetap Laravel + MySQL
+- source of truth backend tetap Laravel + MariaDB
 - Firestore harus memakai project yang sama antara lokal dan produksi agar auth/sync tidak pecah
+- `DB_CONNECTION=mysql` tetap valid di Laravel karena itu adalah driver kompatibilitas untuk engine MariaDB
 
 ## Hardening Auth dan Community API
 
@@ -232,19 +233,19 @@ Temuan penting:
 
 Catatan parity:
 
-- backend lokal sekarang sudah dipindah ke `DB_CONNECTION=mysql`
+- backend lokal sekarang diarahkan ke engine MariaDB dengan `DB_CONNECTION=mysql`
 - koneksi aktif memakai database lokal `tct_localserver`
-- verifikasi data MySQL lokal:
+- verifikasi data MariaDB lokal:
   - `users=22`
   - `member_posts=10`
   - `bible_verses(provider=ayt, lang=id)=31102`
-- migrasi repo ini juga sudah menempel di MySQL lokal, termasuk:
+- migrasi repo ini juga sudah menempel di MariaDB lokal, termasuk:
   - `add_firebase_uid_to_users_table`
   - `create_personal_access_tokens_table`
 
 Kesimpulan parity:
 
-- parity backend engine terhadap produksi sekarang jauh lebih dekat karena lokal sudah memakai MySQL, bukan SQLite
+- parity backend engine terhadap produksi sekarang jauh lebih dekat karena lokal sudah memakai MariaDB, bukan SQLite
 - parity data juga lebih baik karena backend ini sudah membaca dataset lokal yang sama dengan hasil migrasi repo beta
 
 ## Stabilisasi Frontend Next.js
@@ -278,7 +279,7 @@ Urutan kerja yang paling masuk akal dari kondisi repo sekarang:
    Laravel-only untuk community, atau Firestore-first untuk realtime community.
 4. Jika tetap hybrid:
    implementasikan write/read Firestore untuk entitas realtime.
-5. Tambahkan mekanisme sinkronisasi terukur dari Firestore ke Laravel/MySQL.
+5. Tambahkan mekanisme sinkronisasi terukur dari Firestore ke Laravel/MariaDB.
 
 ## Keputusan Kerja Saat Ini
 

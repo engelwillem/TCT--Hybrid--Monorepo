@@ -9,7 +9,7 @@ Source of truth legacy:
 Target:
 
 - Next.js app aktif di root repo (`src/app/**`) harus sama secara visual + behavior dengan Laravel legacy UI.
-- Laravel di production hanya backend API + MySQL.
+- Laravel di production hanya backend API + MariaDB.
 
 ## 1) Definition of 100% Parity
 
