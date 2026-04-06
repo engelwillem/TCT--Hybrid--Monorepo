@@ -12,6 +12,21 @@ if [ ! -f node_modules/@next/swc-linux-x64-gnu/next-swc.linux-x64-gnu.node ]; th
   npm install --no-save "@next/swc-linux-x64-gnu@${next_version}"
 fi
 
+frontend_runtime="${FRONTEND_RUNTIME:-development}"
+frontend_use_turbopack="${FRONTEND_USE_TURBOPACK:-0}"
+
+if [ "$frontend_runtime" = "development" ]; then
+  if [ "${FRONTEND_RESET_CACHE:-0}" = "1" ]; then
+    rm -rf .next/*
+  fi
+
+  if [ "$frontend_use_turbopack" = "1" ]; then
+    exec env NODE_ENV=development npm run dev:tailscale
+  fi
+
+  exec env NODE_ENV=development npx next dev -H 0.0.0.0 -p 9002
+fi
+
 needs_build=1
 
 if [ -f .next/BUILD_ID ]; then

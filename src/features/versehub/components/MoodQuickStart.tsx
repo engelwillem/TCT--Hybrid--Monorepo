@@ -15,11 +15,11 @@ export function MoodQuickStart({
     onSelect,
 }: MoodQuickStartProps) {
     return (
-        <div className="mt-6">
-            <p className="text-[12px] font-medium tracking-wide text-foreground/40">
+        <div className="mt-8">
+            <p className="text-[12px] font-medium tracking-wide text-slate-400">
                 Mulai dari yang kamu rasakan hari ini
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
                 {options.map((option) => {
                     const isActive = option.key === activeMood;
                     return (
@@ -30,10 +30,10 @@ export function MoodQuickStart({
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onSelect(option.key)}
                             className={[
-                                "rounded-full px-5 py-[12px] text-[15px] font-medium transition-colors",
+                                "rounded-full px-5 py-[12px] text-[15px] font-medium transition-all shadow-sm ring-1",
                                 isActive
-                                    ? "bg-[#0f172a] text-white"
-                                    : "bg-black/[0.05] text-foreground/70 hover:bg-black/[0.08]",
+                                    ? "bg-slate-900 text-white ring-slate-900"
+                                    : "bg-white text-slate-600 ring-slate-200/60 hover:bg-slate-50 hover:text-slate-900 hover:ring-slate-300",
                             ].join(" ")}
                             title={option.description}
                         >

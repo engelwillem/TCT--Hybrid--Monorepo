@@ -1,5 +1,3 @@
-"use client";
-
 import { VersehubReaderPage } from "@/features/versehub/pages/VersehubReaderPage";
 
 export default function VerseHubIndonesiaPage() {

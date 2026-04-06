@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
 import './globals.css';
-import { AppShell } from '@/layouts/AppShell';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
-import { FirebaseAuthSync } from '@/components/FirebaseAuthSync';
+import { ClientAppProviders } from '@/components/providers/ClientAppProviders';
 import { getPrimarySiteUrl, isPrimaryProductionDeployment } from '@/lib/seo';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
@@ -96,13 +94,8 @@ export default function RootLayout({
     <html lang="id" suppressHydrationWarning>
       <body className="font-sans antialiased tct-body" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" enableSystem={false} disableTransitionOnChange>
-          <FirebaseClientProvider>
-            <FirebaseAuthSync />
-            <AppShell>
-              {children}
-            </AppShell>
-            <Toaster />
-          </FirebaseClientProvider>
+          <ClientAppProviders>{children}</ClientAppProviders>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

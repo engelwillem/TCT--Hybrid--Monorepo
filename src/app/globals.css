@@ -46,14 +46,15 @@
   --radius-md: 24px;
   --radius-sm: 16px;
 
-  @keyframes tct-shimmer {
-    0% {
-      background-position: -220% 0;
-    }
+}
 
-    100% {
-      background-position: 220% 0;
-    }
+@keyframes tct-shimmer {
+  0% {
+    background-position: -220% 0;
+  }
+
+  100% {
+    background-position: 220% 0;
   }
 }
 
@@ -296,12 +297,14 @@ body {
     background: rgba(255, 255, 255, 0.84);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    @apply ring-1 ring-black/[0.04] shadow-[0_24px_60px_rgba(15,23,42,0.08)];
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgb(15 23 42 / 0.04);
   }
 
   .dark .glass-panel {
     background: hsl(240 5% 9% / 0.84);
-    @apply ring-1 ring-white/[0.06] shadow-[0_24px_60px_rgba(0,0,0,0.4)];
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgb(255 255 255 / 0.06);
   }
 
   .safe-bottom {
@@ -403,5 +406,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200/50 rounded-full hover:bg-slate-300 transition-colors;
+  background: rgb(226 232 240 / 0.5);
+  border-radius: 9999px;
+  transition: background-color 150ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(203 213 225);
 }

@@ -137,3 +137,11 @@ docs/CORE/architecture/SANITIZATION_CONTRACT_AUDIT_2026-04-06.md
 docs/CORE/architecture/TCT_EXECUTIVE_AUDIT_P0_P1_P2_2026-04-06.md
 docs/CORE/architecture/TECHNICAL_DEBT_REGISTER_2026-04-05.md
 installed_software.txt
+.codex-devstudio.err
+.codex-devturbo.err
+.codex-globals.css.bak
+root_error.png
+.codex-layout.tsx.bak
+.codex-page.tsx.bak
+docs/CORE/architecture/laravel-decoupled-hybrid/TECH STACK TCT.md
+docs/CORE/implementation/DOCKER COMMAND.md

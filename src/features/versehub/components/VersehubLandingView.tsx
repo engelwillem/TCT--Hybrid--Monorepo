@@ -40,71 +40,63 @@ export function VersehubLandingView({
     activeMood,
 }: VersehubLandingViewProps) {
     return (
-        <>
-            <motion.header
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top,0px)]"
-            >
-                <div className="mx-auto flex w-full max-w-[620px] items-start justify-between gap-4 px-6 pt-5 pb-4">
+        <div className="relative flex flex-1 flex-col bg-white">
+            {/* Header: Fixed Height & Proper Spacing */}
+            <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md pt-[env(safe-area-inset-top,16px)]">
+                <div className="mx-auto flex w-full max-w-[620px] items-center justify-between gap-4 px-6 py-4">
                     <button
                         type="button"
                         onClick={onBackToday}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-sky-600 ring-1 ring-sky-200/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] backdrop-blur-[10px] transition-all duration-300 hover:bg-slate-900/12 hover:ring-slate-900/8 hover:shadow-[0_14px_34px_-24px_rgba(15,23,42,0.28)] active:scale-95"
+                        className="flex h-10 w-10 min-w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 ring-1 ring-slate-200 transition-all hover:bg-slate-100 active:scale-95"
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </button>
 
-                    <div className="ml-auto flex max-w-[24rem] flex-col text-right">
-                        <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40">
+                    <div className="flex flex-col text-right">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
                             {liveDateLabel}
                         </span>
-                        <h1 className="text-[22px] font-semibold leading-[1.22] tracking-[-0.01em] text-foreground/95 md:text-[25px]">
-                            {memberName ? `${memberName}, selamat datang kembali` : "Selamat datang kembali"}
+                        <h1 className="text-[18px] font-semibold leading-tight text-slate-900 md:text-[20px]">
+                            {memberName ? `${memberName}, Selamat Datang` : "Selamat Datang Kembali"}
                         </h1>
-                        <p className="mt-1 text-[13px] font-medium leading-[1.45] tracking-[0.01em] text-foreground/60 md:text-[14px]">
-                            Chosen People
-                        </p>
                     </div>
                 </div>
-            </motion.header>
+            </header>
 
             <main
-                className="relative z-10 flex flex-1 flex-col overflow-y-auto"
+                className="relative z-10 flex flex-1 flex-col overflow-y-auto px-6"
                 style={{ paddingBottom: landingContentPadding }}
             >
-                <div className="relative z-10 mx-auto min-h-screen w-full max-w-[620px] pt-24">
+                <div className="mx-auto w-full max-w-[620px] pt-12">
                     <motion.section
-                        initial={{ opacity: 0, y: 18 }}
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.45, ease: "easeOut" }}
-                        className="px-6"
+                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="rounded-[34px] border border-white/70 bg-white/92 px-6 py-7 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.26)] backdrop-blur-xl">
-                            <div className="flex items-center gap-3 text-[#0f172a]/55">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7f4ff] text-[#0ea5e9]">
-                                    <BookOpenText className="h-5 w-5" />
+                        <div className="rounded-[40px] bg-white p-8 shadow-sm ring-1 ring-slate-100">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+                                    <BookOpenText className="h-6 w-6" />
                                 </div>
-                                <div>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#0ea5e9]">
+                                <div className="flex flex-col">
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-500">
                                         VerseHub
                                     </p>
-                                    <p className="mt-1 text-[13px] font-medium text-foreground/45">
-                                        Baca firman dengan ritme yang tenang dan sederhana.
+                                    <p className="text-[14px] font-medium text-slate-400">
+                                        Ritme tenang untuk jiwa yang lelah.
                                     </p>
                                 </div>
                             </div>
 
-                            <h2 className="mt-6 text-[34px] font-semibold leading-[1.14] tracking-[-0.03em] text-foreground/95 md:text-[40px]">
-                                Buka satu pasal. Tinggal lebih lama di firman.
+                            <h2 className="mt-8 text-[32px] font-semibold leading-[1.2] tracking-[-0.03em] text-slate-900 md:text-[40px]">
+                                Buka satu pasal.<br />Tinggal lebih lama di firman.
                             </h2>
 
-                            <blockquote className="mt-5 tct-serif text-[25px] leading-[1.65] tracking-[-0.015em] text-foreground/92">
+                            <blockquote className="mt-8 font-serif text-[26px] leading-[1.7] tracking-tight text-slate-700 italic border-l-2 border-sky-100 pl-6">
                                 {activeScene.quote}
                             </blockquote>
 
-                            <p className="mt-5 text-[15px] leading-7 text-foreground/70">
+                            <p className="mt-8 text-[16px] leading-[1.8] text-slate-500">
                                 {activeScene.invitation}
                             </p>
 
@@ -114,43 +106,48 @@ export function VersehubLandingView({
                                 onSelect={onQuickStartMood}
                             />
 
-                            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                            <div className="mt-12 flex flex-col gap-4 sm:flex-row">
                                 <button
                                     type="button"
                                     onClick={onStartFirstChapter}
-                                    className="group inline-flex items-center justify-between rounded-full bg-[#0f172a] px-6 py-4 text-[15px] font-semibold text-white shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)] transition-all duration-300 hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] active:scale-[0.98]"
+                                    className="group flex flex-1 items-center justify-between rounded-full bg-slate-900 px-6 py-4 text-[15px] font-bold text-white shadow-soft transition-all hover:bg-slate-800 active:scale-95"
                                 >
-                                    <span>Mulai dari {firstBookLabel} pasal 1</span>
-                                    <ArrowRight className="ml-3 h-4 w-4" />
+                                    <span>Mulai dari {firstBookLabel}</span>
+                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={onOpenPicker}
-                                    className="inline-flex items-center justify-center rounded-full border border-white/80 bg-white/92 px-6 py-4 text-[15px] font-semibold text-[#0f172a] shadow-[0_22px_60px_-34px_rgba(15,23,42,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-[1px] hover:border-sky-300/45 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,246,255,0.84))] active:scale-[0.985]"
+                                    className="flex flex-1 items-center justify-center rounded-full bg-white px-6 py-4 text-[15px] font-bold text-slate-700 ring-1 ring-slate-200 transition-all hover:bg-slate-50 active:scale-95"
                                 >
-                                    Lihat daftar kitab
+                                    Pilih Kitab
                                 </button>
                             </div>
 
                             {continueReadingHref && continueReadingLabel ? (
-                                <button
-                                    type="button"
-                                    onClick={onContinueReading}
-                                    className="mt-4 inline-flex items-center gap-3 rounded-full bg-black/[0.04] px-5 py-3 text-[14px] font-medium text-foreground/75 transition-colors hover:bg-black/[0.06]"
-                                >
-                                    <span className="text-foreground/45">Lanjutkan:</span>
-                                    <span className="font-semibold text-foreground/80">{continueReadingLabel}</span>
-                                </button>
+                                <div className="mt-8">
+                                    <button
+                                        type="button"
+                                        onClick={onContinueReading}
+                                        className="inline-flex w-full items-center justify-between rounded-2xl bg-slate-50 px-6 py-4 transition-all hover:bg-slate-100 ring-1 ring-slate-100"
+                                    >
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lanjutkan</span>
+                                            <span className="text-[15px] font-bold text-slate-700">{continueReadingLabel}</span>
+                                        </div>
+                                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                                    </button>
+                                </div>
                             ) : null}
 
-                            <p className="mt-6 text-[14px] leading-6 text-foreground/50">
+                            <p className="mt-10 border-t border-slate-50 pt-8 text-[13px] leading-relaxed text-slate-400">
                                 {activeScene.reflection}
                             </p>
                         </div>
                     </motion.section>
                 </div>
             </main>
-        </>
+        </div>
     );
 }
