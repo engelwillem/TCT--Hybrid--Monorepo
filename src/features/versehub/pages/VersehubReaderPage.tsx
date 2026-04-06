@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     Bookmark,
     ChevronLeft,
     Heart,
-    Loader2,
     MessageSquare,
     MessageSquareText,
     Send,
@@ -21,6 +20,7 @@ import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { getVerseShareUrl } from "@/lib/share";
 import { trackVersehubEvent } from "@/features/versehub/analytics";
 import { VersehubLandingView } from "@/features/versehub/components/VersehubLandingView";
+import { VersehubLoadingScreen } from "@/features/versehub/components/VersehubLoadingScreen";
 import { VersehubReaderView } from "@/features/versehub/components/VersehubReaderView";
 import { VersehubControlCenter, type ControlCenterItem } from "@/features/versehub/components/VersehubControlCenter";
 import { buildTodayDateLabel, landingContentPadding, readerContentPadding, SANCTUARY_SCENES } from "@/features/versehub/constants";
@@ -62,10 +62,9 @@ export function VersehubReaderPage({
     initialChapterRef = null,
     initialVerseRef = null,
 }: VersehubReaderPageProps) {
-    const params = useParams<{ lang: string }>();
     const router = useRouter();
     const { identity, status: authStatus, isAuthenticated } = useAuthSession();
-    const lang = params?.lang || initialLang || "id";
+    const lang = initialLang || "id";
     const isLandingMode = mode === "landing";
     const isChapterMode = mode === "chapter";
     const isVerseMode = mode === "verse";
@@ -675,14 +674,7 @@ export function VersehubReaderPage({
     };
 
     if (loading) {
-        return (
-            <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--vh-bg)] text-[var(--vh-text-primary)] transition-colors duration-500">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-[var(--vh-text-muted)]" />
-                    <p className="text-[12px] font-black uppercase tracking-[0.2em] text-[var(--vh-text-muted)]">Menyiapkan Ruang Doa...</p>
-                </div>
-            </div>
-        );
+        return <VersehubLoadingScreen label="Menyiapkan ruang doa VerseHub..." />;
     }
 
     if (error && isChapterMode) {
@@ -726,20 +718,17 @@ export function VersehubReaderPage({
     }
 
     return (
-        <div className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-[var(--vh-bg)] text-[var(--vh-text-primary)] selection:bg-[var(--vh-accent)]/30">
-            <div
-                className="pointer-events-none fixed inset-0 z-0 opacity-[0.05]"
-                style={{
-                    backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)",
-                    backgroundSize: "24px 24px",
-                }}
-            />
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_top,rgba(22,22,24,0.8)_0%,#0A0A0B_60%)]" />
-                <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-[#2A67FF]/[0.03] blur-[120px]" />
-                <div className="absolute bottom-[-20%] left-[-10%] h-[400px] w-[400px] rounded-full bg-white/[0.015] blur-[100px]" />
-                <div className="absolute left-[12%] top-[28%] h-56 w-56 rounded-full bg-[var(--vh-accent)]/[0.01] blur-3xl" />
-            </div>
+        <div className={cn(
+            "relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-transparent text-[var(--vh-text-primary)] selection:bg-[var(--vh-accent)]/30",
+        )}>
+            {!isLandingMode ? (
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_top,rgba(22,22,24,0.8)_0%,#0A0A0B_60%)]" />
+                    <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-[#2A67FF]/[0.03] blur-[120px]" />
+                    <div className="absolute bottom-[-20%] left-[-10%] h-[400px] w-[400px] rounded-full bg-white/[0.015] blur-[100px]" />
+                    <div className="absolute left-[12%] top-[28%] h-56 w-56 rounded-full bg-[var(--vh-accent)]/[0.01] blur-3xl" />
+                </div>
+            ) : null}
 
             {isLandingMode && (
                 <VersehubLandingView

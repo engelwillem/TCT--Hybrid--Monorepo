@@ -16,7 +16,7 @@ export function MoodQuickStart({
 }: MoodQuickStartProps) {
     return (
         <div className="mt-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--vh-text-muted)]">
+            <p className="text-[12px] font-medium tracking-wide text-foreground/40">
                 Mulai dari yang kamu rasakan hari ini
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -30,15 +30,14 @@ export function MoodQuickStart({
                             whileTap={{ scale: 0.98 }}
                             onClick={() => onSelect(option.key)}
                             className={[
-                                "group relative overflow-hidden rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] backdrop-blur-2xl ring-1 transition",
+                                "rounded-full px-5 py-[12px] text-[15px] font-medium transition-colors",
                                 isActive
-                                    ? "bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(232,244,255,0.94))] text-slate-900 ring-[#bfdbfe]/70 shadow-[0_22px_50px_-34px_rgba(37,99,235,0.45)]"
-                                    : "bg-white/8 text-[var(--vh-text-secondary)] ring-white/10 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)] hover:bg-white/12",
+                                    ? "bg-[#0f172a] text-white"
+                                    : "bg-black/[0.05] text-foreground/70 hover:bg-black/[0.08]",
                             ].join(" ")}
                             title={option.description}
                         >
-                            <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_70%)] opacity-80" />
-                            <span className="relative z-10">{option.label}</span>
+                            <span>{option.label}</span>
                         </motion.button>
                     );
                 })}

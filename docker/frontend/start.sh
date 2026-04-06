@@ -56,7 +56,18 @@ if [ "$needs_build" -eq 1 ]; then
 fi
 
 if [ -f .next/standalone/server.js ]; then
-  exec env NODE_ENV=production HOSTNAME=0.0.0.0 PORT=9002 node .next/standalone/server.js
+  mkdir -p .next/standalone/.next/static
+
+  if [ -d public ]; then
+    rm -rf .next/standalone/public
+    cp -R public .next/standalone/public
+  fi
+
+  rm -rf .next/standalone/.next/static/*
+  cp -R .next/static/. .next/standalone/.next/static/
+
+  cd .next/standalone
+  exec env NODE_ENV=production HOSTNAME=0.0.0.0 PORT=9002 node server.js
 fi
 
 exec env NODE_ENV=production npx next start -H 0.0.0.0 -p 9002

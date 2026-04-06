@@ -1,6 +1,3 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import { VersehubReaderPage } from "@/features/versehub/pages/VersehubReaderPage";
 
 const isChapterSlug = (slug: string) => {
@@ -10,10 +7,12 @@ const isChapterSlug = (slug: string) => {
     return segments.length === 2 || /^[a-z]+\d+$/i.test(slug);
 };
 
-export default function UnifiedVerseHubPage() {
-    const params = useParams<{ lang: string; slug: string }>();
-    const lang = params?.lang || "id";
-    const slug = params?.slug || "";
+export default async function UnifiedVerseHubPage({
+    params,
+}: {
+    params: Promise<{ lang: string; slug: string }>;
+}) {
+    const { lang = "id", slug = "" } = await params;
     const mode = isChapterSlug(slug) ? "chapter" : "verse";
 
     return (

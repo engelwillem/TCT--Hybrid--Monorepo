@@ -140,15 +140,15 @@
     --nav-glass: 240 5% 4% / 0.7;
 
     /* VerseHub legacy aliases — auto-inherit dark palette */
-    --vh-bg: hsl(240 5% 4%);
-    --vh-surface: hsl(240 5% 9%);
-    --vh-surface-elevated: hsl(240 5% 12%);
-    --vh-border: hsl(240 5% 18%);
-    --vh-text-primary: hsl(240 5% 90%);
-    --vh-text-secondary: hsl(240 5% 65%);
-    --vh-text-muted: hsl(240 5% 46%);
-    --vh-accent: hsl(223 100% 58%);
-    --vh-accent-glow: hsl(223 100% 58% / 0.15);
+    --vh-bg: hsl(var(--background));
+    --vh-surface: hsl(var(--surface));
+    --vh-surface-elevated: hsl(var(--surface-elevated));
+    --vh-border: hsl(var(--border) / 0.4);
+    --vh-text-primary: hsl(var(--foreground));
+    --vh-text-secondary: hsl(var(--muted-foreground));
+    --vh-text-muted: hsl(var(--muted-foreground));
+    --vh-accent: hsl(var(--accent));
+    --vh-accent-glow: hsl(var(--accent) / 0.15);
   }
 }
 

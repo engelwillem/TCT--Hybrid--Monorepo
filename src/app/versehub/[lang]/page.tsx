@@ -1,12 +1,12 @@
 
-"use client";
-
-import { useParams } from "next/navigation";
 import { VersehubReaderPage } from "@/features/versehub/pages/VersehubReaderPage";
 
-export default function Page() {
-  const params = useParams<{ lang: string }>();
-  const lang = params?.lang || "id";
-  
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang = "id" } = await params;
+
   return <VersehubReaderPage lang={lang} mode="landing" />;
 }

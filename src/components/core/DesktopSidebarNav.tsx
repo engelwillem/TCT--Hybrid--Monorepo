@@ -39,7 +39,7 @@ export default function DesktopSidebarNav({
     return (
         <aside
             className={cn(
-                'flex flex-col gap-4 rounded-3xl bg-surface p-6 shadow-soft',
+                'flex flex-col gap-4 rounded-[34px] border border-white/70 bg-white/92 p-6 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.18)] backdrop-blur-xl',
                 className,
             )}
             style={{ position: 'sticky', top: '2rem', alignSelf: 'start' }}
@@ -49,7 +49,7 @@ export default function DesktopSidebarNav({
                     className={cn(
                         isTodaySidebar
                             ? 'tct-brand-gradient text-base font-bold tracking-tight'
-                            : 'text-xs font-medium uppercase tracking-wide text-muted-foreground',
+                            : 'text-xs font-medium uppercase tracking-wide text-foreground/40',
                     )}
                 >
                     {isTodaySidebar ? 'Choose n Talks' : appName}
@@ -67,8 +67,8 @@ export default function DesktopSidebarNav({
                     const baseClass = cn(
                         'group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-all duration-200',
                         isActive
-                            ? 'bg-surface/70 text-foreground ring-1 ring-black/5 dark:ring-white/10'
-                            : 'text-muted-foreground hover:bg-surface-muted hover:text-foreground',
+                            ? 'bg-[#f3f7fb] text-foreground ring-1 ring-sky-100 shadow-[0_10px_24px_-18px_rgba(14,165,233,0.24)]'
+                            : 'text-foreground/55 hover:bg-black/[0.04] hover:text-foreground/80',
                     );
 
                     return (
@@ -84,7 +84,7 @@ export default function DesktopSidebarNav({
                                 className={cn(
                                     isActive
                                         ? 'text-foreground'
-                                        : 'text-muted-foreground group-hover:text-foreground',
+                                        : 'text-foreground/45 group-hover:text-foreground/75',
                                 )}
                             />
                             <span className="flex-1">{item.label}</span>
@@ -94,20 +94,34 @@ export default function DesktopSidebarNav({
             </nav>
 
             {isAuthenticated ? (
-                <div className="mt-auto flex items-center gap-3 rounded-2xl bg-surface-muted p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-sm font-semibold">
+                <div className="mt-auto flex items-center gap-3 rounded-[24px] bg-[#f8fbff] p-3 ring-1 ring-black/[0.04]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold text-foreground/75 ring-1 ring-sky-100">
                         {initials}
                     </div>
                     <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
+                        <p className="truncate text-sm font-semibold text-foreground/85">
                             {userName}
                         </p>
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate text-xs text-foreground/45">
                             {userEmail}
                         </p>
                     </div>
                 </div>
-            ) : null}
+            ) : (
+                <div className="mt-auto flex items-center gap-3 rounded-[24px] bg-[#f8fbff] p-3 ring-1 ring-black/[0.04]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold text-foreground/75 ring-1 ring-sky-100">
+                        {initials}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground/85">
+                            Guest
+                        </p>
+                        <p className="truncate text-xs text-foreground/45">
+                            {communityName}
+                        </p>
+                    </div>
+                </div>
+            )}
         </aside>
     );
 }
