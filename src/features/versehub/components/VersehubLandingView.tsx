@@ -67,7 +67,7 @@ export function VersehubLandingView({
             </header>
 
             <main
-                className="relative z-10 flex flex-1 flex-col overflow-y-auto px-6"
+                className="relative z-10 flex flex-col overflow-visible px-6"
                 style={{ paddingBottom: landingContentPadding }}
             >
                 <div className="mx-auto w-full max-w-[620px] pt-12">

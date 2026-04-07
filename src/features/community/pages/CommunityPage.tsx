@@ -700,7 +700,7 @@ export function CommunityPage() {
                   value={tab.id}
                   className={cn(
                     "relative z-10 h-full flex-1 rounded-[20px] text-[12px] font-black uppercase tracking-widest transition-all duration-300",
-                    "data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-lg",
+                    "data-[state=active]:bg-[#00A9D6] data-[state=active]:text-white data-[state=active]:shadow-[0_14px_28px_-18px_rgba(0,169,214,0.75)]",
                     "data-[state=inactive]:text-muted-foreground/60 hover:text-foreground/80"
                   )}
                 >
@@ -896,7 +896,7 @@ export function CommunityPage() {
                                 className={cn(
                                   "inline-flex min-h-11 shrink-0 snap-center items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-[12px] font-bold tracking-wide transition-all duration-300 ease-out",
                                   active
-                                    ? "bg-slate-950 text-white shadow-[0_18px_40px_-22px_rgba(15,23,42,0.55)]"
+                                    ? "bg-[#00A9D6] text-white shadow-[0_18px_40px_-22px_rgba(0,169,214,0.65)]"
                                     : "border border-slate-200/85 bg-white/92 text-slate-600 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900"
                                 )}
                               >
@@ -974,7 +974,7 @@ export function CommunityPage() {
                       <button
                         type="button"
                         onClick={() => fetchData()}
-                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#00A9D6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0095BE]"
                       >
                         Muat ulang arsip
                       </button>
@@ -1018,7 +1018,7 @@ export function CommunityPage() {
                             setArchiveCategory("all");
                             startTransition(() => setArchiveSearchQuery(""));
                           }}
-                          className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                          className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#00A9D6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0095BE]"
                         >
                           Reset pencarian
                         </button>
