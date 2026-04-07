@@ -59,7 +59,7 @@ export function VersehubLandingView({
                                 The Chosen Talks
                             </p>
                         </div>
-                        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 md:mt-0">
+                        <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 md:mt-0">
                             VerseHub
                         </p>
                     </div>

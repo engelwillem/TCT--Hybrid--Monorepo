@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import AppIcon from '@/components/system/AppIcon';
 import Link from 'next/link';
@@ -49,11 +50,16 @@ export default function DesktopSidebarNav({
     const resolvedName = userName?.trim() || 'Guest';
     const resolvedInitials = (initials?.trim() || (isGuest ? 'G' : resolvedName.slice(0, 1) || 'U')).toUpperCase();
     const resolvedAvatarUrl = isGuest ? null : avatarUrl;
+    const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
     const avatarPresentation = useCurrentUserAvatarStyle(
         resolvedAvatarUrl,
         { name: resolvedName },
         32,
     );
+
+    useEffect(() => {
+        setAvatarLoadFailed(false);
+    }, [resolvedAvatarUrl]);
 
     return (
         <aside
@@ -107,12 +113,13 @@ export default function DesktopSidebarNav({
             <div className="mt-4 border-t border-black/[0.04] pt-4">
                 <div className="flex items-center gap-3 px-2">
                     <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f8fbff] text-[12px] font-semibold text-foreground/70 ring-1 ring-sky-100">
-                        {resolvedAvatarUrl ? (
+                        {resolvedAvatarUrl && !avatarLoadFailed ? (
                             <img
                                 src={resolvedAvatarUrl}
                                 alt={resolvedName}
                                 className={cn('h-full w-full object-cover', avatarPresentation.className)}
                                 style={avatarPresentation.style}
+                                onError={() => setAvatarLoadFailed(true)}
                             />
                         ) : (
                             resolvedInitials
