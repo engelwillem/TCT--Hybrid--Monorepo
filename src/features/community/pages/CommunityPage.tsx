@@ -666,7 +666,7 @@ export function CommunityPage() {
     <div className="flex h-full flex-col animate-in fade-in duration-700 md:py-6">
       <header className={cn(pageShellClassName, "pb-8 pt-0")}>
         <div className={narrowColumnClassName}>
-          <p className="mb-4 mt-4 text-center text-[11px] font-bold uppercase tracking-[0.15em] text-foreground/30 md:mt-0">Community</p>
+          <p className="mb-8 mt-4 text-center text-[11px] font-bold uppercase tracking-[0.15em] text-foreground/30 md:mb-4 md:mt-0">Community</p>
           <h1 className="tct-serif mb-2 text-[26px] leading-[1.25] tracking-tight text-foreground/90">
             Ruang berbagi dan bertumbuh bersama.
           </h1>
