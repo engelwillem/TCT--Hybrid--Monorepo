@@ -81,15 +81,7 @@ export function VersehubLandingView({
                                 </p>
                             </div>
 
-                            <h2 className="tct-serif text-[32px] font-medium leading-[1.2] text-slate-900 md:text-[40px] mb-8">
-                                Buka satu pasal.<br />Tinggal lebih lama di firman.
-                            </h2>
-
-                            <p className="text-[16px] leading-[1.8] text-slate-500 max-w-sm mb-4">
-                                {activeScene.invitation}
-                            </p>
-
-                            <blockquote className="font-serif text-[20px] leading-[1.7] tracking-tight text-slate-700 italic border-l-2 border-slate-200 pl-4 py-1 my-8 max-w-md">
+                            <blockquote className="font-serif text-[32px] font-medium leading-[1.2] tracking-tight text-slate-700 italic border-l-2 border-slate-200 pl-4 py-1 my-8 max-w-md md:text-[40px]">
                                 {activeScene.quote}
                             </blockquote>
 

@@ -17,7 +17,7 @@ export function MoodQuickStart({
     return (
         <div className="mt-8">
             <p className="text-[12px] font-medium tracking-wide text-slate-400">
-                Mulai dari yang kamu rasakan hari ini
+                apa kabarnya hari ini?
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2.5">
                 {options.map((option) => {

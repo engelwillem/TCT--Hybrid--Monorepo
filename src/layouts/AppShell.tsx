@@ -142,6 +142,7 @@ function ShellFrame({
   const isAuthSurface = isAuthSurfacePath(pathname);
   const isReader = isVersehubPath(pathname);
   const isTodayRitual = isTodayRitualPath(pathname);
+  const centerMobileBrand = pathname === "/profile" || pathname === "/community";
 
   if (isLanding) {
     return (
@@ -245,7 +246,12 @@ function ShellFrame({
             }
           >
             {!isLanding && !isAuthSurface && !isTodayRitual && !isReader && (
-              <div className="mb-4 mt-0 flex items-center justify-between md:hidden">
+              <div
+                className={cn(
+                  "mb-4 mt-0 flex items-center md:hidden",
+                  centerMobileBrand ? "justify-center" : "justify-between"
+                )}
+              >
                 <div className="flex items-center gap-2 opacity-[0.65]">
                   <TCTLogo className="h-4 w-4 drop-shadow-sm" />
                   <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-foreground">
