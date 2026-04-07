@@ -53,13 +53,13 @@ export function VersehubLandingView({
                     </button>
 
                     <div className="flex flex-1 flex-col items-center pr-10 text-center">
-                        <div className="flex items-center gap-2 opacity-[0.65]">
+                        <div className="flex items-center gap-2 opacity-[0.65] md:hidden">
                             <TCTLogo className="h-4 w-4 drop-shadow-sm" />
                             <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-900">
                                 The Chosen Talks
                             </p>
                         </div>
-                        <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 md:mt-0">
                             VerseHub
                         </p>
                     </div>
