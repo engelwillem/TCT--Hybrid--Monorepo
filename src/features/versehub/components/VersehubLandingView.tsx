@@ -43,7 +43,7 @@ export function VersehubLandingView({
     return (
         <div className="relative flex flex-1 flex-col bg-white">
             <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md pt-[env(safe-area-inset-top,16px)]">
-                <div className="mx-auto flex w-full max-w-[620px] items-start gap-4 px-6 py-4">
+                <div className="mx-auto flex w-full max-w-[620px] items-start gap-4 px-6 py-4 md:items-center">
                     <button
                         type="button"
                         onClick={onBackToday}
@@ -52,14 +52,14 @@ export function VersehubLandingView({
                         <ChevronLeft className="h-5 w-5" />
                     </button>
 
-                    <div className="flex flex-1 flex-col items-center pr-10 text-center">
+                    <div className="flex flex-1 flex-col items-center pr-10 text-center md:pr-0">
                         <div className="flex items-center gap-2 opacity-[0.65] md:hidden">
                             <TCTLogo className="h-4 w-4 drop-shadow-sm" />
                             <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-900">
                                 The Chosen Talks
                             </p>
                         </div>
-                        <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 md:mt-0">
+                        <p className="mt-4 text-[11px] font-bold uppercase leading-none tracking-[0.2em] text-slate-400 md:mt-0">
                             VerseHub
                         </p>
                     </div>
