@@ -41,8 +41,8 @@ export function VersehubLandingView({
     activeMood,
 }: VersehubLandingViewProps) {
     return (
-        <div className="relative flex flex-1 flex-col bg-white">
-            <header className="sticky top-0 z-50 w-full border-b border-[#EEE4D5] bg-white/88 backdrop-blur-md pt-[env(safe-area-inset-top,16px)]">
+        <div className="relative flex flex-1 flex-col bg-transparent">
+            <header className="sticky top-0 z-50 w-full border-b border-[#EEE4D5] bg-transparent pt-[env(safe-area-inset-top,16px)]">
                 <div className="mx-auto flex w-full max-w-[620px] items-start gap-4 px-6 py-4 md:items-center">
                     <button
                         type="button"

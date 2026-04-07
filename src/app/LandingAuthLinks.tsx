@@ -5,19 +5,53 @@ import Link from "next/link";
 import { getAppAccessToken, getAppAuthUser } from "@/services/app-auth-token";
 
 export function LandingAuthLinks() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const syncAuthState = () => {
-      setIsAuthenticated(Boolean(getAppAccessToken() || getAppAuthUser()));
+    let isActive = true;
+
+    const syncAuthState = async () => {
+      const hasLocalSession = Boolean(getAppAccessToken() || getAppAuthUser());
+      if (hasLocalSession) {
+        if (isActive) setIsAuthenticated(true);
+        return;
+      }
+
+      try {
+        const persistence =
+          window.localStorage.getItem("tct_app_auth_persistence") ||
+          window.sessionStorage.getItem("tct_app_auth_persistence") ||
+          "session";
+
+        const response = await fetch(`/api/auth/session?persistence=${encodeURIComponent(persistence)}`, {
+          method: "GET",
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+
+        const payload = await response.json().catch(() => null) as {
+          authenticated?: boolean;
+        } | null;
+
+        if (isActive) {
+          setIsAuthenticated(Boolean(response.ok && payload?.authenticated));
+        }
+      } catch {
+        if (isActive) {
+          setIsAuthenticated(false);
+        }
+      }
     };
 
-    syncAuthState();
+    void syncAuthState();
     window.addEventListener("storage", syncAuthState);
-    return () => window.removeEventListener("storage", syncAuthState);
+    return () => {
+      isActive = false;
+      window.removeEventListener("storage", syncAuthState);
+    };
   }, []);
 
-  if (isAuthenticated) {
+  if (isAuthenticated === null || isAuthenticated) {
     return null;
   }
 

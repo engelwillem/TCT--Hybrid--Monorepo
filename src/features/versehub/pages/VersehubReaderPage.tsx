@@ -218,7 +218,8 @@ export function VersehubReaderPage({
 
   return (
     <div className={cn(
-      "relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden bg-[#FAFCFF] text-slate-800 selection:bg-sky-100",
+      "relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden text-slate-800 selection:bg-sky-100",
+      isLandingMode ? "bg-transparent" : "bg-[#FAFCFF]",
     )}>
       {!isLandingMode ? (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
