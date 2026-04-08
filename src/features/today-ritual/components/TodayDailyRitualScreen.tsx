@@ -8,7 +8,13 @@ import Link from 'next/link';
 import { useAuthSession } from '@/auth/use-auth-session';
 import { CommunityService } from '@/services/community.service';
 import type { TodaySessionContent } from '../content/today-session.types';
-import { buildPersonalRenungan, generatePersonalRenungan } from '../content/personal-renungan';
+import type { RenunganMatch } from '../content/personal-renungan';
+import {
+  buildPersonalRenungan,
+  generatePersonalRenungan,
+  normalizeReflectionForCache,
+  preparePersonalRenungan,
+} from '../content/personal-renungan';
 import { useTodayRitualProgress } from '../hooks/useTodayRitualProgress';
 import { useMotionConfig } from '../hooks/useMotionConfig';
 import TodayHeader from './TodayHeader';
@@ -70,6 +76,10 @@ export default function TodayDailyRitualScreen({
   const [bookmarkSuccessNote, setBookmarkSuccessNote] = useState<string | null>(null);
   const [activeActionText, setActiveActionText] = useState<string | null>(null);
   const [isGeneratingRenungan, setIsGeneratingRenungan] = useState(false);
+  const [preparedRenungan, setPreparedRenungan] = useState<{
+    cacheKey: string;
+    result: RenunganMatch;
+  } | null>(null);
   const isAuthRestoring = authStatus === 'restoring';
   const memberName = authStatus === 'authenticated' && !identity.isGuest ? identity.name : null;
   const [personalRenungan, setPersonalRenungan] = useState(() =>
@@ -85,8 +95,11 @@ export default function TodayDailyRitualScreen({
     () => `${personalRenungan.meditation} — ${personalRenungan.verseReference}`,
     [personalRenungan]
   );
+  const reflectionCacheKey = useMemo(() => normalizeReflectionForCache(reflectionText), [reflectionText]);
   const meditationRef = useRef<HTMLDivElement>(null);
   const verseRevealRef = useRef<HTMLDivElement>(null);
+  const prepareTimerRef = useRef<number | null>(null);
+  const prepareAbortRef = useRef<AbortController | null>(null);
   const ritualStage = useMemo(() => {
     if (isPrayerCompleted) return 'complete';
     if (isReflectDone) return 'meditation';
@@ -107,6 +120,77 @@ export default function TodayDailyRitualScreen({
     }
     setActiveActionText(null);
   }, [reflectionText, ritualStage]);
+
+  useEffect(() => {
+    if (ritualStage !== 'reflect' || isReflectDone || isPrayerCompleted) return;
+
+    if (prepareTimerRef.current) {
+      window.clearTimeout(prepareTimerRef.current);
+      prepareTimerRef.current = null;
+    }
+
+    if (reflectionCacheKey.length < 3) {
+      setPreparedRenungan(null);
+      if (prepareAbortRef.current) {
+        prepareAbortRef.current.abort();
+        prepareAbortRef.current = null;
+      }
+      return;
+    }
+
+    if (preparedRenungan?.cacheKey === reflectionCacheKey) {
+      return;
+    }
+
+    prepareTimerRef.current = window.setTimeout(() => {
+      if (prepareAbortRef.current) {
+        prepareAbortRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      prepareAbortRef.current = controller;
+
+      void preparePersonalRenungan(reflectionText, sessionContent, { signal: controller.signal })
+        .then((prepared) => {
+          if (!prepared) return;
+          setPreparedRenungan({
+            cacheKey: normalizeReflectionForCache(reflectionText),
+            result: prepared,
+          });
+        })
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return;
+          }
+        });
+    }, 520);
+
+    return () => {
+      if (prepareTimerRef.current) {
+        window.clearTimeout(prepareTimerRef.current);
+        prepareTimerRef.current = null;
+      }
+    };
+  }, [
+    isPrayerCompleted,
+    isReflectDone,
+    preparedRenungan?.cacheKey,
+    reflectionCacheKey,
+    reflectionText,
+    ritualStage,
+    sessionContent,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (prepareAbortRef.current) {
+        prepareAbortRef.current.abort();
+      }
+      if (prepareTimerRef.current) {
+        window.clearTimeout(prepareTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isHydrating || !isReflectDone || isPrayerCompleted) return;
@@ -204,10 +288,12 @@ export default function TodayDailyRitualScreen({
 
     const reflection = reflectionText.trim();
     if (!reflection || isGeneratingRenungan) return;
+    const cacheKey = normalizeReflectionForCache(reflection);
+    const prepared = preparedRenungan?.cacheKey === cacheKey ? preparedRenungan.result : null;
 
     setIsGeneratingRenungan(true);
     try {
-      const generated = await generatePersonalRenungan(reflection, sessionContent);
+      const generated = prepared ?? (await generatePersonalRenungan(reflection, sessionContent));
       setPersonalRenungan(generated);
     } finally {
       setIsGeneratingRenungan(false);

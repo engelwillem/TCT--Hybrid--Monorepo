@@ -6,6 +6,7 @@ import { Bookmark, Check, Copy, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/auth/use-auth-session";
+import { AppIcon } from "@/features/community/components/AppIcon";
 import {
   buildWhatsAppShareUrl,
   copyToClipboard,
@@ -67,22 +68,27 @@ export default function TodayShareActionBar({
 
   return (
     <div className="mt-8 rounded-full border border-slate-200/80 bg-white/88 p-2 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.35)]">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-start gap-2">
         <motion.button
           whileTap={{ scale: 0.95 }}
           type="button"
           onClick={() => guardMemberAction(onSaveBookmark)}
           disabled={isRestoring || !onBookmark || bookmarked || isSaving}
+          aria-label={bookmarked ? "Bookmarked" : isSaving ? "Menyimpan bookmark" : "Bookmark"}
+          aria-pressed={bookmarked}
           className={cn(
-            "inline-flex h-11 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-all",
+            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
             bookmarked
-              ? "bg-sky-100 text-sky-700 ring-1 ring-inset ring-sky-200"
-              : "bg-slate-100/70 text-slate-700 hover:bg-slate-200/75",
+              ? "bg-brand/10 text-brand ring-1 ring-inset ring-brand/20"
+              : "bg-surface-muted/70 text-muted-foreground hover:bg-surface-muted hover:text-foreground",
             (isRestoring || !onBookmark || bookmarked || isSaving) ? "opacity-60" : ""
           )}
         >
-          {bookmarked ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-          <span>{bookmarked ? "Bookmarked" : isSaving ? "Menyimpan..." : "Bookmark"}</span>
+          {bookmarked ? (
+            <AppIcon icon={Check} variant="action" className="text-brand" />
+          ) : (
+            <AppIcon icon={Bookmark} variant="action" active={bookmarked} className={bookmarked ? "text-brand" : "opacity-70"} />
+          )}
         </motion.button>
 
         <motion.button
@@ -90,14 +96,17 @@ export default function TodayShareActionBar({
           type="button"
           onClick={() => guardMemberAction(onCopyLink)}
           disabled={isRestoring}
+          aria-label={copied ? "Teks renungan tersalin" : "Salin renungan"}
           className={cn(
-            "inline-flex h-11 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-all",
-            "bg-slate-100/70 text-slate-700 hover:bg-slate-200/75",
+            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted/70 text-muted-foreground transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
             isRestoring ? "opacity-60" : ""
           )}
         >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          <span>{copied ? "Tersalin" : "Salin"}</span>
+          {copied ? (
+            <AppIcon icon={Check} variant="action" className="text-brand" />
+          ) : (
+            <AppIcon icon={Copy} variant="action" className="opacity-70" />
+          )}
         </motion.button>
 
         <motion.button
@@ -105,14 +114,13 @@ export default function TodayShareActionBar({
           type="button"
           onClick={() => guardMemberAction(onShareWhatsApp)}
           disabled={isRestoring}
+          aria-label="Bagikan renungan"
           className={cn(
-            "ml-auto inline-flex h-11 items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all",
-            "bg-[#0f172a] text-white hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))]",
+            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted/70 text-muted-foreground transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
             isRestoring ? "opacity-60" : ""
           )}
         >
-          <MessageCircle className="h-4 w-4" />
-          <span>Bagikan</span>
+          <AppIcon icon={MessageCircle} variant="action" className="opacity-70" />
         </motion.button>
       </div>
     </div>

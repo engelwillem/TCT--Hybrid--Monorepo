@@ -14,10 +14,20 @@ export type RenunganMatch = {
     spiritual_need?: string;
     intent?: string;
     secondary_themes?: string[];
+    tone?: "positive" | "negative" | "neutral";
   };
 };
 
 const MATCHES: Array<{ keywords: string[]; result: RenunganMatch }> = [
+  {
+    keywords: ["syukur", "bersyukur", "berkat", "sukacita", "puji", "bahagia", "senang"],
+    result: {
+      verseText: "Bersyukurlah dalam segala hal, sebab itulah yang dikehendaki Allah di dalam Kristus Yesus bagi kamu.",
+      verseReference: "1 Tesalonika 5:18",
+      meditation:
+        "Syukurmu hari ini adalah doa yang hidup. Teruslah memandang kebaikan Tuhan dengan hati yang lembut, supaya sukacitamu tetap berakar pada kasih-Nya, bukan pada situasi yang berubah.",
+    },
+  },
   {
     keywords: ["cemas", "takut", "khawatir", "gelisah", "bingung"],
     result: {
@@ -69,6 +79,10 @@ function sanitizeReflectionText(text: string): string {
   return text.trim().toLowerCase();
 }
 
+export function normalizeReflectionForCache(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export function buildPersonalRenunganFallback(
   reflectionText: string,
   sessionContent: TodaySessionContent
@@ -102,7 +116,8 @@ export function buildPersonalRenungan(
 
 export async function generatePersonalRenungan(
   reflectionText: string,
-  sessionContent: TodaySessionContent
+  sessionContent: TodaySessionContent,
+  options?: { signal?: AbortSignal }
 ): Promise<RenunganMatch> {
   const clean = reflectionText.trim();
   if (clean.length < 3) {
@@ -116,6 +131,7 @@ export async function generatePersonalRenungan(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
+      signal: options?.signal,
       body: JSON.stringify({
         text: clean,
         lang: "id",
@@ -157,7 +173,24 @@ export async function generatePersonalRenungan(
         : [],
       analysis: payload?.data?.analysis,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
     return buildPersonalRenunganFallback(reflectionText, sessionContent);
   }
+}
+
+export async function preparePersonalRenungan(
+  reflectionText: string,
+  sessionContent: TodaySessionContent,
+  options?: { signal?: AbortSignal }
+): Promise<RenunganMatch | null> {
+  const clean = normalizeReflectionForCache(reflectionText);
+  if (clean.length < 3) {
+    return null;
+  }
+
+  const generated = await generatePersonalRenungan(clean, sessionContent, options);
+  return generated;
 }
