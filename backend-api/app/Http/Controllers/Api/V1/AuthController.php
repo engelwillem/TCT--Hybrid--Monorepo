@@ -9,9 +9,11 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -104,9 +106,22 @@ class AuthController extends Controller
             'email' => 'required|email',
         ]);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+        } catch (Throwable $exception) {
+            Log::error('Forgot password email dispatch failed', [
+                'email_hash' => hash('sha256', strtolower((string) $request->input('email'))),
+                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Layanan email sementara terganggu. Silakan coba lagi beberapa saat.',
+            ], 503);
+        }
 
         if ($status == Password::RESET_LINK_SENT) {
             return response()->json([
@@ -158,5 +173,4 @@ class AuthController extends Controller
         ]);
     }
 }
-
 

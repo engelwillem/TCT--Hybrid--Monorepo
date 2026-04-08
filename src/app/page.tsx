@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     description: 'Terima firman, renungkan ayat harian, dan bertumbuh bersama komunitas iman setiap hari.',
     images: [
       {
-        url: '/og/today-share.png',
+        url: '/api/og/home',
         width: 1200,
         height: 630,
         alt: 'The Chosen Talks - Renungan Harian',
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'The Chosen Talks - Renungan Harian Kristen',
     description: 'Terima firman, renungkan ayat harian, dan bertumbuh bersama komunitas iman setiap hari.',
-    images: ['/og/today-share.png'],
+    images: ['/api/og/home'],
   },
 };
 
