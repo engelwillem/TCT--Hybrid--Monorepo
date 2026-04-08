@@ -10,11 +10,14 @@ export type RenunganMatch = {
   }>;
   analysis?: {
     primary_theme?: string;
+    primary_emotion?: string;
     emotional_need?: string;
     spiritual_need?: string;
     intent?: string;
     secondary_themes?: string[];
-    tone?: "positive" | "negative" | "neutral";
+    tone?: "positive" | "negative" | "neutral" | "tender";
+    intensity?: number;
+    relational_context?: "longing" | "conflict" | "neutral";
   };
 };
 
@@ -105,6 +108,14 @@ function cleanMeditationText(input: string): string {
   return `${normalized}.`;
 }
 
+function isUsableMeditationText(input: string): boolean {
+  const text = cleanMeditationText(input);
+  if (!text || text.length < 80) return false;
+  if (/\b(dan|atau|karena|sehingga)\s*$/i.test(text)) return false;
+  if (/[,:;]$/.test(text)) return false;
+  return true;
+}
+
 export function buildPersonalRenunganFallback(
   reflectionText: string,
   sessionContent: TodaySessionContent
@@ -177,7 +188,7 @@ export async function generatePersonalRenungan(
     const verseText = String(payload?.data?.verse?.text || "").trim();
     const verseReference = String(payload?.data?.verse?.reference || "").trim();
 
-    if (!meditation || !verseText || !verseReference) {
+    if (!isUsableMeditationText(meditation) || !verseText || !verseReference) {
       return buildPersonalRenunganFallback(reflectionText, sessionContent);
     }
 

@@ -145,7 +145,7 @@ class RenunganPersonalizationController extends Controller
         }
 
         $primary = $selected[0] ?? null;
-        $meditation = $this->composeMeditation($reflectionText, $analysis);
+        $meditation = $this->composeMeditation($reflectionText, $analysis, $selected);
 
         return response()->json([
             'data' => [
@@ -405,7 +405,7 @@ class RenunganPersonalizationController extends Controller
         return array_values($selected);
     }
 
-    private function composeMeditation(string $reflectionText, array $analysis): string
+    private function composeMeditation(string $reflectionText, array $analysis, array $selectedVerses): string
     {
         $primaryTheme = (string) ($analysis['primary_theme'] ?? 'direction');
         $primaryEmotion = (string) ($analysis['primary_emotion'] ?? 'uncertain');
@@ -444,9 +444,38 @@ class RenunganPersonalizationController extends Controller
             default => "Hari ini kamu membutuhkan {$emotionalNeed}, dan Tuhan menuntunmu kepada {$spiritualNeed}.",
         };
 
-        $raw = trim($opening.' '.$reflectionEcho.' '.$body.' '.$closing);
+        $verseBridge = $this->buildVerseBridge($selectedVerses, $analysis);
+        $raw = trim($opening.' '.$reflectionEcho.' '.$body.' '.$verseBridge.' '.$closing);
 
         return $this->finalizeMeditationText($raw, $analysis);
+    }
+
+    private function buildVerseBridge(array $selectedVerses, array $analysis): string
+    {
+        /** @var BibleVerse|null $primary */
+        $primary = $selectedVerses[0] ?? null;
+        $verseText = trim((string) ($primary?->text ?? ''));
+        if ($verseText === '') {
+            return 'Firman Tuhan tetap meneguhkan langkahmu hari ini.';
+        }
+
+        $normalized = (string) Str::of($verseText)
+            ->replaceMatches('/\s+/', ' ')
+            ->replaceMatches('/[\"\']/', '')
+            ->trim();
+
+        if (!preg_match('/[.!?]$/', $normalized)) {
+            $normalized .= '.';
+        }
+
+        $intro = match ((string) ($analysis['tone'] ?? 'neutral')) {
+            'positive' => 'Firman hari ini menguatkan syukurmu: ',
+            'negative' => 'Firman hari ini meneduhkan hatimu: ',
+            'tender' => 'Firman hari ini memeluk kerinduanmu: ',
+            default => 'Firman hari ini menuntunmu: ',
+        };
+
+        return $intro.$normalized;
     }
 
     private function extractReflectionEcho(string $reflectionText, string $primaryTheme): string
@@ -485,7 +514,7 @@ class RenunganPersonalizationController extends Controller
             $normalized .= '.';
         }
 
-        if (preg_match('/\b(dan|atau|karena|sehingga)\.?$/i', $normalized)) {
+        if (preg_match('/\b(dan|atau|karena|sehingga)\.?$/i', $normalized) || preg_match('/[,;:]$/', $normalized)) {
             $normalized .= ' Tuhan tetap menyertaimu dengan setia.';
         }
 
@@ -658,4 +687,3 @@ class RenunganPersonalizationController extends Controller
         return false;
     }
 }
-
