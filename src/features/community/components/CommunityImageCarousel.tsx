@@ -192,7 +192,7 @@ export function CommunityImageCarousel({
               aria-label="Gambar sebelumnya"
               onClick={() => stepInlineCarousel("prev")}
               disabled={activeIndex === 0}
-              className="absolute left-3 top-1/2 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/20 text-white/90 shadow-sm backdrop-blur-sm transition hover:bg-black/35 disabled:opacity-0 disabled:pointer-events-none"
+              className="absolute left-1.5 top-1/2 z-20 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/18 bg-black/10 text-white/72 shadow-[0_4px_14px_-10px_rgba(15,23,42,0.45)] backdrop-blur-[1px] transition-colors hover:bg-black/18 disabled:opacity-0 disabled:pointer-events-none"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -201,7 +201,7 @@ export function CommunityImageCarousel({
               aria-label="Gambar berikutnya"
               onClick={() => stepInlineCarousel("next")}
               disabled={activeIndex === total - 1}
-              className="absolute right-3 top-1/2 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/20 text-white/90 shadow-sm backdrop-blur-sm transition hover:bg-black/35 disabled:opacity-0 disabled:pointer-events-none"
+              className="absolute right-1.5 top-1/2 z-20 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/18 bg-black/10 text-white/72 shadow-[0_4px_14px_-10px_rgba(15,23,42,0.45)] backdrop-blur-[1px] transition-colors hover:bg-black/18 disabled:opacity-0 disabled:pointer-events-none"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
