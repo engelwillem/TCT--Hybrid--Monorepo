@@ -119,5 +119,11 @@ class DatabaseSeeder extends Seeder
 
         // Global app/site settings defaults (idempotent).
         $this->call(AppSettingsSeeder::class);
+        $this->call([
+            VerseThemeSeeder::class,
+            VerseToneSeeder::class,
+            VerseToneMappingSeeder::class,
+            VersePastoralNotesSeeder::class,
+        ]);
     }
 }

@@ -15,9 +15,9 @@ export type RenunganMatch = {
     spiritual_need?: string;
     intent?: string;
     secondary_themes?: string[];
-    tone?: "positive" | "negative" | "neutral" | "tender";
+    tone?: "positive" | "negative" | "neutral" | "tender" | "restrained";
     intensity?: number;
-    relational_context?: "longing" | "conflict" | "neutral";
+    relational_context?: "longing" | "conflict" | "hostile" | "neutral";
   };
 };
 
@@ -68,6 +68,16 @@ const MATCHES: Array<{ keywords: string[]; result: RenunganMatch }> = [
     },
   },
   {
+    keywords: ["marah", "kesal", "benci", "muak", "maki", "dendam", "balas"],
+    result: {
+      verseText:
+        "Hai saudara-saudaraku yang kekasih, ingatlah hal ini: setiap orang hendaklah cepat untuk mendengar, tetapi lambat untuk berkata-kata, dan juga lambat untuk marah.",
+      verseReference: "Yakobus 1:19",
+      meditation:
+        "Tuhan melihat kemarahanmu dengan jujur, dan kamu tidak perlu memendamnya sendirian. Namun hari ini pilihlah menahan kata-kata yang melukai, tenangkan diri, lalu bawa emosimu dalam doa supaya responsmu tetap dipimpin hikmat, bukan ledakan sesaat.",
+    },
+  },
+  {
     keywords: ["keluarga", "rumah", "orang tua", "anak", "suami", "istri"],
     result: {
       verseText: "Serahkanlah kuatirmu kepada TUHAN, maka Ia akan memelihara engkau.",
@@ -111,7 +121,7 @@ function cleanMeditationText(input: string): string {
 function isUsableMeditationText(input: string): boolean {
   const text = cleanMeditationText(input);
   if (!text || text.length < 80) return false;
-  if (/\b(dan|atau|karena|sehingga)\s*$/i.test(text)) return false;
+  if (/\b(dan|atau|karena|sehingga|namun|tetapi)\s*$/i.test(text)) return false;
   if (/[,:;]$/.test(text)) return false;
   return true;
 }
