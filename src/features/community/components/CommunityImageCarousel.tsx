@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { TouchEvent } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,8 @@ export function CommunityImageCarousel({
   className,
 }: CommunityImageCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartIndexRef = useRef<number>(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const total = images.length;
@@ -60,6 +63,58 @@ export function CommunityImageCarousel({
       setActiveIndex(bounded);
     }
   }, [activeIndex, total]);
+
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      const scroller = scrollerRef.current;
+      if (!scroller) return;
+      const bounded = Math.max(0, Math.min(total - 1, index));
+      const width = scroller.clientWidth || 1;
+      scroller.scrollTo({
+        left: bounded * width,
+        behavior: "smooth",
+      });
+      setActiveIndex(bounded);
+    },
+    [total]
+  );
+
+  const stepInlineCarousel = useCallback(
+    (direction: "prev" | "next") => {
+      const delta = direction === "next" ? 1 : -1;
+      scrollToIndex(activeIndex + delta);
+    },
+    [activeIndex, scrollToIndex]
+  );
+
+  const handleTouchStart = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      touchStartXRef.current = event.touches[0]?.clientX ?? null;
+      touchStartIndexRef.current = activeIndex;
+    },
+    [activeIndex]
+  );
+
+  const handleTouchEnd = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      const startX = touchStartXRef.current;
+      const endX = event.changedTouches[0]?.clientX ?? null;
+      touchStartXRef.current = null;
+
+      if (startX === null || endX === null) return;
+
+      const deltaX = startX - endX;
+      if (Math.abs(deltaX) < 26) {
+        scrollToIndex(touchStartIndexRef.current);
+        return;
+      }
+
+      const direction = deltaX > 0 ? 1 : -1;
+      // Limit mobile swipe movement to one slide per gesture.
+      scrollToIndex(touchStartIndexRef.current + direction);
+    },
+    [scrollToIndex]
+  );
 
   const openViewer = (index: number) => {
     setActiveIndex(index);
@@ -94,8 +149,10 @@ export function CommunityImageCarousel({
             <div
               ref={scrollerRef}
               onScroll={updateActiveByScroll}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
               className={cn(
-                "relative flex overflow-x-auto scroll-smooth snap-x snap-mandatory touch-pan-x rounded-2xl ring-1 ring-border/60 bg-surface-muted scrollbar-hide",
+                "relative flex overflow-x-auto scroll-smooth snap-x snap-mandatory touch-pan-x rounded-2xl ring-1 ring-border/60 bg-surface-muted scrollbar-hide [scrollbar-width:none]",
                 ratioClass
               )}
             >
@@ -104,7 +161,7 @@ export function CommunityImageCarousel({
                   key={`${src}-${idx}`}
                   type="button"
                   onClick={() => openViewer(idx)}
-                  className="h-full w-full shrink-0 snap-start"
+                  className="h-full w-full shrink-0 snap-start snap-always"
                 >
                   <img
                     src={src}
@@ -129,6 +186,25 @@ export function CommunityImageCarousel({
                 />
               ))}
             </div>
+
+            <button
+              type="button"
+              aria-label="Gambar sebelumnya"
+              onClick={() => stepInlineCarousel("prev")}
+              disabled={activeIndex === 0}
+              className="absolute left-3 top-1/2 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/20 text-white/90 shadow-sm backdrop-blur-sm transition hover:bg-black/35 disabled:opacity-0 disabled:pointer-events-none"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Gambar berikutnya"
+              onClick={() => stepInlineCarousel("next")}
+              disabled={activeIndex === total - 1}
+              className="absolute right-3 top-1/2 z-20 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/20 text-white/90 shadow-sm backdrop-blur-sm transition hover:bg-black/35 disabled:opacity-0 disabled:pointer-events-none"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </>
         )}
       </div>

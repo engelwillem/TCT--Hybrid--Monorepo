@@ -5,7 +5,7 @@
  * Ensures 100% parity with legacy data structures.
  */
 
-import { CommunityPost, CommunityComment } from "@/features/community/types";
+import { CommunityPost, CommunityComment, BookmarkCategory } from "@/features/community/types";
 import { clearAppAccessToken, shouldInvalidateLocalSession } from "@/services/app-auth-token";
 import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 
@@ -21,6 +21,24 @@ class ApiError extends Error {
 
 interface ApiEnvelope<T> {
   data?: T;
+}
+
+function appendNestedFormData(formData: FormData, keyPrefix: string, value: unknown) {
+  if (value === null || value === undefined) return;
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => appendNestedFormData(formData, `${keyPrefix}[${index}]`, item));
+    return;
+  }
+
+  if (typeof value === "object") {
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      appendNestedFormData(formData, `${keyPrefix}[${key}]`, item);
+    });
+    return;
+  }
+
+  formData.append(keyPrefix, String(value));
 }
 
 interface ApiPost {
@@ -40,9 +58,21 @@ interface ApiPost {
     media_aspect_ratio?: "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
     text_position?: "above" | "below";
     imageUrl?: string;
+    preview_media_index?: number;
+    ritual_user_reflection?: string;
+    ritual_generated_meditation?: string;
+    ritual_verse_text?: string;
+    ritual_verse_reference?: string;
+    bookmark_origin?: string;
     ref?: string;
     reference?: string;
     quote?: string;
+  } | null;
+  bookmark_category?: {
+    id?: string | number;
+    name?: string;
+    slug?: string;
+    is_default?: boolean;
   } | null;
   createdAt?: string;
   created_at: string;
@@ -157,6 +187,14 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
     .filter((item): item is string => Boolean(item)),
   isFeatured: Boolean(post.is_featured),
   can_moderate: Boolean(post.can_moderate),
+  bookmark_category: post.bookmark_category
+    ? {
+        id: String(post.bookmark_category.id || ""),
+        name: String(post.bookmark_category.name || "Arsip"),
+        slug: String(post.bookmark_category.slug || "arsip"),
+        is_default: Boolean(post.bookmark_category.is_default),
+      }
+    : null,
   metadata: post.metadata ?? undefined,
   createdAt: post.createdAt || post.created_at,
   author: {
@@ -229,13 +267,15 @@ export const CommunityService = {
     text: string,
     type: string = 'user_post',
     images: File[] = [],
-    metadata?: { media_aspect_ratio?: string }
+    metadata?: Record<string, unknown>
   ): Promise<CommunityPost> {
     const formData = new FormData();
     formData.append('text', text);
     formData.append('type', type);
-    if (metadata?.media_aspect_ratio) {
-      formData.append('metadata[media_aspect_ratio]', metadata.media_aspect_ratio);
+    if (metadata && typeof metadata === "object") {
+      Object.entries(metadata).forEach(([key, value]) => {
+        appendNestedFormData(formData, `metadata[${key}]`, value);
+      });
     }
     images.forEach((file) => {
       formData.append('images[]', file);
@@ -261,6 +301,130 @@ export const CommunityService = {
     });
 
     await assertOk(response, "Failed to delete post");
+  },
+
+  async updatePostText(postId: string, text: string): Promise<CommunityPost> {
+    const response = await fetch(`/api/community/posts?postId=${encodeURIComponent(postId)}`, {
+      method: "PATCH",
+      headers: {
+        ...buildHeaders(true),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    await assertOk(response, "Failed to update post");
+    const payload = await response.json() as ApiEnvelope<{ post: ApiPost }>;
+    if (!payload?.data?.post) throw new ApiError("Malformed response", 502);
+
+    return mapApiPost(payload.data.post);
+  },
+
+  async updatePostPreview(postId: string, previewMediaIndex: number): Promise<CommunityPost> {
+    const response = await fetch(`/api/community/posts?postId=${encodeURIComponent(postId)}`, {
+      method: "PATCH",
+      headers: {
+        ...buildHeaders(true),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        metadata: { preview_media_index: previewMediaIndex },
+      }),
+    });
+
+    await assertOk(response, "Failed to update preview image");
+    const payload = await response.json() as ApiEnvelope<{ post: ApiPost }>;
+    if (!payload?.data?.post) throw new ApiError("Malformed response", 502);
+
+    return mapApiPost(payload.data.post);
+  },
+
+  async listBookmarks(): Promise<CommunityPost[]> {
+    const response = await fetch("/api/community/bookmarks", {
+      method: "GET",
+      cache: "no-store",
+      headers: buildHeaders(true),
+    });
+
+    await assertOk(response, "Failed to fetch bookmarks");
+    const payload = await response.json() as ApiEnvelope<{ bookmarks: ApiPost[] }>;
+    return (payload?.data?.bookmarks ?? []).map(mapApiPost);
+  },
+
+  async listBookmarkCategories(): Promise<{ defaultCategoryId?: string; categories: BookmarkCategory[] }> {
+    const response = await fetch("/api/community/bookmark-categories", {
+      method: "GET",
+      cache: "no-store",
+      headers: buildHeaders(true),
+    });
+
+    await assertOk(response, "Failed to fetch bookmark categories");
+    const payload = await response.json() as ApiEnvelope<{
+      defaultCategoryId?: string | number;
+      categories?: Array<{
+        id: string | number;
+        name?: string;
+        slug?: string;
+        is_default?: boolean;
+        count?: number;
+      }>;
+    }>;
+
+    return {
+      defaultCategoryId: payload?.data?.defaultCategoryId ? String(payload.data.defaultCategoryId) : undefined,
+      categories: (payload?.data?.categories ?? []).map((item) => ({
+        id: String(item.id),
+        name: String(item.name || "Kategori"),
+        slug: String(item.slug || ""),
+        is_default: Boolean(item.is_default),
+        count: Number(item.count || 0),
+      })),
+    };
+  },
+
+  async createBookmarkCategory(name: string): Promise<BookmarkCategory> {
+    const response = await fetch("/api/community/bookmark-categories", {
+      method: "POST",
+      headers: {
+        ...buildHeaders(true),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+    });
+
+    await assertOk(response, "Failed to create bookmark category");
+    const payload = await response.json() as ApiEnvelope<{
+      category?: {
+        id: string | number;
+        name?: string;
+        slug?: string;
+        is_default?: boolean;
+        count?: number;
+      };
+    }>;
+    if (!payload?.data?.category) throw new ApiError("Malformed response", 502);
+
+    const item = payload.data.category;
+    return {
+      id: String(item.id),
+      name: String(item.name || "Kategori"),
+      slug: String(item.slug || ""),
+      is_default: Boolean(item.is_default),
+      count: Number(item.count || 0),
+    };
+  },
+
+  async moveBookmarkToCategory(postId: string, categoryId: string): Promise<void> {
+    const response = await fetch(`/api/community/bookmarks/${encodeURIComponent(postId)}/category`, {
+      method: "PATCH",
+      headers: {
+        ...buildHeaders(true),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ category_id: Number(categoryId) }),
+    });
+
+    await assertOk(response, "Failed to move bookmark category");
   },
 
   async toggleLike(postId: string): Promise<CommunityPost> {

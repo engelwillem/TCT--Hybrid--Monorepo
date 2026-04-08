@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpenText, Bookmark } from 'lucide-react';
+import Link from 'next/link';
 import { useAuthSession } from '@/auth/use-auth-session';
 import { CommunityService } from '@/services/community.service';
 import type { TodaySessionContent } from '../content/today-session.types';
-import { buildPersonalRenungan } from '../content/personal-renungan';
+import { buildPersonalRenungan, generatePersonalRenungan } from '../content/personal-renungan';
 import { useTodayRitualProgress } from '../hooks/useTodayRitualProgress';
 import { useMotionConfig } from '../hooks/useMotionConfig';
 import TodayHeader from './TodayHeader';
@@ -21,13 +22,22 @@ interface TodayDailyRitualScreenProps {
   showOfflineBanner?: boolean;
 }
 
-function buildArchiveText(reflectionText: string, meditation: string, verseReference: string): string {
+function buildArchiveText(
+  reflectionText: string,
+  meditation: string,
+  verseText: string,
+  verseReference: string
+): string {
   return [
-    reflectionText.trim(),
-    '',
-    meditation.trim(),
-    '',
+    "Renungan Pribadiku",
+    "",
+    `Isi hati: ${reflectionText.trim()}`,
+    "",
+    `Renungan: ${meditation.trim()}`,
+    "",
+    `Ayat: ${verseText.trim()}`,
     verseReference.trim(),
+    reflectionText.trim(),
   ]
     .filter(Boolean)
     .join('\n');
@@ -57,13 +67,20 @@ export default function TodayDailyRitualScreen({
   const [hasStarted, setHasStarted] = useState(false);
   const [syncedPostId, setSyncedPostId] = useState<string | null>(null);
   const [bookmarkError, setBookmarkError] = useState<string | null>(null);
+  const [bookmarkSuccessNote, setBookmarkSuccessNote] = useState<string | null>(null);
   const [activeActionText, setActiveActionText] = useState<string | null>(null);
+  const [isGeneratingRenungan, setIsGeneratingRenungan] = useState(false);
   const isAuthRestoring = authStatus === 'restoring';
   const memberName = authStatus === 'authenticated' && !identity.isGuest ? identity.name : null;
-  const personalRenungan = useMemo(
-    () => buildPersonalRenungan(reflectionText, sessionContent),
-    [reflectionText, sessionContent]
+  const [personalRenungan, setPersonalRenungan] = useState(() =>
+    buildPersonalRenungan('', sessionContent)
   );
+  useEffect(() => {
+    setPersonalRenungan((current) => {
+      if (current?.meditation?.trim()) return current;
+      return buildPersonalRenungan('', sessionContent);
+    });
+  }, [sessionContent]);
   const personalShareText = useMemo(
     () => `${personalRenungan.meditation} — ${personalRenungan.verseReference}`,
     [personalRenungan]
@@ -114,6 +131,7 @@ export default function TodayDailyRitualScreen({
     }
 
     setBookmarkError(null);
+    setBookmarkSuccessNote(null);
 
     try {
       const ensuredPostId = syncedPostId
@@ -123,9 +141,19 @@ export default function TodayDailyRitualScreen({
               buildArchiveText(
                 reflectionText,
                 personalRenungan.meditation,
+                personalRenungan.verseText,
                 personalRenungan.verseReference
               ),
-              'reflection'
+              'reflection',
+              [],
+              {
+                bookmark_origin: 'renungan',
+                ritual_user_reflection: reflectionText.trim(),
+                ritual_generated_meditation: personalRenungan.meditation,
+                ritual_verse_text: personalRenungan.verseText,
+                ritual_verse_reference: personalRenungan.verseReference,
+                related_verses: personalRenungan.relatedVerses ?? [],
+              }
             )
           ).id;
 
@@ -135,6 +163,7 @@ export default function TodayDailyRitualScreen({
 
       const updatedPost = await CommunityService.toggleBookmark(ensuredPostId);
       if (updatedPost.isBookmarked) {
+        setBookmarkSuccessNote("Memori rohanimu tersimpan. Kamu bisa membacanya kembali di Community > Bookmarks.");
         void trackFunnelEvent('reflection_bookmark', {
           surface: 'renungan',
           meta: {
@@ -166,13 +195,23 @@ export default function TodayDailyRitualScreen({
     setHasStarted(true);
   };
 
-  const handleContinueReflect = () => {
+  const handleContinueReflect = async () => {
     if (isAuthRestoring) return;
     if (!isAuthenticated) {
       router.push('/login?next=/renungan');
       return;
     }
 
+    const reflection = reflectionText.trim();
+    if (!reflection || isGeneratingRenungan) return;
+
+    setIsGeneratingRenungan(true);
+    try {
+      const generated = await generatePersonalRenungan(reflection, sessionContent);
+      setPersonalRenungan(generated);
+    } finally {
+      setIsGeneratingRenungan(false);
+    }
     completeReflect();
   };
 
@@ -352,13 +391,14 @@ export default function TodayDailyRitualScreen({
                 >
                   <ReflectPrompt
                     prompt="Apa satu hal yang ingin kamu serahkan kepada Tuhan hari ini?"
-                    placeholder="Tulis refleksi singkatmu di sini..."
+                    placeholder="ketik disini..."
                     ctaLabel="Doakan"
                     sealedLabel="Telah didoakan"
                     value={activeActionText ?? ''}
                     onChange={setReflectionText}
-                    onContinue={handleContinueReflect}
+                    onContinue={() => void handleContinueReflect()}
                     isDone={isReflectDone}
+                    isSubmitting={isGeneratingRenungan}
                   />
                 </motion.div>
               ) : null}
@@ -372,13 +412,13 @@ export default function TodayDailyRitualScreen({
               initial={{ opacity: 0, y: 22, scale: 0.985 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={m.reduce ? m.tx.calm : { ...m.tx.slow, delay: 0.08 }}
-              className="mt-16 sm:mt-24 px-6 pb-8 focus:outline-none"
+              className="mt-14 sm:mt-20 px-4 sm:px-6 pb-6 sm:pb-8 focus:outline-none"
             >
-              <div className="rounded-[36px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,250,255,0.94))] px-6 py-8 shadow-[0_32px_110px_-60px_rgba(14,116,144,0.35)] backdrop-blur-xl">
+              <div className="rounded-[28px] sm:rounded-[36px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,250,255,0.94))] px-4 sm:px-6 py-6 sm:py-8 shadow-[0_32px_110px_-60px_rgba(14,116,144,0.35)] backdrop-blur-xl">
                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#0284c7]">
                   Ayat untukmu hari ini
                 </p>
-                <blockquote className="mt-5 tct-serif text-[25px] leading-[1.65] tracking-[-0.015em] text-foreground/92">
+                <blockquote className="mt-4 sm:mt-5 tct-serif text-[22px] sm:text-[25px] leading-[1.58] sm:leading-[1.65] tracking-[-0.015em] text-foreground/92">
                   “{personalRenungan.verseText}”
                 </blockquote>
                 <div className="mt-6 h-px w-10 bg-foreground/15" aria-hidden="true" />
@@ -395,31 +435,34 @@ export default function TodayDailyRitualScreen({
                   <Bookmark className="mt-0.5 h-4 w-4 shrink-0 text-foreground/35" />
                   <p>
                     Bookmark akan menyimpan renungan ini ke kategori <span className="font-semibold text-foreground/68">Arsip</span> dan
-                    tab <span className="font-semibold text-foreground/68">Bookmarks</span> di Community.
+                    tab <span className="font-semibold text-foreground/68">Bookmarks</span> di{' '}
+                    <Link
+                      href="/community"
+                      className="font-semibold text-[#0284c7] underline-offset-2 transition-colors hover:text-[#0ea5e9] hover:underline"
+                    >
+                      Community
+                    </Link>
+                    .
                   </p>
                 </div>
 
                 {bookmarkError ? (
                   <p className="mt-3 text-[13px] font-medium text-rose-500">{bookmarkError}</p>
                 ) : null}
+                {bookmarkSuccessNote ? (
+                  <p className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-[13px] font-medium text-emerald-700">
+                    {bookmarkSuccessNote}
+                  </p>
+                ) : null}
 
-                <div className="mt-6 rounded-[24px] border border-sky-100/90 bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.92))] p-4 shadow-[0_18px_40px_-30px_rgba(14,165,233,0.35)]">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#0284c7]">
-                    Langkah Berikutnya
-                  </p>
-                  <p className="mt-2 text-[14px] leading-6 text-foreground/70">
-                    Misi selesai. Kalau ingin melangkah lebih jauh, VerseHub akan langsung membukakan mode Explore agar kamu bisa masuk ke kitab atau pasal berikutnya dengan tenang.
-                  </p>
-                  <motion.button
+                <div className="mt-6">
+                  <button
                     type="button"
                     onClick={handleContinueToVersehub}
-                    className="mt-4 inline-flex items-center rounded-full bg-[#0f172a] px-6 py-3 text-[14px] font-semibold text-white shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)] transition-all duration-300 hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-[0.98]"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={m.reduce ? m.tx.base : { ...m.tx.base, delay: 0.16 }}
+                    className="text-[11px] font-black uppercase tracking-[0.24em] text-[#0284c7] underline-offset-2 transition-colors hover:text-[#0ea5e9] hover:underline"
                   >
-                    Lanjut ke VerseHub Explore
-                  </motion.button>
+                    Lanjut ke Versehub
+                  </button>
                 </div>
               </div>
             </motion.section>

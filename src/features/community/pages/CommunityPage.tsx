@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ChevronRight, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,7 +32,7 @@ import { PostComposer } from "../components/PostComposer";
 import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityArchiveGalleryCard } from "../components/CommunityArchiveGalleryCard";
-import type { CommunityPost } from "../types";
+import type { BookmarkCategory, CommunityPost } from "../types";
 
 type ArchiveCategory = CommunityArchiveCategory;
 
@@ -79,6 +79,9 @@ export function CommunityPage() {
 
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [archivePosts, setArchivePosts] = useState<CommunityPost[]>([]);
+  const [bookmarkPosts, setBookmarkPosts] = useState<CommunityPost[]>([]);
+  const [bookmarkCategories, setBookmarkCategories] = useState<BookmarkCategory[]>([]);
+  const [activeBookmarkCategoryId, setActiveBookmarkCategoryId] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
   const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
@@ -111,17 +114,12 @@ export function CommunityPage() {
 
   const discussionPosts = posts;
 
-  const bookmarkedPosts = useMemo(() => {
-    const merged = [...posts, ...archivePosts];
-    const seen = new Set<string>();
-
-    return merged.filter((post) => {
-      if (!post.isBookmarked) return false;
-      if (seen.has(post.id)) return false;
-      seen.add(post.id);
-      return true;
-    });
-  }, [archivePosts, posts]);
+  const filteredBookmarkPosts = useMemo(() => {
+    if (activeBookmarkCategoryId === "all") return bookmarkPosts;
+    return bookmarkPosts.filter(
+      (post) => String(post.bookmark_category?.id || "") === String(activeBookmarkCategoryId)
+    );
+  }, [activeBookmarkCategoryId, bookmarkPosts]);
 
   const showToast = useCallback((message: string, type: "success" | "error" = "error") => {
     setToast({ message, type });
@@ -172,6 +170,31 @@ export function CommunityPage() {
     setArchivePosts((prev) => patchComments(prev));
   }, []);
 
+  const loadBookmarkData = useCallback(async () => {
+    if (!isAuthenticated) {
+      setBookmarkPosts([]);
+      setBookmarkCategories([]);
+      setActiveBookmarkCategoryId("all");
+      return;
+    }
+
+    try {
+      const [bookmarks, categoryPayload] = await Promise.all([
+        CommunityService.listBookmarks(),
+        CommunityService.listBookmarkCategories(),
+      ]);
+      setBookmarkPosts(bookmarks);
+      setBookmarkCategories(categoryPayload.categories);
+      setActiveBookmarkCategoryId((prev) => {
+        if (prev === "all") return "all";
+        const hasPrev = categoryPayload.categories.some((item) => String(item.id) === String(prev));
+        return hasPrev ? prev : "all";
+      });
+    } catch {
+      // ignore category fetch errors to keep community feed usable
+    }
+  }, [isAuthenticated]);
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -181,6 +204,7 @@ export function CommunityPage() {
       setPosts(fetched.posts);
       setArchivePosts(fetched.archivePosts);
       persistFeedCache(fetched.posts, fetched.archivePosts);
+      await loadBookmarkData();
 
       const ritualRes = await fetch("/api/today");
       if (ritualRes.ok) {
@@ -230,11 +254,15 @@ export function CommunityPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [COMMUNITY_FEED_CACHE_KEY, persistFeedCache]);
+  }, [COMMUNITY_FEED_CACHE_KEY, loadBookmarkData, persistFeedCache]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    void loadBookmarkData();
+  }, [loadBookmarkData]);
 
   const activeArchiveCategoryIndex = useMemo(
     () => Math.max(
@@ -364,7 +392,149 @@ export function CommunityPage() {
     }
   };
 
+  const mergeUpdatedPost = useCallback(
+    (updatedPost: CommunityPost) => {
+      setPosts((prev) => {
+        const nextPosts = prev.map((post) => (post.id === updatedPost.id ? updatedPost : post));
+        setArchivePosts((prevArchive) => {
+          const nextArchive = prevArchive.map((post) => (post.id === updatedPost.id ? updatedPost : post));
+          persistFeedCache(nextPosts, nextArchive);
+          return nextArchive;
+        });
+        return nextPosts;
+      });
+    },
+    [persistFeedCache]
+  );
+
+  const handleEditPostText = async (postId: string, currentText?: string | null) => {
+    const initialText = String(currentText ?? "").trim();
+    const nextText = window.prompt("Edit teks konten:", initialText);
+    if (nextText === null) return;
+
+    const trimmed = nextText.trim();
+    if (!trimmed) {
+      showToast("Teks tidak boleh kosong.", "error");
+      return;
+    }
+
+    if (trimmed === initialText) return;
+
+    try {
+      const updatedPost = await CommunityService.updatePostText(postId, trimmed);
+      mergeUpdatedPost(updatedPost);
+      showToast("Teks berhasil diperbarui.", "success");
+    } catch {
+      showToast("Gagal memperbarui teks.", "error");
+    }
+  };
+
+  const handleEditPostPreview = async (post: CommunityPost) => {
+    const media = Array.isArray(post.mediaPaths) ? post.mediaPaths.filter(Boolean) : [];
+    if (media.length === 0) {
+      showToast("Post ini tidak punya gambar untuk dijadikan preview.", "error");
+      return;
+    }
+
+    const currentIndex =
+      Number.isInteger(post.metadata?.preview_media_index) && Number(post.metadata?.preview_media_index) >= 0
+        ? Number(post.metadata?.preview_media_index)
+        : 0;
+    const fallbackChoice = String(currentIndex + 1);
+    const optionsLabel = media.map((_, idx) => `${idx + 1}`).join(", ");
+    const nextSelection = window.prompt(
+      `Pilih nomor gambar untuk preview WA (${optionsLabel}):`,
+      fallbackChoice
+    );
+    if (nextSelection === null) return;
+
+    const parsed = Number.parseInt(nextSelection, 10);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > media.length) {
+      showToast("Nomor gambar tidak valid.", "error");
+      return;
+    }
+
+    const nextIndex = parsed - 1;
+    if (nextIndex === currentIndex) return;
+
+    try {
+      const updatedPost = await CommunityService.updatePostPreview(post.id, nextIndex);
+      mergeUpdatedPost(updatedPost);
+      showToast("Preview share berhasil diperbarui.", "success");
+    } catch {
+      showToast("Gagal memperbarui preview share.", "error");
+    }
+  };
+
+  const handleEditBookmarkCategory = async (post: CommunityPost) => {
+    if (!post.isBookmarked) {
+      showToast("Konten ini belum masuk bookmarks.", "error");
+      return;
+    }
+
+    const categories = bookmarkCategories;
+    if (categories.length === 0) {
+      showToast("Kategori bookmark belum tersedia. Coba muat ulang.", "error");
+      return;
+    }
+
+    const options = categories.map((item, index) => `${index + 1}. ${item.name}`).join("\n");
+    const userInput = window.prompt(
+      `Pilih kategori bookmark untuk konten ini:\n${options}\n\nKetik nomor kategori, atau ketik nama kategori baru.`,
+      ""
+    );
+    if (userInput === null) return;
+
+    const normalizedInput = userInput.trim();
+    if (!normalizedInput) return;
+
+    let targetCategoryId: string | null = null;
+
+    const parsedIndex = Number.parseInt(normalizedInput, 10);
+    if (Number.isInteger(parsedIndex) && parsedIndex >= 1 && parsedIndex <= categories.length) {
+      targetCategoryId = String(categories[parsedIndex - 1]?.id || "");
+    } else {
+      const existing = categories.find(
+        (item) => item.name.toLowerCase() === normalizedInput.toLowerCase()
+      );
+      if (existing) {
+        targetCategoryId = String(existing.id);
+      } else {
+        try {
+          const created = await CommunityService.createBookmarkCategory(normalizedInput);
+          setBookmarkCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+          targetCategoryId = created.id;
+          showToast(`Kategori "${created.name}" dibuat.`, "success");
+        } catch {
+          showToast("Gagal membuat kategori bookmark baru.", "error");
+          return;
+        }
+      }
+    }
+
+    if (!targetCategoryId) {
+      showToast("Kategori tidak valid.", "error");
+      return;
+    }
+
+    try {
+      await CommunityService.moveBookmarkToCategory(post.id, targetCategoryId);
+      await loadBookmarkData();
+      showToast("Bookmark dipindahkan ke kategori baru.", "success");
+    } catch {
+      showToast("Gagal memindahkan bookmark.", "error");
+    }
+  };
+
   const canDeletePost = useCallback(
+    (post: CommunityPost) => {
+      const currentUserId = String(currentAppUser?.id || "");
+      return Boolean(post.can_moderate || (currentUserId && post.author.id === currentUserId));
+    },
+    [currentAppUser?.id]
+  );
+
+  const canEditPost = useCallback(
     (post: CommunityPost) => {
       const currentUserId = String(currentAppUser?.id || "");
       return Boolean(post.can_moderate || (currentUserId && post.author.id === currentUserId));
@@ -461,6 +631,7 @@ export function CommunityPage() {
         return nextPosts;
       });
 
+      void loadBookmarkData();
       showToast(updatedPost.isBookmarked ? "Disimpan ke Bookmarks" : "Dihapus dari Bookmarks", "success");
     } catch {
       setPosts(originalPosts);
@@ -764,6 +935,12 @@ export function CommunityPage() {
                       onMessageAuthor={() => router.push(`/inbox/${post.author.id}`)}
                       followBusy={followBusyAuthorId === post.author.id}
                       canDelete={canDeletePost(post)}
+                      canEdit={canEditPost(post)}
+                      canEditPreview={canEditPost(post) && Boolean(post.mediaPaths?.length)}
+                      canEditBookmarkCategory={post.isBookmarked}
+                      onEditText={() => handleEditPostText(post.id, post.text)}
+                      onEditPreview={() => handleEditPostPreview(post)}
+                      onEditBookmarkCategory={() => void handleEditBookmarkCategory(post)}
                       onDelete={() => handleDeletePost(post.id)}
                     />
                   ))}
@@ -1065,8 +1242,68 @@ export function CommunityPage() {
 
           <TabsContent value="bookmarks" className="mt-6 outline-none">
             <div className={cn(narrowColumnClassName, "space-y-6")}>
-              {bookmarkedPosts.length > 0 ? (
-                bookmarkedPosts.map((post) => (
+              <div className="rounded-3xl border border-slate-200/70 bg-white/85 p-4 shadow-[0_20px_45px_-34px_rgba(15,23,42,0.35)]">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[12px] font-black uppercase tracking-[0.18em] text-slate-500">Kategori Bookmark</p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const name = window.prompt("Nama kategori bookmark baru:");
+                      if (!name) return;
+                      try {
+                        const created = await CommunityService.createBookmarkCategory(name.trim());
+                        setBookmarkCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+                        setActiveBookmarkCategoryId(created.id);
+                        showToast(`Kategori ${created.name} siap dipakai.`, "success");
+                        await loadBookmarkData();
+                      } catch {
+                        showToast("Gagal membuat kategori bookmark.", "error");
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Kategori Baru
+                  </button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveBookmarkCategoryId("all")}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all",
+                      activeBookmarkCategoryId === "all"
+                        ? "bg-[#00A9D6] text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:text-slate-900"
+                    )}
+                  >
+                    Semua ({bookmarkPosts.length})
+                  </button>
+                  {bookmarkCategories.map((category) => {
+                    const count = bookmarkPosts.filter(
+                      (post) => String(post.bookmark_category?.id || "") === String(category.id)
+                    ).length;
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => setActiveBookmarkCategoryId(String(category.id))}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all",
+                          String(activeBookmarkCategoryId) === String(category.id)
+                            ? "bg-[#00A9D6] text-white"
+                            : "border border-slate-200 bg-white text-slate-600 hover:text-slate-900"
+                        )}
+                      >
+                        {category.name} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {filteredBookmarkPosts.length > 0 ? (
+                filteredBookmarkPosts.map((post) => (
                   <MemberPostCard
                     key={post.id}
                     authorId={post.author.id}
@@ -1094,12 +1331,20 @@ export function CommunityPage() {
                     onMessageAuthor={() => router.push(`/inbox/${post.author.id}`)}
                     followBusy={followBusyAuthorId === post.author.id}
                     canDelete={canDeletePost(post)}
+                    canEdit={canEditPost(post)}
+                    canEditPreview={canEditPost(post) && Boolean(post.mediaPaths?.length)}
+                    canEditBookmarkCategory={post.isBookmarked}
+                    onEditText={() => handleEditPostText(post.id, post.text)}
+                    onEditPreview={() => handleEditPostPreview(post)}
+                    onEditBookmarkCategory={() => void handleEditBookmarkCategory(post)}
                     onDelete={() => handleDeletePost(post.id)}
                   />
                 ))
               ) : (
                 <div className="max-w-[420px] px-4 pb-24 pt-12">
-                  <p className="text-[15px] leading-relaxed text-foreground/70">Belum ada simpanan.</p>
+                  <p className="text-[15px] leading-relaxed text-foreground/70">
+                    Belum ada memori rohani di kategori ini. Simpan renunganmu agar bisa dibaca lagi saat kamu butuh dikuatkan.
+                  </p>
                 </div>
               )}
             </div>

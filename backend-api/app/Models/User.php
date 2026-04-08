@@ -163,6 +163,11 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasMany(MemberPostBookmark::class);
     }
 
+    public function memberBookmarkCategories(): HasMany
+    {
+        return $this->hasMany(MemberBookmarkCategory::class);
+    }
+
     public function memberPostReports(): HasMany
     {
         return $this->hasMany(MemberPostReport::class);

@@ -20,3 +20,14 @@ export async function DELETE(request: NextRequest) {
   }
   return proxyLaravel(request, `/api/v1/community/posts/${postId}`);
 }
+
+export async function PATCH(request: NextRequest) {
+  const postId = request.nextUrl.searchParams.get("postId");
+  if (!postId) {
+    return new Response(JSON.stringify({ message: "postId is required" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  return proxyLaravel(request, `/api/v1/community/posts/${postId}`);
+}

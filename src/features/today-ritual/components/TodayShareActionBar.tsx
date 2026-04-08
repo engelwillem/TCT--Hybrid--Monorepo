@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bookmark, Check, Copy, MessageCircle } from "lucide-react";
-import { PageActionBar } from "@/components/actions/PageActionBar";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/auth/use-auth-session";
 import {
   buildWhatsAppShareUrl,
@@ -65,34 +66,55 @@ export default function TodayShareActionBar({
   };
 
   return (
-    <PageActionBar
-      className="mt-8"
-      actions={[
-        {
-          id: "save-bookmark",
-          label: bookmarked ? "Bookmarked" : isSaving ? "Menyimpan..." : "Bookmark",
-          icon: bookmarked ? Check : Bookmark,
-          onClick: () => guardMemberAction(onSaveBookmark),
-          disabled: isRestoring || !onBookmark || bookmarked || isSaving,
-          variant: bookmarked ? "primary" : "secondary",
-        },
-        {
-          id: "copy-link",
-          label: copied ? "Tersalin" : "Salin",
-          icon: copied ? Check : Copy,
-          onClick: () => guardMemberAction(onCopyLink),
-          disabled: isRestoring,
-          variant: "ghost",
-        },
-        {
-          id: "share-wa",
-          label: "Bagikan",
-          icon: MessageCircle,
-          onClick: () => guardMemberAction(onShareWhatsApp),
-          disabled: isRestoring,
-          variant: "primary",
-        },
-      ]}
-    />
+    <div className="mt-8 rounded-full border border-slate-200/80 bg-white/88 p-2 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.35)]">
+      <div className="flex items-center gap-2">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          type="button"
+          onClick={() => guardMemberAction(onSaveBookmark)}
+          disabled={isRestoring || !onBookmark || bookmarked || isSaving}
+          className={cn(
+            "inline-flex h-11 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-all",
+            bookmarked
+              ? "bg-sky-100 text-sky-700 ring-1 ring-inset ring-sky-200"
+              : "bg-slate-100/70 text-slate-700 hover:bg-slate-200/75",
+            (isRestoring || !onBookmark || bookmarked || isSaving) ? "opacity-60" : ""
+          )}
+        >
+          {bookmarked ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+          <span>{bookmarked ? "Bookmarked" : isSaving ? "Menyimpan..." : "Bookmark"}</span>
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          type="button"
+          onClick={() => guardMemberAction(onCopyLink)}
+          disabled={isRestoring}
+          className={cn(
+            "inline-flex h-11 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-all",
+            "bg-slate-100/70 text-slate-700 hover:bg-slate-200/75",
+            isRestoring ? "opacity-60" : ""
+          )}
+        >
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          <span>{copied ? "Tersalin" : "Salin"}</span>
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          type="button"
+          onClick={() => guardMemberAction(onShareWhatsApp)}
+          disabled={isRestoring}
+          className={cn(
+            "ml-auto inline-flex h-11 items-center gap-2 rounded-full px-5 text-[14px] font-semibold transition-all",
+            "bg-[#0f172a] text-white hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))]",
+            isRestoring ? "opacity-60" : ""
+          )}
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span>Bagikan</span>
+        </motion.button>
+      </div>
+    </div>
   );
 }

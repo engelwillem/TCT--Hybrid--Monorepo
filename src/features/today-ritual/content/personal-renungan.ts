@@ -1,9 +1,20 @@
 import type { TodaySessionContent } from "./today-session.types";
 
-type RenunganMatch = {
+export type RenunganMatch = {
   verseText: string;
   verseReference: string;
   meditation: string;
+  relatedVerses?: Array<{
+    reference: string;
+    text: string;
+  }>;
+  analysis?: {
+    primary_theme?: string;
+    emotional_need?: string;
+    spiritual_need?: string;
+    intent?: string;
+    secondary_themes?: string[];
+  };
 };
 
 const MATCHES: Array<{ keywords: string[]; result: RenunganMatch }> = [
@@ -58,7 +69,7 @@ function sanitizeReflectionText(text: string): string {
   return text.trim().toLowerCase();
 }
 
-export function buildPersonalRenungan(
+export function buildPersonalRenunganFallback(
   reflectionText: string,
   sessionContent: TodaySessionContent
 ): RenunganMatch {
@@ -80,4 +91,73 @@ export function buildPersonalRenungan(
     verseReference: sessionContent.verseReference,
     meditation: `Tuhan menerima ${firstSentence.trim()} tanpa menghakimi. Di tengah kata-kata yang kamu tulis, ada ruang tenang tempat kasih-Nya bekerja diam-diam, menata ulang hatimu dengan lembut hari ini.`,
   };
+}
+
+export function buildPersonalRenungan(
+  reflectionText: string,
+  sessionContent: TodaySessionContent
+): RenunganMatch {
+  return buildPersonalRenunganFallback(reflectionText, sessionContent);
+}
+
+export async function generatePersonalRenungan(
+  reflectionText: string,
+  sessionContent: TodaySessionContent
+): Promise<RenunganMatch> {
+  const clean = reflectionText.trim();
+  if (clean.length < 3) {
+    return buildPersonalRenunganFallback(reflectionText, sessionContent);
+  }
+
+  try {
+    const response = await fetch("/api/renungan/personalize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        text: clean,
+        lang: "id",
+      }),
+    });
+
+    if (!response.ok) {
+      return buildPersonalRenunganFallback(reflectionText, sessionContent);
+    }
+
+    const payload = (await response.json()) as {
+      data?: {
+        meditation?: string;
+        verse?: { text?: string; reference?: string };
+        related_verses?: Array<{ text?: string; reference?: string }>;
+        analysis?: RenunganMatch["analysis"];
+      };
+    };
+
+    const meditation = String(payload?.data?.meditation || "").trim();
+    const verseText = String(payload?.data?.verse?.text || "").trim();
+    const verseReference = String(payload?.data?.verse?.reference || "").trim();
+
+    if (!meditation || !verseText || !verseReference) {
+      return buildPersonalRenunganFallback(reflectionText, sessionContent);
+    }
+
+    return {
+      meditation,
+      verseText,
+      verseReference,
+      relatedVerses: Array.isArray(payload?.data?.related_verses)
+        ? payload.data.related_verses
+            .map((item) => ({
+              text: String(item?.text || "").trim(),
+              reference: String(item?.reference || "").trim(),
+            }))
+            .filter((item) => Boolean(item.text && item.reference))
+        : [],
+      analysis: payload?.data?.analysis,
+    };
+  } catch {
+    return buildPersonalRenunganFallback(reflectionText, sessionContent);
+  }
 }

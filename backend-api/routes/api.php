@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\CommunityApiController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
+use App\Http\Controllers\Api\V1\RenunganPersonalizationController;
 use App\Http\Controllers\Api\V1\TodaySessionController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
@@ -33,6 +34,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/register', [\App\Http\Controllers\Api\V1\AuthController::class, 'register']);
     Route::post('/forgot-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'resetPassword']);
+    Route::post('/renungan/personalize', [RenunganPersonalizationController::class, 'personalize']);
 
     Route::get('/today', [TodayApiController::class, 'show']);
     Route::post('/analytics/funnel', [FunnelAnalyticsController::class, 'store']);
@@ -92,6 +94,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
         Route::post('/community/posts/{memberPost}/bookmark', [CommunityApiController::class, 'toggleBookmark']);
+        Route::get('/community/bookmarks', [CommunityApiController::class, 'listBookmarks']);
+        Route::patch('/community/bookmarks/{memberPost}/category', [CommunityApiController::class, 'moveBookmarkCategory']);
+        Route::get('/community/bookmark-categories', [CommunityApiController::class, 'listBookmarkCategories']);
+        Route::post('/community/bookmark-categories', [CommunityApiController::class, 'createBookmarkCategory']);
+        Route::patch('/community/posts/{memberPost}', [CommunityApiController::class, 'update']);
         Route::delete('/community/posts/{memberPost}', [CommunityApiController::class, 'destroy']);
 
         Route::post('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'upsert'])

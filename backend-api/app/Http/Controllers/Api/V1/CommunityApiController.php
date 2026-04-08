@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\MemberBookmarkCategory;
 use App\Models\MemberPost;
 use App\Models\MemberPostBookmark;
 use App\Models\MemberPostComment;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CommunityApiController extends Controller
 {
@@ -144,9 +146,11 @@ class CommunityApiController extends Controller
             $bookmark->delete();
             $status = 'removed';
         } else {
+            $defaultCategory = $this->ensureDefaultBookmarkCategory($user);
             MemberPostBookmark::query()->create([
                 'member_post_id' => $memberPost->id,
                 'user_id' => $user->id,
+                'category_id' => $defaultCategory->id,
             ]);
             $status = 'added';
         }
@@ -177,6 +181,230 @@ class CommunityApiController extends Controller
             'data' => [
                 'status' => 'removed',
                 'id' => (string) $memberPost->id,
+            ],
+        ]);
+    }
+
+    public function update(Request $request, MemberPost $memberPost): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+        abort_unless($user->is_admin || (int) $memberPost->user_id === (int) $user->id, 403);
+
+        $validated = $request->validate([
+            'text' => ['nullable', 'string', 'max:5000', 'required_without:metadata.preview_media_index'],
+            'metadata' => ['nullable', 'array'],
+            'metadata.preview_media_index' => ['nullable', 'integer', 'min:0', 'required_without:text'],
+        ]);
+
+        $updates = [];
+        if (array_key_exists('text', $validated)) {
+            $nextText = trim((string) ($validated['text'] ?? ''));
+            if ($nextText === '') {
+                return response()->json([
+                    'message' => 'The text field must not be empty.',
+                    'errors' => [
+                        'text' => ['The text field must not be empty.'],
+                    ],
+                ], 422);
+            }
+            $updates['text'] = $nextText;
+        }
+
+        $previewIndex = $request->input('metadata.preview_media_index');
+        if ($request->has('metadata.preview_media_index')) {
+            $mediaCount = count($memberPost->media_paths ?? []);
+            if (! is_numeric($previewIndex) || (int) $previewIndex < 0 || (int) $previewIndex >= $mediaCount) {
+                return response()->json([
+                    'message' => 'Preview image index is invalid for this post.',
+                    'errors' => [
+                        'metadata.preview_media_index' => ['Preview image index is invalid for this post.'],
+                    ],
+                ], 422);
+            }
+
+            $metadata = is_array($memberPost->metadata) ? $memberPost->metadata : [];
+            $metadata['preview_media_index'] = (int) $previewIndex;
+            $updates['metadata'] = $metadata;
+        }
+
+        if (! empty($updates)) {
+            $memberPost->forceFill($updates)->save();
+        }
+
+        $fresh = $this->reloadPost($memberPost->id, $user->id);
+
+        return response()->json([
+            'data' => [
+                'post' => $this->serializePost($fresh, $user),
+            ],
+        ]);
+    }
+
+    public function listBookmarks(): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+
+        $bookmarks = MemberPostBookmark::query()
+            ->where('user_id', $user->id)
+            ->with([
+                'category',
+                'post' => fn ($query) => $query
+                    ->whereNull('hidden_at')
+                    ->with(['user:id,name,avatar_path'])
+                    ->withCount([
+                        'comments',
+                        'bookmarks',
+                        'reactions as pray_count' => fn ($q) => $q->where('type', 'pray'),
+                    ])
+                    ->withExists([
+                        'reactions as is_prayed_by_me' => fn ($q) => $q
+                            ->where('type', 'pray')
+                            ->where('user_id', $user->id),
+                        'bookmarks as is_bookmarked_by_me' => fn ($q) => $q
+                            ->where('user_id', $user->id),
+                    ]),
+            ])
+            ->orderByDesc('created_at')
+            ->limit(240)
+            ->get()
+            ->filter(fn (MemberPostBookmark $bookmark) => $bookmark->post !== null)
+            ->values()
+            ->map(function (MemberPostBookmark $bookmark) use ($user): array {
+                $serialized = $this->serializePost($bookmark->post, $user);
+                $serialized['bookmark_category'] = $bookmark->category
+                    ? [
+                        'id' => (string) $bookmark->category->id,
+                        'name' => (string) $bookmark->category->name,
+                        'slug' => (string) $bookmark->category->slug,
+                        'is_default' => (bool) $bookmark->category->is_default,
+                    ]
+                    : null;
+                return $serialized;
+            });
+
+        return response()->json([
+            'data' => [
+                'bookmarks' => $bookmarks,
+            ],
+        ]);
+    }
+
+    public function listBookmarkCategories(): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+
+        $default = $this->ensureDefaultBookmarkCategory($user);
+
+        $categories = MemberBookmarkCategory::query()
+            ->where('user_id', $user->id)
+            ->withCount('bookmarks')
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (MemberBookmarkCategory $category) => [
+                'id' => (string) $category->id,
+                'name' => (string) $category->name,
+                'slug' => (string) $category->slug,
+                'is_default' => (bool) $category->is_default,
+                'count' => (int) ($category->bookmarks_count ?? 0),
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => [
+                'defaultCategoryId' => (string) $default->id,
+                'categories' => $categories,
+            ],
+        ]);
+    }
+
+    public function createBookmarkCategory(Request $request): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:80'],
+        ]);
+
+        $name = trim((string) $validated['name']);
+        $baseSlug = Str::slug(Str::lower($name), '-');
+        $rootSlug = $baseSlug !== '' ? $baseSlug : 'kategori';
+        $slug = $rootSlug;
+        $suffix = 2;
+
+        while (
+            MemberBookmarkCategory::query()
+                ->where('user_id', $user->id)
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $slug = "{$rootSlug}-{$suffix}";
+            $suffix++;
+        }
+
+        $category = MemberBookmarkCategory::query()->create([
+            'user_id' => $user->id,
+            'name' => $name,
+            'slug' => $slug,
+            'is_default' => false,
+        ]);
+
+        return response()->json([
+            'data' => [
+                'category' => [
+                    'id' => (string) $category->id,
+                    'name' => (string) $category->name,
+                    'slug' => (string) $category->slug,
+                    'is_default' => (bool) $category->is_default,
+                    'count' => 0,
+                ],
+            ],
+        ], 201);
+    }
+
+    public function moveBookmarkCategory(Request $request, MemberPost $memberPost): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+
+        $validated = $request->validate([
+            'category_id' => ['required', 'integer'],
+        ]);
+
+        $categoryId = (int) $validated['category_id'];
+        $category = MemberBookmarkCategory::query()
+            ->where('id', $categoryId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $bookmark = MemberPostBookmark::query()
+            ->where('member_post_id', $memberPost->id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $bookmark->forceFill([
+            'category_id' => $category->id,
+        ])->save();
+
+        return response()->json([
+            'data' => [
+                'status' => 'updated',
+                'postId' => (string) $memberPost->id,
+                'category' => [
+                    'id' => (string) $category->id,
+                    'name' => (string) $category->name,
+                    'slug' => (string) $category->slug,
+                    'is_default' => (bool) $category->is_default,
+                ],
             ],
         ]);
     }
@@ -292,6 +520,24 @@ class CommunityApiController extends Controller
             $isFollowedByAuthor = $author->following()->where('users.id', $viewerId)->exists();
         }
 
+        $bookmarkCategory = null;
+        if ($viewerId > 0) {
+            $viewerBookmark = MemberPostBookmark::query()
+                ->where('member_post_id', $post->id)
+                ->where('user_id', $viewerId)
+                ->with('category')
+                ->first();
+
+            if ($viewerBookmark?->category) {
+                $bookmarkCategory = [
+                    'id' => (string) $viewerBookmark->category->id,
+                    'name' => (string) $viewerBookmark->category->name,
+                    'slug' => (string) $viewerBookmark->category->slug,
+                    'is_default' => (bool) $viewerBookmark->category->is_default,
+                ];
+            }
+        }
+
         return [
             'id' => (string) $post->id,
             'type' => (string) ($post->type->value ?? 'user_post'),
@@ -320,8 +566,36 @@ class CommunityApiController extends Controller
             'isLiked' => (bool) ($post->is_prayed_by_me ?? false),
             'isBookmarked' => (bool) ($post->is_bookmarked_by_me ?? false),
             'metadata' => $post->metadata,
+            'bookmark_category' => $bookmarkCategory,
             'can_moderate' => (bool) ($viewer?->is_admin ?? false),
         ];
+    }
+
+    private function ensureDefaultBookmarkCategory(User $user): MemberBookmarkCategory
+    {
+        $existingDefault = MemberBookmarkCategory::query()
+            ->where('user_id', $user->id)
+            ->where('is_default', true)
+            ->first();
+        if ($existingDefault) {
+            return $existingDefault;
+        }
+
+        $existingArchiveByName = MemberBookmarkCategory::query()
+            ->where('user_id', $user->id)
+            ->where('slug', 'arsip')
+            ->first();
+        if ($existingArchiveByName) {
+            $existingArchiveByName->forceFill(['is_default' => true])->save();
+            return $existingArchiveByName;
+        }
+
+        return MemberBookmarkCategory::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Arsip',
+            'slug' => 'arsip',
+            'is_default' => true,
+        ]);
     }
 
     private function serializeComment(MemberPostComment $comment): array

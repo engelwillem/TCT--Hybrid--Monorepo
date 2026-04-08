@@ -10,6 +10,7 @@ class MemberPostBookmark extends Model
     protected $fillable = [
         'member_post_id',
         'user_id',
+        'category_id',
     ];
 
     public function post(): BelongsTo
@@ -20,5 +21,10 @@ class MemberPostBookmark extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(MemberBookmarkCategory::class, 'category_id');
     }
 }

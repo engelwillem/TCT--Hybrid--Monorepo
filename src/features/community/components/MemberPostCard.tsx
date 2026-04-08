@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { MemberPostActionBar } from "./MemberPostActionBar";
 import { QuoteCard } from "./QuoteCard";
 import { CommunityImageCarousel } from "./CommunityImageCarousel";
-import { MessageCircle, MoreHorizontal, Share2, Trash2 } from "lucide-react";
+import { FolderCog, Image as ImageIcon, MoreHorizontal, PencilLine, Trash2 } from "lucide-react";
 
 type MemberPostCardProps = {
   className?: string;
@@ -38,7 +38,13 @@ type MemberPostCardProps = {
   onShare: () => void | Promise<void>;
   onBookmark: () => void;
   canModerate?: boolean;
+  canEdit?: boolean;
+  canEditPreview?: boolean;
+  canEditBookmarkCategory?: boolean;
   canDelete?: boolean;
+  onEditText?: () => void;
+  onEditPreview?: () => void;
+  onEditBookmarkCategory?: () => void;
   onDelete?: () => void;
   onAdminHide?: () => void;
   onAdminExtend24h?: () => void;
@@ -75,7 +81,13 @@ export function MemberPostCard({
   onShare,
   onBookmark,
   canModerate = false,
+  canEdit = false,
+  canEditPreview = false,
+  canEditBookmarkCategory = false,
   canDelete = false,
+  onEditText,
+  onEditPreview,
+  onEditBookmarkCategory,
   onDelete,
   onAdminHide,
   onToggleFollowAuthor,
@@ -161,14 +173,24 @@ export function MemberPostCard({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={onShare}>
-          <Share2 className="h-4 w-4" />
-          Bagikan
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onOpenComments}>
-          <MessageCircle className="h-4 w-4" />
-          Komentar
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={onEditText}>
+            <PencilLine className="h-4 w-4" />
+            Edit teks
+          </DropdownMenuItem>
+        ) : null}
+        {canEditPreview ? (
+          <DropdownMenuItem onClick={onEditPreview}>
+            <ImageIcon className="h-4 w-4" />
+            Edit preview
+          </DropdownMenuItem>
+        ) : null}
+        {canEditBookmarkCategory ? (
+          <DropdownMenuItem onClick={onEditBookmarkCategory}>
+            <FolderCog className="h-4 w-4" />
+            Edit bookmark
+          </DropdownMenuItem>
+        ) : null}
         {canDelete ? (
           <DropdownMenuItem onClick={onDelete} className="text-rose-600 focus:text-rose-600">
             <Trash2 className="h-4 w-4" />

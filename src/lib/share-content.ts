@@ -30,6 +30,7 @@ type CommunitySharePost = {
     ref?: string;
     reference?: string;
     quote?: string;
+    preview_media_index?: number;
     media_aspect_ratio?: '4:5' | 'og' | 'auto';
     text_position?: 'above' | 'below';
     imageUrl?: string;
@@ -179,7 +180,12 @@ export async function fetchCommunitySharePost(postId: string): Promise<Community
 }
 
 export function buildCommunitySharePayload(post: CommunitySharePost) {
+  const rawPreviewIndex = post.metadata?.preview_media_index;
+  const selectedPreviewIndex =
+    Number.isInteger(rawPreviewIndex) && Number(rawPreviewIndex) >= 0 ? Number(rawPreviewIndex) : 0;
+  const selectedMediaUrl = post.mediaPaths[selectedPreviewIndex] || null;
   const mediaUrl =
+    selectedMediaUrl ||
     post.thumbPath ||
     post.mediaPaths[0] ||
     post.imageUrl ||
@@ -187,14 +193,13 @@ export function buildCommunitySharePayload(post: CommunitySharePost) {
     null;
   const text = truncateText(post.text || post.metadata?.quote || post.title || '');
   const reference = post.metadata?.reference || post.metadata?.ref || null;
-  const isScriptureLike = Boolean(reference || post.type === 'quote' || post.type === 'reflection');
 
-  if (mediaUrl && !isScriptureLike) {
+  if (mediaUrl) {
     return {
       kind: 'media' as const,
       title: post.title || post.type_label || 'Community',
       body: text || 'Bagikan momen dan cerita yang menguatkan bersama komunitas.',
-      meta: `${post.author.name} • Community`,
+      meta: reference ? `${reference} • ${post.author.name}` : `${post.author.name} • Community`,
       imageUrl: mediaUrl,
       eyebrow: 'Community Share',
     };

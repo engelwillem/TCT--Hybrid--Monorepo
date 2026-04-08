@@ -14,6 +14,7 @@ interface ReflectPromptProps {
   onChange: (val: string) => void;
   onContinue: () => void;
   isDone: boolean;
+  isSubmitting?: boolean;
 }
 
 export default function ReflectPrompt({
@@ -26,6 +27,7 @@ export default function ReflectPrompt({
   onChange,
   onContinue,
   isDone,
+  isSubmitting = false,
 }: ReflectPromptProps) {
   const m = useMotionConfig();
   const isFilled = value.trim().length > 0;
@@ -77,18 +79,18 @@ export default function ReflectPrompt({
             <div className="mt-4 flex justify-start">
               <button
                 data-testid="today-reflection-submit"
-                disabled={!isFilled}
+                disabled={!isFilled || isSubmitting}
                 onClick={onContinue}
                 // Explicit aria-label provides full context for screen reader users
                 aria-label={isFilled ? `${ctaLabel} refleksiku` : ctaLabel}
                 className={`group rounded-full px-6 py-[10px] text-[14px] font-medium transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                  isFilled
+                  isFilled && !isSubmitting
                     ? 'bg-black text-white shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] hover:shadow-[0_22px_44px_-24px_rgba(14,165,233,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-95'
                     : 'bg-transparent text-foreground/20'
                 }`}
               >
                 <span className={isFilled ? 'inline-block transition-transform duration-400 ease-out group-hover:translate-x-[1px]' : undefined}>
-                  {ctaLabel}
+                  {isSubmitting ? "Mendoakan..." : ctaLabel}
                 </span>
               </button>
             </div>
