@@ -38,6 +38,7 @@ class CommunityApiController extends Controller
             ->whereNull('hidden_at')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', $now)
+            ->publicFeed()
             ->with(['user:id,name,avatar_path'])
             ->withCount([
                 'comments',

@@ -54,6 +54,7 @@ class TodayFeedService
 
         $rawItems = MemberPost::query()
             ->active()
+            ->publicFeed()
             ->with(['user:id,name,avatar_path'])
             ->withCount([
                 'comments',

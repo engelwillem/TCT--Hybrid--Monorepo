@@ -29,6 +29,15 @@ const MATCHES: Array<{ keywords: string[]; result: RenunganMatch }> = [
     },
   },
   {
+    keywords: ["rindu", "kangen", "merindukan", "jauh", "terpisah", "anak", "istri", "suami", "keluarga"],
+    result: {
+      verseText: "TUHAN itu dekat kepada orang-orang yang patah hati, dan Ia menyelamatkan orang-orang yang remuk jiwanya.",
+      verseReference: "Mazmur 34:19",
+      meditation:
+        "Kerinduanmu kepada orang yang kamu kasihi adalah kasih yang tulus, dan Tuhan memahaminya sepenuhnya. Di tengah jarak, kamu boleh mempercayakan mereka ke dalam penjagaan-Nya sambil terus memelihara doa yang setia. Tuhan tetap dekat dan menumbuhkan pengharapan untuk perjumpaan pada waktu-Nya.",
+    },
+  },
+  {
     keywords: ["cemas", "takut", "khawatir", "gelisah", "bingung"],
     result: {
       verseText: "Janganlah hendaknya hatimu gelisah; percayalah kepada Allah, percayalah juga kepada-Ku.",
@@ -81,6 +90,19 @@ function sanitizeReflectionText(text: string): string {
 
 export function normalizeReflectionForCache(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function cleanMeditationText(input: string): string {
+  const normalized = input
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;!?])/g, "$1")
+    .replace(/([!?.,;:]){2,}/g, "$1")
+    .replace(/…|\.\.\./g, ".")
+    .trim();
+
+  if (!normalized) return normalized;
+  if (/[.!?]$/.test(normalized)) return normalized;
+  return `${normalized}.`;
 }
 
 export function buildPersonalRenunganFallback(
@@ -160,7 +182,7 @@ export async function generatePersonalRenungan(
     }
 
     return {
-      meditation,
+      meditation: cleanMeditationText(meditation),
       verseText,
       verseReference,
       relatedVerses: Array.isArray(payload?.data?.related_verses)

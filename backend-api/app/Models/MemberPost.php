@@ -45,6 +45,17 @@ class MemberPost extends Model
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()->subDays(7)));
     }
 
+    /**
+     * Only include posts intended for public community feeds.
+     */
+    public function scopePublicFeed($query)
+    {
+        return $query->whereRaw(
+            "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.visibility')), '') <> ?",
+            ['private_renungan_archive']
+        );
+    }
+
     public function scopeUrgentPrayer($query)
     {
         return $query->whereIn('type', [\App\Enums\PostType::PRAYER_REQUEST, \App\Enums\PostType::VERSE_REFLECTION])

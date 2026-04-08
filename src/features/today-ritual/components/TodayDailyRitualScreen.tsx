@@ -232,6 +232,7 @@ export default function TodayDailyRitualScreen({
               [],
               {
                 bookmark_origin: 'renungan',
+                visibility: 'private_renungan_archive',
                 ritual_user_reflection: reflectionText.trim(),
                 ritual_generated_meditation: personalRenungan.meditation,
                 ritual_verse_text: personalRenungan.verseText,
@@ -415,7 +416,7 @@ export default function TodayDailyRitualScreen({
                   </div>
 
                   <motion.p
-                    className="mt-6 tct-serif text-[23px] leading-[1.7] tracking-[-0.01em] text-foreground/88"
+                    className="mt-6 tct-serif break-words whitespace-pre-line text-[23px] leading-[1.7] tracking-[-0.01em] text-foreground/88"
                     initial={{ opacity: 0, filter: 'blur(8px)' }}
                     animate={{ opacity: 1, filter: 'blur(0px)' }}
                     transition={m.reduce ? m.tx.calm : { ...m.tx.slow, delay: 0.08 }}

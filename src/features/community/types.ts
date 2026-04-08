@@ -57,6 +57,7 @@ export interface CommunityPost {
     ritual_verse_text?: string;
     ritual_verse_reference?: string;
     bookmark_origin?: string;
+    visibility?: "private_renungan_archive" | "public";
   };
 }
 

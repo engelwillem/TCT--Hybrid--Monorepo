@@ -12,64 +12,110 @@ class RenunganPersonalizationController extends Controller
 {
     private const THEME_PROFILES = [
         'gratitude' => [
-            'keywords' => ['syukur', 'bersyukur', 'berkat', 'puji', 'pujian', 'terima kasih', 'sukacita', 'bahagia', 'senang'],
-            'tone_affinity' => 'positive',
+            'keywords' => ['syukur', 'bersyukur', 'berkat', 'puji', 'pujian', 'terima kasih', 'sukacita', 'bahagia', 'lega'],
+            'emotion' => 'joyful',
             'emotional_need' => 'syukur yang stabil',
             'spiritual_need' => 'hati yang menyembah',
             'intent' => 'mengucap syukur',
-            'verse_hints' => ['bersyukur', 'sukacita', 'pujian', 'memuji', 'syukur', 'kemurahan'],
+            'verse_hints' => ['bersyukur', 'sukacita', 'pujilah', 'kemurahan', 'setia'],
             'book_boost' => ['mzm', '1tes', 'kol', 'ef'],
+            'preferred_verse_tone' => 'worshipful',
+        ],
+        'longing_family' => [
+            'keywords' => ['rindu', 'kangen', 'merindukan', 'jauh', 'terpisah', 'pisah', 'anak', 'istri', 'suami', 'keluarga'],
+            'emotion' => 'longing',
+            'emotional_need' => 'dikuatkan dalam kerinduan',
+            'spiritual_need' => 'penghiburan dan penjagaan Tuhan',
+            'intent' => 'mempercayakan orang terkasih kepada Tuhan',
+            'verse_hints' => ['menyertai', 'lindungi', 'pelihara', 'dekat', 'damai'],
+            'book_boost' => ['mzm', 'yes', 'yoh', 'flp'],
+            'preferred_verse_tone' => 'comforting',
+        ],
+        'relationship_conflict' => [
+            'keywords' => ['bertengkar', 'konflik', 'marah', 'sakit hati', 'kecewa', 'disakiti', 'bermusuhan', 'rekonsiliasi'],
+            'emotion' => 'tense',
+            'emotional_need' => 'hati yang tenang dan lembut',
+            'spiritual_need' => 'kasih, pengampunan, dan pemulihan relasi',
+            'intent' => 'memulihkan relasi',
+            'verse_hints' => ['kasih', 'sabar', 'mengampuni', 'damai', 'lemah lembut'],
+            'book_boost' => ['ef', 'kol', '1kor', 'rom', 'mzm'],
+            'preferred_verse_tone' => 'restorative',
         ],
         'anxiety' => [
-            'keywords' => ['cemas', 'khawatir', 'takut', 'gelisah', 'panik', 'deg-degan', 'resah', 'kuatir'],
-            'tone_affinity' => 'negative',
+            'keywords' => ['cemas', 'khawatir', 'takut', 'gelisah', 'panik', 'resah', 'kuatir', 'degdegan'],
+            'emotion' => 'anxious',
             'emotional_need' => 'ketenangan',
             'spiritual_need' => 'percaya pemeliharaan Tuhan',
             'intent' => 'mencari rasa aman',
-            'verse_hints' => ['damai', 'tenang', 'jangan takut', 'jangan khawatir', 'percaya', 'menyerahkan'],
+            'verse_hints' => ['jangan takut', 'jangan khawatir', 'damai', 'tenang', 'percaya'],
             'book_boost' => ['mzm', 'mat', 'yes', 'flp', 'yoh'],
+            'preferred_verse_tone' => 'comforting',
         ],
         'fatigue' => [
-            'keywords' => ['lelah', 'capek', 'penat', 'burnout', 'letih', 'habis tenaga', 'kelelahan', 'jenuh'],
-            'tone_affinity' => 'negative',
+            'keywords' => ['lelah', 'letih', 'capek', 'penat', 'burnout', 'habis tenaga', 'kelelahan', 'jenuh'],
+            'emotion' => 'weary',
             'emotional_need' => 'kelegaan',
             'spiritual_need' => 'kekuatan baru',
             'intent' => 'butuh pemulihan',
             'verse_hints' => ['kekuatan', 'istirahat', 'dipulihkan', 'ditopang', 'dikuatkan'],
             'book_boost' => ['yes', 'mat', 'mzm', 'ibr'],
+            'preferred_verse_tone' => 'restorative',
         ],
         'guilt' => [
-            'keywords' => ['dosa', 'bersalah', 'malu', 'jatuh', 'gagal', 'ampun', 'menyesal', 'hancur'],
-            'tone_affinity' => 'negative',
+            'keywords' => ['dosa', 'bersalah', 'malu', 'jatuh', 'gagal', 'ampun', 'menyesal', 'bertobat'],
+            'emotion' => 'contrite',
             'emotional_need' => 'diterima kembali',
             'spiritual_need' => 'pengampunan dan pemulihan',
-            'intent' => 'ingin dipulihkan',
-            'verse_hints' => ['ampuni', 'kasih setia', 'anugerah', 'dipulihkan', 'belas kasihan'],
+            'intent' => 'mencari pengampunan',
+            'verse_hints' => ['ampuni', 'anugerah', 'kasih setia', 'belas kasihan', 'dipulihkan'],
             'book_boost' => ['1yoh', 'mzm', 'rom', 'luk'],
+            'preferred_verse_tone' => 'restorative',
         ],
         'direction' => [
             'keywords' => ['bingung', 'keputusan', 'jalan', 'masa depan', 'pilihan', 'rencana', 'arah', 'langkah'],
-            'tone_affinity' => 'neutral',
+            'emotion' => 'uncertain',
             'emotional_need' => 'kejelasan',
             'spiritual_need' => 'hikmat dan tuntunan',
             'intent' => 'mencari arah',
-            'verse_hints' => ['hikmat', 'tuntun', 'jalan', 'percaya', 'nasihat', 'pimpin'],
+            'verse_hints' => ['hikmat', 'tuntun', 'jalan', 'percaya', 'nasihat'],
             'book_boost' => ['ams', 'mzm', 'yes', 'yak'],
+            'preferred_verse_tone' => 'guiding',
         ],
-        'relationship' => [
-            'keywords' => ['keluarga', 'suami', 'istri', 'anak', 'rumah', 'hubungan', 'orang tua', 'teman', 'konflik'],
-            'tone_affinity' => 'neutral',
-            'emotional_need' => 'rekonsiliasi',
-            'spiritual_need' => 'kasih dan kesabaran',
-            'intent' => 'memulihkan relasi',
-            'verse_hints' => ['kasih', 'sabar', 'mengampuni', 'damai', 'lemah lembut'],
-            'book_boost' => ['ef', 'kol', '1kor', 'mzm', 'rom'],
+        'surrender' => [
+            'keywords' => ['serahkan', 'pasrah', 'berserah', 'kehendakmu', 'menyerah kepada tuhan'],
+            'emotion' => 'yielding',
+            'emotional_need' => 'hati yang tenang',
+            'spiritual_need' => 'iman untuk berserah',
+            'intent' => 'menyerahkan keadaan kepada Tuhan',
+            'verse_hints' => ['serahkan', 'percaya', 'menopang', 'setia', 'damai'],
+            'book_boost' => ['mzm', 'ams', 'mat', 'flp'],
+            'preferred_verse_tone' => 'guiding',
         ],
     ];
 
-    /**
-     * Generate personal renungan from user reflection text using Bible DB candidates.
-     */
+    private const EMOTION_PROFILES = [
+        'joyful' => ['syukur', 'bersyukur', 'bahagia', 'sukacita', 'lega', 'damai'],
+        'longing' => ['rindu', 'kangen', 'merindukan', 'jauh', 'terpisah', 'menanti'],
+        'anxious' => ['cemas', 'khawatir', 'takut', 'gelisah', 'panik', 'resah'],
+        'weary' => ['lelah', 'letih', 'capek', 'penat', 'burnout', 'jenuh'],
+        'contrite' => ['bersalah', 'dosa', 'ampun', 'menyesal', 'malu', 'bertobat'],
+        'uncertain' => ['bingung', 'ragu', 'keputusan', 'arah', 'pilihan', 'jalan'],
+        'tense' => ['marah', 'konflik', 'bertengkar', 'sakit hati', 'kecewa'],
+    ];
+
+    private const INTENT_PROFILES = [
+        'worship' => ['bersyukur', 'memuji', 'puji', 'terima kasih'],
+        'comfort' => ['rindu', 'sendiri', 'kesepian', 'jauh', 'terpisah', 'cemas', 'takut'],
+        'restoration' => ['ampun', 'dipulihkan', 'bertobat', 'memperbaiki', 'rekonsiliasi'],
+        'guidance' => ['bingung', 'keputusan', 'arah', 'langkah', 'rencana', 'masa depan'],
+        'surrender' => ['serahkan', 'pasrah', 'berserah', 'kehendakmu'],
+    ];
+
+    private const STOP_WORDS = [
+        'yang', 'dengan', 'untuk', 'dalam', 'sudah', 'akan', 'saya', 'kami', 'kamu', 'dari', 'karena', 'tetapi',
+        'atau', 'dan', 'itu', 'ini', 'hari', 'lagi', 'saat', 'agar', 'pada', 'kepada', 'seperti',
+    ];
+
     public function personalize(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -99,7 +145,7 @@ class RenunganPersonalizationController extends Controller
         }
 
         $primary = $selected[0] ?? null;
-        $meditation = $this->composeMeditation($reflectionText, $analysis, $selected);
+        $meditation = $this->composeMeditation($reflectionText, $analysis);
 
         return response()->json([
             'data' => [
@@ -123,80 +169,118 @@ class RenunganPersonalizationController extends Controller
     private function analyzeReflection(string $text): array
     {
         $normalized = $this->normalizeText($text);
-        $tokens = explode(' ', $normalized);
+        $themeScores = $this->scoreProfiles($normalized, self::THEME_PROFILES);
+        $emotionScores = $this->scoreProfiles($normalized, self::EMOTION_PROFILES);
+        $intentScores = $this->scoreProfiles($normalized, self::INTENT_PROFILES);
+        $contextFlags = $this->detectContextFlags($normalized);
 
-        $positiveWords = ['syukur', 'bersyukur', 'berkat', 'sukacita', 'damai', 'tenang', 'lega', 'puji', 'terima kasih', 'ditolong'];
-        $negativeWords = ['cemas', 'khawatir', 'takut', 'gelisah', 'lelah', 'capek', 'malu', 'bersalah', 'gagal', 'sendiri', 'bingung'];
-
-        $positiveScore = $this->countWeightedMatches($normalized, $positiveWords);
-        $negativeScore = $this->countWeightedMatches($normalized, $negativeWords);
-        $tone = $positiveScore >= $negativeScore + 2 ? 'positive' : ($negativeScore >= $positiveScore + 2 ? 'negative' : 'neutral');
-
-        $scores = [];
-        foreach (self::THEME_PROFILES as $theme => $profile) {
-            $score = $this->countWeightedMatches($normalized, $profile['keywords']);
-            foreach ($tokens as $token) {
-                if (strlen($token) > 3 && in_array($token, $profile['keywords'], true)) {
-                    $score += 1.2;
-                }
-            }
-
-            if (($profile['tone_affinity'] ?? 'neutral') === $tone) {
-                $score += 1.5;
-            }
-            if ($theme === 'gratitude' && $tone === 'positive') {
-                $score += 2;
-            }
-
-            if ($score > 0) {
-                $scores[$theme] = round($score, 2);
-            }
+        if ($contextFlags['has_family_terms'] && $contextFlags['has_longing_terms']) {
+            $themeScores['longing_family'] = ($themeScores['longing_family'] ?? 0) + 3.5;
+            $intentScores['comfort'] = ($intentScores['comfort'] ?? 0) + 2.0;
+        }
+        if ($contextFlags['has_conflict_terms']) {
+            $themeScores['relationship_conflict'] = ($themeScores['relationship_conflict'] ?? 0) + 3.0;
+            $intentScores['restoration'] = ($intentScores['restoration'] ?? 0) + 1.5;
+        }
+        if ($contextFlags['has_gratitude_terms']) {
+            $themeScores['gratitude'] = ($themeScores['gratitude'] ?? 0) + 2.5;
+            $intentScores['worship'] = ($intentScores['worship'] ?? 0) + 1.5;
         }
 
-        arsort($scores, SORT_NUMERIC);
-        $topThemes = array_slice(array_keys($scores), 0, 3);
-        $primaryTheme = $topThemes[0] ?? ($tone === 'positive' ? 'gratitude' : 'direction');
-        $selectedProfile = self::THEME_PROFILES[$primaryTheme] ?? self::THEME_PROFILES['direction'];
-        $intent = $this->inferIntent($primaryTheme, $tone, $normalized);
+        arsort($themeScores, SORT_NUMERIC);
+        arsort($emotionScores, SORT_NUMERIC);
+        arsort($intentScores, SORT_NUMERIC);
+
+        $primaryTheme = (string) (array_key_first($themeScores) ?? 'direction');
+        $primaryEmotion = (string) (array_key_first($emotionScores) ?? (self::THEME_PROFILES[$primaryTheme]['emotion'] ?? 'uncertain'));
+        $intent = $this->resolveIntent($intentScores, $primaryTheme, $normalized);
+        $tone = $this->inferTone($primaryEmotion, $contextFlags);
+        $intensity = $this->computeIntensity($text, $themeScores, $emotionScores);
+        $profile = self::THEME_PROFILES[$primaryTheme] ?? self::THEME_PROFILES['direction'];
+
+        $secondaryThemes = collect(array_keys($themeScores))
+            ->reject(fn (string $theme) => $theme === $primaryTheme)
+            ->take(2)
+            ->values()
+            ->all();
+
+        $secondaryEmotions = collect(array_keys($emotionScores))
+            ->reject(fn (string $emotion) => $emotion === $primaryEmotion)
+            ->take(2)
+            ->values()
+            ->all();
 
         return [
             'primary_theme' => $primaryTheme,
-            'secondary_themes' => array_values(array_slice($topThemes, 1)),
-            'emotional_need' => $selectedProfile['emotional_need'],
-            'spiritual_need' => $selectedProfile['spiritual_need'],
+            'secondary_themes' => $secondaryThemes,
+            'primary_emotion' => $primaryEmotion,
+            'secondary_emotions' => $secondaryEmotions,
             'intent' => $intent,
             'tone' => $tone,
-            'positive_score' => $positiveScore,
-            'negative_score' => $negativeScore,
+            'intensity' => $intensity,
+            'relational_context' => $this->resolveRelationalContext($contextFlags),
+            'emotional_need' => (string) ($profile['emotional_need'] ?? 'ketenangan'),
+            'spiritual_need' => (string) ($profile['spiritual_need'] ?? 'pengharapan'),
+            'preferred_verse_tone' => (string) ($profile['preferred_verse_tone'] ?? 'comforting'),
+            'context_flags' => $contextFlags,
+            'theme_scores' => $this->roundScores($themeScores),
+            'emotion_scores' => $this->roundScores($emotionScores),
         ];
     }
 
     private function buildSearchTerms(string $text, array $analysis): array
     {
         $normalized = $this->normalizeText($text);
-
         $tokens = collect(explode(' ', $normalized))
             ->filter(fn (string $token) => strlen($token) >= 3)
-            ->reject(fn (string $token) => in_array($token, [
-                'yang', 'dengan', 'untuk', 'dalam', 'sudah', 'akan', 'saya', 'kami', 'kamu', 'dari', 'karena', 'tetapi',
-            ], true))
-            ->take(10)
+            ->reject(fn (string $token) => in_array($token, self::STOP_WORDS, true))
+            ->take(12)
             ->values()
             ->all();
 
         $primaryTheme = (string) ($analysis['primary_theme'] ?? 'direction');
+        $secondaryThemes = (array) ($analysis['secondary_themes'] ?? []);
+        $primaryEmotion = (string) ($analysis['primary_emotion'] ?? 'uncertain');
+        $intent = (string) ($analysis['intent'] ?? 'guidance');
+        $contextFlags = (array) ($analysis['context_flags'] ?? []);
+
         $themeTerms = self::THEME_PROFILES[$primaryTheme]['verse_hints'] ?? ['percaya', 'pengharapan'];
-        $secondaryTerms = collect((array) ($analysis['secondary_themes'] ?? []))
+        $secondaryTerms = collect($secondaryThemes)
             ->flatMap(fn (string $theme) => self::THEME_PROFILES[$theme]['verse_hints'] ?? [])
             ->take(4)
             ->values()
             ->all();
 
-        return collect(array_merge($tokens, $themeTerms, $secondaryTerms))
+        $emotionHints = [
+            'joyful' => ['sukacita', 'bersyukur', 'pujilah'],
+            'longing' => ['menyertai', 'pelihara', 'dekat'],
+            'anxious' => ['damai', 'tenang', 'jangan takut'],
+            'weary' => ['kekuatan', 'istirahat', 'ditopang'],
+            'contrite' => ['ampuni', 'anugerah', 'dipulihkan'],
+            'uncertain' => ['hikmat', 'tuntun', 'jalan'],
+            'tense' => ['kasih', 'sabar', 'mengampuni'],
+        ][$primaryEmotion] ?? ['percaya', 'setia'];
+
+        $intentHints = [
+            'worship' => ['puji', 'syukur', 'kemuliaan'],
+            'comfort' => ['penghiburan', 'dekat', 'menyertai'],
+            'restoration' => ['pemulihan', 'pengampunan', 'damai'],
+            'guidance' => ['hikmat', 'tuntunan', 'arah'],
+            'surrender' => ['serahkan', 'percaya', 'damai'],
+        ][$intent] ?? ['percaya', 'pengharapan'];
+
+        $contextTerms = [];
+        if (($contextFlags['has_family_terms'] ?? false) && ($contextFlags['has_longing_terms'] ?? false)) {
+            $contextTerms = ['keluarga', 'pelihara', 'lindungi', 'menyertai'];
+        } elseif (($contextFlags['has_conflict_terms'] ?? false)) {
+            $contextTerms = ['kasih', 'damai', 'mengampuni'];
+        }
+
+        return collect(array_merge($tokens, $themeTerms, $secondaryTerms, $emotionHints, $intentHints, $contextTerms))
             ->map(fn (string $term) => trim($term))
             ->filter()
             ->unique()
-            ->take(18)
+            ->take(22)
             ->values()
             ->all();
     }
@@ -219,7 +303,7 @@ class RenunganPersonalizationController extends Controller
             ->orderBy('book_code')
             ->orderBy('chapter')
             ->orderBy('verse')
-            ->limit(220)
+            ->limit(280)
             ->get();
     }
 
@@ -229,50 +313,64 @@ class RenunganPersonalizationController extends Controller
             return [];
         }
 
-        $normalizedTerms = collect($searchTerms)->map(fn (string $term) => Str::lower($term))->all();
-        $primaryTheme = (string) ($analysis['primary_theme'] ?? '');
-        $tone = (string) ($analysis['tone'] ?? 'neutral');
-        $themeHints = self::THEME_PROFILES[$primaryTheme]['verse_hints'] ?? [];
+        $normalizedTerms = collect($searchTerms)
+            ->map(fn (string $term) => Str::lower($term))
+            ->filter()
+            ->values()
+            ->all();
+
+        $primaryTheme = (string) ($analysis['primary_theme'] ?? 'direction');
         $bookBoost = self::THEME_PROFILES[$primaryTheme]['book_boost'] ?? ['mzm', 'mat', 'yoh'];
+        $preferredTone = (string) ($analysis['preferred_verse_tone'] ?? 'comforting');
+        $contextFlags = (array) ($analysis['context_flags'] ?? []);
         $reflectionNormalized = $this->normalizeText($reflectionText);
 
         $scored = $candidates
-            ->map(function (BibleVerse $verse) use ($normalizedTerms, $themeHints, $bookBoost, $tone, $reflectionNormalized) {
-                $text = Str::lower((string) $verse->text);
-                $score = 0;
+            ->map(function (BibleVerse $verse) use ($normalizedTerms, $analysis, $bookBoost, $preferredTone, $contextFlags, $reflectionNormalized) {
+                $verseText = Str::lower((string) $verse->text);
+                $score = 0.0;
 
                 foreach ($normalizedTerms as $term) {
-                    if ($term !== '' && Str::contains($text, $term)) {
-                        $score += strlen($term) > 5 ? 9 : 6;
+                    if (Str::contains($verseText, $term)) {
+                        $score += strlen($term) > 5 ? 8.5 : 5.5;
                     }
                 }
 
+                $themeHints = self::THEME_PROFILES[(string) ($analysis['primary_theme'] ?? 'direction')]['verse_hints'] ?? [];
                 foreach ($themeHints as $hint) {
-                    if (Str::contains($text, Str::lower($hint))) {
-                        $score += 7;
+                    if (Str::contains($verseText, Str::lower($hint))) {
+                        $score += 7.0;
                     }
                 }
 
                 if (in_array((string) $verse->book_code, $bookBoost, true)) {
-                    $score += 8;
+                    $score += 8.0;
                 }
 
-                if ($tone === 'positive' && (Str::contains($text, 'sukacita') || Str::contains($text, 'bersyukur') || Str::contains($text, 'pujilah'))) {
-                    $score += 10;
-                }
-                if ($tone === 'negative' && (Str::contains($text, 'jangan takut') || Str::contains($text, 'jangan khawatir') || Str::contains($text, 'damai sejahtera'))) {
-                    $score += 9;
-                }
-
-                if ($tone === 'positive' && (Str::contains($text, 'air mata') || Str::contains($text, 'dukacita') || Str::contains($text, 'ratapan'))) {
-                    $score -= 4;
-                }
-                if ($tone === 'negative' && Str::contains($text, 'bersukacitalah')) {
-                    $score -= 2;
+                $verseTone = $this->classifyVerseTone($verseText);
+                if ($verseTone === $preferredTone) {
+                    $score += 9.5;
+                } elseif ($preferredTone === 'comforting' && $verseTone === 'restorative') {
+                    $score += 4.0;
+                } elseif ($verseTone === 'corrective' && $preferredTone !== 'corrective') {
+                    $score -= 7.5;
                 }
 
-                if ($reflectionNormalized !== '' && Str::contains($reflectionNormalized, 'berkat') && Str::contains($text, 'berkat')) {
-                    $score += 6;
+                if (($contextFlags['has_family_terms'] ?? false) && ($contextFlags['has_longing_terms'] ?? false)) {
+                    if (Str::contains($verseText, 'menyertai') || Str::contains($verseText, 'pelihara') || Str::contains($verseText, 'lindungi')) {
+                        $score += 10.0;
+                    }
+                    if (Str::contains($verseText, 'bertengkar') || Str::contains($verseText, 'perselisihan')) {
+                        $score -= 8.0;
+                    }
+                }
+
+                if (($contextFlags['has_conflict_terms'] ?? false) && (Str::contains($verseText, 'mengampuni') || Str::contains($verseText, 'damai'))) {
+                    $score += 7.0;
+                }
+
+                if (Str::contains($reflectionNormalized, 'berkat') && Str::contains($verseText, 'berkat')) {
+                    $score += 6.0;
                 }
 
                 return [
@@ -291,95 +389,254 @@ class RenunganPersonalizationController extends Controller
         $primary = $scored[0]['verse'];
         $selected = [$primary];
 
-        // Prioritize correlated verses from same book/chapter, then wider top-ranked support.
-        $relatedFromSameBook = $scored
-            ->filter(fn (array $item) => (string) $item['verse']->book_code === (string) $primary->book_code)
+        $supporting = $scored
+            ->skip(1)
             ->map(fn (array $item) => $item['verse'])
-            ->reject(fn (BibleVerse $v) => (int) $v->id === (int) $primary->id)
-            ->unique(fn (BibleVerse $v) => (string) $v->reference)
+            ->unique(fn (BibleVerse $verse) => (string) $verse->reference)
+            ->reject(fn (BibleVerse $verse) => (int) $verse->id === (int) $primary->id)
             ->take(2)
             ->values()
             ->all();
 
-        foreach ($relatedFromSameBook as $verse) {
+        foreach ($supporting as $verse) {
             $selected[] = $verse;
-        }
-
-        if (count($selected) < 3) {
-            $topOthers = $scored
-                ->map(fn (array $item) => $item['verse'])
-                ->reject(fn (BibleVerse $v) => collect($selected)->contains(fn (BibleVerse $s) => (int) $s->id === (int) $v->id))
-                ->unique(fn (BibleVerse $v) => (string) $v->reference)
-                ->take(3 - count($selected))
-                ->values()
-                ->all();
-
-            foreach ($topOthers as $verse) {
-                $selected[] = $verse;
-            }
         }
 
         return array_values($selected);
     }
 
-    private function composeMeditation(string $reflectionText, array $analysis, array $selectedVerses): string
+    private function composeMeditation(string $reflectionText, array $analysis): string
     {
-        $reflectionSummary = trim(Str::of($reflectionText)->replaceMatches('/\s+/', ' ')->limit(120, '...')->value());
         $primaryTheme = (string) ($analysis['primary_theme'] ?? 'direction');
-        $tone = (string) ($analysis['tone'] ?? 'neutral');
+        $primaryEmotion = (string) ($analysis['primary_emotion'] ?? 'uncertain');
+        $intent = (string) ($analysis['intent'] ?? 'guidance');
+        $relationalContext = (string) ($analysis['relational_context'] ?? 'neutral');
+        $emotionalNeed = (string) ($analysis['emotional_need'] ?? 'ketenangan');
+        $spiritualNeed = (string) ($analysis['spiritual_need'] ?? 'pengharapan');
+        $reflectionEcho = $this->extractReflectionEcho($reflectionText, $primaryTheme);
+
+        $opening = match ($primaryTheme) {
+            'gratitude' => "Syukurmu hari ini adalah respons iman yang indah.",
+            'longing_family' => "Kerinduanmu kepada orang yang kamu kasihi adalah ungkapan kasih yang tulus, dan Tuhan memahaminya sepenuhnya.",
+            'relationship_conflict' => "Tuhan melihat luka relasimu dengan kasih yang tidak menghakimi.",
+            'anxiety' => "Tuhan hadir menenangkan hatimu di tengah rasa cemas.",
+            'fatigue' => "Dalam lelahmu, Tuhan tidak menekanmu; Ia meneduhkan dan menguatkanmu.",
+            'guilt' => "Kasih Tuhan membukakan jalan pulih, bahkan ketika kamu merasa gagal.",
+            'surrender' => "Keinginanmu untuk berserah adalah langkah iman yang dewasa.",
+            default => "Tuhan menuntunmu dengan lembut ketika arah terasa belum jelas.",
+        };
+
+        $body = match ($primaryTheme) {
+            'gratitude' => "Rawatlah hati yang bersyukur itu agar tetap berakar pada kebaikan-Nya, bukan pada situasi yang berubah.",
+            'longing_family' => "Di tengah jarak atau perpisahan, kamu boleh mempercayakan mereka ke dalam penjagaan-Nya sambil terus mendoakan perlindungan dan damai.",
+            'relationship_conflict' => "Mintalah hati yang lembut untuk berkata benar dalam kasih, sehingga pemulihan terjadi tanpa kehilangan ketegasan.",
+            'anxiety' => "Tarik napas perlahan, serahkan hal yang di luar kendalimu, lalu melangkah dengan damai yang Tuhan berikan.",
+            'fatigue' => "Kamu boleh beristirahat tanpa rasa bersalah, sebab Tuhan sanggup menambah kekuatanmu setahap demi setahap.",
+            'guilt' => "Pengakuan yang jujur bukan akhir, melainkan pintu masuk untuk pengampunan, pemulihan, dan hidup baru.",
+            'surrender' => "Saat kamu menyerahkan keadaanmu kepada Tuhan, Ia membentuk keteguhan yang tenang dari dalam.",
+            default => "Setialah pada langkah kecil hari ini, karena Tuhan sering menyingkapkan arah melalui ketaatan yang sederhana.",
+        };
+
+        $closing = match (true) {
+            $relationalContext === 'longing' => "Tuhan tetap menyertaimu hari ini dan menumbuhkan pengharapan untuk perjumpaan pada waktu-Nya.",
+            $intent === 'worship' => "Biarlah penyembahanmu hari ini membuat hatimu makin peka terhadap kemurahan Tuhan.",
+            $primaryEmotion === 'contrite' => "Kasih karunia-Nya lebih besar daripada rasa bersalahmu, dan masa depanmu tidak berhenti di kegagalan.",
+            default => "Hari ini kamu membutuhkan {$emotionalNeed}, dan Tuhan menuntunmu kepada {$spiritualNeed}.",
+        };
+
+        $raw = trim($opening.' '.$reflectionEcho.' '.$body.' '.$closing);
+
+        return $this->finalizeMeditationText($raw, $analysis);
+    }
+
+    private function extractReflectionEcho(string $reflectionText, string $primaryTheme): string
+    {
+        $clean = trim((string) Str::of($reflectionText)->replaceMatches('/\s+/', ' '));
+        if ($clean === '' || strlen($clean) > 180) {
+            return match ($primaryTheme) {
+                'longing_family' => "Kerinduan itu tidak membuatmu lemah; kerinduan itu menunjukkan kasih yang hidup.",
+                'anxiety' => "Kamu tidak perlu pura-pura kuat ketika hatimu sedang mencari ketenangan.",
+                default => "Tuhan menghargai kejujuran hatimu di hadapan-Nya.",
+            };
+        }
+
+        $safe = preg_replace('/[\"\']+/', '', $clean) ?? $clean;
+
+        return 'Saat kamu membawa isi hati ini dalam doa: '.$safe.'.';
+    }
+
+    private function finalizeMeditationText(string $meditation, array $analysis): string
+    {
+        $normalized = (string) Str::of($meditation)
+            ->replaceMatches('/\s+/', ' ')
+            ->replaceMatches('/\s+([,.;!?])/', '$1')
+            ->trim();
+
+        $normalized = preg_replace('/([!?.,;:]){2,}/', '$1', $normalized) ?? $normalized;
+        $normalized = str_replace(['…', '...'], '.', $normalized);
+        $normalized = preg_replace('/\s*"\s*/', '', $normalized) ?? $normalized;
+        $normalized = trim($normalized);
+
+        if ($normalized === '' || strlen($normalized) < 80) {
+            return $this->composeSafeFallbackMeditation($analysis);
+        }
+
+        if (!preg_match('/[.!?]$/', $normalized)) {
+            $normalized .= '.';
+        }
+
+        if (preg_match('/\b(dan|atau|karena|sehingga)\.?$/i', $normalized)) {
+            $normalized .= ' Tuhan tetap menyertaimu dengan setia.';
+        }
+
+        return $normalized;
+    }
+
+    private function composeSafeFallbackMeditation(array $analysis): string
+    {
+        $theme = (string) ($analysis['primary_theme'] ?? 'direction');
         $emotionalNeed = (string) ($analysis['emotional_need'] ?? 'ketenangan');
         $spiritualNeed = (string) ($analysis['spiritual_need'] ?? 'pengharapan');
 
-        $opening = match ($tone) {
-            'positive' => match ($primaryTheme) {
-                'gratitude' => "Syukurmu hari ini adalah ibadah yang indah di hadapan Tuhan.",
-                default => "Ada benih pengharapan yang sehat dalam isi hatimu hari ini.",
-            },
-            'negative' => match ($primaryTheme) {
-                'anxiety' => "Tuhan hadir menenangkanmu, bukan menuntutmu terlihat kuat.",
-                'fatigue' => "Dalam lelahmu, Tuhan tidak menjauh; Ia memberi ruang untuk dipulihkan.",
-                'guilt' => "Kasih Tuhan tidak menutup pintu bagimu; kasih-Nya membuka jalan pulih.",
-                default => "Tuhan melihat hatimu dengan lembut, bahkan di saat berat.",
-            },
-            default => match ($primaryTheme) {
-                'direction' => "Tuhan menuntun langkahmu setahap demi setahap, tidak dengan tergesa-gesa.",
-                'relationship' => "Tuhan membentuk relasimu lewat kasih yang sabar dan jujur.",
-                default => "Tuhan memahami isi hatimu dan menuntunmu dengan tenang.",
-            },
+        $opening = match ($theme) {
+            'gratitude' => 'Syukurmu hari ini adalah anugerah yang perlu dijaga dengan hati yang lembut.',
+            'longing_family' => 'Kerinduanmu kepada keluarga adalah kasih yang berharga di hadapan Tuhan.',
+            'anxiety' => 'Tuhan hadir menenangkanmu ketika hatimu terasa gelisah.',
+            'fatigue' => 'Dalam kelelahanmu, Tuhan tetap menopangmu dengan kasih yang setia.',
+            'guilt' => 'Kasih Tuhan tetap membuka jalan pengampunan dan pemulihan bagimu.',
+            default => 'Tuhan memahami isi hatimu dan menuntunmu dengan lembut.',
         };
 
-        $support = match ($primaryTheme) {
-            'gratitude' => "Terus rawat ucapan syukur itu agar hatimu tetap peka pada kebaikan-Nya.",
-            'anxiety' => "Tarik napas perlahan, serahkan yang tak bisa kamu kendalikan, lalu berjalan dalam damai-Nya.",
-            'fatigue' => "Kamu boleh berhenti sejenak; kekuatan yang dari Tuhan cukup untuk langkah berikutnya.",
-            'guilt' => "Pengakuan yang jujur bukan akhir, melainkan awal pemulihan dan hidup baru.",
-            'direction' => "Saat arah belum jelas, setia pada langkah kecil hari ini sering menjadi pintu hikmat esok.",
-            'relationship' => "Minta hati yang lembut untuk mendengar, mengampuni, dan membangun ulang kepercayaan.",
-            default => "Tetaplah dekat pada Tuhan, karena dari sana arah dan keteguhan hati dipulihkan.",
-        };
-
-        $verseEcho = $this->buildVerseEcho($selectedVerses, $tone);
-
-        return trim($opening.' "'.$reflectionSummary.'". '.$support.' Saat ini kamu butuh '.$emotionalNeed.', dan Tuhan menuntunmu pada '.$spiritualNeed.'.'.$verseEcho.' Langkahmu hari ini tetap berharga di hadapan-Nya.');
+        return $opening.' Hari ini kamu membutuhkan '.$emotionalNeed.', dan Tuhan menuntunmu kepada '.$spiritualNeed.'. Kamu tidak berjalan sendiri.';
     }
 
-    private function buildVerseEcho(array $selectedVerses, string $tone): string
+    private function resolveRelationalContext(array $contextFlags): string
     {
-        $snippet = collect($selectedVerses)
-            ->map(fn (BibleVerse $verse) => Str::of((string) $verse->text)->replaceMatches('/\s+/', ' ')->trim()->limit(88, '...')->value())
-            ->filter()
-            ->take(1)
-            ->first();
-
-        if (!is_string($snippet) || $snippet === '') {
-            return '';
+        if (($contextFlags['has_family_terms'] ?? false) && ($contextFlags['has_longing_terms'] ?? false)) {
+            return 'longing';
+        }
+        if ($contextFlags['has_conflict_terms'] ?? false) {
+            return 'conflict';
         }
 
-        $prefix = $tone === 'positive'
-            ? ' Firman juga menguatkan syukurmu: '
-            : ' Firman meneguhkan hatimu: ';
+        return 'neutral';
+    }
 
-        return $prefix.$snippet.'.';
+    private function resolveIntent(array $intentScores, string $primaryTheme, string $normalizedText): string
+    {
+        $bestIntent = array_key_first($intentScores);
+        if (is_string($bestIntent) && ($intentScores[$bestIntent] ?? 0) >= 1.0) {
+            return $bestIntent;
+        }
+
+        if ($primaryTheme === 'longing_family') {
+            return 'comfort';
+        }
+        if ($primaryTheme === 'gratitude') {
+            return 'worship';
+        }
+        if ($primaryTheme === 'guilt') {
+            return 'restoration';
+        }
+        if ($primaryTheme === 'direction' || Str::contains($normalizedText, 'keputusan')) {
+            return 'guidance';
+        }
+        if ($primaryTheme === 'surrender') {
+            return 'surrender';
+        }
+
+        return 'guidance';
+    }
+
+    private function inferTone(string $primaryEmotion, array $contextFlags): string
+    {
+        if ($primaryEmotion === 'joyful') {
+            return 'positive';
+        }
+        if (in_array($primaryEmotion, ['anxious', 'weary', 'contrite', 'tense'], true)) {
+            return 'negative';
+        }
+        if (($contextFlags['has_longing_terms'] ?? false) && ($contextFlags['has_family_terms'] ?? false)) {
+            return 'tender';
+        }
+
+        return 'neutral';
+    }
+
+    private function detectContextFlags(string $normalizedText): array
+    {
+        return [
+            'has_family_terms' => $this->containsAny($normalizedText, ['anak', 'istri', 'suami', 'keluarga', 'orang tua']),
+            'has_longing_terms' => $this->containsAny($normalizedText, ['rindu', 'kangen', 'merindukan', 'jauh', 'terpisah', 'pisah']),
+            'has_conflict_terms' => $this->containsAny($normalizedText, ['konflik', 'bertengkar', 'marah', 'sakit hati', 'bermusuhan', 'kecewa']),
+            'has_gratitude_terms' => $this->containsAny($normalizedText, ['syukur', 'bersyukur', 'berkat', 'terima kasih', 'puji']),
+        ];
+    }
+
+    private function scoreProfiles(string $normalizedText, array $profiles): array
+    {
+        $scores = [];
+        foreach ($profiles as $key => $profile) {
+            $keywords = is_array($profile) && array_key_exists('keywords', $profile) ? (array) $profile['keywords'] : (array) $profile;
+            $score = 0.0;
+            foreach ($keywords as $keyword) {
+                $needle = trim(Str::lower((string) $keyword));
+                if ($needle === '') {
+                    continue;
+                }
+                if (Str::contains($normalizedText, $needle)) {
+                    $score += strlen($needle) >= 7 ? 1.4 : 1.0;
+                }
+            }
+            if ($score > 0) {
+                $scores[$key] = $score;
+            }
+        }
+
+        return $scores;
+    }
+
+    private function classifyVerseTone(string $verseText): string
+    {
+        $toneKeywords = [
+            'comforting' => ['jangan takut', 'jangan khawatir', 'damai', 'tenang', 'menyertai', 'penghiburan', 'pelihara', 'lindungi'],
+            'worshipful' => ['bersyukur', 'pujilah', 'muliakan', 'sukacita', 'sorak', 'memuji'],
+            'guiding' => ['hikmat', 'jalan', 'tuntun', 'nasihat', 'percaya', 'langkah'],
+            'restorative' => ['ampun', 'anugerah', 'dipulihkan', 'belas kasihan', 'mengampuni'],
+            'corrective' => ['bertobat', 'hukuman', 'tegur', 'kesalahan', 'jangan berbuat'],
+        ];
+
+        $scores = [];
+        foreach ($toneKeywords as $tone => $keywords) {
+            $scores[$tone] = 0;
+            foreach ($keywords as $keyword) {
+                if (Str::contains($verseText, $keyword)) {
+                    $scores[$tone] += 1;
+                }
+            }
+        }
+
+        arsort($scores, SORT_NUMERIC);
+        $topTone = (string) (array_key_first($scores) ?? 'comforting');
+        return ($scores[$topTone] ?? 0) > 0 ? $topTone : 'comforting';
+    }
+
+    private function computeIntensity(string $rawText, array $themeScores, array $emotionScores): int
+    {
+        $base = (int) round(max(array_sum($themeScores), array_sum($emotionScores)));
+        $punctuationBoost = preg_match_all('/[!?]/', $rawText) ?: 0;
+        $wordCount = str_word_count($rawText);
+        $lengthBoost = $wordCount >= 12 ? 1 : 0;
+        $intensity = $base + $punctuationBoost + $lengthBoost;
+
+        return max(1, min(5, $intensity));
+    }
+
+    private function roundScores(array $scores): array
+    {
+        return collect($scores)
+            ->map(fn ($score) => round((float) $score, 2))
+            ->all();
     }
 
     private function normalizeText(string $text): string
@@ -390,40 +647,15 @@ class RenunganPersonalizationController extends Controller
             ->trim();
     }
 
-    private function countWeightedMatches(string $normalizedText, array $keywords): float
+    private function containsAny(string $haystack, array $needles): bool
     {
-        $score = 0.0;
-        foreach ($keywords as $keyword) {
-            $needle = Str::lower(trim((string) $keyword));
-            if ($needle === '') {
-                continue;
-            }
-            if (Str::contains($normalizedText, $needle)) {
-                $score += strlen($needle) > 6 ? 1.4 : 1.0;
+        foreach ($needles as $needle) {
+            if (Str::contains($haystack, Str::lower((string) $needle))) {
+                return true;
             }
         }
 
-        return $score;
-    }
-
-    private function inferIntent(string $primaryTheme, string $tone, string $normalized): string
-    {
-        if ($primaryTheme === 'gratitude') {
-            return 'mengucap syukur';
-        }
-        if ($primaryTheme === 'anxiety' && Str::contains($normalized, 'takut')) {
-            return 'mencari ketenangan atas rasa takut';
-        }
-        if ($primaryTheme === 'direction' && Str::contains($normalized, 'keputusan')) {
-            return 'meminta hikmat untuk mengambil keputusan';
-        }
-        if ($primaryTheme === 'guilt') {
-            return 'mencari pengampunan dan pemulihan';
-        }
-        if ($primaryTheme === 'relationship') {
-            return 'membangun relasi dengan kasih dan kesabaran';
-        }
-
-        return $tone === 'positive' ? 'menjaga hati tetap bersyukur' : (self::THEME_PROFILES[$primaryTheme]['intent'] ?? 'mencari penguatan iman');
+        return false;
     }
 }
+
