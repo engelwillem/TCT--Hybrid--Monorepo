@@ -17,6 +17,7 @@ use App\Http\Controllers\SsDayCommentController;
 use App\Http\Controllers\StudyPathController;
 use App\Http\Controllers\UserFollowController;
 use App\Http\Controllers\VersehubActionController;
+use App\Http\Controllers\VersehubCommentController;
 use App\Http\Controllers\VerseHubController;
 use App\Http\Controllers\VerseHubEventController;
 use App\Http\Controllers\VerseHubLibraryController;
@@ -73,6 +74,9 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/versehub/{lang}/{ref}/mentor', [VerseHubController::class, 'mentorInsights'])
         ->whereIn('lang', ['id', 'en'])
         ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
+    Route::get('/versehub/{lang}/{ref}/comments', [VersehubCommentController::class, 'index'])
+        ->whereIn('lang', ['id', 'en'])
+        ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
 
     // Read-only reader actions are guest-safe to prevent noisy 401s on public surfaces.
     Route::get('/versehub/{lang}/reader-actions', [VersehubActionController::class, 'index'])
@@ -99,6 +103,9 @@ Route::prefix('v1')->group(function (): void {
             ->whereIn('lang', ['id', 'en']);
 
         Route::post('/versehub/{lang}/{ref}/mentor/ask', [VerseHubController::class, 'mentorAsk'])
+            ->whereIn('lang', ['id', 'en'])
+            ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
+        Route::post('/versehub/{lang}/{ref}/comments', [VersehubCommentController::class, 'store'])
             ->whereIn('lang', ['id', 'en'])
             ->where('ref', '[a-z0-9]+(?:[-_.]\d+){1,3}');
 

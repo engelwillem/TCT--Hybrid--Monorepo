@@ -9,6 +9,24 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  openGraph: {
+    title: 'The Chosen Talks - Renungan Harian Kristen',
+    description: 'Terima firman, renungkan ayat harian, dan bertumbuh bersama komunitas iman setiap hari.',
+    images: [
+      {
+        url: '/og/today-share.png',
+        width: 1200,
+        height: 630,
+        alt: 'The Chosen Talks - Renungan Harian',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'The Chosen Talks - Renungan Harian Kristen',
+    description: 'Terima firman, renungkan ayat harian, dan bertumbuh bersama komunitas iman setiap hari.',
+    images: ['/og/today-share.png'],
+  },
 };
 
 export default function HomePage() {

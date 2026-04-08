@@ -328,6 +328,7 @@ export function VersehubReaderPage({
                 bookmarked={bookmarked}
                 bookmarkCount={bookmarkCount}
                 chapterRouteFromVerse={chapterRouteFromVerse}
+                lang={lang}
                 liked={liked}
                 likeCount={likeCount}
                 onBackToReader={() => router.push(chapterRouteFromVerse)}

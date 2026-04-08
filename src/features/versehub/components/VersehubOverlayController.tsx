@@ -316,7 +316,10 @@ export function VersehubOverlayController({
             <motion.img
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              src={verseData.og_image_url}
+              src={verseData.og_image_url || "/og/today-share.png"}
+              onError={(event) => {
+                event.currentTarget.src = "/og/today-share.png";
+              }}
               className="max-h-[85dvh] w-full max-w-5xl rounded-2xl object-contain shadow-2xl ring-1 ring-white/10"
             />
           </motion.div>
