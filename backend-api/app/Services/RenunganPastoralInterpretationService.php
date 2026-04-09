@@ -191,6 +191,7 @@ class RenunganPastoralInterpretationService
         return match ($theme) {
             'gratitude' => 'Syukur menolong hati melihat kesetiaan Tuhan dengan jernih.',
             'longing_family' => 'Kerinduan dalam jarak tetap berada dalam penjagaan Tuhan.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Tuhan hadir di tengah luka pelayanan dan menuntun langkah pulih dengan hikmat.',
             'anxiety' => 'Tuhan memanggil hati yang cemas untuk kembali tenang dalam-Nya.',
             'fatigue' => 'Tuhan memberi ruang pemulihan bagi jiwa yang letih.',
             'guilt', 'repentance' => 'Pengakuan yang jujur membuka jalan pemulihan.',
@@ -204,6 +205,7 @@ class RenunganPastoralInterpretationService
         return match ($theme) {
             'gratitude' => 'Sebutkan berkat Tuhan hari ini dan responsi dengan hidup yang rendah hati.',
             'longing_family' => 'Bawa nama orang yang kamu rindukan dalam doa harian dengan setia.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Pulihkan hati terlebih dahulu, tetapkan batas sehat, lalu melangkah dengan keputusan yang jujur di hadapan Tuhan.',
             'anxiety' => 'Pisahkan beban yang bisa kamu kerjakan hari ini dari yang perlu kamu serahkan pada Tuhan.',
             'fatigue' => 'Ambil ritme istirahat yang sehat dan lanjutkan langkah kecil dengan iman.',
             'guilt', 'repentance' => 'Akui dengan jujur, tinggalkan pola lama, lalu melangkah dalam pemulihan.',
@@ -222,6 +224,7 @@ class RenunganPastoralInterpretationService
         }
 
         return match ($theme) {
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Tuhan tidak menyepelekan lukamu; Ia menuntunmu memulihkan hati tanpa kehilangan arah.',
             'anger_conflict', 'hatred_hostility' => 'Tuhan mengerti emosimu, dan Ia memimpinmu agar tidak dikuasai amarah.',
             default => 'Tuhan tetap dekat dan tidak meninggalkanmu pada musim ini.',
         };
@@ -243,6 +246,7 @@ class RenunganPastoralInterpretationService
     {
         return match ($theme) {
             'longing_family' => 'Tuhan sanggup menjaga kasih tetap hidup sampai waktunya perjumpaan.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Tuhan masih sanggup membuka jalan panggilan yang sehat setelah musim luka ini.',
             'anger_conflict', 'hatred_hostility' => 'Dengan pertolongan Tuhan, kemarahanmu bisa diubah menjadi kedewasaan dan damai.',
             default => 'Pengharapanmu bisa bertumbuh lagi karena Tuhan setia menuntunmu.',
         };
@@ -253,6 +257,7 @@ class RenunganPastoralInterpretationService
         return match ($theme) {
             'anxiety' => 'Doakan: Tuhan, tenangkan hatiku dan tuntun langkahku hari ini.',
             'fatigue' => 'Doakan kekuatan baru agar kamu dapat melanjutkan langkah dengan damai.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Doakan: Tuhan, sembuhkan lukaku, jernihkan pikiranku, dan tuntun aku memilih langkah yang benar.',
             'anger_conflict', 'hatred_hostility' => 'Doakan: Tuhan, jaga lidahku, lembutkan hatiku, dan pimpin aku memilih damai.',
             default => 'Tutup hari ini dengan doa singkat yang jujur, lalu percayakan hasilnya kepada Tuhan.',
         };

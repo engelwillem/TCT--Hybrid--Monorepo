@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\CommunityApiController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
 use App\Http\Controllers\Api\V1\RenunganPersonalizationController;
+use App\Http\Controllers\Api\V1\RenunganShareController;
 use App\Http\Controllers\Api\V1\TodaySessionController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
@@ -35,6 +36,7 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/forgot-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'resetPassword']);
     Route::post('/renungan/personalize', [RenunganPersonalizationController::class, 'personalize']);
+    Route::get('/renungan/share/{token}', [RenunganShareController::class, 'show']);
 
     Route::get('/today', [TodayApiController::class, 'show']);
     Route::post('/analytics/funnel', [FunnelAnalyticsController::class, 'store']);
@@ -91,6 +93,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/today/state', [TodayApiController::class, 'updateState']);
 
         Route::post('/community/posts', [CommunityApiController::class, 'store']);
+        Route::post('/renungan/share', [RenunganShareController::class, 'store']);
+        Route::delete('/renungan/share/{token}', [RenunganShareController::class, 'destroy']);
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
         Route::post('/community/posts/{memberPost}/bookmark', [CommunityApiController::class, 'toggleBookmark']);

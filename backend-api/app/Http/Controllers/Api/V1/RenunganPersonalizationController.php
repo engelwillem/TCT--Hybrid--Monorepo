@@ -127,6 +127,76 @@ class RenunganPersonalizationController extends Controller
             'book_boost' => ['mzm', 'yes', 'yoh', 'ibr'],
             'preferred_verse_tone' => 'comforting',
         ],
+        'ministry_disillusionment' => [
+            'keywords' => ['pelayanan', 'pendeta', 'gereja', 'tidak dilibatkan', 'dimanfaatkan', 'tidak sanggup bertahan', 'luka pelayanan'],
+            'emotion' => 'resentful',
+            'emotional_need' => 'didengar tanpa dihakimi',
+            'spiritual_need' => 'pemulihan panggilan dan keteguhan hati',
+            'intent' => 'mencari kejelasan panggilan dengan hati pulih',
+            'verse_hints' => ['setia', 'hikmat', 'menguatkan', 'tidak tawar hati', 'gembalakan'],
+            'book_boost' => ['2kor', 'gal', 'mzm', '1ptr', 'yak'],
+            'preferred_verse_tone' => 'restorative',
+        ],
+        'church_hurt' => [
+            'keywords' => ['luka gereja', 'tersakiti di gereja', 'kecewa gereja', 'trauma gereja', 'disakiti pemimpin'],
+            'emotion' => 'sad',
+            'emotional_need' => 'ruang aman untuk pulih',
+            'spiritual_need' => 'penghiburan dan pemulihan kepercayaan',
+            'intent' => 'dipulihkan tanpa menyangkal luka',
+            'verse_hints' => ['dekat kepada yang patah hati', 'penghiburan', 'sabar', 'damai'],
+            'book_boost' => ['mzm', 'mat', 'yoh', '2kor'],
+            'preferred_verse_tone' => 'tender',
+        ],
+        'calling_conflict' => [
+            'keywords' => ['panggilan', 'talenta', 'tidak dilibatkan', 'konflik pelayanan', 'arah hidup', 'tetap atau berhenti'],
+            'emotion' => 'confused',
+            'emotional_need' => 'kejelasan yang tenang',
+            'spiritual_need' => 'hikmat dalam keputusan panggilan',
+            'intent' => 'menimbang langkah dengan bijak',
+            'verse_hints' => ['hikmat', 'tuntun', 'setia', 'jalan', 'teguh'],
+            'book_boost' => ['ams', 'yak', 'mzm', 'kol'],
+            'preferred_verse_tone' => 'guiding',
+        ],
+        'exploitation' => [
+            'keywords' => ['dimanfaatkan', 'dieksploitasi', 'dipakai', 'kepentingan senior', 'hanya dipakai', 'tidak dihargai'],
+            'emotion' => 'resentful',
+            'emotional_need' => 'batas sehat dan martabat dipulihkan',
+            'spiritual_need' => 'hikmat, keberanian, dan damai',
+            'intent' => 'menetapkan batas yang benar',
+            'verse_hints' => ['hikmat', 'lemah lembut', 'benar', 'damai', 'teguh'],
+            'book_boost' => ['ams', 'yak', 'ef', 'rom'],
+            'preferred_verse_tone' => 'corrective',
+        ],
+        'institutional_disappointment' => [
+            'keywords' => ['institusi', 'organisasi', 'sistem', 'struktur', 'budaya kerja rohani', 'kecewa pimpinan'],
+            'emotion' => 'resentful',
+            'emotional_need' => 'diakui rasa kecewanya',
+            'spiritual_need' => 'hikmat bersikap tanpa kepahitan',
+            'intent' => 'mencari jalan yang sehat',
+            'verse_hints' => ['hikmat', 'damai', 'sabar', 'kebenaran'],
+            'book_boost' => ['ams', 'yak', 'mzm', 'rom'],
+            'preferred_verse_tone' => 'guiding',
+        ],
+        'authority_wound' => [
+            'keywords' => ['senior', 'otoritas', 'pemimpin', 'atasan rohani', 'ditekan pemimpin', 'disalahgunakan'],
+            'emotion' => 'sad',
+            'emotional_need' => 'rasa aman dan pemulihan harga diri',
+            'spiritual_need' => 'kebenaran dengan kasih',
+            'intent' => 'pulih sambil tetap bijak',
+            'verse_hints' => ['kebenaran', 'lemah lembut', 'penghiburan', 'damai'],
+            'book_boost' => ['mzm', 'ef', '1ptr', 'yak'],
+            'preferred_verse_tone' => 'restorative',
+        ],
+        'mixed_emotional_state' => [
+            'keywords' => ['di satu sisi', 'namun di sisi lain', 'campur aduk', 'bingung tapi', 'bersyukur tapi', 'rindu tapi'],
+            'emotion' => 'confused',
+            'emotional_need' => 'ditolong memilah isi hati',
+            'spiritual_need' => 'damai dan kejelasan bertahap',
+            'intent' => 'menata hati yang kompleks',
+            'verse_hints' => ['damai', 'hikmat', 'menuntun', 'menopang'],
+            'book_boost' => ['mzm', 'ams', 'flp', 'yak'],
+            'preferred_verse_tone' => 'reassuring',
+        ],
         'direction' => [
             'keywords' => ['bingung', 'keputusan', 'jalan', 'masa depan', 'pilihan', 'rencana', 'arah', 'langkah'],
             'emotion' => 'confused',
@@ -296,6 +366,34 @@ class RenunganPersonalizationController extends Controller
             $themeScores['fatigue'] = ($themeScores['fatigue'] ?? 0) + 2.3;
             $intentScores['seek_comfort'] = ($intentScores['seek_comfort'] ?? 0) + 1.2;
         }
+        if ($contextFlags['has_ministry_terms']) {
+            $themeScores['ministry_disillusionment'] = ($themeScores['ministry_disillusionment'] ?? 0) + 2.8;
+        }
+        if ($contextFlags['has_church_hurt_terms']) {
+            $themeScores['church_hurt'] = ($themeScores['church_hurt'] ?? 0) + 2.8;
+        }
+        if ($contextFlags['has_calling_terms']) {
+            $themeScores['calling_conflict'] = ($themeScores['calling_conflict'] ?? 0) + 2.2;
+        }
+        if ($contextFlags['has_exploitation_terms']) {
+            $themeScores['exploitation'] = ($themeScores['exploitation'] ?? 0) + 2.6;
+        }
+        if ($contextFlags['has_institution_terms']) {
+            $themeScores['institutional_disappointment'] = ($themeScores['institutional_disappointment'] ?? 0) + 2.2;
+        }
+        if ($contextFlags['has_authority_wound_terms']) {
+            $themeScores['authority_wound'] = ($themeScores['authority_wound'] ?? 0) + 2.4;
+        }
+        $negativeSignalCount = 0;
+        foreach (['has_conflict_terms', 'has_anger_terms', 'has_harm_terms', 'has_church_hurt_terms', 'has_exploitation_terms', 'has_authority_wound_terms', 'has_fear_terms', 'has_exhaustion_terms'] as $flagKey) {
+            if ($contextFlags[$flagKey] ?? false) {
+                $negativeSignalCount++;
+            }
+        }
+        if ($negativeSignalCount >= 3) {
+            $themeScores['mixed_emotional_state'] = ($themeScores['mixed_emotional_state'] ?? 0) + 2.9;
+            $intentScores['seek_peace'] = ($intentScores['seek_peace'] ?? 0) + 1.4;
+        }
 
         arsort($themeScores, SORT_NUMERIC);
         arsort($emotionScores, SORT_NUMERIC);
@@ -391,6 +489,13 @@ class RenunganPersonalizationController extends Controller
         $contextTerms = [];
         if (($contextFlags['has_family_terms'] ?? false) && ($contextFlags['has_longing_terms'] ?? false)) {
             $contextTerms = ['keluarga', 'pelihara', 'lindungi', 'menyertai'];
+        } elseif (
+            ($contextFlags['has_ministry_terms'] ?? false)
+            || ($contextFlags['has_church_hurt_terms'] ?? false)
+            || ($contextFlags['has_exploitation_terms'] ?? false)
+            || ($contextFlags['has_authority_wound_terms'] ?? false)
+        ) {
+            $contextTerms = ['hikmat', 'pulihkan', 'teguhkan', 'damai', 'kebenaran', 'jangan tawar hati'];
         } elseif (($contextFlags['has_harm_terms'] ?? false) || ($contextFlags['has_anger_terms'] ?? false)) {
             $contextTerms = ['lambat marah', 'jaga lidah', 'jangan membalas', 'damai'];
         } elseif (($contextFlags['has_conflict_terms'] ?? false)) {
@@ -489,6 +594,25 @@ class RenunganPersonalizationController extends Controller
                 if (($contextFlags['has_conflict_terms'] ?? false) && (Str::contains($verseText, 'mengampuni') || Str::contains($verseText, 'damai'))) {
                     $score += 7.0;
                 }
+                if (
+                    ($contextFlags['has_ministry_terms'] ?? false)
+                    || ($contextFlags['has_church_hurt_terms'] ?? false)
+                    || ($contextFlags['has_exploitation_terms'] ?? false)
+                    || ($contextFlags['has_authority_wound_terms'] ?? false)
+                ) {
+                    if (
+                        Str::contains($verseText, 'hikmat')
+                        || Str::contains($verseText, 'damai')
+                        || Str::contains($verseText, 'jangan tawar hati')
+                        || Str::contains($verseText, 'menguatkan')
+                        || Str::contains($verseText, 'setia')
+                    ) {
+                        $score += 9.0;
+                    }
+                    if (Str::contains($verseText, 'sukacita') && !Str::contains($reflectionNormalized, 'syukur')) {
+                        $score -= 4.0;
+                    }
+                }
                 if (($contextFlags['has_anger_terms'] ?? false) || ($contextFlags['has_harm_terms'] ?? false)) {
                     if (
                         Str::contains($verseText, 'lambat untuk marah')
@@ -554,6 +678,8 @@ class RenunganPersonalizationController extends Controller
             'gratitude' => "Syukurmu hari ini adalah respons iman yang indah.",
             'longing_family' => "Kerinduanmu kepada orang yang kamu kasihi adalah ungkapan kasih yang tulus, dan Tuhan memahaminya sepenuhnya.",
             'relationship_conflict' => "Tuhan melihat luka relasimu dengan kasih yang tidak menghakimi.",
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound' => "Tuhan melihat pergumulanmu dalam pelayanan dan relasi dengan sangat jujur, tanpa mengabaikan luka yang kamu rasakan.",
+            'mixed_emotional_state' => "Tuhan memahami isi hatimu yang campur aduk, dan Ia tidak menuntutmu menyederhanakan rasa yang memang kompleks.",
             'anger_conflict', 'hatred_hostility' => "Tuhan melihat kemarahanmu dengan jujur, dan Ia menuntunmu agar emosi itu tidak melukai dirimu maupun orang lain.",
             'anxiety' => "Tuhan hadir menenangkan hatimu di tengah rasa cemas.",
             'fatigue' => "Dalam lelahmu, Tuhan tidak menekanmu; Ia meneduhkan dan menguatkanmu.",
@@ -567,6 +693,8 @@ class RenunganPersonalizationController extends Controller
             'gratitude' => "Rawatlah hati yang bersyukur itu agar tetap berakar pada kebaikan-Nya, bukan pada situasi yang berubah.",
             'longing_family' => "Di tengah jarak atau perpisahan, kamu boleh mempercayakan mereka ke dalam penjagaan-Nya sambil terus mendoakan perlindungan dan damai.",
             'relationship_conflict' => "Mintalah hati yang lembut untuk berkata benar dalam kasih, sehingga pemulihan terjadi tanpa kehilangan ketegasan.",
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound' => "Sebelum mengambil keputusan besar, izinkan Tuhan memulihkan hatimu lebih dulu, menolongmu menetapkan batas yang sehat, dan memberi hikmat untuk melangkah benar tanpa kepahitan.",
+            'mixed_emotional_state' => "Kamu boleh menata satu per satu isi hati ini dalam doa, karena damai Tuhan sering hadir lewat langkah kecil yang jujur, bukan lewat jawaban instan.",
             'anger_conflict', 'hatred_hostility' => "Sebelum bereaksi, ambil jeda, tenangkan napas, lalu pilih kata yang benar dan tidak melukai; di situlah kedewasaan rohani sedang dibentuk.",
             'anxiety' => "Tarik napas perlahan, serahkan hal yang di luar kendalimu, lalu melangkah dengan damai yang Tuhan berikan.",
             'fatigue' => "Kamu boleh beristirahat tanpa rasa bersalah, sebab Tuhan sanggup menambah kekuatanmu setahap demi setahap.",
@@ -578,6 +706,7 @@ class RenunganPersonalizationController extends Controller
 
         $closing = match (true) {
             $relationalContext === 'longing' => "Tuhan tetap menyertaimu hari ini dan menumbuhkan pengharapan untuk perjumpaan pada waktu-Nya.",
+            in_array($primaryTheme, ['ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state'], true) => "Tuhan menuntunmu memilih jalan yang benar: tetap lembut, tetap jujur, dan tetap sehat secara rohani.",
             $intent === 'express_gratitude' => "Biarlah penyembahanmu hari ini membuat hatimu makin peka terhadap kemurahan Tuhan.",
             in_array($primaryTheme, ['anger_conflict', 'hatred_hostility'], true) => "Pilihanmu untuk menahan diri hari ini adalah langkah kemenangan yang berkenan di hadapan Tuhan.",
             $primaryEmotion === 'guilty' => "Kasih karunia-Nya lebih besar daripada rasa bersalahmu, dan masa depanmu tidak berhenti di kegagalan.",
@@ -649,6 +778,7 @@ class RenunganPersonalizationController extends Controller
         $opening = match ($theme) {
             'gratitude' => 'Syukurmu hari ini adalah anugerah yang perlu dijaga dengan hati yang lembut.',
             'longing_family' => 'Kerinduanmu kepada keluarga adalah kasih yang berharga di hadapan Tuhan.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Tuhan melihat isi hatimu yang kompleks dan menuntunmu dengan hikmat tanpa menyepelekan lukamu.',
             'anger_conflict', 'hatred_hostility' => 'Tuhan melihat kemarahanmu, dan Ia menolongmu menahan diri agar tidak melukai.',
             'anxiety' => 'Tuhan hadir menenangkanmu ketika hatimu terasa gelisah.',
             'fatigue' => 'Dalam kelelahanmu, Tuhan tetap menopangmu dengan kasih yang setia.',
@@ -671,6 +801,7 @@ class RenunganPersonalizationController extends Controller
             'gratitude' => 'Syukur menolong hati tetap melihat kebaikan Tuhan secara konsisten.',
             'longing_family' => 'Jarak tidak memutuskan kasih dan penjagaan Tuhan atas keluarga.',
             'relationship_conflict' => 'Kasih yang sabar membuka jalan pemulihan relasi secara sehat.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Tuhan tetap hadir di tengah luka pelayanan, memberi hikmat untuk pulih dan melangkah tanpa kepahitan.',
             'anger_conflict', 'hatred_hostility' => 'Kemarahan perlu ditata dalam hikmat agar tidak menjadi luka baru.',
             'anxiety' => 'Tuhan memanggil hati yang cemas untuk beristirahat dalam pemeliharaan-Nya.',
             'fatigue' => 'Kekuatan dari Tuhan cukup untuk memulihkan langkah yang lelah.',
@@ -683,6 +814,7 @@ class RenunganPersonalizationController extends Controller
             'gratitude' => 'Syukurmu bukan sekadar perasaan sesaat, tetapi cara hati bertumbuh stabil dalam iman sehari-hari.',
             'longing_family' => 'Kerinduanmu bisa menjadi doa yang lembut: Tuhan menjaga keluargamu di sana, dan menguatkanmu di sini.',
             'relationship_conflict' => 'Kesembuhan relasi sering dimulai dari hati yang mau tenang dulu, lalu berbicara dengan kasih dan kejujuran.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Lukamu perlu dihormati, namun jangan biarkan luka menentukan seluruh arah hidupmu; Tuhan menuntunmu membangun batas sehat, kejujuran, dan damai.',
             'anger_conflict', 'hatred_hostility' => 'Marahmu perlu diakui, tetapi tidak perlu dituruti; Tuhan menuntunmu memilih kata yang benar dan damai.',
             'anxiety' => 'Saat rasa takut muncul, kamu boleh menata napas, lalu menyerahkan hal yang tidak bisa kamu kendalikan kepada Tuhan.',
             'fatigue' => 'Kamu tidak perlu memaksa diri terlihat kuat; Tuhan juga bekerja lewat ritme istirahat dan pemulihan.',
@@ -695,6 +827,7 @@ class RenunganPersonalizationController extends Controller
             'longing_family' => 'Tuhan hadir di dua tempat sekaligus: menyertai keluarga yang kamu rindukan dan meneguhkan hatimu di perantauan.',
             'anxiety' => 'Kamu aman untuk jujur di hadapan Tuhan, bahkan ketika hati terasa gemetar.',
             'fatigue' => 'Kasih Tuhan tidak menghakimi kelemahanmu; Ia memulihkanmu dengan sabar.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Tuhan tidak menutup mata terhadap ketidakadilan yang kamu rasakan; Ia menemanimu memulihkan hati dengan perlahan.',
             'anger_conflict', 'hatred_hostility' => 'Tuhan tidak meninggalkanmu dalam emosi panas; Ia sanggup menuntunmu kembali tenang.',
             default => 'Tuhan tetap dekat dan tidak meninggalkanmu di musim ini.',
         };
@@ -705,6 +838,7 @@ class RenunganPersonalizationController extends Controller
 
         $hopeDirection = match ($primaryTheme) {
             'longing_family' => 'Harapanmu tidak sia-sia; Tuhan sanggup menjaga kasih tetap hidup sampai waktunya perjumpaan.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Masa depan panggilanmu tidak berhenti pada luka hari ini; Tuhan masih sanggup menumbuhkan jalan yang sehat dan bermakna.',
             'anger_conflict', 'hatred_hostility' => 'Dengan tuntunan Tuhan, amarah yang liar bisa berubah menjadi hati yang lebih dewasa dan damai.',
             'direction' => 'Jalanmu mungkin belum lengkap terlihat, tetapi Tuhan tidak pernah terlambat memberi arah.',
             default => 'Pengharapanmu bisa bertumbuh lagi karena Tuhan setia menyelesaikan pekerjaan-Nya dalam hidupmu.',
@@ -714,6 +848,7 @@ class RenunganPersonalizationController extends Controller
             'longing_family' => 'Jadikan kerinduan ini doa harian: titipkan nama keluargamu satu per satu kepada Tuhan.',
             'anxiety' => 'Doakan ini dengan sederhana: Tuhan, tenangkan hatiku dan tuntun langkahku hari ini.',
             'guilt', 'repentance' => 'Berdoalah dengan jujur: Tuhan, ampuni aku, pulihkan aku, dan pimpin aku hidup benar.',
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => 'Doakan: Tuhan, pulihkan lukaku, beri aku hikmat menata batas yang sehat, dan tuntun aku berjalan dalam damai-Mu.',
             'anger_conflict', 'hatred_hostility' => 'Doakan: Tuhan, jaga lidahku, lembutkan hatiku, dan tuntun aku memilih damai.',
             default => 'Tutup hari ini dengan doa singkat yang jujur, lalu percayakan hasilnya kepada Tuhan.',
         };
@@ -740,6 +875,7 @@ class RenunganPersonalizationController extends Controller
             'gratitude' => ['gratitude', 'worship', 'hope'],
             'longing_family' => ['longing', 'family', 'protection', 'comfort', 'hope'],
             'relationship_conflict' => ['restoration', 'peace', 'love'],
+            'ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state' => ['healing', 'wisdom', 'peace', 'calling', 'restoration'],
             'anger_conflict', 'hatred_hostility' => ['self_control', 'peace', 'wisdom', 'repentance'],
             'anxiety' => ['peace', 'comfort', 'trust', 'perseverance'],
             'fatigue' => ['restoration', 'strength', 'comfort'],
@@ -804,6 +940,14 @@ class RenunganPersonalizationController extends Controller
         if (($contextFlags['has_family_terms'] ?? false) && ($contextFlags['has_longing_terms'] ?? false)) {
             return 'longing';
         }
+        if (
+            ($contextFlags['has_ministry_terms'] ?? false)
+            || ($contextFlags['has_church_hurt_terms'] ?? false)
+            || ($contextFlags['has_exploitation_terms'] ?? false)
+            || ($contextFlags['has_authority_wound_terms'] ?? false)
+        ) {
+            return 'institutional_pain';
+        }
         if (($contextFlags['has_harm_terms'] ?? false) || ($contextFlags['has_anger_terms'] ?? false)) {
             return 'hostile';
         }
@@ -816,6 +960,10 @@ class RenunganPersonalizationController extends Controller
 
     private function resolveIntent(array $intentScores, string $primaryTheme, string $normalizedText): string
     {
+        if (in_array($primaryTheme, ['ministry_disillusionment', 'church_hurt', 'calling_conflict', 'exploitation', 'institutional_disappointment', 'authority_wound', 'mixed_emotional_state'], true)) {
+            return 'seek_peace';
+        }
+
         $bestIntent = array_key_first($intentScores);
         if (is_string($bestIntent) && ($intentScores[$bestIntent] ?? 0) >= 1.0) {
             return $bestIntent;
@@ -873,6 +1021,12 @@ class RenunganPersonalizationController extends Controller
             'has_guilt_terms' => $this->containsAny($normalizedText, ['bersalah', 'dosa', 'ampun', 'menyesal', 'bertobat']),
             'has_fear_terms' => $this->containsAny($normalizedText, ['cemas', 'khawatir', 'takut', 'gelisah', 'resah']),
             'has_exhaustion_terms' => $this->containsAny($normalizedText, ['lelah', 'letih', 'capek', 'jenuh', 'burnout']),
+            'has_ministry_terms' => $this->containsAny($normalizedText, ['pelayanan', 'pendeta', 'melayani', 'talenta', 'perantau pelayanan']),
+            'has_church_hurt_terms' => $this->containsAny($normalizedText, ['luka gereja', 'tersakiti di gereja', 'kecewa gereja', 'trauma gereja', 'disakiti pemimpin']),
+            'has_calling_terms' => $this->containsAny($normalizedText, ['panggilan', 'talenta', 'arah hidup', 'tetap atau berhenti', 'tidak sanggup bertahan']),
+            'has_exploitation_terms' => $this->containsAny($normalizedText, ['dimanfaatkan', 'dieksploitasi', 'hanya dipakai', 'dipakai untuk kepentingan']),
+            'has_institution_terms' => $this->containsAny($normalizedText, ['institusi', 'organisasi', 'sistem', 'struktur', 'budaya kerja']),
+            'has_authority_wound_terms' => $this->containsAny($normalizedText, ['senior', 'otoritas', 'pemimpin', 'atasan rohani', 'dipaksa', 'ditekan']),
         ];
     }
 

@@ -10,6 +10,16 @@ type VerseShareData = {
   canonical_url?: string | null;
 };
 
+export type RenunganShareSnapshot = {
+  token: string;
+  lang: string;
+  verse_reference: string;
+  verse_text: string;
+  meditation_excerpt: string;
+  theme?: string | null;
+  expires_at?: string | null;
+};
+
 type CommunitySharePost = {
   id: string;
   type: string;
@@ -174,6 +184,20 @@ export async function fetchCommunitySharePost(postId: string): Promise<Community
         ),
       },
     };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchRenunganShareSnapshot(token: string): Promise<RenunganShareSnapshot | null> {
+  try {
+    const response = await callLaravelApi(`/api/v1/renungan/share/${encodeURIComponent(token)}`);
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { data?: RenunganShareSnapshot };
+    if (!payload?.data?.verse_reference || !payload?.data?.verse_text || !payload?.data?.meditation_excerpt) {
+      return null;
+    }
+    return payload.data;
   } catch {
     return null;
   }

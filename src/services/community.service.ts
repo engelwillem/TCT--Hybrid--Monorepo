@@ -63,6 +63,8 @@ interface ApiPost {
     ritual_generated_meditation?: string;
     ritual_verse_text?: string;
     ritual_verse_reference?: string;
+    related_verses?: Array<{ reference?: string; text?: string }>;
+    interpretation_summary?: string;
     bookmark_origin?: string;
     visibility?: "private_renungan_archive" | "public";
     ref?: string;

@@ -22,6 +22,7 @@ import ReceiveVerse from './ReceiveVerse';
 import ReflectPrompt from './ReflectPrompt';
 import TodayShareActionBar from './TodayShareActionBar';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
+import { createRenunganShareToken } from '@/lib/renungan-share';
 
 interface TodayDailyRitualScreenProps {
   sessionContent: TodaySessionContent;
@@ -37,13 +38,15 @@ function buildArchiveText(
   return [
     "Renungan Pribadiku",
     "",
-    `Isi hati: ${reflectionText.trim()}`,
-    "",
-    `Renungan: ${meditation.trim()}`,
-    "",
-    `Ayat: ${verseText.trim()}`,
-    verseReference.trim(),
+    "Isi Hati",
     reflectionText.trim(),
+    "",
+    "Renungan",
+    meditation.trim(),
+    "",
+    "Ayat",
+    verseText.trim(),
+    verseReference.trim(),
   ]
     .filter(Boolean)
     .join('\n');
@@ -76,6 +79,7 @@ export default function TodayDailyRitualScreen({
   const [bookmarkSuccessNote, setBookmarkSuccessNote] = useState<string | null>(null);
   const [activeActionText, setActiveActionText] = useState<string | null>(null);
   const [isGeneratingRenungan, setIsGeneratingRenungan] = useState(false);
+  const [snapshotSharePath, setSnapshotSharePath] = useState<string | null>(null);
   const [preparedRenungan, setPreparedRenungan] = useState<{
     cacheKey: string;
     result: RenunganMatch;
@@ -92,9 +96,52 @@ export default function TodayDailyRitualScreen({
     });
   }, [sessionContent]);
   const personalShareText = useMemo(
-    () => `${personalRenungan.meditation} — ${personalRenungan.verseReference}`,
+    () => `${personalRenungan.meditation} - ${personalRenungan.verseReference}`,
     [personalRenungan]
   );
+  const personalSharePath = useMemo(() => {
+    const meditationExcerpt = personalRenungan.meditation.replace(/\s+/g, " ").trim().slice(0, 220);
+    const token = createRenunganShareToken({
+      verseReference: personalRenungan.verseReference,
+      verseText: personalRenungan.verseText,
+      meditationExcerpt,
+      theme: personalRenungan.analysis?.primary_theme,
+    });
+    return `/renungan/share/${token}`;
+  }, [personalRenungan]);
+  useEffect(() => {
+    setSnapshotSharePath(null);
+  }, [personalSharePath]);
+  const resolvePersonalSharePath = async (): Promise<string | null> => {
+    if (snapshotSharePath) return snapshotSharePath;
+    try {
+      const response = await fetch("/api/renungan/share", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          lang: "id",
+          verse_reference: personalRenungan.verseReference,
+          verse_text: personalRenungan.verseText,
+          meditation_excerpt: personalRenungan.meditation.replace(/\s+/g, " ").trim().slice(0, 260),
+          theme: personalRenungan.analysis?.primary_theme,
+          ttl_hours: 72,
+        }),
+      });
+      if (!response.ok) return personalSharePath;
+      const payload = (await response.json()) as {
+        data?: { share_path?: string };
+      };
+      const nextPath = String(payload?.data?.share_path || "").trim();
+      if (!nextPath) return personalSharePath;
+      setSnapshotSharePath(nextPath);
+      return nextPath;
+    } catch {
+      return personalSharePath;
+    }
+  };
   const reflectionCacheKey = useMemo(() => normalizeReflectionForCache(reflectionText), [reflectionText]);
   const meditationRef = useRef<HTMLDivElement>(null);
   const verseRevealRef = useRef<HTMLDivElement>(null);
@@ -238,6 +285,10 @@ export default function TodayDailyRitualScreen({
                 ritual_verse_text: personalRenungan.verseText,
                 ritual_verse_reference: personalRenungan.verseReference,
                 related_verses: personalRenungan.relatedVerses ?? [],
+                interpretation_summary:
+                  personalRenungan.analysis?.primary_theme
+                    ? `Tema: ${personalRenungan.analysis.primary_theme}`
+                    : undefined,
               }
             )
           ).id;
@@ -515,6 +566,8 @@ export default function TodayDailyRitualScreen({
 
                 <TodayShareActionBar
                   shareText={personalShareText}
+                  sharePath={personalSharePath}
+                  resolveSharePath={resolvePersonalSharePath}
                   onBookmark={handleBookmarkReflection}
                 />
 
@@ -559,3 +612,4 @@ export default function TodayDailyRitualScreen({
     </div>
   );
 }
+

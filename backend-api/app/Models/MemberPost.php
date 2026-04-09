@@ -50,10 +50,20 @@ class MemberPost extends Model
      */
     public function scopePublicFeed($query)
     {
-        return $query->whereRaw(
-            "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.visibility')), '') <> ?",
-            ['private_renungan_archive']
-        );
+        return $query
+            ->whereRaw(
+                "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.visibility')), '') <> ?",
+                ['private_renungan_archive']
+            )
+            ->whereRaw(
+                "COALESCE(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.bookmark_origin')), '') <> ?",
+                ['renungan']
+            )
+            // Backward guard for older flattened private posts created before metadata hardening.
+            ->where(function ($q) {
+                $q->whereNull('text')
+                    ->orWhere('text', 'not like', 'Renungan Pribadiku%');
+            });
     }
 
     public function scopeUrgentPrayer($query)
@@ -81,6 +91,18 @@ class MemberPost extends Model
     public function isUrgent(): bool
     {
         return $this->type === \App\Enums\PostType::PRAYER_REQUEST && ! $this->reactions()->where('type', \App\Enums\ReactionType::PRAY)->exists();
+    }
+
+    public function isPrivateRenunganArchive(): bool
+    {
+        $metadata = is_array($this->metadata) ? $this->metadata : [];
+        $visibility = (string) ($metadata['visibility'] ?? '');
+        $origin = (string) ($metadata['bookmark_origin'] ?? '');
+        $text = (string) ($this->text ?? '');
+
+        return $visibility === 'private_renungan_archive'
+            || $origin === 'renungan'
+            || str_starts_with($text, 'Renungan Pribadiku');
     }
 
     public function user(): BelongsTo

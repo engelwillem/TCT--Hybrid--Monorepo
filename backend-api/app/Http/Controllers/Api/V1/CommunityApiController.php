@@ -119,6 +119,7 @@ class CommunityApiController extends Controller
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
         abort_unless($user, 401);
+        $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
 
         $added = $this->interactionService->toggleReaction($memberPost, $user, 'pray');
 
@@ -137,6 +138,7 @@ class CommunityApiController extends Controller
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
         abort_unless($user, 401);
+        $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
 
         $bookmark = MemberPostBookmark::query()
             ->where('member_post_id', $memberPost->id)
@@ -412,6 +414,10 @@ class CommunityApiController extends Controller
 
     public function commentsIndex(MemberPost $memberPost): JsonResponse
     {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
+
         $comments = MemberPostComment::query()
             ->where('member_post_id', $memberPost->id)
             ->with(['user:id,name,avatar_path', 'replyTo.user:id,name'])
@@ -433,6 +439,7 @@ class CommunityApiController extends Controller
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
         abort_unless($user, 401);
+        $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
 
         $validated = $request->validate([
             'text' => ['required', 'string', 'max:2000'],
@@ -683,6 +690,20 @@ class CommunityApiController extends Controller
             File::copy($source, $target);
         } catch (\Throwable) {
             // Non-fatal: file already persisted on public disk.
+        }
+    }
+
+    private function abortIfPrivateRenunganNotVisibleToViewer(MemberPost $post, ?User $viewer): void
+    {
+        if (! $post->isPrivateRenunganArchive()) {
+            return;
+        }
+
+        $isOwner = $viewer && (int) $viewer->id === (int) $post->user_id;
+        $isAdmin = $viewer && (bool) ($viewer->is_admin ?? false);
+
+        if (! $isOwner && ! $isAdmin) {
+            abort(Response::HTTP_NOT_FOUND, 'Post not found.');
         }
     }
 }

@@ -918,6 +918,7 @@ export function CommunityPage() {
                       canFollowAuthor={Boolean(currentAppUser?.id) && String(currentAppUser?.id) !== post.author.id}
                       type={post.type}
                       text={post.text}
+                      metadata={post.metadata}
                       imgSrc={post.imageUrl || undefined}
                       mediaSrcList={post.mediaPaths || undefined}
                       aspectRatio={post.metadata?.media_aspect_ratio}
@@ -1314,6 +1315,7 @@ export function CommunityPage() {
                     canFollowAuthor={Boolean(currentAppUser?.id) && String(currentAppUser?.id) !== post.author.id}
                     type={post.type}
                     text={post.text}
+                    metadata={post.metadata}
                     imgSrc={post.imageUrl}
                     mediaSrcList={post.mediaPaths || undefined}
                     aspectRatio={post.metadata?.media_aspect_ratio}

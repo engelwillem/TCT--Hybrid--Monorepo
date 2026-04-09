@@ -10,6 +10,8 @@ import { MemberPostActionBar } from "./MemberPostActionBar";
 import { QuoteCard } from "./QuoteCard";
 import { CommunityImageCarousel } from "./CommunityImageCarousel";
 import { FolderCog, Image as ImageIcon, MoreHorizontal, PencilLine, Trash2 } from "lucide-react";
+import { PrivateRenunganArchiveCard } from "./PrivateRenunganArchiveCard";
+import { isPrivateRenunganArchive as detectPrivateRenunganArchive } from "@/features/community/utils/private-renungan-archive";
 
 type MemberPostCardProps = {
   className?: string;
@@ -23,6 +25,16 @@ type MemberPostCardProps = {
   canFollowAuthor?: boolean;
   type?: string;
   text?: string | null;
+  metadata?: {
+    ritual_user_reflection?: string;
+    ritual_generated_meditation?: string;
+    ritual_verse_text?: string;
+    ritual_verse_reference?: string;
+    related_verses?: Array<{ reference?: string; text?: string }>;
+    interpretation_summary?: string;
+    bookmark_origin?: string;
+    visibility?: "private_renungan_archive" | "public";
+  } | null;
   createdAt?: string | null;
   imgSrc?: string | null;
   mediaSrcList?: string[];
@@ -66,6 +78,7 @@ export function MemberPostCard({
   canFollowAuthor = false,
   type,
   text,
+  metadata,
   createdAt,
   imgSrc,
   mediaSrcList,
@@ -150,6 +163,7 @@ export function MemberPostCard({
   const hasImage = media.length > 0;
   const isQuoteCard = (isPremiumQuoteAuthor && hasText) || (!hasImage && hasText && type === "quote");
   const isTwitterStyle = !isPremiumQuoteAuthor && !hasImage && hasText && type !== "quote" && normalizedText.length < 140;
+  const isPrivateRenunganArchive = detectPrivateRenunganArchive(metadata);
 
   const actionBar = (
     <MemberPostActionBar
@@ -313,14 +327,26 @@ export function MemberPostCard({
 
       <CardContent className="p-0 flex flex-col gap-5">
         {/* Text Above Layout */}
-        {hasText && textPosition === "above" && !isTwitterStyle && (
+        {isPrivateRenunganArchive ? (
+          <PrivateRenunganArchiveCard
+            reflection={metadata?.ritual_user_reflection}
+            meditation={metadata?.ritual_generated_meditation}
+            verseText={metadata?.ritual_verse_text}
+            verseReference={metadata?.ritual_verse_reference}
+            relatedVerses={metadata?.related_verses || []}
+            interpretationSummary={metadata?.interpretation_summary}
+            createdAtLabel={postTimeLabel}
+          />
+        ) : null}
+
+        {hasText && textPosition === "above" && !isTwitterStyle && !isPrivateRenunganArchive && (
           <p className="max-w-[42rem] px-1 text-[15px] leading-relaxed text-foreground font-medium md:text-[16px]">
             {normalizedText}
           </p>
         )}
 
         {/* Media Container */}
-        {hasImage ? (
+        {hasImage && !isPrivateRenunganArchive ? (
           <div className="flex justify-center">
             <CommunityImageCarousel
               images={media}
@@ -331,7 +357,7 @@ export function MemberPostCard({
         ) : null}
 
         {/* Twitter Style Text */}
-        {isTwitterStyle && (
+        {isTwitterStyle && !isPrivateRenunganArchive && (
           <div className="relative py-8 px-6 rounded-[32px] bg-surface-muted/80 ring-1 ring-border/60 shadow-inner overflow-hidden">
             <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand/8 blur-3xl" />
             <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-brand/6 blur-3xl" />
@@ -343,7 +369,7 @@ export function MemberPostCard({
         )}
 
         {/* Standard Text Below */}
-        {hasText && textPosition === "below" && !isTwitterStyle && (
+        {hasText && textPosition === "below" && !isTwitterStyle && !isPrivateRenunganArchive && (
           <p className="max-w-[42rem] px-1 text-[15px] leading-relaxed text-foreground font-medium md:text-[16px]">
             {normalizedText}
           </p>

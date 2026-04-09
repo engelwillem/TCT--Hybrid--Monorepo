@@ -22,6 +22,12 @@ class VerseToneMappingSeeder extends Seeder
             ['tone_slug' => 'restraining', 'verse_ref' => 'ef-4-29', 'weight' => 126],
             ['tone_slug' => 'corrective', 'verse_ref' => 'rom-12-21', 'weight' => 115],
             ['tone_slug' => 'restorative', 'verse_ref' => 'mat-11-28', 'weight' => 123],
+            ['tone_slug' => 'restorative', 'verse_ref' => '2kor-4-1', 'weight' => 127],
+            ['tone_slug' => 'guiding', 'verse_ref' => 'gal-6-9', 'weight' => 123],
+            ['tone_slug' => 'reassuring', 'verse_ref' => 'yak-3-17', 'weight' => 124],
+            ['tone_slug' => 'tender', 'verse_ref' => 'mzm-62-2', 'weight' => 128],
+            ['tone_slug' => 'corrective', 'verse_ref' => '1ptr-5-2', 'weight' => 120],
+            ['tone_slug' => 'reassuring', 'verse_ref' => 'mzm-42-6', 'weight' => 122],
         ];
 
         foreach ($mappings as $index => $mapping) {
