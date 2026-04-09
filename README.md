@@ -70,3 +70,27 @@ Catatan:
 ## Lisensi
 
 MIT
+## E2E Acceptance Env (Auth + Privacy)
+
+To run the acceptance suite (`tests/renungan-versehub-acceptance.spec.ts`) without skips:
+
+```bash
+npm run test:e2e:acceptance
+```
+
+Set these env vars (recommended):
+
+```bash
+E2E_ADMIN_EMAIL=
+E2E_ADMIN_PASSWORD=
+E2E_MEMBER_A_EMAIL=
+E2E_MEMBER_A_PASSWORD=
+E2E_MEMBER_B_EMAIL=
+E2E_MEMBER_B_PASSWORD=
+```
+
+Supported aliases/fallbacks:
+- `E2E_ADMIN_USER_EMAIL`, `E2E_ADMIN_USER_PASSWORD`
+- `E2E_MEMBER_EMAIL`, `E2E_MEMBER_PASSWORD`
+- `E2E_MEMBER_SECONDARY_EMAIL`, `E2E_MEMBER_SECONDARY_PASSWORD`
+- Legacy fallback for member A: `E2E_AUTH_EMAIL`, `E2E_AUTH_PASSWORD`

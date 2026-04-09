@@ -2,12 +2,15 @@ import { expect, test, devices, type BrowserContext, type Page } from "@playwrig
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
 
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
-const MEMBER_A_EMAIL = process.env.E2E_MEMBER_A_EMAIL;
-const MEMBER_A_PASSWORD = process.env.E2E_MEMBER_A_PASSWORD;
-const MEMBER_B_EMAIL = process.env.E2E_MEMBER_B_EMAIL;
-const MEMBER_B_PASSWORD = process.env.E2E_MEMBER_B_PASSWORD;
+const LEGACY_E2E_EMAIL = process.env.E2E_AUTH_EMAIL;
+const LEGACY_E2E_PASSWORD = process.env.E2E_AUTH_PASSWORD;
+
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? process.env.E2E_ADMIN_USER_EMAIL;
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? process.env.E2E_ADMIN_USER_PASSWORD;
+const MEMBER_A_EMAIL = process.env.E2E_MEMBER_A_EMAIL ?? process.env.E2E_MEMBER_EMAIL ?? LEGACY_E2E_EMAIL;
+const MEMBER_A_PASSWORD = process.env.E2E_MEMBER_A_PASSWORD ?? process.env.E2E_MEMBER_PASSWORD ?? LEGACY_E2E_PASSWORD;
+const MEMBER_B_EMAIL = process.env.E2E_MEMBER_B_EMAIL ?? process.env.E2E_MEMBER_SECONDARY_EMAIL;
+const MEMBER_B_PASSWORD = process.env.E2E_MEMBER_B_PASSWORD ?? process.env.E2E_MEMBER_SECONDARY_PASSWORD;
 
 function buildTodayGuestProgress() {
   const parts = new Intl.DateTimeFormat("en-CA", {

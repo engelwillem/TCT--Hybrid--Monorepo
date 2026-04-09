@@ -24,6 +24,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:acceptance": "playwright test tests/renungan-versehub-acceptance.spec.ts",
     "today:readiness:strict": "vitest run src/features/today-ritual/data/today-session.loader.test.ts",
     "zip:website": "python scripts/create_main_website_zip.py",
     "zip:website:clean": "python scripts/create_main_website_zip.py --clean",
