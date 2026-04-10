@@ -99,8 +99,6 @@ export function useAuthSession() {
   }, []);
 
   useEffect(() => {
-    if (firebaseStatus === "restoring") return;
-
     let isActive = true;
     const controller = new AbortController();
 
@@ -190,7 +188,13 @@ export function useAuthSession() {
   }, [authStorageVersion, firebaseStatus, hasAuthenticatedFirebaseUser, hasToken]);
 
   const status: AuthSessionStatus = useMemo(() => {
-    if (firebaseStatus === "restoring") return "restoring";
+    if (firebaseStatus === "restoring") {
+      if (hasAppAuthenticatedSession()) return "authenticated";
+      if (serverSession.status === "ready") {
+        return serverSession.authenticated ? "authenticated" : "guest";
+      }
+      return "restoring";
+    }
     // Prioritize authenticated Firebase identity to avoid UI stalls while server session hydrates.
     if (hasAuthenticatedFirebaseUser) return "authenticated";
     if (serverSession.status === "loading") return "restoring";
