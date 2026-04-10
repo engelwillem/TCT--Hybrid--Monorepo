@@ -1066,6 +1066,7 @@ export function CommunityPage() {
                         <div className="-mx-4 overflow-hidden px-4 md:mx-0 md:px-0">
                           <div
                             ref={archiveRailRef}
+                            style={{ touchAction: 'pan-y' }}
                             className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto overscroll-x-contain px-10 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                           >
                           {COMMUNITY_ARCHIVE_CATEGORIES.map((item) => {

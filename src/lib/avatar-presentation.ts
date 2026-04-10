@@ -43,10 +43,14 @@ function normalizeAvatarSource(value?: string | null): string {
   const raw = String(value || "").trim();
   if (!raw) return "";
   try {
+    // If it's an absolute URL, extract the path and search
     const parsed = new URL(raw);
-    return `${parsed.pathname}${parsed.search}`.toLowerCase();
+    const path = `${parsed.pathname}${parsed.search}`;
+    // Ensure it starts with / and remove duplicate slashes
+    return `/${path.replace(/^\/+/, "")}`.toLowerCase();
   } catch {
-    return raw.toLowerCase();
+    // If it's already a path, just normalize slashes
+    return `/${raw.replace(/^\/+/, "")}`.toLowerCase();
   }
 }
 
@@ -90,12 +94,9 @@ export function useCurrentUserAvatarStyle(
   const targetAvatar = normalizeAvatarSource(avatarSrc || null);
   const authId = String(authUser?.id || "").trim();
   const ownerId = String(owner?.id || "").trim();
-  const authName = String(authUser?.name || "").trim().toLowerCase();
-  const ownerName = String(owner?.name || "").trim().toLowerCase();
   const matchesIdentity = Boolean(authId && ownerId && authId === ownerId);
-  const matchesName = Boolean(authName && ownerName && authName === ownerName);
   const matchesAvatar = Boolean(currentAvatar) && currentAvatar === targetAvatar;
-  const shouldApply = Boolean(identity) && (matchesIdentity || matchesName || matchesAvatar);
+  const shouldApply = Boolean(identity) && (matchesIdentity || matchesAvatar);
 
   useEffect(() => {
     if (!identity || !shouldApply) {

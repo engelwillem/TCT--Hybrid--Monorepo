@@ -103,7 +103,7 @@ export function CommentsSheet({ isOpen, onOpenChange, postId, onCommentsUpdated 
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} onOpenChange={onOpenChange} modal={true}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-[32px] p-0 sm:max-w-md mx-auto outline-none border-none bg-surface/95 backdrop-blur-xl shadow-2xl flex flex-col">
         <div className="w-12 h-1.5 bg-border/60 rounded-full mx-auto my-3 shrink-0" />
         <SheetHeader className="px-6 pb-2 shrink-0">
