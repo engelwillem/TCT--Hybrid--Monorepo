@@ -75,12 +75,15 @@ export function useAuthSession() {
   const hasToken = hasAppAccessToken();
   const authUser = getAppAuthUser();
   const hasAuthenticatedFirebaseUser = firebaseStatus === "authenticated" && !user?.isAnonymous;
-  const isAwaitingFirebaseToken = hasAuthenticatedFirebaseUser && !hasToken;
   const [serverSession, setServerSession] = useState<ServerSessionState>({
     status: "loading",
     authenticated: false,
     user: null,
   });
+  // Only wait for Firebase token while the server session is still hydrating.
+  // Once server session is ready, avoid infinite "restoring" loops.
+  const isAwaitingFirebaseToken =
+    hasAuthenticatedFirebaseUser && !hasToken && serverSession.status === "loading";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -96,13 +99,12 @@ export function useAuthSession() {
   }, []);
 
   useEffect(() => {
-    if (firebaseStatus === "restoring") return;
-
     let isActive = true;
     const controller = new AbortController();
 
     const hydrateSession = async () => {
       setServerSession((prev) => ({ ...prev, status: "loading" }));
+      const timeoutId = window.setTimeout(() => controller.abort(), 8000);
 
       try {
         const persistence = typeof window !== "undefined"
@@ -175,6 +177,8 @@ export function useAuthSession() {
           authenticated: false,
           user: null,
         });
+      } finally {
+        window.clearTimeout(timeoutId);
       }
     };
 
@@ -187,10 +191,17 @@ export function useAuthSession() {
   }, [authStorageVersion, firebaseStatus, hasAuthenticatedFirebaseUser, hasToken]);
 
   const status: AuthSessionStatus = useMemo(() => {
-    if (firebaseStatus === "restoring") return "restoring";
+    if (firebaseStatus === "restoring") {
+      if (hasAppAuthenticatedSession()) return "authenticated";
+      if (serverSession.status === "ready") {
+        return serverSession.authenticated ? "authenticated" : "guest";
+      }
+      return "restoring";
+    }
+    // Prioritize authenticated Firebase identity to avoid UI stalls while server session hydrates.
+    if (hasAuthenticatedFirebaseUser) return "authenticated";
     if (serverSession.status === "loading") return "restoring";
     if (isAwaitingFirebaseToken) return "restoring";
-    if (hasAuthenticatedFirebaseUser) return "authenticated";
     return serverSession.authenticated ? "authenticated" : "guest";
   }, [firebaseStatus, hasAuthenticatedFirebaseUser, isAwaitingFirebaseToken, serverSession.authenticated, serverSession.status]);
 

@@ -16,6 +16,13 @@ export type AppAuthUser = {
   avatarUrl?: string | null;
 };
 
+type ComparableAuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string;
+};
+
 type BrowserStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 function isLikelySanctumToken(token: string): boolean {
@@ -77,6 +84,27 @@ function emitAuthStateChanged(reason: "token" | "user" | "clear"): void {
 
 function normalizePersistence(raw: string | null | undefined): AppAuthPersistence | null {
   return raw === "session" || raw === "local" ? raw : null;
+}
+
+function normalizeAuthUser(user: AppAuthUser | null | undefined): ComparableAuthUser {
+  return {
+    id: String(user?.id ?? "").trim(),
+    name: String(user?.name ?? "").trim(),
+    email: String(user?.email ?? "").trim().toLowerCase(),
+    avatarUrl: String(user?.avatarUrl ?? "").trim(),
+  };
+}
+
+function areAuthUsersEqual(prevUser: AppAuthUser | null | undefined, nextUser: AppAuthUser | null | undefined): boolean {
+  const prev = normalizeAuthUser(prevUser);
+  const next = normalizeAuthUser(nextUser);
+
+  return (
+    prev.id === next.id &&
+    prev.name === next.name &&
+    prev.email === next.email &&
+    prev.avatarUrl === next.avatarUrl
+  );
 }
 
 function getPreferredPersistence(): AppAuthPersistence {
@@ -173,6 +201,10 @@ export function setAppAuthUser(user: AppAuthUser, persistence?: AppAuthPersisten
   const targetPersistence = persistence ?? getPreferredPersistence();
   const targetStorage = getStorageForPersistence(targetPersistence);
   if (!targetStorage) return;
+  const currentUser = getAppAuthUser();
+  if (areAuthUsersEqual(currentUser, normalized)) {
+    return;
+  }
 
   removeKeyFromAllStorages(APP_AUTH_USER_KEY);
   targetStorage.setItem(APP_AUTH_USER_KEY, JSON.stringify(normalized));
