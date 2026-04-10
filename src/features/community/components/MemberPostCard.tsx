@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAuthSession } from "@/auth/use-auth-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCurrentUserAvatarStyle } from "@/lib/avatar-presentation";
@@ -20,6 +19,7 @@ type MemberPostCardProps = {
   authorName?: string | null;
   authorAvatar?: string | null;
   isOfficial?: boolean;
+  isAuthenticated?: boolean;
   isFollowingAuthor?: boolean;
   isMutualFollow?: boolean;
   canFollowAuthor?: boolean;
@@ -73,6 +73,7 @@ export function MemberPostCard({
   authorName,
   authorAvatar,
   isOfficial,
+  isAuthenticated = false,
   isFollowingAuthor = false,
   isMutualFollow = false,
   canFollowAuthor = false,
@@ -107,7 +108,6 @@ export function MemberPostCard({
   onMessageAuthor,
   followBusy = false,
 }: MemberPostCardProps) {
-  const { isAuthenticated } = useAuthSession();
   const postTimeLabel = useMemo(() => {
     if (!createdAt) return "Baru saja";
     const posted = new Date(createdAt);

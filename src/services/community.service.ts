@@ -222,7 +222,9 @@ const buildHeaders = (needsAuth = false): HeadersInit => {
     };
   }
 
-  return buildAppAuthHeaders();
+  return buildAppAuthHeaders({
+    includeBearerFallback: true,
+  });
 };
 
 function handleAuthFailure(status: number) {

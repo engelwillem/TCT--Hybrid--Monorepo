@@ -99,6 +99,7 @@ export function CommunityPage() {
   const [archivePosts, setArchivePosts] = useState<CommunityPost[]>([]);
   const [bookmarkPosts, setBookmarkPosts] = useState<CommunityPost[]>([]);
   const [bookmarkCategories, setBookmarkCategories] = useState<BookmarkCategory[]>([]);
+  const [bookmarkLoadError, setBookmarkLoadError] = useState<string | null>(null);
   const [activeBookmarkCategoryId, setActiveBookmarkCategoryId] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
@@ -190,10 +191,15 @@ export function CommunityPage() {
   }, []);
 
   const loadBookmarkData = useCallback(async () => {
+    if (isRestoring) {
+      return;
+    }
+
     if (!isAuthenticated) {
       setBookmarkPosts([]);
       setBookmarkCategories([]);
       setActiveBookmarkCategoryId("all");
+      setBookmarkLoadError(null);
       return;
     }
 
@@ -209,10 +215,11 @@ export function CommunityPage() {
         const hasPrev = categoryPayload.categories.some((item) => String(item.id) === String(prev));
         return hasPrev ? prev : "all";
       });
+      setBookmarkLoadError(null);
     } catch {
-      // ignore category fetch errors to keep community feed usable
+      setBookmarkLoadError("Bookmark belum bisa dimuat. Coba Muat ulang.");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isRestoring]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -923,6 +930,7 @@ export function CommunityPage() {
                       authorId={post.author.id}
                       authorName={post.author.name}
                       authorAvatar={resolveAuthorAvatar(post)}
+                      isAuthenticated={isAuthenticated}
                       isOfficial={post.author.isOfficial}
                       isFollowingAuthor={Boolean(post.author.isFollowing)}
                       isMutualFollow={Boolean(post.author.isMutualFollow)}
@@ -1255,6 +1263,11 @@ export function CommunityPage() {
 
           <TabsContent value="bookmarks" className="mt-6 outline-none">
             <div className={cn(narrowColumnClassName, "space-y-6")}>
+              {bookmarkLoadError ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-[13px] text-amber-800">
+                  {bookmarkLoadError}
+                </div>
+              ) : null}
               <div className="rounded-3xl border border-slate-200/70 bg-white/85 p-4 shadow-[0_20px_45px_-34px_rgba(15,23,42,0.35)]">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[12px] font-black uppercase tracking-[0.18em] text-slate-500">Kategori Bookmark</p>
@@ -1322,6 +1335,7 @@ export function CommunityPage() {
                     authorId={post.author.id}
                     authorName={post.author.name}
                     authorAvatar={resolveAuthorAvatar(post)}
+                    isAuthenticated={isAuthenticated}
                     isFollowingAuthor={Boolean(post.author.isFollowing)}
                     isMutualFollow={Boolean(post.author.isMutualFollow)}
                     canFollowAuthor={Boolean(currentUserId) && currentUserId !== post.author.id}

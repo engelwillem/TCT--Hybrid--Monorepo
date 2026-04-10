@@ -152,7 +152,7 @@ export function CommunityImageCarousel({
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
               className={cn(
-                "relative flex overflow-x-auto scroll-smooth snap-x snap-mandatory touch-pan-x rounded-2xl ring-1 ring-border/60 bg-surface-muted scrollbar-hide [scrollbar-width:none]",
+                "relative flex overflow-x-auto scroll-smooth snap-x snap-mandatory touch-pan-y rounded-2xl ring-1 ring-border/60 bg-surface-muted scrollbar-hide [scrollbar-width:none]",
                 ratioClass
               )}
             >
