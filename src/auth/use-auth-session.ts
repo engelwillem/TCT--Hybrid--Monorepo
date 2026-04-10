@@ -24,6 +24,13 @@ type ServerSessionState = {
   } | null;
 };
 
+type ComparableAuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string;
+};
+
 function buildInitial(name: string | null | undefined, fallback: string): string {
   const trimmed = String(name || "").trim();
   if (!trimmed) return fallback;
@@ -35,6 +42,30 @@ function deriveDisplayName(name: string | null, email: string | null): string | 
   if (name) return name;
   const emailLocalPart = String(email || "").split("@")[0]?.trim() || "";
   return emailLocalPart || null;
+}
+
+function normalizeAuthUser(user: ServerSessionState["user"]): ComparableAuthUser {
+  return {
+    id: String(user?.id || "").trim(),
+    name: String(user?.name || "").trim(),
+    email: String(user?.email || "").trim().toLowerCase(),
+    avatarUrl: String(user?.avatarUrl || "").trim(),
+  };
+}
+
+function areAuthUsersEqual(
+  prevUser: ServerSessionState["user"] | null,
+  nextUser: ServerSessionState["user"] | null
+): boolean {
+  const prev = normalizeAuthUser(prevUser);
+  const next = normalizeAuthUser(nextUser);
+
+  return (
+    prev.id === next.id &&
+    prev.name === next.name &&
+    prev.email === next.email &&
+    prev.avatarUrl === next.avatarUrl
+  );
 }
 
 export function useAuthSession() {
@@ -108,12 +139,17 @@ export function useAuthSession() {
         }
 
         if (payload?.authenticated && payload.user) {
-          setAppAuthUser({
+          const nextAuthUser = {
             id: payload.user.id,
             name: payload.user.name,
             email: payload.user.email,
             avatarUrl: payload.user.avatarUrl ?? null,
-          });
+          };
+
+          if (!areAuthUsersEqual(authUser, nextAuthUser)) {
+            setAppAuthUser(nextAuthUser);
+          }
+
           setServerSession({
             status: "ready",
             authenticated: true,

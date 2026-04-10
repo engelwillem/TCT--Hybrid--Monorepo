@@ -412,6 +412,7 @@ export default function TodayDailyRitualScreen({
           greeting="Selamat datang kembali,"
           dateLabel={sessionContent.dateLabel}
           memberName={memberName}
+          isAuthenticated={isAuthenticated}
           isAuthRestoring={isAuthRestoring}
         />
 
@@ -567,6 +568,8 @@ export default function TodayDailyRitualScreen({
                 <TodayShareActionBar
                   shareText={personalShareText}
                   sharePath={personalSharePath}
+                  isAuthenticated={isAuthenticated}
+                  isRestoring={isAuthRestoring}
                   resolveSharePath={resolvePersonalSharePath}
                   onBookmark={handleBookmarkReflection}
                 />

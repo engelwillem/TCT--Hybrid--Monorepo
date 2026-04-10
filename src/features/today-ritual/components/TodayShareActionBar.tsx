@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Bookmark, Check, Copy } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useAuthSession } from "@/auth/use-auth-session";
 import { AppIcon } from "@/features/community/components/AppIcon";
 import {
   buildWhatsAppShareUrl,
@@ -16,6 +15,8 @@ import {
 type TodayShareActionBarProps = {
   sharePath?: string;
   shareText: string;
+  isAuthenticated?: boolean;
+  isRestoring?: boolean;
   resolveSharePath?: () => Promise<string | null>;
   onBookmark?: () => Promise<boolean> | boolean;
 };
@@ -34,11 +35,12 @@ function WhatsAppIcon({ className }: { className?: string }) {
 export default function TodayShareActionBar({
   sharePath = "/renungan",
   shareText,
+  isAuthenticated = false,
+  isRestoring = false,
   resolveSharePath,
   onBookmark,
 }: TodayShareActionBarProps) {
   const router = useRouter();
-  const { isAuthenticated, isRestoring } = useAuthSession();
   const [copied, setCopied] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

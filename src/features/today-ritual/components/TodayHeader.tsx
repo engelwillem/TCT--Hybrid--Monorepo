@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Bell, Inbox } from 'lucide-react';
-import { useAuthSession } from '@/auth/use-auth-session';
 import ChatPopover from '@/components/core/ChatPopover';
 import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ interface TodayHeaderProps {
   greeting: string;
   dateLabel: string;
   memberName?: string | null;
+  isAuthenticated?: boolean;
   isAuthRestoring?: boolean;
 }
 
@@ -39,10 +39,10 @@ export default function TodayHeader({
   greeting,
   dateLabel,
   memberName = null,
+  isAuthenticated = false,
   isAuthRestoring = false,
 }: TodayHeaderProps) {
   const router = useRouter();
-  const { isAuthenticated, isRestoring } = useAuthSession();
   const m = useMotionConfig();
   const primaryGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
   const [liveDateLabel, setLiveDateLabel] = useState(() => buildTodayDateLabel(dateLabel));
@@ -55,7 +55,7 @@ export default function TodayHeader({
   }, [dateLabel]);
 
   useEffect(() => {
-    if (isRestoring) {
+    if (isAuthRestoring) {
       return;
     }
 
@@ -92,7 +92,7 @@ export default function TodayHeader({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [isAuthenticated, isRestoring]);
+  }, [isAuthenticated, isAuthRestoring]);
 
   const iconButtonClassName =
     'group relative flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-sky-600 ring-1 ring-sky-200/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] backdrop-blur-[10px] transition-all duration-300 hover:bg-slate-900/12 hover:ring-slate-900/8 hover:shadow-[0_14px_34px_-24px_rgba(15,23,42,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70';
