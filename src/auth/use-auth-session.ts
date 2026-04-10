@@ -191,9 +191,10 @@ export function useAuthSession() {
 
   const status: AuthSessionStatus = useMemo(() => {
     if (firebaseStatus === "restoring") return "restoring";
+    // Prioritize authenticated Firebase identity to avoid UI stalls while server session hydrates.
+    if (hasAuthenticatedFirebaseUser) return "authenticated";
     if (serverSession.status === "loading") return "restoring";
     if (isAwaitingFirebaseToken) return "restoring";
-    if (hasAuthenticatedFirebaseUser) return "authenticated";
     return serverSession.authenticated ? "authenticated" : "guest";
   }, [firebaseStatus, hasAuthenticatedFirebaseUser, isAwaitingFirebaseToken, serverSession.authenticated, serverSession.status]);
 
