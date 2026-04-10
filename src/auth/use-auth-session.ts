@@ -75,12 +75,15 @@ export function useAuthSession() {
   const hasToken = hasAppAccessToken();
   const authUser = getAppAuthUser();
   const hasAuthenticatedFirebaseUser = firebaseStatus === "authenticated" && !user?.isAnonymous;
-  const isAwaitingFirebaseToken = hasAuthenticatedFirebaseUser && !hasToken;
   const [serverSession, setServerSession] = useState<ServerSessionState>({
     status: "loading",
     authenticated: false,
     user: null,
   });
+  // Only wait for Firebase token while the server session is still hydrating.
+  // Once server session is ready, avoid infinite "restoring" loops.
+  const isAwaitingFirebaseToken =
+    hasAuthenticatedFirebaseUser && !hasToken && serverSession.status === "loading";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
