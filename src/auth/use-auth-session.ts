@@ -6,6 +6,7 @@ import {
   APP_AUTH_STATE_EVENT,
   clearAppAccessToken,
   getAppAuthUser,
+  hasAppAuthenticatedSession,
   hasAppAccessToken,
   setAppAuthUser,
 } from "@/services/app-auth-token";
@@ -158,7 +159,8 @@ export function useAuthSession() {
           return;
         }
 
-        if (response.status === 200) {
+        // Avoid redundant clear+broadcast loops when local auth state is already empty.
+        if (response.status === 200 && hasAppAuthenticatedSession()) {
           clearAppAccessToken();
         }
         setServerSession({

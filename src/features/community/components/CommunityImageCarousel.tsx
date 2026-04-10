@@ -45,6 +45,7 @@ export function CommunityImageCarousel({
 }: CommunityImageCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
   const touchStartIndexRef = useRef<number>(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -90,6 +91,7 @@ export function CommunityImageCarousel({
   const handleTouchStart = useCallback(
     (event: TouchEvent<HTMLDivElement>) => {
       touchStartXRef.current = event.touches[0]?.clientX ?? null;
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
       touchStartIndexRef.current = activeIndex;
     },
     [activeIndex]
@@ -98,14 +100,19 @@ export function CommunityImageCarousel({
   const handleTouchEnd = useCallback(
     (event: TouchEvent<HTMLDivElement>) => {
       const startX = touchStartXRef.current;
+      const startY = touchStartYRef.current;
       const endX = event.changedTouches[0]?.clientX ?? null;
+      const endY = event.changedTouches[0]?.clientY ?? null;
       touchStartXRef.current = null;
+      touchStartYRef.current = null;
 
-      if (startX === null || endX === null) return;
+      if (startX === null || startY === null || endX === null || endY === null) return;
 
       const deltaX = startX - endX;
-      if (Math.abs(deltaX) < 26) {
-        scrollToIndex(touchStartIndexRef.current);
+      const deltaY = startY - endY;
+
+      // Preserve vertical page scroll: ignore non-horizontal gestures on the carousel.
+      if (Math.abs(deltaY) >= Math.abs(deltaX) || Math.abs(deltaX) < 26) {
         return;
       }
 
