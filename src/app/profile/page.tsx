@@ -530,10 +530,7 @@ export default function ProfilePage() {
     }, [authStatus, isAuthenticated, router]);
 
     useEffect(() => {
-        if (authStatus === 'restoring') {
-            setLoading(true);
-            return;
-        }
+        if (authStatus === 'restoring') return;
 
         if (!isAuthenticated) {
             setLoading(false);
@@ -1123,7 +1120,7 @@ export default function ProfilePage() {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    if (authStatus === 'restoring' || loading) {
+    if (loading) {
         return (
             <MobileAppLayout title="Profile" activeNavId="profile" backHref="/renungan">
                 <div className="mx-auto max-w-[640px] px-4 py-10">

@@ -72,6 +72,7 @@ function areAuthUsersEqual(
 export function useAuthSession() {
   const { user, status: firebaseStatus } = useUser();
   const [authStorageVersion, setAuthStorageVersion] = useState(0);
+  const [restoreStalled, setRestoreStalled] = useState(false);
   const hasToken = hasAppAccessToken();
   const authUser = getAppAuthUser();
   const hasAuthenticatedFirebaseUser = firebaseStatus === "authenticated" && !user?.isAnonymous;
@@ -103,7 +104,9 @@ export function useAuthSession() {
     const controller = new AbortController();
 
     const hydrateSession = async () => {
-      setServerSession((prev) => ({ ...prev, status: "loading" }));
+      // Keep previously resolved state while revalidating to prevent UI from
+      // bouncing back to endless "restoring" when auth events are noisy.
+      setServerSession((prev) => (prev.status === "ready" ? prev : { ...prev, status: "loading" }));
       const timeoutId = window.setTimeout(() => controller.abort(), 8000);
 
       try {
@@ -190,7 +193,29 @@ export function useAuthSession() {
     };
   }, [authStorageVersion, firebaseStatus, hasAuthenticatedFirebaseUser, hasToken]);
 
+  useEffect(() => {
+    if (firebaseStatus !== "restoring" || serverSession.status !== "loading") {
+      setRestoreStalled(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRestoreStalled(true);
+    }, 12000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [firebaseStatus, serverSession.status]);
+
   const status: AuthSessionStatus = useMemo(() => {
+    if (restoreStalled) {
+      if (hasAuthenticatedFirebaseUser || serverSession.authenticated || hasAppAuthenticatedSession()) {
+        return "authenticated";
+      }
+      return "guest";
+    }
+
     if (firebaseStatus === "restoring") {
       if (hasAppAuthenticatedSession()) return "authenticated";
       if (serverSession.status === "ready") {
@@ -203,7 +228,7 @@ export function useAuthSession() {
     if (serverSession.status === "loading") return "restoring";
     if (isAwaitingFirebaseToken) return "restoring";
     return serverSession.authenticated ? "authenticated" : "guest";
-  }, [firebaseStatus, hasAuthenticatedFirebaseUser, isAwaitingFirebaseToken, serverSession.authenticated, serverSession.status]);
+  }, [firebaseStatus, hasAuthenticatedFirebaseUser, isAwaitingFirebaseToken, restoreStalled, serverSession.authenticated, serverSession.status]);
 
   const profileName = user?.displayName?.trim() || serverSession.user?.name?.trim() || authUser?.name?.trim() || null;
   const profileEmail = user?.email?.trim() || serverSession.user?.email?.trim() || authUser?.email?.trim() || null;
