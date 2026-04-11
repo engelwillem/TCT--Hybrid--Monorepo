@@ -42,7 +42,7 @@ type OpsGatewayData = {
 type ApiProfilePayload = {
     data?: {
         user?: {
-            id?: string;
+            id?: string | number;
             name?: string;
             email?: string;
             is_admin?: boolean;
@@ -579,10 +579,11 @@ export default function ProfilePage() {
                     is_admin: Boolean(apiUser.is_admin),
                     email_verified_at: apiUser.email_verified_at || null,
                 };
+                const normalizedUserId = apiUser.id != null ? String(apiUser.id) : undefined;
 
                 setUser(nextUser);
                 setAppAuthUser({
-                    id: typeof apiUser.id === 'string' ? apiUser.id : undefined,
+                    id: normalizedUserId,
                     name: nextUser.name,
                     email: nextUser.email,
                     avatarUrl: nextUser.avatarUrl,
