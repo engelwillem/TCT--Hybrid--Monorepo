@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { CommunityService } from "@/services/community.service";
 import { useAuthSession } from "@/auth/use-auth-session";
+import { subscribeDataMutation } from "@/lib/mutation-sync";
 import { buildWhatsAppShareUrl, copyToClipboard, getCommunityShareUrl } from "@/lib/share";
 import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 import {
@@ -278,6 +279,18 @@ export function CommunityPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeDataMutation((detail) => {
+      if (!detail.path.startsWith("/api/community/") && !detail.path.startsWith("/api/versehub/")) {
+        return;
+      }
+      void fetchData();
+      void loadBookmarkData();
+    });
+
+    return unsubscribe;
+  }, [fetchData, loadBookmarkData]);
 
   useEffect(() => {
     void loadBookmarkData();

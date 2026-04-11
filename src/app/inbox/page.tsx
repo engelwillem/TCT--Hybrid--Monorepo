@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/auth/use-auth-session";
 import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
+import { subscribeDataMutation } from "@/lib/mutation-sync";
 import MobileAppLayout from "@/layouts/MobileAppLayout";
 import SegmentedTabs from "@/components/core/SegmentedTabs";
 
@@ -108,6 +109,17 @@ export default function InboxPage() {
     void fetchInbox(true);
     const interval = setInterval(() => void fetchInbox(), 7000);
     return () => clearInterval(interval);
+  }, [isAuthenticated, isRestoring]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeDataMutation((detail) => {
+      if (!detail.path.startsWith("/api/inbox/") && !detail.path.startsWith("/api/users/")) {
+        return;
+      }
+      void fetchInbox();
+    });
+
+    return unsubscribe;
   }, [isAuthenticated, isRestoring]);
 
   const formatTime = (iso: string | null) => {

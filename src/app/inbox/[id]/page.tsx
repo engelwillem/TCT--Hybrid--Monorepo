@@ -8,6 +8,7 @@ import { Send, MoreVertical, Smile, Image as ImageIcon, ArrowLeft, Loader2, Chec
 import { cn } from '@/lib/utils';
 import { useAuthSession } from '@/auth/use-auth-session';
 import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import { subscribeDataMutation } from '@/lib/mutation-sync';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Message = {
@@ -115,6 +116,17 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
         // Polling parity: 7s
         const interval = setInterval(() => void fetchThread(), 7000);
         return () => clearInterval(interval);
+    }, [isAuthenticated, isRestoring, partnerId]);
+
+    useEffect(() => {
+        const unsubscribe = subscribeDataMutation((detail) => {
+            if (!detail.path.startsWith('/api/inbox/') && !detail.path.startsWith('/api/users/')) {
+                return;
+            }
+            void fetchThread();
+        });
+
+        return unsubscribe;
     }, [isAuthenticated, isRestoring, partnerId]);
 
     const handleSend = async () => {
