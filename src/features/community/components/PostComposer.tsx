@@ -3,17 +3,18 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Crop, ImagePlus, Star, X } from "lucide-react";
+import { Crop, ImagePlus, Sparkles, Star, X } from "lucide-react";
 import type { CommunityUser } from "../types";
-import { ActionBarButton } from "@/components/actions/ActionBarButton";
 import { COMMUNITY_COMPOSER_TYPES, type CommunityComposerType } from "../categories";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { AnimatePresence, motion } from "framer-motion";
 
 type PostType = CommunityComposerType;
 type ComposerMode = "carousel" | "free";
 type MediaAspectRatio = "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
+type ComposerPanel = "none" | "media" | "category";
 
 type PostComposerMetadata = {
   media_aspect_ratio?: MediaAspectRatio;
@@ -162,6 +163,7 @@ export function PostComposer({
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [composerMode, setComposerMode] = useState<ComposerMode>("carousel");
+  const [activePanel, setActivePanel] = useState<ComposerPanel>("none");
   const [images, setImages] = useState<ComposerImage[]>([]);
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [mediaAspectRatio, setMediaAspectRatio] = useState<MediaAspectRatio>("4:5");
@@ -260,6 +262,27 @@ export function PostComposer({
   const coverImage = images[0] ?? null;
   const coverPreviewUrl = coverImage ? previewUrls[coverImage.id] : null;
   const hasImages = Object.keys(previewUrls).length > 0;
+  const selectedTypeLabel = types.find((item) => item.value === type)?.label ?? "Curahan Hati";
+  const canSubmit = Boolean(text.trim() || images.length > 0);
+
+  const resetComposer = () => {
+    setIsExpanded(false);
+    setActivePanel("none");
+    setText("");
+    setImages([]);
+    setCropQueue([]);
+    setComposerMode("carousel");
+    setMediaAspectRatio("4:5");
+  };
+
+  const openComposer = () => {
+    setIsExpanded(true);
+  };
+
+  const togglePanel = (panel: ComposerPanel) => {
+    setIsExpanded(true);
+    setActivePanel((prev) => (prev === panel ? "none" : panel));
+  };
 
   const handleSubmit = async () => {
     if (!text.trim() && images.length === 0) return;
@@ -270,12 +293,7 @@ export function PostComposer({
       });
       const shouldReset = result !== false;
       if (shouldReset) {
-        setText("");
-        setImages([]);
-        setCropQueue([]);
-        setIsExpanded(false);
-        setMediaAspectRatio("4:5");
-        setComposerMode("carousel");
+        resetComposer();
       }
     } finally {
       setIsSubmitting(false);
@@ -460,42 +478,47 @@ export function PostComposer({
     );
   };
 
-  const composerSummaryLabel = composerMode === "carousel" ? "Carousel" : "Free Upload";
-
   return (
     <>
       <Card
         className={cn(
-          "rounded-[32px] bg-surface/80 shadow-premium backdrop-blur-3xl border border-border/60 overflow-hidden transition-all duration-500",
-          isExpanded ? "ring-2 ring-brand/20 shadow-premium" : "",
+          "overflow-hidden rounded-[30px] border border-border/60 bg-surface/85 shadow-premium backdrop-blur-2xl transition-all duration-500",
+          isExpanded ? "ring-2 ring-sky-200/45" : "",
           className
         )}
       >
         <CardContent className="p-0">
           <div className="flex flex-col">
-            <div className="flex items-center gap-5 px-6 pt-8 pb-3">
+            <div className="flex items-start justify-between gap-4 px-6 pt-7 pb-2">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="tct-serif text-[22px] tracking-tight leading-tight text-foreground/90">Ruang Berbagi</h2>
-                </div>
+                <h2 className="tct-serif text-[22px] leading-tight tracking-tight text-foreground/90">Ruang Berbagi</h2>
                 <p className="mt-1 text-[13px] font-medium tracking-wide text-foreground/50">Apa yang Tuhan taruh di hati Anda?</p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/60 bg-sky-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
+                <Sparkles className="h-3.5 w-3.5" />
+                Tulis Dulu
+              </span>
+            </div>
+
+            <div className="px-6 pb-4">
+              <div className="rounded-[24px] border border-white/80 bg-white/75 px-4 py-3 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.36)]">
+                <textarea
+                  className="min-h-[132px] w-full resize-none border-none bg-transparent px-0 py-1 text-[16px] font-medium leading-8 tracking-[0.01em] text-foreground placeholder:text-foreground/30 outline-none focus:ring-0"
+                  placeholder="Mulai menulis..."
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    openComposer();
+                  }}
+                  onFocus={openComposer}
+                  rows={isExpanded ? 6 : 4}
+                />
               </div>
             </div>
 
-            <div className="px-6">
-              <textarea
-                className="w-full bg-transparent border-none focus:ring-0 px-0 py-3 text-[16px] leading-8 tracking-[0.01em] font-medium text-foreground placeholder:text-foreground/30 resize-none transition-all duration-500 outline-none"
-                placeholder="Mulai menulis..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onFocus={() => setIsExpanded(true)}
-                rows={isExpanded ? 4 : 1}
-              />
-            </div>
-
             {hasImages ? (
-              <div className="px-6 pb-4 space-y-3">
-                <div className="rounded-[28px] border border-border/60 bg-background/90 p-3 shadow-soft">
+              <div className="space-y-3 px-6 pb-4">
+                <div className="rounded-[24px] border border-border/60 bg-background/92 p-3 shadow-soft">
                   {coverImage && coverPreviewUrl ? (
                     <button
                       type="button"
@@ -598,104 +621,164 @@ export function PostComposer({
             ) : null}
 
             {isExpanded ? (
-              <div className="flex flex-col animate-in fade-in duration-500">
-                <div className="px-6 py-4 space-y-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {(["carousel", "free"] as const).map((mode) => {
-                      const active = composerMode === mode;
-                      return (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => setComposerMode(mode)}
-                          className={cn(
-                            "rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-all",
-                            active
-                              ? "bg-foreground text-background shadow-lg"
-                              : "border border-border/60 bg-background/80 text-foreground/60 hover:bg-background"
-                          )}
-                        >
-                          {mode === "carousel" ? "Carousel" : "Free Upload"}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="relative">
-                      <select
-                        value={type}
-                        onChange={(e) => setType(e.target.value as PostType)}
-                        className="appearance-none bg-transparent hover:bg-surface-muted text-[13px] font-medium text-foreground/60 rounded-full pl-2 pr-7 py-1.5 outline-none focus:ring-2 focus:ring-foreground/10 transition-all cursor-pointer"
-                      >
-                        {types.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-foreground/40">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <span className="rounded-full bg-brand/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-brand">
-                      {composerSummaryLabel}
+              <div className="space-y-3 px-6 pb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => togglePanel("media")}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
+                      activePanel === "media"
+                        ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
+                        : "border-border/60 bg-background/85 text-foreground/70 hover:bg-background"
+                    )}
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    Tambahkan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => togglePanel("category")}
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
+                      activePanel === "category"
+                        ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
+                        : "border-border/60 bg-background/85 text-foreground/70 hover:bg-background"
+                    )}
+                  >
+                    {selectedTypeLabel}
+                  </button>
+                  <span className="rounded-full border border-sky-200/70 bg-sky-50/80 px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-sky-700">
+                    {composerMode === "carousel" ? "Carousel" : "Free Upload"}
+                  </span>
+                  {hasImages ? (
+                    <span className="rounded-full border border-border/60 bg-background/90 px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-foreground/60">
+                      Rasio {mediaAspectRatio}
                     </span>
-                  </div>
+                  ) : null}
+                </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {availableRatioPresets.map((preset) => (
-                      <button
-                        key={preset.value}
+                <AnimatePresence initial={false} mode="wait">
+                  {activePanel === "media" ? (
+                    <motion.div
+                      key="composer-media-panel"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="space-y-3 rounded-[22px] border border-border/60 bg-background/88 p-4 shadow-soft"
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {(["carousel", "free"] as const).map((mode) => {
+                          const active = composerMode === mode;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => setComposerMode(mode)}
+                              className={cn(
+                                "rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
+                                active
+                                  ? "bg-foreground text-background shadow-lg"
+                                  : "border border-border/60 bg-background/80 text-foreground/60 hover:bg-background"
+                              )}
+                            >
+                              {mode === "carousel" ? "Carousel" : "Free Upload"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {availableRatioPresets.map((preset) => (
+                          <button
+                            key={preset.value}
+                            type="button"
+                            onClick={() => setMediaAspectRatio(preset.value)}
+                            className={cn(
+                              "rounded-full px-3.5 py-2 text-[11px] font-black tracking-[0.12em] transition-all",
+                              mediaAspectRatio === preset.value
+                                ? "bg-slate-950 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
+                                : "border border-border/60 bg-background/85 text-foreground/65 hover:bg-background"
+                            )}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                      <Button
                         type="button"
-                        onClick={() => setMediaAspectRatio(preset.value)}
-                        className={cn(
-                          "rounded-full px-3.5 py-2 text-[11px] font-black tracking-[0.12em] transition-all",
-                          mediaAspectRatio === preset.value
-                            ? "bg-slate-950 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
-                            : "border border-border/60 bg-background/85 text-foreground/65 hover:bg-background"
-                        )}
+                        variant="outline"
+                        onClick={handlePickImages}
+                        className="h-11 rounded-full border-border/60 bg-white/70 px-5 text-[12px] font-black uppercase tracking-[0.15em] text-foreground/80 hover:bg-white"
                       >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
+                        <ImagePlus className="mr-2 h-4 w-4" />
+                        Upload Gambar
+                      </Button>
+                    </motion.div>
+                  ) : null}
 
-                  <div className="w-full rounded-[22px] bg-background/86 p-2 ring-1 ring-border/60 backdrop-blur-xl flex items-center gap-2">
-                    <ActionBarButton icon={ImagePlus} label="Upload" variant="secondary" onClick={handlePickImages} type="button" />
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept="image/png,image/jpeg,image/webp"
-                      className="hidden"
-                      onChange={(e) => {
-                        handleFilesSelected(e.target.files);
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                    <ActionBarButton
-                      label="Cancel"
+                  {activePanel === "category" ? (
+                    <motion.div
+                      key="composer-type-panel"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="rounded-[22px] border border-border/60 bg-background/88 p-4 shadow-soft"
+                    >
+                      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/50">Kategori Konten</p>
+                      <div className="relative">
+                        <select
+                          value={type}
+                          onChange={(e) => setType(e.target.value as PostType)}
+                          className="h-11 w-full appearance-none rounded-full border border-border/60 bg-white/90 px-4 pr-10 text-[13px] font-semibold text-foreground/80 outline-none transition focus:ring-2 focus:ring-sky-200/50"
+                        >
+                          {types.map((t) => (
+                            <option key={t.value} value={t.value}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40">
+                          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleFilesSelected(e.target.files);
+                    e.currentTarget.value = "";
+                  }}
+                />
+
+                <div className="sticky bottom-0 z-10 -mx-6 border-t border-border/50 bg-[linear-gradient(180deg,rgba(248,251,255,0.88),rgba(255,255,255,0.96))] px-6 py-3 backdrop-blur-xl">
+                  <div className="flex items-center gap-2 rounded-[18px] border border-border/60 bg-white/85 p-2 shadow-soft">
+                    <Button
+                      type="button"
                       variant="ghost"
-                      className="ml-auto"
-                      onClick={() => {
-                        setIsExpanded(false);
-                        setText("");
-                        setImages([]);
-                        setCropQueue([]);
-                        setComposerMode("carousel");
-                        setMediaAspectRatio("4:5");
-                      }}
-                    />
-                    <ActionBarButton
-                      label={isSubmitting ? "..." : "Posting"}
-                      variant="primary"
+                      onClick={resetComposer}
+                      className="h-11 rounded-full px-5 text-[13px] font-bold text-foreground/60 hover:bg-surface-muted"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
                       onClick={handleSubmit}
-                      disabled={(!text.trim() && images.length === 0) || isSubmitting}
-                    />
+                      disabled={!canSubmit || isSubmitting}
+                      className="ml-auto h-11 rounded-full px-6 text-[13px] font-black uppercase tracking-[0.15em]"
+                    >
+                      {isSubmitting ? "Posting..." : "Posting"}
+                    </Button>
                   </div>
                 </div>
               </div>
