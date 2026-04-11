@@ -98,6 +98,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);
         Route::post('/community/posts/{memberPost}/pray', [CommunityApiController::class, 'togglePray']);
         Route::post('/community/posts/{memberPost}/bookmark', [CommunityApiController::class, 'toggleBookmark']);
+        Route::post('/community/posts/{memberPost}/repost', [CommunityApiController::class, 'repost']);
         Route::get('/community/bookmarks', [CommunityApiController::class, 'listBookmarks']);
         Route::patch('/community/bookmarks/{memberPost}/category', [CommunityApiController::class, 'moveBookmarkCategory']);
         Route::get('/community/bookmark-categories', [CommunityApiController::class, 'listBookmarkCategories']);

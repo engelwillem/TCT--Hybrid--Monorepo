@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ArrowUpRight, Bookmark, Heart, MessageCircle, Share2 } from "lucide-react";
+import { ArrowUpRight, Bookmark, Heart, MessageCircle, Repeat2, Share2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { CommunityPost } from "../types";
@@ -68,6 +68,8 @@ type CommunityArchiveGalleryCardProps = {
   onOpen: () => void;
   onBookmark: () => void;
   onPray: () => void;
+  onRepost: () => void | Promise<void>;
+  reposting?: boolean;
   onShare: () => void | Promise<void>;
 };
 
@@ -76,6 +78,8 @@ export function CommunityArchiveGalleryCard({
   onOpen,
   onBookmark,
   onPray,
+  onRepost,
+  reposting = false,
   onShare,
 }: CommunityArchiveGalleryCardProps) {
   const categoryMeta = CATEGORY_STYLES[post.type] ?? {
@@ -193,18 +197,37 @@ export function CommunityArchiveGalleryCard({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              void onShare();
-            }}
-            className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-[12px] font-semibold hover:bg-slate-100/80 hover:text-slate-800"
-            aria-label="Bagikan konten"
-          >
-            <Share2 className="h-4 w-4" />
-            <span>Bagikan</span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void onShare();
+              }}
+              className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-[12px] font-semibold hover:bg-slate-100/80 hover:text-slate-800"
+              aria-label="Bagikan konten"
+            >
+              <Share2 className="h-4 w-4" />
+              <span>Bagikan</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={reposting}
+              onClick={(event) => {
+                event.stopPropagation();
+                void onRepost();
+              }}
+              className={cn(
+                "inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-[12px] font-semibold transition-colors",
+                reposting ? "cursor-not-allowed bg-slate-100/80 text-slate-400" : "hover:bg-slate-100/80 hover:text-slate-800"
+              )}
+              aria-label="Repost ke diskusi"
+            >
+              <Repeat2 className="h-4 w-4" />
+              <span>{reposting ? "Memposting..." : "Repost"}</span>
+            </button>
+          </div>
         </div>
       </div>
     </Card>

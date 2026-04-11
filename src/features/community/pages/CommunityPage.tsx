@@ -3,6 +3,7 @@
 import {
   Suspense,
   startTransition,
+  type TouchEvent as ReactTouchEvent,
   useCallback,
   useDeferredValue,
   useEffect,
@@ -39,6 +40,7 @@ import {
   resolveCommunityFeedCacheScope,
   writeCommunityFeedCache,
 } from "../utils/community-feed-cache";
+import { partitionCommunityPostsByAge, sortByNewest } from "../utils/community-lifecycle";
 import { isPrivateRenunganArchive } from "../utils/private-renungan-archive";
 
 type ArchiveCategory = CommunityArchiveCategory;
@@ -50,6 +52,8 @@ const slugifyRef = (ref: string) =>
     .replace(/[:\.\s_]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const CATEGORY_SWIPE_THRESHOLD_PX = 36;
 
 function SmartPostComposer({
   onPost,
@@ -111,12 +115,15 @@ export function CommunityPage() {
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [followBusyAuthorId, setFollowBusyAuthorId] = useState<string | null>(null);
+  const [repostBusyPostId, setRepostBusyPostId] = useState<string | null>(null);
+  const [timelineNowMs, setTimelineNowMs] = useState(() => Date.now());
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [authGateContent, setAuthGateContent] = useState<{ title: string; description: string }>({
     title: "Tulisanmu sudah siap.",
     description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
   });
   const archiveRailRef = useRef<HTMLDivElement | null>(null);
+  const archiveRailTouchRef = useRef<{ startX: number; startY: number; hasStepped: boolean } | null>(null);
   const [archiveRailHovered, setArchiveRailHovered] = useState(false);
 
   const deferredArchiveSearchQuery = useDeferredValue(archiveSearchQuery);
@@ -138,10 +145,22 @@ export function CommunityPage() {
     return metadataMarkedPrivate || textMarkedPrivate;
   }, []);
 
-  const discussionPosts = useMemo(
-    () => posts.filter((post) => !isPrivateRenunganPost(post)),
-    [isPrivateRenunganPost, posts]
+  const publicTimelinePosts = useMemo(() => {
+    const mergedById = new Map<string, CommunityPost>();
+    [...posts, ...archivePosts].forEach((post) => {
+      if (!post?.id) return;
+      mergedById.set(post.id, post);
+    });
+
+    return sortByNewest(Array.from(mergedById.values()).filter((post) => !isPrivateRenunganPost(post)));
+  }, [archivePosts, isPrivateRenunganPost, posts]);
+
+  const timelineBuckets = useMemo(
+    () => partitionCommunityPostsByAge(publicTimelinePosts, timelineNowMs),
+    [publicTimelinePosts, timelineNowMs]
   );
+
+  const discussionPosts = timelineBuckets.discussionPosts;
 
   const filteredBookmarkPosts = useMemo(() => {
     if (activeBookmarkCategoryId === "all") return bookmarkPosts;
@@ -296,6 +315,14 @@ export function CommunityPage() {
     void loadBookmarkData();
   }, [loadBookmarkData]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTimelineNowMs(Date.now());
+    }, 60_000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const activeArchiveCategoryIndex = useMemo(
     () => Math.max(
       COMMUNITY_ARCHIVE_CATEGORIES.findIndex((item) => item.key === archiveCategory),
@@ -336,15 +363,54 @@ export function CommunityPage() {
 
     const nextIndex =
       direction === "next"
-        ? (activeArchiveCategoryIndex + 1) % categoryCount
-        : (activeArchiveCategoryIndex - 1 + categoryCount) % categoryCount;
+        ? Math.min(activeArchiveCategoryIndex + 1, categoryCount - 1)
+        : Math.max(activeArchiveCategoryIndex - 1, 0);
 
     const nextCategory = COMMUNITY_ARCHIVE_CATEGORIES[nextIndex]?.key as ArchiveCategory | undefined;
     if (!nextCategory) return;
+    if (nextCategory === archiveCategory) return;
 
     setArchiveCategory(nextCategory);
     window.setTimeout(() => centerArchiveCategoryChip(nextCategory), 18);
-  }, [activeArchiveCategoryIndex, centerArchiveCategoryChip]);
+  }, [activeArchiveCategoryIndex, archiveCategory, centerArchiveCategoryChip]);
+
+  const isArchiveCategoryAtStart = activeArchiveCategoryIndex <= 0;
+  const isArchiveCategoryAtEnd = activeArchiveCategoryIndex >= COMMUNITY_ARCHIVE_CATEGORIES.length - 1;
+
+  const handleArchiveRailTouchStart = useCallback((event: ReactTouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    archiveRailTouchRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      hasStepped: false,
+    };
+  }, []);
+
+  const handleArchiveRailTouchMove = useCallback(
+    (event: ReactTouchEvent<HTMLDivElement>) => {
+      const state = archiveRailTouchRef.current;
+      const touch = event.touches[0];
+      if (!state || !touch || state.hasStepped) return;
+
+      const deltaX = touch.clientX - state.startX;
+      const deltaY = touch.clientY - state.startY;
+      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY) + 8;
+
+      if (!isHorizontal || Math.abs(deltaX) < CATEGORY_SWIPE_THRESHOLD_PX) return;
+
+      stepArchiveCategory(deltaX < 0 ? "next" : "prev");
+      archiveRailTouchRef.current = {
+        ...state,
+        hasStepped: true,
+      };
+    },
+    [stepArchiveCategory]
+  );
+
+  const handleArchiveRailTouchEnd = useCallback(() => {
+    archiveRailTouchRef.current = null;
+  }, []);
 
   const revealArchiveRailControls = useCallback(() => {
     setArchiveRailHovered(true);
@@ -691,6 +757,55 @@ export function CommunityPage() {
     }
   };
 
+  const handleRepostFromArchive = useCallback(
+    async (post: CommunityPost) => {
+      if (isRestoring) return;
+      if (!isAuthenticated) {
+        openAuthGate("interact");
+        return;
+      }
+      if (repostBusyPostId) return;
+
+      setRepostBusyPostId(post.id);
+      try {
+        const updatedPost = await CommunityService.repost(post.id);
+
+        const upsertById = (list: CommunityPost[]) => {
+          const index = list.findIndex((item) => item.id === updatedPost.id);
+          if (index >= 0) {
+            return list.map((item) => (item.id === updatedPost.id ? updatedPost : item));
+          }
+          return [updatedPost, ...list];
+        };
+
+        setTimelineNowMs(Date.now());
+        setPosts((prev) => {
+          const nextPosts = upsertById(prev);
+          setArchivePosts((prevArchive) => {
+            const nextArchive = upsertById(prevArchive);
+            persistFeedCache(nextPosts, nextArchive);
+            return nextArchive;
+          });
+          return nextPosts;
+        });
+
+        showToast("Post berhasil diaktifkan kembali ke Diskusi.", "success");
+      } catch {
+        showToast("Gagal mengaktifkan ulang post.", "error");
+      } finally {
+        setRepostBusyPostId(null);
+      }
+    },
+    [
+      isAuthenticated,
+      isRestoring,
+      openAuthGate,
+      persistFeedCache,
+      repostBusyPostId,
+      showToast,
+    ]
+  );
+
   const handleOpenComments = useCallback(
     (postId: string) => {
       if (isRestoring) return;
@@ -794,10 +909,7 @@ export function CommunityPage() {
     return null;
   }, [featuredPost, rituals]);
 
-  const publicArchivePosts = useMemo(
-    () => archivePosts.filter((post) => !isPrivateRenunganPost(post)),
-    [archivePosts, isPrivateRenunganPost]
-  );
+  const publicArchivePosts = timelineBuckets.archivePosts;
 
   const archiveCategoryCounts = useMemo(() => {
     return publicArchivePosts.reduce<Record<string, number>>(
@@ -1049,7 +1161,13 @@ export function CommunityPage() {
                         onMouseMove={revealArchiveRailControls}
                         onPointerEnter={revealArchiveRailControls}
                         onPointerMove={revealArchiveRailControls}
-                        onTouchStart={revealArchiveRailControls}
+                        onTouchStart={(event) => {
+                          revealArchiveRailControls();
+                          handleArchiveRailTouchStart(event);
+                        }}
+                        onTouchMove={handleArchiveRailTouchMove}
+                        onTouchEnd={handleArchiveRailTouchEnd}
+                        onTouchCancel={handleArchiveRailTouchEnd}
                         onFocusCapture={revealArchiveRailControls}
                         onMouseLeave={() => setArchiveRailHovered(false)}
                       >
@@ -1059,11 +1177,13 @@ export function CommunityPage() {
                         <button
                           type="button"
                           onClick={() => stepArchiveCategory("prev")}
+                          disabled={isArchiveCategoryAtStart}
                           className={cn(
                             "absolute left-1 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200/80 bg-white/58 text-sky-600 shadow-[0_16px_34px_-18px_rgba(14,165,233,0.7)] backdrop-blur-xl transition-all duration-300 ease-out md:h-11 md:w-11 md:bg-white/44 md:text-sky-500",
                             archiveRailHovered
                               ? "opacity-100 scale-100 translate-x-0 md:opacity-100"
-                              : "opacity-80 scale-[0.96] md:translate-x-1 md:opacity-0"
+                              : "opacity-80 scale-[0.96] md:translate-x-1 md:opacity-0",
+                            isArchiveCategoryAtStart ? "pointer-events-none border-slate-200/70 text-slate-300 shadow-none" : ""
                           )}
                           aria-label="Geser kategori ke kiri"
                         >
@@ -1073,11 +1193,13 @@ export function CommunityPage() {
                         <button
                           type="button"
                           onClick={() => stepArchiveCategory("next")}
+                          disabled={isArchiveCategoryAtEnd}
                           className={cn(
                             "absolute right-1 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200/80 bg-white/58 text-sky-600 shadow-[0_16px_34px_-18px_rgba(14,165,233,0.7)] backdrop-blur-xl transition-all duration-300 ease-out md:h-11 md:w-11 md:bg-white/44 md:text-sky-500",
                             archiveRailHovered
                               ? "opacity-100 scale-100 translate-x-0 md:opacity-100"
-                              : "opacity-80 scale-[0.96] md:-translate-x-1 md:opacity-0"
+                              : "opacity-80 scale-[0.96] md:-translate-x-1 md:opacity-0",
+                            isArchiveCategoryAtEnd ? "pointer-events-none border-slate-200/70 text-slate-300 shadow-none" : ""
                           )}
                           aria-label="Geser kategori ke kanan"
                         >
@@ -1088,7 +1210,7 @@ export function CommunityPage() {
                           <div
                             ref={archiveRailRef}
                             style={{ touchAction: 'pan-y' }}
-                            className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto overscroll-x-contain px-10 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex snap-x snap-mandatory items-center gap-2 overflow-x-hidden overscroll-x-contain px-10 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                           >
                           {COMMUNITY_ARCHIVE_CATEGORIES.map((item) => {
                             const active = archiveCategory === (item.key as ArchiveCategory);
@@ -1265,6 +1387,8 @@ export function CommunityPage() {
                         onOpen={() => handleOpenComments(post.id)}
                         onPray={() => toggleLike(post.id)}
                         onBookmark={() => toggleBookmark(post.id)}
+                        onRepost={() => handleRepostFromArchive(post)}
+                        reposting={repostBusyPostId === post.id}
                         onShare={() => handleShare(post.id, post.text)}
                       />
                     ))}

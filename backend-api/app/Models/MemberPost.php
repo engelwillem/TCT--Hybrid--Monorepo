@@ -40,9 +40,14 @@ class MemberPost extends Model
 
     public function scopeActive($query)
     {
-        // Relaxed from 24h to 7 days to ensure feed continuity in slower communities
         return $query->whereNull('hidden_at')
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()->subDays(7)));
+            ->where(function ($q) {
+                $q->where('expires_at', '>', now())
+                    ->orWhere(function ($legacy) {
+                        $legacy->whereNull('expires_at')
+                            ->where('created_at', '>', now()->subDay());
+                    });
+            });
     }
 
     /**

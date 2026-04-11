@@ -68,6 +68,7 @@ class TodayFeedService
                 'bookmarks as is_bookmarked_by_me' => fn ($q) => $q
                     ->where('user_id', $user?->id ?? 0),
             ])
+            ->orderByDesc('expires_at')
             ->orderByDesc('created_at')
             ->limit($fetchLimit)
             ->get();
@@ -101,7 +102,10 @@ class TodayFeedService
                 ->values()
                 ->all(),
             'metadata' => $p->metadata,
-            'createdAt' => $p->created_at?->diffForHumans(),
+            'createdAt' => $p->created_at?->toIso8601String(),
+            'created_at' => $p->created_at?->toIso8601String(),
+            'expiresAt' => $p->expires_at?->toIso8601String(),
+            'expires_at' => $p->expires_at?->toIso8601String(),
             'author' => [
                 'id' => (string) ($p->user?->id ?? ''),
                 'name' => (string) ($p->user?->name ?? 'Member'),

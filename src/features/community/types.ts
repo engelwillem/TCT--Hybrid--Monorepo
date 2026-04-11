@@ -28,6 +28,7 @@ export interface CommunityPost {
   thumbPath?: string | null;
   mediaPaths?: string[] | null;
   createdAt: string;
+  expiresAt?: string | null;
   author: CommunityUser;
   counts: {
     likes: number;
@@ -63,6 +64,8 @@ export interface CommunityPost {
     interpretation_summary?: string;
     bookmark_origin?: string;
     visibility?: "private_renungan_archive" | "public";
+    last_activated_at?: string;
+    last_reposted_at?: string;
   };
 }
 

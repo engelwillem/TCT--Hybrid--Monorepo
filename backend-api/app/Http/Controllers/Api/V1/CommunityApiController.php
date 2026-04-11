@@ -33,11 +33,17 @@ class CommunityApiController extends Controller
 
         $feedData = $feedService->getTodayData($user);
 
-        $now = \Illuminate\Support\Carbon::now();
+        $now = Carbon::now();
         $archivePosts = MemberPost::query()
             ->whereNull('hidden_at')
-            ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', $now)
+            ->where(function ($query) use ($now) {
+                $query->whereNotNull('expires_at')
+                    ->where('expires_at', '<=', $now)
+                    ->orWhere(function ($legacy) use ($now) {
+                        $legacy->whereNull('expires_at')
+                            ->where('created_at', '<=', $now->copy()->subDay());
+                    });
+            })
             ->publicFeed()
             ->with(['user:id,name,avatar_path'])
             ->withCount([
@@ -101,8 +107,10 @@ class CommunityApiController extends Controller
             'text' => trim((string) ($validated['text'] ?? '')),
             'image_path' => $mediaPaths[0] ?? null,
             'media_paths' => ! empty($mediaPaths) ? $mediaPaths : null,
-            'metadata' => $validated['metadata'] ?? null,
-            'expires_at' => Carbon::now()->addDays(7),
+            'metadata' => array_merge($validated['metadata'] ?? [], [
+                'last_activated_at' => Carbon::now()->toIso8601String(),
+            ]),
+            'expires_at' => Carbon::now()->addDay(),
         ]);
 
         $fresh = $this->reloadPost($post->id, $user->id);
@@ -240,6 +248,34 @@ class CommunityApiController extends Controller
 
         return response()->json([
             'data' => [
+                'post' => $this->serializePost($fresh, $user),
+            ],
+        ]);
+    }
+
+    public function repost(MemberPost $memberPost): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = Auth::guard('sanctum')->user();
+        abort_unless($user, 401);
+        abort_if($memberPost->hidden_at !== null, 404);
+        $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
+
+        $now = Carbon::now();
+        $metadata = is_array($memberPost->metadata) ? $memberPost->metadata : [];
+        $metadata['last_activated_at'] = $now->toIso8601String();
+        $metadata['last_reposted_at'] = $now->toIso8601String();
+
+        $memberPost->forceFill([
+            'metadata' => $metadata,
+            'expires_at' => $now->copy()->addDay(),
+        ])->save();
+
+        $fresh = $this->reloadPost($memberPost->id, $user->id);
+
+        return response()->json([
+            'data' => [
+                'status' => 'reactivated',
                 'post' => $this->serializePost($fresh, $user),
             ],
         ]);
@@ -557,7 +593,10 @@ class CommunityApiController extends Controller
                 ->filter()
                 ->values()
                 ->all(),
-            'createdAt' => $post->created_at?->diffForHumans(),
+            'createdAt' => $post->created_at?->toIso8601String(),
+            'created_at' => $post->created_at?->toIso8601String(),
+            'expiresAt' => $post->expires_at?->toIso8601String(),
+            'expires_at' => $post->expires_at?->toIso8601String(),
             'author' => [
                 'id' => (string) ($author?->id ?? ''),
                 'name' => (string) ($author?->name ?? 'Member'),

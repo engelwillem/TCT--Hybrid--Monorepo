@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Crop, ImagePlus, Sparkles, Star, X } from "lucide-react";
+import { Crop, ImagePlus, Star, X } from "lucide-react";
 import type { CommunityUser } from "../types";
 import { COMMUNITY_COMPOSER_TYPES, type CommunityComposerType } from "../categories";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -489,15 +489,13 @@ export function PostComposer({
       >
         <CardContent className="p-0">
           <div className="flex flex-col">
-            <div className="flex items-start justify-between gap-4 px-6 pt-7 pb-2">
-              <div className="flex-1">
-                <h2 className="tct-serif text-[22px] leading-tight tracking-tight text-foreground/90">Ruang Berbagi</h2>
-                <p className="mt-1 text-[13px] font-medium tracking-wide text-foreground/50">Apa yang Tuhan taruh di hati Anda?</p>
+            <div className="px-6 pt-8 pb-4">
+              <div className="mx-auto max-w-[26rem] space-y-2">
+                <h2 className="tct-serif text-[24px] leading-[1.18] tracking-tight text-foreground/90">Ruang Berbagi</h2>
+                <p className="max-w-[22rem] text-[13px] font-medium leading-relaxed tracking-[0.01em] text-foreground/55">
+                  Apa yang Tuhan taruh di hati Anda?
+                </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/60 bg-sky-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
-                <Sparkles className="h-3.5 w-3.5" />
-                Tulis Dulu
-              </span>
             </div>
 
             <div className="px-6 pb-4">

@@ -79,6 +79,8 @@ interface ApiPost {
   } | null;
   createdAt?: string;
   created_at: string;
+  expiresAt?: string | null;
+  expires_at?: string | null;
   author: {
     id: string | number;
     name: string | null;
@@ -199,7 +201,8 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
       }
     : null,
   metadata: post.metadata ?? undefined,
-  createdAt: post.createdAt || post.created_at,
+  createdAt: post.created_at || post.createdAt || "",
+  expiresAt: post.expires_at ?? post.expiresAt ?? undefined,
   author: {
     id: String(post.author?.id || ""),
     name: post.author?.name || "Member",
@@ -339,6 +342,19 @@ export const CommunityService = {
 
     await assertOk(response, "Failed to update preview image");
     const payload = await response.json() as ApiEnvelope<{ post: ApiPost }>;
+    if (!payload?.data?.post) throw new ApiError("Malformed response", 502);
+
+    return mapApiPost(payload.data.post);
+  },
+
+  async repost(postId: string): Promise<CommunityPost> {
+    const response = await fetch(`/api/community/posts/${postId}/repost`, {
+      method: "POST",
+      headers: buildHeaders(true),
+    });
+
+    await assertOk(response, "Failed to repost post");
+    const payload = (await response.json()) as ApiEnvelope<{ post: ApiPost }>;
     if (!payload?.data?.post) throw new ApiError("Malformed response", 502);
 
     return mapApiPost(payload.data.post);
