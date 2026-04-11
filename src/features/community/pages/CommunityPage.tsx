@@ -3,6 +3,7 @@
 import {
   Suspense,
   startTransition,
+  type PointerEvent as ReactPointerEvent,
   type TouchEvent as ReactTouchEvent,
   useCallback,
   useDeferredValue,
@@ -124,6 +125,7 @@ export function CommunityPage() {
   });
   const archiveRailRef = useRef<HTMLDivElement | null>(null);
   const archiveRailTouchRef = useRef<{ startX: number; startY: number; hasStepped: boolean } | null>(null);
+  const archiveRailDragRef = useRef<{ pointerId: number; startX: number; startY: number; hasStepped: boolean } | null>(null);
   const [archiveRailHovered, setArchiveRailHovered] = useState(false);
 
   const deferredArchiveSearchQuery = useDeferredValue(archiveSearchQuery);
@@ -359,25 +361,24 @@ export function CommunityPage() {
 
   const stepArchiveCategory = useCallback((direction: "prev" | "next") => {
     const categoryCount = COMMUNITY_ARCHIVE_CATEGORIES.length;
-    if (categoryCount === 0) return;
+    if (categoryCount <= 1) return;
 
     const nextIndex =
       direction === "next"
-        ? Math.min(activeArchiveCategoryIndex + 1, categoryCount - 1)
-        : Math.max(activeArchiveCategoryIndex - 1, 0);
+        ? (activeArchiveCategoryIndex + 1) % categoryCount
+        : (activeArchiveCategoryIndex - 1 + categoryCount) % categoryCount;
 
     const nextCategory = COMMUNITY_ARCHIVE_CATEGORIES[nextIndex]?.key as ArchiveCategory | undefined;
     if (!nextCategory) return;
-    if (nextCategory === archiveCategory) return;
 
     setArchiveCategory(nextCategory);
     window.setTimeout(() => centerArchiveCategoryChip(nextCategory), 18);
-  }, [activeArchiveCategoryIndex, archiveCategory, centerArchiveCategoryChip]);
+  }, [activeArchiveCategoryIndex, centerArchiveCategoryChip]);
 
-  const isArchiveCategoryAtStart = activeArchiveCategoryIndex <= 0;
-  const isArchiveCategoryAtEnd = activeArchiveCategoryIndex >= COMMUNITY_ARCHIVE_CATEGORIES.length - 1;
+  const canLoopArchiveCategories = COMMUNITY_ARCHIVE_CATEGORIES.length > 1;
 
   const handleArchiveRailTouchStart = useCallback((event: ReactTouchEvent<HTMLDivElement>) => {
+    if (archiveRailDragRef.current) return;
     const touch = event.touches[0];
     if (!touch) return;
     archiveRailTouchRef.current = {
@@ -389,6 +390,7 @@ export function CommunityPage() {
 
   const handleArchiveRailTouchMove = useCallback(
     (event: ReactTouchEvent<HTMLDivElement>) => {
+      if (archiveRailDragRef.current) return;
       const state = archiveRailTouchRef.current;
       const touch = event.touches[0];
       if (!state || !touch || state.hasStepped) return;
@@ -410,6 +412,44 @@ export function CommunityPage() {
 
   const handleArchiveRailTouchEnd = useCallback(() => {
     archiveRailTouchRef.current = null;
+  }, []);
+
+  const handleArchiveRailPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!canLoopArchiveCategories) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    archiveRailDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      hasStepped: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, [canLoopArchiveCategories]);
+
+  const handleArchiveRailPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const state = archiveRailDragRef.current;
+      if (!state || state.pointerId !== event.pointerId || state.hasStepped) return;
+
+      const deltaX = event.clientX - state.startX;
+      const deltaY = event.clientY - state.startY;
+      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY) + 8;
+      if (!isHorizontal || Math.abs(deltaX) < CATEGORY_SWIPE_THRESHOLD_PX) return;
+
+      stepArchiveCategory(deltaX < 0 ? "next" : "prev");
+      archiveRailDragRef.current = { ...state, hasStepped: true };
+    },
+    [stepArchiveCategory]
+  );
+
+  const handleArchiveRailPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const state = archiveRailDragRef.current;
+    if (!state || state.pointerId !== event.pointerId) return;
+    archiveRailDragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }, []);
 
   const revealArchiveRailControls = useCallback(() => {
@@ -1160,7 +1200,13 @@ export function CommunityPage() {
                         onMouseEnter={revealArchiveRailControls}
                         onMouseMove={revealArchiveRailControls}
                         onPointerEnter={revealArchiveRailControls}
-                        onPointerMove={revealArchiveRailControls}
+                        onPointerDown={handleArchiveRailPointerDown}
+                        onPointerMove={(event) => {
+                          revealArchiveRailControls();
+                          handleArchiveRailPointerMove(event);
+                        }}
+                        onPointerUp={handleArchiveRailPointerUp}
+                        onPointerCancel={handleArchiveRailPointerUp}
                         onTouchStart={(event) => {
                           revealArchiveRailControls();
                           handleArchiveRailTouchStart(event);
@@ -1177,13 +1223,13 @@ export function CommunityPage() {
                         <button
                           type="button"
                           onClick={() => stepArchiveCategory("prev")}
-                          disabled={isArchiveCategoryAtStart}
+                          disabled={!canLoopArchiveCategories}
                           className={cn(
                             "absolute left-1 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200/80 bg-white/58 text-sky-600 shadow-[0_16px_34px_-18px_rgba(14,165,233,0.7)] backdrop-blur-xl transition-all duration-300 ease-out md:h-11 md:w-11 md:bg-white/44 md:text-sky-500",
                             archiveRailHovered
                               ? "opacity-100 scale-100 translate-x-0 md:opacity-100"
                               : "opacity-80 scale-[0.96] md:translate-x-1 md:opacity-0",
-                            isArchiveCategoryAtStart ? "pointer-events-none border-slate-200/70 text-slate-300 shadow-none" : ""
+                            canLoopArchiveCategories ? "" : "pointer-events-none border-slate-200/70 text-slate-300 shadow-none"
                           )}
                           aria-label="Geser kategori ke kiri"
                         >
@@ -1193,13 +1239,13 @@ export function CommunityPage() {
                         <button
                           type="button"
                           onClick={() => stepArchiveCategory("next")}
-                          disabled={isArchiveCategoryAtEnd}
+                          disabled={!canLoopArchiveCategories}
                           className={cn(
                             "absolute right-1 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200/80 bg-white/58 text-sky-600 shadow-[0_16px_34px_-18px_rgba(14,165,233,0.7)] backdrop-blur-xl transition-all duration-300 ease-out md:h-11 md:w-11 md:bg-white/44 md:text-sky-500",
                             archiveRailHovered
                               ? "opacity-100 scale-100 translate-x-0 md:opacity-100"
                               : "opacity-80 scale-[0.96] md:-translate-x-1 md:opacity-0",
-                            isArchiveCategoryAtEnd ? "pointer-events-none border-slate-200/70 text-slate-300 shadow-none" : ""
+                            canLoopArchiveCategories ? "" : "pointer-events-none border-slate-200/70 text-slate-300 shadow-none"
                           )}
                           aria-label="Geser kategori ke kanan"
                         >

@@ -94,28 +94,26 @@ export function CommunityArchiveGalleryCard({
   const mediaPreview = post.mediaPaths?.[0] || post.imageUrl || null;
 
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-white/70 bg-white/82 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.38)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_34px_90px_-46px_rgba(15,23,42,0.42)]">
-      <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b", categoryMeta.accentClassName)} />
-
+    <Card className="group relative flex h-full flex-col overflow-hidden rounded-[26px] border border-slate-200/80 bg-white shadow-[0_18px_42px_-28px_rgba(15,23,42,0.32)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_26px_54px_-30px_rgba(15,23,42,0.35)]">
       <button
         type="button"
         onClick={onOpen}
-        className="absolute inset-0 z-10 rounded-[28px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+        className="absolute inset-0 z-10 rounded-[26px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
         aria-label={`Buka ${title}`}
       />
 
-      <div className="relative flex h-full flex-col p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex h-full flex-col p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span
               className={cn(
-                "inline-flex min-h-8 items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ring-1",
+                "inline-flex min-h-7 items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ring-1",
                 categoryMeta.badgeClassName
               )}
             >
               {categoryMeta.label}
             </span>
-            <span className="text-[11px] font-semibold text-slate-500">{formatArchiveDate(post.createdAt)}</span>
+            <span className="truncate text-[11px] font-semibold text-slate-500">{formatArchiveDate(post.createdAt)}</span>
           </div>
 
           <button
@@ -125,7 +123,7 @@ export function CommunityArchiveGalleryCard({
               onBookmark();
             }}
             className={cn(
-              "relative z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
+              "relative z-20 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors",
               post.isBookmarked
                 ? "border-amber-300/70 bg-amber-50 text-amber-700"
                 : "border-slate-200/80 bg-white/90 text-slate-500 hover:border-slate-300 hover:text-slate-800"
@@ -137,36 +135,36 @@ export function CommunityArchiveGalleryCard({
         </div>
 
         {mediaPreview ? (
-          <div className="relative mt-4 overflow-hidden rounded-[24px] border border-white/75 bg-slate-100">
+          <div className="relative mt-4 overflow-hidden rounded-[20px] border border-slate-200/80 bg-slate-100">
             <img
               src={mediaPreview}
               alt={title}
-              className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/12 via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/10 via-transparent to-transparent" />
           </div>
         ) : (
-          <div className="mt-4 rounded-[24px] border border-dashed border-slate-200/80 bg-[linear-gradient(135deg,rgba(248,250,252,0.95),rgba(241,245,249,0.82))] p-5 text-left">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Arsip Community</p>
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{excerpt}</p>
+          <div className="mt-4 rounded-[20px] border border-dashed border-slate-200/80 bg-slate-50/70 p-4 text-left">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Arsip Community</p>
+            <p className="mt-2 line-clamp-3 text-[13px] leading-6 text-slate-600">{excerpt}</p>
           </div>
         )}
 
-        <div className="mt-5 flex flex-1 flex-col">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{authorName}</p>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/[0.035] px-2.5 py-1 text-[11px] font-semibold text-slate-500">
+        <div className="mt-4 flex flex-1 flex-col">
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{authorName}</p>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
               Buka
               <ArrowUpRight className="h-3.5 w-3.5" />
             </span>
           </div>
 
-          <h3 className="mt-3 line-clamp-2 text-[19px] font-bold leading-tight tracking-tight text-slate-900">{title}</h3>
-          <p className="mt-3 line-clamp-3 text-[14px] leading-6 text-slate-600">{excerpt}</p>
+          <h3 className="mt-3 line-clamp-2 text-[18px] font-bold leading-[1.3] tracking-tight text-slate-900">{title}</h3>
+          <p className="mt-2.5 line-clamp-3 text-[14px] leading-6 text-slate-600">{excerpt}</p>
         </div>
 
-        <div className="relative z-20 mt-6 flex items-center justify-between gap-3 border-t border-slate-200/75 pt-4 text-slate-500">
-          <div className="flex items-center gap-2 text-[12px] font-semibold">
+        <div className="relative z-20 mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-3 text-slate-500">
+          <div className="flex items-center gap-1 text-[12px] font-semibold">
             <button
               type="button"
               onClick={(event) => {
