@@ -504,7 +504,15 @@ export function CommunityPage() {
       return true;
     } catch (error) {
       console.error("Failed to create post", error);
-      showToast("Gagal membagikan post.", "error");
+      const rawMessage = error instanceof Error ? error.message : "";
+      if (rawMessage.includes("422")) {
+        const hint = rawMessage.split(" - ")[1]?.trim() || "Periksa teks, kategori, dan jumlah gambar (maks 5).";
+        showToast(hint, "error");
+      } else if (rawMessage.includes("401") || rawMessage.includes("403")) {
+        showToast("Sesi akun berakhir. Silakan masuk lagi.", "error");
+      } else {
+        showToast("Gagal membagikan post. Coba lagi.", "error");
+      }
       return false;
     }
   };

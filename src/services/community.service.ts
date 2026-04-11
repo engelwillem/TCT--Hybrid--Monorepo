@@ -241,7 +241,26 @@ function handleAuthFailure(status: number) {
 async function assertOk(response: Response, message: string): Promise<void> {
   if (response.ok) return;
   handleAuthFailure(response.status);
-  throw new ApiError(`${message}: ${response.status}`, response.status);
+
+  let detail = "";
+  try {
+    const body = await response.clone().json() as {
+      message?: string;
+      errors?: Record<string, string[] | string>;
+    };
+    const topMessage = String(body?.message || "").trim();
+    if (topMessage) {
+      detail = topMessage;
+    } else if (body?.errors && typeof body.errors === "object") {
+      const firstError = Object.values(body.errors).flat().find(Boolean);
+      if (firstError) detail = String(firstError).trim();
+    }
+  } catch {
+    // Ignore non-JSON error bodies.
+  }
+
+  const suffix = detail ? ` - ${detail}` : "";
+  throw new ApiError(`${message}: ${response.status}${suffix}`, response.status);
 }
 
 async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, attempts = 2): Promise<Response> {

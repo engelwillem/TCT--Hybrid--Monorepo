@@ -68,6 +68,7 @@ const FREE_UPLOAD_RATIO_PRESETS: RatioPreset[] = [
 ];
 
 const DEFAULT_CROP_TRANSFORM: CropTransform = { x: 0, y: 0, scale: 1 };
+const MAX_COMPOSER_IMAGES = 5;
 
 function clampCropTransform(
   transform: CropTransform,
@@ -172,6 +173,7 @@ export function PostComposer({
   const [cropTransform, setCropTransform] = useState<CropTransform>(DEFAULT_CROP_TRANSFORM);
   const [cropImageSize, setCropImageSize] = useState<CropImageSize | null>(null);
   const [cropBusy, setCropBusy] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const cropDragRef = useRef<{ pointerId: number; startX: number; startY: number; origin: CropTransform } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -271,6 +273,10 @@ export function PostComposer({
     setText("");
     setImages([]);
     setCropQueue([]);
+    setActiveCropItem(null);
+    setCropTransform(DEFAULT_CROP_TRANSFORM);
+    setCropImageSize(null);
+    setSubmitError(null);
     setComposerMode("carousel");
     setMediaAspectRatio("4:5");
   };
@@ -286,15 +292,24 @@ export function PostComposer({
 
   const handleSubmit = async () => {
     if (!text.trim() && images.length === 0) return;
+    if (activeCropItem || cropQueue.length > 0) {
+      setSubmitError("Selesaikan editor gambar terlebih dahulu sebelum posting.");
+      return;
+    }
     try {
       setIsSubmitting(true);
+      setSubmitError(null);
       const result = await onPost(text, type, images.map((image) => image.file), {
         media_aspect_ratio: images.length > 0 ? mediaAspectRatio : undefined,
       });
       const shouldReset = result !== false;
       if (shouldReset) {
         resetComposer();
+      } else {
+        setSubmitError("Belum berhasil membagikan post. Coba lagi.");
       }
+    } catch {
+      setSubmitError("Terjadi gangguan saat mengirim post. Coba lagi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -326,18 +341,27 @@ export function PostComposer({
   const handleFilesSelected = async (fileList: FileList | null) => {
     const files = Array.from(fileList ?? []);
     if (!files.length) return;
-    const availableSlots = Math.max(0, 10 - images.length - cropQueue.length - (activeCropItem ? 1 : 0));
+    const availableSlots = Math.max(0, MAX_COMPOSER_IMAGES - images.length - cropQueue.length - (activeCropItem ? 1 : 0));
+    if (availableSlots <= 0) {
+      setSubmitError(`Maksimal ${MAX_COMPOSER_IMAGES} gambar per post.`);
+      return;
+    }
     const nextFiles = files.slice(0, availableSlots);
-    const prepared = await Promise.all(
-      nextFiles.map(async (file) => ({
-        id: buildImageId(file),
-        file,
-        source: await readFileAsDataUrl(file),
-        aspectRatio: mediaAspectRatio,
-        transform: DEFAULT_CROP_TRANSFORM,
-      }))
-    );
-    setCropQueue((prev) => [...prev, ...prepared]);
+    try {
+      const prepared = await Promise.all(
+        nextFiles.map(async (file) => ({
+          id: buildImageId(file),
+          file,
+          source: await readFileAsDataUrl(file),
+          aspectRatio: mediaAspectRatio,
+          transform: DEFAULT_CROP_TRANSFORM,
+        }))
+      );
+      setSubmitError(null);
+      setCropQueue((prev) => [...prev, ...prepared]);
+    } catch {
+      setSubmitError("Gagal memuat gambar. Coba pilih ulang file.");
+    }
   };
 
   const reopenCropForImage = (image: ComposerImage) => {
@@ -451,7 +475,7 @@ export function PostComposer({
           return prev.map((item) => (item.id === activeCropItem.existingId ? nextComposerImage : item));
         }
 
-        return [...prev, nextComposerImage].slice(0, 10);
+        return [...prev, nextComposerImage].slice(0, MAX_COMPOSER_IMAGES);
       });
       closeCropDialog();
     } catch {
@@ -482,15 +506,15 @@ export function PostComposer({
     <>
       <Card
         className={cn(
-          "overflow-hidden rounded-[30px] border border-border/60 bg-surface/85 shadow-premium backdrop-blur-2xl transition-all duration-500",
+          "overflow-hidden rounded-[30px] border border-border/60 bg-surface/90 shadow-premium backdrop-blur-2xl transition-all duration-500",
           isExpanded ? "ring-2 ring-sky-200/45" : "",
           className
         )}
       >
         <CardContent className="p-0">
           <div className="flex flex-col">
-            <div className="px-6 pt-8 pb-4">
-              <div className="mx-auto max-w-[26rem] space-y-2">
+            <div className="px-6 pt-8 pb-3">
+              <div className="mx-auto max-w-[26rem] space-y-1.5">
                 <h2 className="tct-serif text-[24px] leading-[1.18] tracking-tight text-foreground/90">Ruang Berbagi</h2>
                 <p className="max-w-[22rem] text-[13px] font-medium leading-relaxed tracking-[0.01em] text-foreground/55">
                   Apa yang Tuhan taruh di hati Anda?
@@ -498,14 +522,15 @@ export function PostComposer({
               </div>
             </div>
 
-            <div className="px-6 pb-4">
-              <div className="rounded-[24px] border border-white/80 bg-white/75 px-4 py-3 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.36)]">
+            <div className="px-6 pb-5">
+              <div className="rounded-[24px] border border-white/80 bg-white/80 px-4 py-3.5 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.36)]">
                 <textarea
-                  className="min-h-[132px] w-full resize-none border-none bg-transparent px-0 py-1 text-[16px] font-medium leading-8 tracking-[0.01em] text-foreground placeholder:text-foreground/30 outline-none focus:ring-0"
+                  className="min-h-[124px] w-full resize-none border-none bg-transparent px-0 py-1 text-[16px] font-medium leading-8 tracking-[0.01em] text-foreground placeholder:text-foreground/30 outline-none focus:ring-0"
                   placeholder="Mulai menulis..."
                   value={text}
                   onChange={(e) => {
                     setText(e.target.value);
+                    if (submitError) setSubmitError(null);
                     openComposer();
                   }}
                   onFocus={openComposer}
@@ -515,8 +540,8 @@ export function PostComposer({
             </div>
 
             {hasImages ? (
-              <div className="space-y-3 px-6 pb-4">
-                <div className="rounded-[24px] border border-border/60 bg-background/92 p-3 shadow-soft">
+              <div className="space-y-3 px-6 pb-5">
+                <div className="rounded-[24px] border border-border/60 bg-background/92 p-2.5 shadow-soft">
                   {coverImage && coverPreviewUrl ? (
                     <button
                       type="button"
@@ -539,7 +564,7 @@ export function PostComposer({
                   ) : null}
                 </div>
 
-                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1.5 scrollbar-hide">
                   {images.map((image, index) => {
                     const url = previewUrls[image.id];
                     if (!url) return null;
@@ -548,7 +573,7 @@ export function PostComposer({
                     return (
                       <div
                         key={image.id}
-                        className="group relative shrink-0 snap-start rounded-[22px] border border-border/60 bg-background/90 p-2 shadow-soft"
+                        className="group relative shrink-0 snap-start rounded-[20px] border border-border/60 bg-background/95 p-2 shadow-soft"
                       >
                         <button
                           type="button"
@@ -593,7 +618,7 @@ export function PostComposer({
                             disabled={index === 0}
                             className="rounded-full border border-border/60 px-2 py-1.5 text-[10px] font-bold text-foreground/70 transition-colors hover:bg-surface-muted disabled:opacity-35"
                           >
-                            Left
+                            Kiri
                           </button>
                           <button
                             type="button"
@@ -601,7 +626,7 @@ export function PostComposer({
                             disabled={index === images.length - 1}
                             className="rounded-full border border-border/60 px-2 py-1.5 text-[10px] font-bold text-foreground/70 transition-colors hover:bg-surface-muted disabled:opacity-35"
                           >
-                            Right
+                            Kanan
                           </button>
                         </div>
                         <button
@@ -619,7 +644,7 @@ export function PostComposer({
             ) : null}
 
             {isExpanded ? (
-              <div className="space-y-3 px-6 pb-4">
+              <div className="space-y-4 px-6 pb-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -664,8 +689,9 @@ export function PostComposer({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="space-y-3 rounded-[22px] border border-border/60 bg-background/88 p-4 shadow-soft"
+                      className="space-y-3.5 rounded-[22px] border border-border/60 bg-background/90 p-4 shadow-soft"
                     >
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">Editor Media</p>
                       <div className="flex flex-wrap gap-2">
                         {(["carousel", "free"] as const).map((mode) => {
                           const active = composerMode === mode;
@@ -710,7 +736,7 @@ export function PostComposer({
                         className="h-11 rounded-full border-border/60 bg-white/70 px-5 text-[12px] font-black uppercase tracking-[0.15em] text-foreground/80 hover:bg-white"
                       >
                         <ImagePlus className="mr-2 h-4 w-4" />
-                        Upload Gambar
+                        Upload Gambar (Maks 5)
                       </Button>
                     </motion.div>
                   ) : null}
@@ -722,7 +748,7 @@ export function PostComposer({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="rounded-[22px] border border-border/60 bg-background/88 p-4 shadow-soft"
+                      className="rounded-[22px] border border-border/60 bg-background/90 p-4 shadow-soft"
                     >
                       <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/50">Kategori Konten</p>
                       <div className="relative">
@@ -759,7 +785,13 @@ export function PostComposer({
                   }}
                 />
 
-                <div className="sticky bottom-0 z-10 -mx-6 border-t border-border/50 bg-[linear-gradient(180deg,rgba(248,251,255,0.88),rgba(255,255,255,0.96))] px-6 py-3 backdrop-blur-xl">
+                {submitError ? (
+                  <p className="rounded-xl border border-rose-200/80 bg-rose-50/80 px-3 py-2 text-[12px] font-semibold text-rose-700">
+                    {submitError}
+                  </p>
+                ) : null}
+
+                <div className="sticky bottom-0 z-10 -mx-6 border-t border-border/50 bg-[linear-gradient(180deg,rgba(248,251,255,0.88),rgba(255,255,255,0.98))] px-6 pt-3 pb-[max(env(safe-area-inset-bottom),0.9rem)] backdrop-blur-xl">
                   <div className="flex items-center gap-2 rounded-[18px] border border-border/60 bg-white/85 p-2 shadow-soft">
                     <Button
                       type="button"
@@ -787,16 +819,18 @@ export function PostComposer({
 
       <Dialog open={!!activeCropItem} onOpenChange={(open) => (!open ? closeCropDialog() : null)}>
         <DialogContent
-          className="grid max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[820px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-[2rem] border-border/60 bg-background p-0 overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:w-full"
+          className="grid max-h-[calc(100dvh-0.5rem)] w-[calc(100vw-0.5rem)] max-w-[820px] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[1.4rem] border-border/60 bg-background p-0 sm:max-h-[calc(100dvh-1.5rem)] sm:w-full sm:rounded-[2rem]"
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
         >
-          <DialogHeader className="border-b border-border/50 px-6 py-5 text-left">
-            <DialogTitle className="text-xl font-black tracking-tight text-foreground">Carousel Editor</DialogTitle>
+          <DialogHeader className="border-b border-border/50 px-5 py-4 text-left sm:px-6 sm:py-5">
+            <DialogTitle className="text-[18px] font-black tracking-tight text-foreground sm:text-xl">Carousel Editor</DialogTitle>
           </DialogHeader>
           <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-6">
             <div className="space-y-5">
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Rasio</p>
+                <div className="flex flex-wrap gap-2">
                 {availableRatioPresets.map((preset) => (
                   <button
                     key={preset.value}
@@ -812,13 +846,14 @@ export function PostComposer({
                     {preset.label}
                   </button>
                 ))}
+                </div>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_250px]">
                 <div className="space-y-4">
                   <div
                     className={cn(
-                      "relative mx-auto overflow-hidden rounded-[2rem] border border-border/60 bg-surface shadow-soft",
+                      "relative mx-auto overflow-hidden rounded-[1.5rem] border border-border/60 bg-surface shadow-soft sm:rounded-[2rem]",
                       cropBusy ? "pointer-events-none opacity-70" : "cursor-grab active:cursor-grabbing"
                     )}
                     style={{ width: `${cropViewport.width}px`, height: `${cropViewport.height}px` }}
@@ -860,7 +895,7 @@ export function PostComposer({
                   </div>
                 </div>
 
-                <div className="space-y-4 rounded-[1.75rem] border border-border/50 bg-surface-muted/40 p-4">
+                <div className="space-y-4 rounded-[1.4rem] border border-border/50 bg-surface-muted/40 p-4 sm:rounded-[1.75rem]">
                   <div className="grid grid-cols-2 gap-2">
                     <Button type="button" variant="outline" onClick={applyFitTransform} className="rounded-full">
                       Fit
@@ -917,7 +952,7 @@ export function PostComposer({
               </div>
             </div>
           </div>
-          <DialogFooter className="border-t border-border/50 bg-background px-6 py-5">
+          <DialogFooter className="border-t border-border/50 bg-background px-5 pt-4 pb-[max(env(safe-area-inset-bottom),1rem)] sm:px-6 sm:py-5">
             <Button type="button" variant="outline" onClick={closeCropDialog} disabled={cropBusy} className="rounded-full">
               Cancel
             </Button>
