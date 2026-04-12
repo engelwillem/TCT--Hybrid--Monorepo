@@ -1,144 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Crop, ImagePlus, Star, X } from "lucide-react";
-import type { CommunityUser } from "../types";
-import { COMMUNITY_COMPOSER_TYPES, type CommunityComposerType } from "../categories";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
-type PostType = CommunityComposerType;
-type ComposerMode = "carousel" | "free";
-type MediaAspectRatio = "9:16" | "4:5" | "1:1" | "16:9" | "og" | "auto";
-type ComposerPanel = "none" | "media" | "category";
-
-type PostComposerMetadata = {
-  media_aspect_ratio?: MediaAspectRatio;
-};
-
-type CropTransform = {
-  x: number;
-  y: number;
-  scale: number;
-};
-
-type CropQueueItem = {
-  id: string;
-  file: File;
-  source: string;
-  aspectRatio: MediaAspectRatio;
-  transform: CropTransform;
-  existingId?: string;
-};
-
-type CropImageSize = {
-  width: number;
-  height: number;
-};
-
-type ComposerImage = {
-  id: string;
-  file: File;
-  aspectRatio: MediaAspectRatio;
-  originalFile: File;
-  originalSource: string;
-  transform: CropTransform;
-};
-
-type RatioPreset = {
-  value: MediaAspectRatio;
-  label: string;
-  ratio: number | null;
-};
-
-const CAROUSEL_RATIO_PRESETS: RatioPreset[] = [
-  { value: "9:16", label: "9:16", ratio: 9 / 16 },
-  { value: "4:5", label: "4:5", ratio: 4 / 5 },
-  { value: "1:1", label: "1:1", ratio: 1 },
-];
-
-const FREE_UPLOAD_RATIO_PRESETS: RatioPreset[] = [
-  ...CAROUSEL_RATIO_PRESETS,
-  { value: "auto", label: "Original", ratio: null },
-  { value: "og", label: "1.9:1", ratio: 1.91 / 1 },
-];
-
-const DEFAULT_CROP_TRANSFORM: CropTransform = { x: 0, y: 0, scale: 1 };
-const MAX_COMPOSER_IMAGES = 5;
-
-function clampCropTransform(
-  transform: CropTransform,
-  preview: { width: number; height: number } | null,
-  viewport: { width: number; height: number }
-): CropTransform {
-  if (!preview) return transform;
-
-  const scaledWidth = preview.width * transform.scale;
-  const scaledHeight = preview.height * transform.scale;
-  const maxOffsetX = Math.max(0, (scaledWidth - viewport.width) / 2);
-  const maxOffsetY = Math.max(0, (scaledHeight - viewport.height) / 2);
-
-  return {
-    ...transform,
-    x: Math.min(maxOffsetX, Math.max(-maxOffsetX, transform.x)),
-    y: Math.min(maxOffsetY, Math.max(-maxOffsetY, transform.y)),
-  };
-}
-
-function resolveFillScale(
-  preview: { width: number; height: number } | null,
-  viewport: { width: number; height: number }
-): number {
-  if (!preview) return 1;
-  const fillScaleX = viewport.width / preview.width;
-  const fillScaleY = viewport.height / preview.height;
-  return Math.max(1, fillScaleX, fillScaleY);
-}
-
-function aspectRatioClass(value: MediaAspectRatio): string {
-  switch (value) {
-    case "9:16":
-      return "aspect-[9/16]";
-    case "4:5":
-      return "aspect-[4/5]";
-    case "1:1":
-      return "aspect-square";
-    case "16:9":
-      return "aspect-video";
-    case "og":
-      return "aspect-[1.91/1]";
-    default:
-      return "aspect-[1.08/1]";
-  }
-}
-
-function moveItemToIndex<T>(items: T[], fromIndex: number, toIndex: number): T[] {
-  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
-    return items;
-  }
-
-  const next = [...items];
-  const [item] = next.splice(fromIndex, 1);
-  next.splice(toIndex, 0, item);
-  return next;
-}
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error || new Error("Gagal membaca gambar."));
-    reader.readAsDataURL(file);
-  });
-}
-
-function buildImageId(file: File): string {
-  return `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`;
-}
+import { Crop, ImagePlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import type { CommunityUser } from "../types";
+import { ComposerActionBar } from "./post-composer/ComposerActionBar";
+import { ComposerInput } from "./post-composer/ComposerInput";
+import { ComposerMediaStrip } from "./post-composer/ComposerMediaStrip";
+import { ComposerShell } from "./post-composer/ComposerShell";
+import { ComposerTypeChips } from "./post-composer/ComposerTypeChips";
+import { clampCropTransform, type CropTransform, type PostComposerMetadata, type PostType } from "./post-composer/types";
+import { usePostComposerState } from "./post-composer/usePostComposerState";
+import { cn } from "@/lib/utils";
 
 interface PostComposerProps {
   onPost: (text: string, type: PostType, images?: File[], metadata?: PostComposerMetadata) => Promise<boolean | void> | boolean | void;
@@ -159,236 +35,61 @@ export function PostComposer({
   initialType = "user_post",
   initialExpanded = false,
 }: PostComposerProps) {
-  const [text, setText] = useState(initialText);
-  const [type, setType] = useState<PostType>(initialType);
-  const [isExpanded, setIsExpanded] = useState(initialExpanded);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [composerMode, setComposerMode] = useState<ComposerMode>("carousel");
-  const [activePanel, setActivePanel] = useState<ComposerPanel>("none");
-  const [images, setImages] = useState<ComposerImage[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
-  const [mediaAspectRatio, setMediaAspectRatio] = useState<MediaAspectRatio>("4:5");
-  const [cropQueue, setCropQueue] = useState<CropQueueItem[]>([]);
-  const [activeCropItem, setActiveCropItem] = useState<CropQueueItem | null>(null);
-  const [cropTransform, setCropTransform] = useState<CropTransform>(DEFAULT_CROP_TRANSFORM);
-  const [cropImageSize, setCropImageSize] = useState<CropImageSize | null>(null);
-  const [cropBusy, setCropBusy] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  void currentUser;
+  void channels;
+
+  const {
+    types,
+    text,
+    type,
+    isExpanded,
+    isSubmitting,
+    composerMode,
+    activePanel,
+    images,
+    previewUrls,
+    mediaAspectRatio,
+    activeCropItem,
+    cropTransform,
+    cropBusy,
+    submitError,
+    availableRatioPresets,
+    cropViewport,
+    cropPreviewMetrics,
+    hasImages,
+    selectedTypeLabel,
+    canSubmit,
+    openComposer,
+    updateText,
+    setType,
+    togglePanel,
+    setMode,
+    selectMediaAspectRatio,
+    handleSubmit,
+    resetComposer,
+    removeImage,
+    setImageAsCover,
+    moveImage,
+    handleFilesSelected,
+    reopenCropForImage,
+    closeCropDialog,
+    setCropTransform,
+    applyCrop,
+    applyFitTransform,
+    applyFillTransform,
+  } = usePostComposerState({
+    onPost,
+    initialText,
+    initialType,
+    initialExpanded,
+  });
+
   const cropDragRef = useRef<{ pointerId: number; startX: number; startY: number; origin: CropTransform } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const types: { value: PostType; label: string }[] = COMMUNITY_COMPOSER_TYPES;
-  const availableRatioPresets = composerMode === "carousel" ? CAROUSEL_RATIO_PRESETS : FREE_UPLOAD_RATIO_PRESETS;
-  const cropPreset = useMemo(
-    () => availableRatioPresets.find((item) => item.value === mediaAspectRatio) ?? availableRatioPresets[1] ?? availableRatioPresets[0],
-    [availableRatioPresets, mediaAspectRatio]
-  );
-
-  useEffect(() => {
-    const next: Record<string, string> = {};
-    images.forEach((image) => {
-      next[image.id] = URL.createObjectURL(image.file);
-    });
-    setPreviewUrls(next);
-
-    return () => {
-      Object.values(next).forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [images]);
-
-  useEffect(() => {
-    if (availableRatioPresets.some((preset) => preset.value === mediaAspectRatio)) return;
-    setMediaAspectRatio(availableRatioPresets[0]?.value ?? "4:5");
-  }, [availableRatioPresets, mediaAspectRatio]);
-
-  useEffect(() => {
-    if (activeCropItem || cropQueue.length === 0) return;
-    const [next, ...rest] = cropQueue;
-    setActiveCropItem(next);
-    setCropQueue(rest);
-    setCropTransform(next.transform);
-    setCropImageSize(null);
-    if (composerMode === "free") {
-      setMediaAspectRatio(next.aspectRatio);
-    }
-  }, [activeCropItem, composerMode, cropQueue]);
-
-  useEffect(() => {
-    if (!activeCropItem) {
-      setCropImageSize(null);
-      return;
-    }
-
-    let cancelled = false;
-    const image = new Image();
-    image.onload = () => {
-      if (cancelled) return;
-      setCropImageSize({
-        width: image.naturalWidth,
-        height: image.naturalHeight,
-      });
-    };
-    image.onerror = () => {
-      if (!cancelled) setCropImageSize(null);
-    };
-    image.src = activeCropItem.source;
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeCropItem]);
-
-  const cropViewport = useMemo(() => {
-    const maxWidth = 320;
-    const maxHeight = 420;
-    if (!cropPreset?.ratio) {
-      return { width: maxWidth, height: 320 };
-    }
-    const ratio = cropPreset.ratio;
-    const widthByHeight = maxHeight * ratio;
-    if (widthByHeight <= maxWidth) {
-      return { width: widthByHeight, height: maxHeight };
-    }
-    return { width: maxWidth, height: maxWidth / ratio };
-  }, [cropPreset]);
-
-  const cropPreviewMetrics = useMemo(() => {
-    if (!cropImageSize) return null;
-    const containScale = Math.min(cropViewport.width / cropImageSize.width, cropViewport.height / cropImageSize.height);
-    return {
-      width: cropImageSize.width * containScale,
-      height: cropImageSize.height * containScale,
-    };
-  }, [cropImageSize, cropViewport.height, cropViewport.width]);
-
-  const coverImage = images[0] ?? null;
-  const coverPreviewUrl = coverImage ? previewUrls[coverImage.id] : null;
-  const hasImages = Object.keys(previewUrls).length > 0;
-  const selectedTypeLabel = types.find((item) => item.value === type)?.label ?? "Curahan Hati";
-  const canSubmit = Boolean(text.trim() || images.length > 0);
-
-  const resetComposer = () => {
-    setIsExpanded(false);
-    setActivePanel("none");
-    setText("");
-    setImages([]);
-    setCropQueue([]);
-    setActiveCropItem(null);
-    setCropTransform(DEFAULT_CROP_TRANSFORM);
-    setCropImageSize(null);
-    setSubmitError(null);
-    setComposerMode("carousel");
-    setMediaAspectRatio("4:5");
-  };
-
-  const openComposer = () => {
-    setIsExpanded(true);
-  };
-
-  const togglePanel = (panel: ComposerPanel) => {
-    setIsExpanded(true);
-    setActivePanel((prev) => (prev === panel ? "none" : panel));
-  };
-
-  const handleSubmit = async () => {
-    if (!text.trim() && images.length === 0) return;
-    if (activeCropItem || cropQueue.length > 0) {
-      setSubmitError("Selesaikan editor gambar terlebih dahulu sebelum posting.");
-      return;
-    }
-    try {
-      setIsSubmitting(true);
-      setSubmitError(null);
-      const result = await onPost(text, type, images.map((image) => image.file), {
-        media_aspect_ratio: images.length > 0 ? mediaAspectRatio : undefined,
-      });
-      const shouldReset = result !== false;
-      if (shouldReset) {
-        resetComposer();
-      } else {
-        setSubmitError("Belum berhasil membagikan post. Coba lagi.");
-      }
-    } catch {
-      setSubmitError("Terjadi gangguan saat mengirim post. Coba lagi.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const removeImage = (targetKey: string) => {
-    setImages((prev) => prev.filter((image) => image.id !== targetKey));
-  };
-
-  const setImageAsCover = (targetKey: string) => {
-    setImages((prev) => {
-      const fromIndex = prev.findIndex((image) => image.id === targetKey);
-      return moveItemToIndex(prev, fromIndex, 0);
-    });
-  };
-
-  const moveImage = (targetKey: string, direction: "left" | "right") => {
-    setImages((prev) => {
-      const fromIndex = prev.findIndex((image) => image.id === targetKey);
-      const toIndex = direction === "left" ? fromIndex - 1 : fromIndex + 1;
-      return moveItemToIndex(prev, fromIndex, toIndex);
-    });
-  };
-
-  const handlePickImages = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFilesSelected = async (fileList: FileList | null) => {
-    const files = Array.from(fileList ?? []);
-    if (!files.length) return;
-    const availableSlots = Math.max(0, MAX_COMPOSER_IMAGES - images.length - cropQueue.length - (activeCropItem ? 1 : 0));
-    if (availableSlots <= 0) {
-      setSubmitError(`Maksimal ${MAX_COMPOSER_IMAGES} gambar per post.`);
-      return;
-    }
-    const nextFiles = files.slice(0, availableSlots);
-    try {
-      const prepared = await Promise.all(
-        nextFiles.map(async (file) => ({
-          id: buildImageId(file),
-          file,
-          source: await readFileAsDataUrl(file),
-          aspectRatio: mediaAspectRatio,
-          transform: DEFAULT_CROP_TRANSFORM,
-        }))
-      );
-      setSubmitError(null);
-      setCropQueue((prev) => [...prev, ...prepared]);
-    } catch {
-      setSubmitError("Gagal memuat gambar. Coba pilih ulang file.");
-    }
-  };
-
-  const reopenCropForImage = (image: ComposerImage) => {
-    setActiveCropItem({
-      id: image.id,
-      file: image.originalFile,
-      source: image.originalSource,
-      aspectRatio: image.aspectRatio,
-      transform: image.transform,
-      existingId: image.id,
-    });
-    setCropTransform(image.transform);
-    setCropImageSize(null);
-    if (composerMode === "free") {
-      setMediaAspectRatio(image.aspectRatio);
-    }
-  };
-
-  const closeCropDialog = () => {
-    setActiveCropItem(null);
-    setCropTransform(DEFAULT_CROP_TRANSFORM);
-    setCropImageSize(null);
-    setCropBusy(false);
-  };
-
   const handleCropPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!activeCropItem || cropBusy) return;
+
     cropDragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -401,8 +102,10 @@ export function PostComposer({
   const handleCropPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = cropDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+
     const deltaX = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
+
     setCropTransform(
       clampCropTransform(
         {
@@ -419,403 +122,170 @@ export function PostComposer({
   const handleCropPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = cropDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+
     cropDragRef.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
   };
 
-  const applyCrop = async () => {
-    if (!activeCropItem) return;
-    setCropBusy(true);
-    try {
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Gagal memuat gambar."));
-        img.src = activeCropItem.source;
-      });
-
-      const outputWidth = 1440;
-      const outputHeight = cropPreset.ratio ? Math.round(outputWidth / cropPreset.ratio) : Math.round(outputWidth * (image.naturalHeight / image.naturalWidth));
-      const canvas = document.createElement("canvas");
-      canvas.width = outputWidth;
-      canvas.height = outputHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas crop tidak tersedia.");
-
-      const baseScale = Math.min(outputWidth / image.naturalWidth, outputHeight / image.naturalHeight);
-      const finalScale = baseScale * cropTransform.scale;
-      const drawWidth = image.naturalWidth * finalScale;
-      const drawHeight = image.naturalHeight * finalScale;
-      const viewportRatioX = outputWidth / cropViewport.width;
-      const viewportRatioY = outputHeight / cropViewport.height;
-      const drawX = (outputWidth - drawWidth) / 2 + cropTransform.x * viewportRatioX;
-      const drawY = (outputHeight - drawHeight) / 2 + cropTransform.y * viewportRatioY;
-      ctx.clearRect(0, 0, outputWidth, outputHeight);
-      ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-      if (!blob) throw new Error("Gagal menyiapkan hasil crop.");
-      const nextFile = new File([blob], `${activeCropItem.file.name.replace(/\.[^.]+$/, "")}-community.jpg`, {
-        type: "image/jpeg",
-      });
-
-      const nextComposerImage: ComposerImage = {
-        id: activeCropItem.existingId || activeCropItem.id,
-        file: nextFile,
-        aspectRatio: mediaAspectRatio,
-        originalFile: activeCropItem.file,
-        originalSource: activeCropItem.source,
-        transform: cropTransform,
-      };
-
-      setImages((prev) => {
-        if (activeCropItem.existingId) {
-          return prev.map((item) => (item.id === activeCropItem.existingId ? nextComposerImage : item));
-        }
-
-        return [...prev, nextComposerImage].slice(0, MAX_COMPOSER_IMAGES);
-      });
-      closeCropDialog();
-    } catch {
-      setCropBusy(false);
-    }
-  };
-
-  const applyFitTransform = () => {
-    setCropTransform(DEFAULT_CROP_TRANSFORM);
-  };
-
-  const applyFillTransform = () => {
-    const nextScale = resolveFillScale(cropPreviewMetrics, cropViewport);
-    setCropTransform(
-      clampCropTransform(
-        {
-          x: 0,
-          y: 0,
-          scale: nextScale,
-        },
-        cropPreviewMetrics,
-        cropViewport
-      )
-    );
+  const openImagePicker = () => {
+    fileInputRef.current?.click();
   };
 
   return (
     <>
-      <Card
-        className={cn(
-          "overflow-hidden rounded-[30px] border border-border/60 bg-surface/90 shadow-premium backdrop-blur-2xl transition-all duration-500",
-          isExpanded ? "ring-2 ring-sky-200/45" : "",
-          className
-        )}
-      >
-        <CardContent className="p-0">
-          <div className="flex flex-col">
-            <div className="px-6 pt-8 pb-3">
-              <div className="mx-auto max-w-[26rem] space-y-1.5">
-                <h2 className="tct-serif text-[24px] leading-[1.18] tracking-tight text-foreground/90">Ruang Berbagi</h2>
-                <p className="max-w-[22rem] text-[13px] font-medium leading-relaxed tracking-[0.01em] text-foreground/55">
-                  Apa yang Tuhan taruh di hati Anda?
-                </p>
-              </div>
+      <ComposerShell isExpanded={isExpanded} className={className}>
+        <div className="flex flex-col">
+          <div className="px-6 pb-3 pt-8">
+            <div className="mx-auto max-w-[26rem] space-y-1.5">
+              <h2 className="tct-serif text-[24px] leading-[1.18] tracking-tight text-foreground/90">Ruang Berbagi</h2>
+              <p className="max-w-[22rem] text-[13px] font-medium leading-relaxed tracking-[0.01em] text-foreground/55">
+                Apa yang Tuhan taruh di hati Anda?
+              </p>
             </div>
+          </div>
 
-            <div className="px-6 pb-5">
-              <div className="rounded-[24px] border border-white/80 bg-white/80 px-4 py-3.5 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.36)]">
-                <textarea
-                  className="min-h-[124px] w-full resize-none border-none bg-transparent px-0 py-1 text-[16px] font-medium leading-8 tracking-[0.01em] text-foreground placeholder:text-foreground/30 outline-none focus:ring-0"
-                  placeholder="Mulai menulis..."
-                  value={text}
-                  onChange={(e) => {
-                    setText(e.target.value);
-                    if (submitError) setSubmitError(null);
-                    openComposer();
-                  }}
-                  onFocus={openComposer}
-                  rows={isExpanded ? 6 : 4}
-                />
-              </div>
-            </div>
+          <ComposerInput value={text} isExpanded={isExpanded} onFocus={openComposer} onChange={updateText} />
 
-            {hasImages ? (
-              <div className="space-y-3 px-6 pb-5">
-                <div className="rounded-[24px] border border-border/60 bg-background/92 p-2.5 shadow-soft">
-                  {coverImage && coverPreviewUrl ? (
-                    <button
+          <ComposerMediaStrip
+            hasImages={hasImages}
+            images={images}
+            previewUrls={previewUrls}
+            composerMode={composerMode}
+            mediaAspectRatio={mediaAspectRatio}
+            onReopenCrop={reopenCropForImage}
+            onSetCover={setImageAsCover}
+            onMoveImage={moveImage}
+            onRemoveImage={removeImage}
+          />
+
+          {isExpanded ? (
+            <div className="space-y-4 px-6 pb-4">
+              <ComposerTypeChips
+                activePanel={activePanel}
+                selectedTypeLabel={selectedTypeLabel}
+                composerMode={composerMode}
+                hasImages={hasImages}
+                mediaAspectRatio={mediaAspectRatio}
+                onTogglePanel={togglePanel}
+              />
+
+              <AnimatePresence initial={false} mode="wait">
+                {activePanel === "media" ? (
+                  <motion.div
+                    key="composer-media-panel"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="space-y-3.5 rounded-[22px] border border-border/60 bg-background/90 p-4 shadow-soft"
+                  >
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">Editor Media</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(["carousel", "free"] as const).map((mode) => {
+                        const active = composerMode === mode;
+                        return (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setMode(mode)}
+                            className={cn(
+                              "rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
+                              active
+                                ? "bg-foreground text-background shadow-lg"
+                                : "border border-border/60 bg-background/80 text-foreground/60 hover:bg-background"
+                            )}
+                          >
+                            {mode === "carousel" ? "Carousel" : "Free Upload"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {availableRatioPresets.map((preset) => (
+                        <button
+                          key={preset.value}
+                          type="button"
+                          onClick={() => selectMediaAspectRatio(preset.value)}
+                          className={cn(
+                            "rounded-full px-3.5 py-2 text-[11px] font-black tracking-[0.12em] transition-all",
+                            mediaAspectRatio === preset.value
+                              ? "bg-slate-950 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
+                              : "border border-border/60 bg-background/85 text-foreground/65 hover:bg-background"
+                          )}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
                       type="button"
-                      onClick={() => reopenCropForImage(coverImage)}
-                      className={cn(
-                        "relative block w-full overflow-hidden rounded-[22px] bg-surface-muted ring-1 ring-border/60",
-                        aspectRatioClass(composerMode === "carousel" ? mediaAspectRatio : coverImage.aspectRatio)
-                      )}
+                      variant="outline"
+                      onClick={openImagePicker}
+                      className="h-11 rounded-full border-border/60 bg-white/70 px-5 text-[12px] font-black uppercase tracking-[0.15em] text-foreground/80 hover:bg-white"
                     >
-                      <img src={coverPreviewUrl} alt="Cover preview" className="h-full w-full object-cover" />
-                      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3">
-                        <span className="rounded-full bg-black/55 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                          Cover
-                        </span>
-                        <span className="rounded-full bg-black/55 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                          {images.length} Foto
-                        </span>
-                      </div>
-                    </button>
-                  ) : null}
-                </div>
-
-                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1.5 scrollbar-hide">
-                  {images.map((image, index) => {
-                    const url = previewUrls[image.id];
-                    if (!url) return null;
-                    const displayRatio = composerMode === "carousel" ? mediaAspectRatio : image.aspectRatio;
-                    const isCover = index === 0;
-                    return (
-                      <div
-                        key={image.id}
-                        className="group relative shrink-0 snap-start rounded-[20px] border border-border/60 bg-background/95 p-2 shadow-soft"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => reopenCropForImage(image)}
-                          className={cn("block w-28 overflow-hidden rounded-[18px] bg-surface-muted", aspectRatioClass(displayRatio))}
-                        >
-                          <img src={url} alt={`Preview ${index + 1}`} className="h-full w-full object-cover" />
-                        </button>
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/55">{index + 1}</span>
-                          {isCover ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700 ring-1 ring-amber-200">
-                              <Star className="h-3 w-3 fill-current" />
-                              Cover
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-2 grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => reopenCropForImage(image)}
-                            className="rounded-full border border-border/60 px-2 py-1.5 text-[10px] font-bold text-foreground/70 transition-colors hover:bg-surface-muted"
-                          >
-                            Posisi
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setImageAsCover(image.id)}
-                            disabled={isCover}
-                            className={cn(
-                              "rounded-full border px-2 py-1.5 text-[10px] font-bold transition-colors",
-                              isCover
-                                ? "border-amber-200 bg-amber-50 text-amber-700"
-                                : "border-border/60 text-foreground/70 hover:bg-surface-muted"
-                            )}
-                          >
-                            Set as cover
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveImage(image.id, "left")}
-                            disabled={index === 0}
-                            className="rounded-full border border-border/60 px-2 py-1.5 text-[10px] font-bold text-foreground/70 transition-colors hover:bg-surface-muted disabled:opacity-35"
-                          >
-                            Kiri
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveImage(image.id, "right")}
-                            disabled={index === images.length - 1}
-                            className="rounded-full border border-border/60 px-2 py-1.5 text-[10px] font-bold text-foreground/70 transition-colors hover:bg-surface-muted disabled:opacity-35"
-                          >
-                            Kanan
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md shadow-md hover:bg-black/80 transition-colors"
-                          onClick={() => removeImage(image.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {isExpanded ? (
-              <div className="space-y-4 px-6 pb-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => togglePanel("media")}
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
-                      activePanel === "media"
-                        ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
-                        : "border-border/60 bg-background/85 text-foreground/70 hover:bg-background"
-                    )}
-                  >
-                    <ImagePlus className="h-3.5 w-3.5" />
-                    Tambahkan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => togglePanel("category")}
-                    className={cn(
-                      "rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
-                      activePanel === "category"
-                        ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
-                        : "border-border/60 bg-background/85 text-foreground/70 hover:bg-background"
-                    )}
-                  >
-                    {selectedTypeLabel}
-                  </button>
-                  <span className="rounded-full border border-sky-200/70 bg-sky-50/80 px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-sky-700">
-                    {composerMode === "carousel" ? "Carousel" : "Free Upload"}
-                  </span>
-                  {hasImages ? (
-                    <span className="rounded-full border border-border/60 bg-background/90 px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-foreground/60">
-                      Rasio {mediaAspectRatio}
-                    </span>
-                  ) : null}
-                </div>
-
-                <AnimatePresence initial={false} mode="wait">
-                  {activePanel === "media" ? (
-                    <motion.div
-                      key="composer-media-panel"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="space-y-3.5 rounded-[22px] border border-border/60 bg-background/90 p-4 shadow-soft"
-                    >
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/45">Editor Media</p>
-                      <div className="flex flex-wrap gap-2">
-                        {(["carousel", "free"] as const).map((mode) => {
-                          const active = composerMode === mode;
-                          return (
-                            <button
-                              key={mode}
-                              type="button"
-                              onClick={() => setComposerMode(mode)}
-                              className={cn(
-                                "rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
-                                active
-                                  ? "bg-foreground text-background shadow-lg"
-                                  : "border border-border/60 bg-background/80 text-foreground/60 hover:bg-background"
-                              )}
-                            >
-                              {mode === "carousel" ? "Carousel" : "Free Upload"}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {availableRatioPresets.map((preset) => (
-                          <button
-                            key={preset.value}
-                            type="button"
-                            onClick={() => setMediaAspectRatio(preset.value)}
-                            className={cn(
-                              "rounded-full px-3.5 py-2 text-[11px] font-black tracking-[0.12em] transition-all",
-                              mediaAspectRatio === preset.value
-                                ? "bg-slate-950 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
-                                : "border border-border/60 bg-background/85 text-foreground/65 hover:bg-background"
-                            )}
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handlePickImages}
-                        className="h-11 rounded-full border-border/60 bg-white/70 px-5 text-[12px] font-black uppercase tracking-[0.15em] text-foreground/80 hover:bg-white"
-                      >
-                        <ImagePlus className="mr-2 h-4 w-4" />
-                        Upload Gambar (Maks 5)
-                      </Button>
-                    </motion.div>
-                  ) : null}
-
-                  {activePanel === "category" ? (
-                    <motion.div
-                      key="composer-type-panel"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="rounded-[22px] border border-border/60 bg-background/90 p-4 shadow-soft"
-                    >
-                      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/50">Kategori Konten</p>
-                      <div className="relative">
-                        <select
-                          value={type}
-                          onChange={(e) => setType(e.target.value as PostType)}
-                          className="h-11 w-full appearance-none rounded-full border border-border/60 bg-white/90 px-4 pr-10 text-[13px] font-semibold text-foreground/80 outline-none transition focus:ring-2 focus:ring-sky-200/50"
-                        >
-                          {types.map((t) => (
-                            <option key={t.value} value={t.value}>
-                              {t.label}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40">
-                          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    handleFilesSelected(e.target.files);
-                    e.currentTarget.value = "";
-                  }}
-                />
-
-                {submitError ? (
-                  <p className="rounded-xl border border-rose-200/80 bg-rose-50/80 px-3 py-2 text-[12px] font-semibold text-rose-700">
-                    {submitError}
-                  </p>
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      Upload Gambar (Maks 5)
+                    </Button>
+                  </motion.div>
                 ) : null}
 
-                <div className="sticky bottom-0 z-10 -mx-6 border-t border-border/50 bg-[linear-gradient(180deg,rgba(248,251,255,0.88),rgba(255,255,255,0.98))] px-6 pt-3 pb-[max(env(safe-area-inset-bottom),0.9rem)] backdrop-blur-xl">
-                  <div className="flex items-center gap-2 rounded-[18px] border border-border/60 bg-white/85 p-2 shadow-soft">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={resetComposer}
-                      className="h-11 rounded-full px-5 text-[13px] font-bold text-foreground/60 hover:bg-surface-muted"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={!canSubmit || isSubmitting}
-                      className="ml-auto h-11 rounded-full px-6 text-[13px] font-black uppercase tracking-[0.15em]"
-                    >
-                      {isSubmitting ? "Posting..." : "Posting"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
+                {activePanel === "category" ? (
+                  <motion.div
+                    key="composer-type-panel"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="rounded-[22px] border border-border/60 bg-background/90 p-4 shadow-soft"
+                  >
+                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-foreground/50">Kategori Konten</p>
+                    <div className="relative">
+                      <select
+                        value={type}
+                        onChange={(event) => setType(event.target.value as PostType)}
+                        className="h-11 w-full appearance-none rounded-full border border-border/60 bg-white/90 px-4 pr-10 text-[13px] font-semibold text-foreground/80 outline-none transition focus:ring-2 focus:ring-sky-200/50"
+                      >
+                        {types.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40">
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  void handleFilesSelected(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+              />
+
+              {submitError ? (
+                <p className="rounded-xl border border-rose-200/80 bg-rose-50/80 px-3 py-2 text-[12px] font-semibold text-rose-700">
+                  {submitError}
+                </p>
+              ) : null}
+
+              <ComposerActionBar canSubmit={canSubmit} isSubmitting={isSubmitting} onCancel={resetComposer} onSubmit={() => void handleSubmit()} />
+            </div>
+          ) : null}
+        </div>
+      </ComposerShell>
 
       <Dialog open={!!activeCropItem} onOpenChange={(open) => (!open ? closeCropDialog() : null)}>
         <DialogContent
@@ -831,21 +301,21 @@ export function PostComposer({
               <div className="space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-foreground/45">Rasio</p>
                 <div className="flex flex-wrap gap-2">
-                {availableRatioPresets.map((preset) => (
-                  <button
-                    key={preset.value}
-                    type="button"
-                    onClick={() => setMediaAspectRatio(preset.value)}
-                    className={cn(
-                      "rounded-full px-3.5 py-2 text-[11px] font-black tracking-[0.12em] transition-all",
-                      mediaAspectRatio === preset.value
-                        ? "bg-slate-950 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
-                        : "border border-border/60 bg-background/85 text-foreground/65 hover:bg-background"
-                    )}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
+                  {availableRatioPresets.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => selectMediaAspectRatio(preset.value)}
+                      className={cn(
+                        "rounded-full px-3.5 py-2 text-[11px] font-black tracking-[0.12em] transition-all",
+                        mediaAspectRatio === preset.value
+                          ? "bg-slate-950 text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.5)]"
+                          : "border border-border/60 bg-background/85 text-foreground/65 hover:bg-background"
+                      )}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -952,11 +422,11 @@ export function PostComposer({
               </div>
             </div>
           </div>
-          <DialogFooter className="border-t border-border/50 bg-background px-5 pt-4 pb-[max(env(safe-area-inset-bottom),1rem)] sm:px-6 sm:py-5">
+          <DialogFooter className="border-t border-border/50 bg-background px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-4 sm:px-6 sm:py-5">
             <Button type="button" variant="outline" onClick={closeCropDialog} disabled={cropBusy} className="rounded-full">
               Cancel
             </Button>
-            <Button type="button" onClick={applyCrop} disabled={cropBusy || !activeCropItem} className="rounded-full">
+            <Button type="button" onClick={() => void applyCrop()} disabled={cropBusy || !activeCropItem} className="rounded-full">
               {cropBusy ? "Memproses..." : "Gunakan"}
             </Button>
           </DialogFooter>
