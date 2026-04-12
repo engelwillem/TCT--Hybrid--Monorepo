@@ -55,6 +55,8 @@ const slugifyRef = (ref: string) =>
     .replace(/^-+|-+$/g, "");
 
 const CATEGORY_SWIPE_THRESHOLD_PX = 36;
+const POST_SUBMIT_CUE_DURATION_MS = 8000;
+const POST_SCROLL_TOP_OFFSET_PX = 116;
 
 function SmartPostComposer({
   onPost,
@@ -121,12 +123,15 @@ export function CommunityPage() {
   const [followBusyAuthorId, setFollowBusyAuthorId] = useState<string | null>(null);
   const [repostBusyPostId, setRepostBusyPostId] = useState<string | null>(null);
   const [timelineNowMs, setTimelineNowMs] = useState(() => Date.now());
+  const [lastPostedId, setLastPostedId] = useState<string | null>(null);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [authGateContent, setAuthGateContent] = useState<{ title: string; description: string }>({
     title: "Tulisanmu sudah siap.",
     description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
   });
   const archiveRailRef = useRef<HTMLDivElement | null>(null);
+  const discussionPostRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrolledToLastPostedRef = useRef<string | null>(null);
   const archiveRailTouchRef = useRef<{ startX: number; startY: number; hasStepped: boolean } | null>(null);
   const archiveRailDragRef = useRef<{ pointerId: number; startX: number; startY: number; hasStepped: boolean } | null>(null);
   const [archiveRailHovered, setArchiveRailHovered] = useState(false);
@@ -178,6 +183,10 @@ export function CommunityPage() {
   );
 
   const discussionPosts = timelineBuckets.discussionPosts;
+  const hasLastPostedInDiscussions = useMemo(
+    () => Boolean(lastPostedId && discussionPosts.some((post) => post.id === lastPostedId)),
+    [discussionPosts, lastPostedId]
+  );
 
   const filteredBookmarkPosts = useMemo(() => {
     if (activeBookmarkCategoryId === "all") return bookmarkPosts;
@@ -339,6 +348,42 @@ export function CommunityPage() {
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!lastPostedId) return;
+
+    const timer = window.setTimeout(() => {
+      setLastPostedId((prev) => (prev === lastPostedId ? null : prev));
+      if (scrolledToLastPostedRef.current === lastPostedId) {
+        scrolledToLastPostedRef.current = null;
+      }
+    }, POST_SUBMIT_CUE_DURATION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [lastPostedId]);
+
+  useEffect(() => {
+    if (!lastPostedId || activeTab !== "discussions" || !hasLastPostedInDiscussions) return;
+    if (scrolledToLastPostedRef.current === lastPostedId) return;
+
+    const element = discussionPostRefs.current[lastPostedId];
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const topBoundary = POST_SCROLL_TOP_OFFSET_PX;
+    const bottomBoundary = viewportHeight - 20;
+    const isVisible = rect.top >= topBoundary && rect.bottom <= bottomBoundary;
+
+    if (isVisible) {
+      scrolledToLastPostedRef.current = lastPostedId;
+      return;
+    }
+
+    const targetTop = Math.max(window.scrollY + rect.top - POST_SCROLL_TOP_OFFSET_PX, 0);
+    window.scrollTo({ top: targetTop, behavior: "smooth" });
+    scrolledToLastPostedRef.current = lastPostedId;
+  }, [activeTab, hasLastPostedInDiscussions, lastPostedId]);
 
   const activeArchiveCategoryIndex = useMemo(
     () => Math.max(
@@ -529,9 +574,17 @@ export function CommunityPage() {
         },
       };
 
+      setTimelineNowMs(nowMs);
+      setActiveTab("discussions");
+      setLastPostedId(normalizedNewPost.id);
+      scrolledToLastPostedRef.current = null;
       setPosts((prev) => {
-        const nextPosts = [normalizedNewPost, ...prev];
-        persistFeedCache(nextPosts, archivePosts);
+        const nextPosts = [normalizedNewPost, ...prev.filter((post) => post.id !== normalizedNewPost.id)];
+        setArchivePosts((prevArchive) => {
+          const nextArchive = prevArchive.filter((post) => post.id !== normalizedNewPost.id);
+          persistFeedCache(nextPosts, nextArchive);
+          return nextArchive;
+        });
         return nextPosts;
       });
       showToast("Berhasil membagikan!", "success");
@@ -1131,45 +1184,68 @@ export function CommunityPage() {
                 </div>
               ) : discussionPosts.length ? (
                 <div className="space-y-6">
+                  {hasLastPostedInDiscussions ? (
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-2xl border border-sky-100/80 bg-sky-50/40 px-4 py-3 text-[13px] font-medium leading-relaxed text-slate-700"
+                    >
+                      Apa yang kamu bagikan bisa menguatkan seseorang.
+                    </p>
+                  ) : null}
                   {discussionPosts.map((post) => (
-                    <MemberPostCard
+                    <div
                       key={post.id}
-                      authorId={post.author.id}
-                      authorName={post.author.name}
-                      authorAvatar={resolveAuthorAvatar(post)}
-                      isAuthenticated={isAuthenticated}
-                      isOfficial={post.author.isOfficial}
-                      isFollowingAuthor={Boolean(post.author.isFollowing)}
-                      isMutualFollow={Boolean(post.author.isMutualFollow)}
-                      canFollowAuthor={Boolean(currentUserId) && currentUserId !== post.author.id}
-                      type={post.type}
-                      text={post.text}
-                      metadata={post.metadata}
-                      imgSrc={post.imageUrl || undefined}
-                      mediaSrcList={post.mediaPaths || undefined}
-                      aspectRatio={post.metadata?.media_aspect_ratio}
-                      createdAt={post.createdAt}
-                      prayLabel={String(post.counts.likes || 0)}
-                      prayed={post.isLiked}
-                      commentsCount={post.counts.comments || 0}
-                      bookmarked={post.isBookmarked}
-                      bookmarkLabel={String(post.counts.bookmarks || 0)}
-                      onPray={() => toggleLike(post.id)}
-                      onBookmark={() => toggleBookmark(post.id)}
-                      onOpenComments={() => handleOpenComments(post.id)}
-                      onShare={() => handleShare(post.id, post.text)}
-                      onToggleFollowAuthor={() => handleToggleFollowAuthor(post.author.id)}
-                      onMessageAuthor={() => router.push(`/inbox/${post.author.id}`)}
-                      followBusy={followBusyAuthorId === post.author.id}
-                      canDelete={canDeletePost(post)}
-                      canEdit={canEditPost(post)}
-                      canEditPreview={canEditPost(post) && Boolean(post.mediaPaths?.length)}
-                      canEditBookmarkCategory={post.isBookmarked}
-                      onEditText={() => handleEditPostText(post.id, post.text)}
-                      onEditPreview={() => handleEditPostPreview(post)}
-                      onEditBookmarkCategory={() => void handleEditBookmarkCategory(post)}
-                      onDelete={() => handleDeletePost(post.id)}
-                    />
+                      ref={(node) => {
+                        discussionPostRefs.current[post.id] = node;
+                      }}
+                    >
+                      {lastPostedId === post.id ? (
+                        <div className="mb-3 flex items-center gap-3 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          <div className="h-px flex-1 bg-slate-200/80" />
+                          <span>Baru saja dibagikan</span>
+                          <div className="h-px flex-1 bg-slate-200/80" />
+                        </div>
+                      ) : null}
+                      <MemberPostCard
+                        authorId={post.author.id}
+                        authorName={post.author.name}
+                        authorAvatar={resolveAuthorAvatar(post)}
+                        isAuthenticated={isAuthenticated}
+                        isOfficial={post.author.isOfficial}
+                        isFollowingAuthor={Boolean(post.author.isFollowing)}
+                        isMutualFollow={Boolean(post.author.isMutualFollow)}
+                        canFollowAuthor={Boolean(currentUserId) && currentUserId !== post.author.id}
+                        type={post.type}
+                        text={post.text}
+                        metadata={post.metadata}
+                        imgSrc={post.imageUrl || undefined}
+                        mediaSrcList={post.mediaPaths || undefined}
+                        aspectRatio={post.metadata?.media_aspect_ratio}
+                        createdAt={post.createdAt}
+                        prayLabel={String(post.counts.likes || 0)}
+                        prayed={post.isLiked}
+                        commentsCount={post.counts.comments || 0}
+                        bookmarked={post.isBookmarked}
+                        bookmarkLabel={String(post.counts.bookmarks || 0)}
+                        onPray={() => toggleLike(post.id)}
+                        onBookmark={() => toggleBookmark(post.id)}
+                        onOpenComments={() => handleOpenComments(post.id)}
+                        onShare={() => handleShare(post.id, post.text)}
+                        onToggleFollowAuthor={() => handleToggleFollowAuthor(post.author.id)}
+                        onMessageAuthor={() => router.push(`/inbox/${post.author.id}`)}
+                        followBusy={followBusyAuthorId === post.author.id}
+                        canDelete={canDeletePost(post)}
+                        canEdit={canEditPost(post)}
+                        canEditPreview={canEditPost(post) && Boolean(post.mediaPaths?.length)}
+                        canEditBookmarkCategory={post.isBookmarked}
+                        onEditText={() => handleEditPostText(post.id, post.text)}
+                        onEditPreview={() => handleEditPostPreview(post)}
+                        onEditBookmarkCategory={() => void handleEditBookmarkCategory(post)}
+                        onDelete={() => handleDeletePost(post.id)}
+                        isNewlyPosted={lastPostedId === post.id}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (

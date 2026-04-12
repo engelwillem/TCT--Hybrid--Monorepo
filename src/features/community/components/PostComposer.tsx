@@ -2,9 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlignLeft,
   Check,
-  Crop,
   History,
   ImagePlus,
   Images,
@@ -68,6 +66,7 @@ export function PostComposer({
   initialExpanded = false,
 }: PostComposerProps) {
   void channels;
+  void currentUser;
 
   const canRestoreDraft = initialText.trim().length === 0;
   const draftSeed = useMemo(() => (canRestoreDraft ? readComposerDraftSeed() : null), [canRestoreDraft]);
@@ -165,7 +164,6 @@ export function PostComposer({
 
   const hasPendingCrop = Boolean(cropDomain.activeCropItem) || cropDomain.cropQueue.length > 0;
   const canSubmit = Boolean(textDomain.text.trim() || mediaDomain.hasImages);
-  const selectedTypeLabel = composerTypes.find((item) => item.value === type)?.label ?? "Kategori";
   const [dialogMediaDraft, setDialogMediaDraft] = useState<ComposerImage[] | null>(null);
   const [dialogCoverDirty, setDialogCoverDirty] = useState(false);
   const [dialogReorderDirty, setDialogReorderDirty] = useState(false);
@@ -348,16 +346,15 @@ export function PostComposer({
 
   const openImagePicker = () => fileInputRef.current?.click();
 
-  // Toolbar Component for Code Reusability (Desktop Vertical and Mobile Horizontal)
-  const renderActionTools = (isMobile: boolean) => (
-    <div className={cn("flex", isMobile ? "flex-row items-center gap-1.5" : "flex-col gap-2")}>
+  const renderActionTools = () => (
+    <div className="flex items-center gap-1.5">
       <button
         type="button"
         title="Pilih Gambar"
         aria-label="Pilih gambar"
         onClick={openImagePicker}
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all",
           mediaDomain.hasImages
             ? "bg-brand/10 text-brand"
             : "bg-surface-muted/50 text-foreground/50 hover:bg-surface-muted hover:text-foreground"
@@ -382,7 +379,7 @@ export function PostComposer({
             });
           }}
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all",
             "bg-surface-muted/50 text-foreground/60 hover:bg-surface-muted hover:text-foreground"
           )}
         >
@@ -394,9 +391,12 @@ export function PostComposer({
         type="button"
         title="Kategori Konten"
         aria-label="Pilih kategori konten"
-        onClick={() => lifecycleDomain.togglePanel("category")}
+        onClick={() => {
+          lifecycleDomain.openComposer();
+          lifecycleDomain.togglePanel("category");
+        }}
         className={cn(
-          "flex h-10 shrink-0 select-none items-center gap-1.5 rounded-full px-3 transition-all",
+          "flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full transition-all",
           lifecycleDomain.activePanel === "category"
             ? "bg-brand/10 text-brand"
             : type !== "user_post" 
@@ -404,32 +404,21 @@ export function PostComposer({
               : "bg-surface-muted/50 text-foreground/50 hover:bg-surface-muted hover:text-foreground"
         )}
       >
-        <div className="flex h-5 w-5 items-center justify-center">
-          <PenLine className="h-4 w-4" />
-        </div>
-        <span className="text-[11px] font-bold tracking-wide">
-          {selectedTypeLabel}
-        </span>
+        <PenLine className="h-4 w-4" />
       </button>
     </div>
   );
 
   return (
     <>
-      <div className={cn("relative mx-auto flex w-full max-w-[660px] flex-col md:flex-row items-start transition-all md:pr-16", className)}>
+      <div className={cn("relative mx-auto flex w-full max-w-[660px] flex-col items-start transition-all", className)}>
         <ComposerShell isExpanded={lifecycleDomain.isExpanded} className="w-full flex-1">
           <div className="flex flex-col">
-            <div className="flex items-center gap-3 px-6 pb-2 pt-6">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted ring-1 ring-border/40 shadow-sm">
-                {currentUser?.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt={currentUser.name} className="h-full w-full rounded-full object-cover" />
-                ) : (
-                  <span className="text-[12px] font-black uppercase text-brand">{(currentUser?.name || "U")[0]}</span>
-                )}
-              </div>
+            <div className="flex items-start justify-between gap-3 px-6 pb-2 pt-6">
               <h2 className="tct-serif text-[18px] leading-tight tracking-tight text-foreground/80">
                 Ruang Berbagi
               </h2>
+              {lifecycleDomain.isExpanded ? renderActionTools() : null}
             </div>
 
             <ComposerInput
@@ -560,7 +549,7 @@ export function PostComposer({
                   canSubmit={canSubmit}
                   isSubmitting={submitDomain.isSubmitting}
                   statusSlot={draftStatusSlot}
-                  actionSlot={<div className="md:hidden flex">{renderActionTools(true)}</div>}
+                  actionSlot={null}
                   onCancel={() => {
                     analytics.trackComposerCancel({
                       postType: type,
@@ -577,13 +566,6 @@ export function PostComposer({
             ) : null}
           </div>
         </ComposerShell>
-
-        {/* Desktop Vertical Icon Dock (Hidden on Mobile) */}
-        {lifecycleDomain.isExpanded && (
-          <div className="hidden md:flex absolute right-0 top-6 flex-col items-center gap-2 rounded-full border border-border/50 bg-white/90 p-1.5 shadow-[0_12px_24px_-10px_rgba(15,23,42,0.12)] backdrop-blur-xl animate-in slide-in-from-right-4 fade-in">
-             {renderActionTools(false)}
-          </div>
-        )}
       </div>
 
       <Dialog open={!!cropDomain.activeCropItem} onOpenChange={(open) => (!open ? closeCropDialogWithoutSave() : null)}>

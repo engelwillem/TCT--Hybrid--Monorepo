@@ -15,6 +15,7 @@ import { isPrivateRenunganArchive as detectPrivateRenunganArchive } from "@/feat
 type MemberPostCardProps = {
   className?: string;
   compact?: boolean;
+  isNewlyPosted?: boolean;
   authorId?: string | null;
   authorName?: string | null;
   authorAvatar?: string | null;
@@ -69,6 +70,7 @@ type MemberPostCardProps = {
 export function MemberPostCard({
   className,
   compact = false,
+  isNewlyPosted = false,
   authorId,
   authorName,
   authorAvatar,
@@ -238,6 +240,7 @@ export function MemberPostCard({
     <Card
       className={cn(
         "rounded-[32px] md:rounded-[40px] border-0 glass-card overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4 tct-card-pad",
+        isNewlyPosted ? "bg-sky-50/35 ring-1 ring-sky-200/60" : "",
         className
       )}
     >
