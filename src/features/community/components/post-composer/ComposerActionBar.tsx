@@ -5,9 +5,10 @@ type ComposerActionBarProps = {
   isSubmitting: boolean;
   onCancel: () => void;
   onSubmit: () => void;
+  statusSlot?: React.ReactNode;
 };
 
-export function ComposerActionBar({ canSubmit, isSubmitting, onCancel, onSubmit }: ComposerActionBarProps) {
+export function ComposerActionBar({ canSubmit, isSubmitting, onCancel, onSubmit, statusSlot }: ComposerActionBarProps) {
   return (
     <div className="sticky bottom-0 z-10 -mx-6 border-t border-border/50 bg-[linear-gradient(180deg,rgba(248,251,255,0.88),rgba(255,255,255,0.98))] px-6 pt-3 pb-[max(env(safe-area-inset-bottom),0.9rem)] backdrop-blur-xl">
       <div className="flex items-center gap-2 rounded-[18px] border border-border/60 bg-white/85 p-2 shadow-soft">
@@ -19,6 +20,7 @@ export function ComposerActionBar({ canSubmit, isSubmitting, onCancel, onSubmit 
         >
           Cancel
         </Button>
+        <div className="flex-1 px-2">{statusSlot}</div>
         <Button
           type="button"
           onClick={onSubmit}
@@ -31,3 +33,4 @@ export function ComposerActionBar({ canSubmit, isSubmitting, onCancel, onSubmit 
     </div>
   );
 }
+

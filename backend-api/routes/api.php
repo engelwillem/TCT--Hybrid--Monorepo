@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CommunityApiController;
+use App\Http\Controllers\Api\V1\CommunityComposerAnalyticsController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
 use App\Http\Controllers\Api\V1\RenunganPersonalizationController;
@@ -91,6 +92,7 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/auth/logout', [FirebaseAuthSyncController::class, 'logout']);
         Route::post('/today/state', [TodayApiController::class, 'updateState']);
+        Route::get('/analytics/community/composer', [CommunityComposerAnalyticsController::class, 'index']);
 
         Route::post('/community/posts', [CommunityApiController::class, 'store']);
         Route::post('/renungan/share', [RenunganShareController::class, 'store']);
