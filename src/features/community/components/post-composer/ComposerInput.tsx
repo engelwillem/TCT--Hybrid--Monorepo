@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
+
 type ComposerInputProps = {
   value: string;
   isExpanded: boolean;
@@ -17,22 +20,36 @@ export function ComposerInput({
   onFocus,
   onChange,
 }: ComposerInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.max(textarea.scrollHeight, isExpanded ? 160 : 80)}px`;
+    }
+  }, [value, isExpanded]);
+
   return (
-    <div className="px-6 pb-5">
-      <div className="rounded-[24px] border border-white/80 bg-white/80 px-4 py-3.5 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.36)]">
-        <textarea
-          className="min-h-[124px] w-full resize-none border-none bg-transparent px-0 py-1 text-[16px] font-medium leading-8 tracking-[0.01em] text-foreground placeholder:text-foreground/30 outline-none focus:ring-0"
-          placeholder={placeholder}
-          value={value}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.value)}
-          onFocus={onFocus}
-          rows={isExpanded ? 6 : 4}
-        />
-        {helperText ? (
-          <p className="mt-2 text-[12px] font-medium leading-relaxed text-foreground/45">{helperText}</p>
-        ) : null}
-      </div>
+    <div className="relative px-6">
+      <textarea
+        ref={textareaRef}
+        className={cn(
+          "w-full resize-none bg-transparent py-4 text-[17px] font-medium leading-[1.65] tracking-[-0.01em] text-foreground outline-none transition-all placeholder:text-foreground/35",
+          !isExpanded ? "min-h-[80px]" : "min-h-[160px]"
+        )}
+        placeholder={placeholder}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        onFocus={onFocus}
+      />
+      {helperText ? (
+        <p className="pointer-events-none absolute bottom-1 right-6 text-[11px] font-bold tracking-wide text-foreground/25">
+          {helperText}
+        </p>
+      ) : null}
     </div>
   );
 }

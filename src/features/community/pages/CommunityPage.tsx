@@ -34,14 +34,14 @@ import { PostComposer } from "../components/PostComposer";
 import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityArchiveGalleryCard } from "../components/CommunityArchiveGalleryCard";
-import type { BookmarkCategory, CommunityPost } from "../types";
+import type { BookmarkCategory, CommunityPost, CommunityUser } from "../types";
 import {
   buildCommunityFeedCacheKey,
   readCommunityFeedCache,
   resolveCommunityFeedCacheScope,
   writeCommunityFeedCache,
 } from "../utils/community-feed-cache";
-import { partitionCommunityPostsByAge, sortByNewest } from "../utils/community-lifecycle";
+import { DISCUSSION_WINDOW_MS, partitionCommunityPostsByAge, sortByNewest } from "../utils/community-lifecycle";
 import { isPrivateRenunganArchive } from "../utils/private-renungan-archive";
 
 type ArchiveCategory = CommunityArchiveCategory;
@@ -58,6 +58,7 @@ const CATEGORY_SWIPE_THRESHOLD_PX = 36;
 
 function SmartPostComposer({
   onPost,
+  currentUser,
 }: {
   onPost: (
     text: string,
@@ -65,6 +66,7 @@ function SmartPostComposer({
     images?: File[],
     metadata?: { media_aspect_ratio?: string }
   ) => Promise<boolean>;
+  currentUser?: CommunityUser;
 }) {
   const searchParams = useSearchParams();
   const intent = searchParams?.get("intent");
@@ -76,6 +78,7 @@ function SmartPostComposer({
   return (
     <PostComposer
       onPost={onPost}
+      currentUser={currentUser}
       initialType={isReflection ? "reflection" : "user_post"}
       initialText={text}
       initialExpanded={initialExpanded}
@@ -85,7 +88,7 @@ function SmartPostComposer({
 
 export function CommunityPage() {
   const router = useRouter();
-  const { isAuthenticated, isRestoring, profileEmail, profileId } = useAuthSession();
+  const { isAuthenticated, isRestoring, profileEmail, profileId, profileName, avatarUrl } = useAuthSession();
   const currentUserId = useMemo(() => String(profileId || "").trim(), [profileId]);
   const communityCacheScope = useMemo(
     () =>
@@ -131,6 +134,17 @@ export function CommunityPage() {
   const deferredArchiveSearchQuery = useDeferredValue(archiveSearchQuery);
   const narrowColumnClassName = "mx-auto w-full max-w-3xl";
   const pageShellClassName = "mx-auto w-full max-w-7xl px-3 pb-28 md:px-6 lg:px-8";
+  const composerCurrentUser = useMemo<CommunityUser | undefined>(() => {
+    const id = String(profileId || "").trim();
+    if (!id) return undefined;
+
+    const name = String(profileName || profileEmail || "Member").trim() || "Member";
+    return {
+      id,
+      name,
+      avatarUrl: avatarUrl || undefined,
+    };
+  }, [avatarUrl, profileEmail, profileId, profileName]);
 
   const resolveAuthorAvatar = (post: CommunityPost): string | null => {
     const author = post.author as CommunityPost["author"] & {
@@ -149,7 +163,8 @@ export function CommunityPage() {
 
   const publicTimelinePosts = useMemo(() => {
     const mergedById = new Map<string, CommunityPost>();
-    [...posts, ...archivePosts].forEach((post) => {
+    // Prefer active feed payload when the same post exists in both buckets.
+    [...archivePosts, ...posts].forEach((post) => {
       if (!post?.id) return;
       mergedById.set(post.id, post);
     });
@@ -495,8 +510,27 @@ export function CommunityPage() {
 
     try {
       const newPost = await CommunityService.createPost(text, type, images, metadata);
+      const nowMs = Date.now();
+      const parsedCreatedAtMs = Date.parse(String(newPost.createdAt || "").trim());
+      const createdAtMs = Number.isFinite(parsedCreatedAtMs) && parsedCreatedAtMs > 0 ? parsedCreatedAtMs : nowMs;
+      const parsedExpiresAtMs = Date.parse(String(newPost.expiresAt || "").trim());
+      const expiresAtMs =
+        Number.isFinite(parsedExpiresAtMs) && parsedExpiresAtMs > nowMs
+          ? parsedExpiresAtMs
+          : createdAtMs + DISCUSSION_WINDOW_MS;
+
+      const normalizedNewPost: CommunityPost = {
+        ...newPost,
+        createdAt: new Date(createdAtMs).toISOString(),
+        expiresAt: new Date(expiresAtMs).toISOString(),
+        metadata: {
+          ...(newPost.metadata || {}),
+          last_activated_at: new Date(createdAtMs).toISOString(),
+        },
+      };
+
       setPosts((prev) => {
-        const nextPosts = [newPost, ...prev];
+        const nextPosts = [normalizedNewPost, ...prev];
         persistFeedCache(nextPosts, archivePosts);
         return nextPosts;
       });
@@ -1053,8 +1087,8 @@ export function CommunityPage() {
           <div className={cn(narrowColumnClassName, "sticky top-0 z-40 py-2")}>
             <TabsList className="relative flex h-[56px] w-full items-center justify-between overflow-hidden rounded-[24px] bg-background/60 p-1 text-foreground shadow-sm ring-1 ring-border/50 backdrop-blur-2xl">
               {[
-                { id: "discussions", label: "Diskusi" },
-                { id: "archive", label: "Arsip" },
+                { id: "discussions", label: "Talks" },
+                { id: "archive", label: "History" },
                 { id: "bookmarks", label: "Bookmarks" },
               ].map((tab) => (
                 <TabsTrigger
@@ -1075,7 +1109,7 @@ export function CommunityPage() {
           <TabsContent value="discussions" className="mt-0 space-y-6 outline-none">
             <div className={cn(narrowColumnClassName, "space-y-8")}>
               <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-[32px] bg-surface-muted" />}>
-                <SmartPostComposer onPost={handlePost} />
+                <SmartPostComposer onPost={handlePost} currentUser={composerCurrentUser} />
               </Suspense>
 
               {isLoading ? (

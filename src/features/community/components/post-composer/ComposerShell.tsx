@@ -12,12 +12,12 @@ export function ComposerShell({ isExpanded, className, children }: ComposerShell
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[30px] border border-border/60 bg-surface/90 shadow-premium backdrop-blur-2xl transition-all duration-500",
-        isExpanded ? "ring-2 ring-sky-200/45" : "",
+        "relative flex min-h-[140px] flex-col overflow-hidden rounded-[36px] border-0 bg-white shadow-[0_24px_68px_-20px_rgba(15,23,42,0.18)] transition-all duration-500 md:rounded-[42px]",
+        isExpanded ? "ring-1 ring-border/50" : "",
         className
       )}
     >
-      <CardContent className="p-0">{children}</CardContent>
+      <CardContent className="flex flex-1 flex-col p-0">{children}</CardContent>
     </Card>
   );
 }

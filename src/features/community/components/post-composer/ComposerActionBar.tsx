@@ -10,27 +10,27 @@ type ComposerActionBarProps = {
 
 export function ComposerActionBar({ canSubmit, isSubmitting, onCancel, onSubmit, statusSlot }: ComposerActionBarProps) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-6 border-t border-border/50 bg-[linear-gradient(180deg,rgba(248,251,255,0.88),rgba(255,255,255,0.98))] px-6 pt-3 pb-[max(env(safe-area-inset-bottom),0.9rem)] backdrop-blur-xl">
-      <div className="flex items-center gap-2 rounded-[18px] border border-border/60 bg-white/85 p-2 shadow-soft">
+    <div className="sticky bottom-0 z-30 mt-auto border-t border-border/40 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),#ffffff)] px-6 py-4 pb-[max(env(safe-area-inset-bottom),1rem)] backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3">
         <Button
           type="button"
           variant="ghost"
           onClick={onCancel}
-          className="h-11 rounded-full px-5 text-[13px] font-bold text-foreground/60 hover:bg-surface-muted"
+          className="h-10 min-w-10 rounded-full px-4 text-[12px] font-bold text-foreground/50 hover:bg-surface-muted hover:text-foreground/80 md:px-5"
         >
-          Cancel
+          Batal
         </Button>
-        <div className="flex-1 px-2">{statusSlot}</div>
+        <div className="flex-1 overflow-hidden" />
         <Button
           type="button"
           onClick={onSubmit}
           disabled={!canSubmit || isSubmitting}
-          className="ml-auto h-11 rounded-full px-6 text-[13px] font-black uppercase tracking-[0.15em]"
+          className="h-10 shrink-0 rounded-full bg-brand px-6 text-[12px] font-black uppercase tracking-[0.16em] text-white shadow-[0_12px_24px_-10px_var(--color-brand)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_30px_-10px_var(--color-brand)] hover:brightness-110 disabled:pointer-events-none disabled:bg-surface-muted disabled:text-foreground/30 disabled:shadow-none"
         >
-          {isSubmitting ? "Posting..." : "Posting"}
+          {isSubmitting ? "Posting..." : "Bagikan"}
         </Button>
       </div>
+      {statusSlot ? <div className="mt-2 px-1">{statusSlot}</div> : null}
     </div>
   );
 }
-
