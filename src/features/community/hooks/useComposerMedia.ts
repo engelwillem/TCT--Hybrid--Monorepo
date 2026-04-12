@@ -12,6 +12,7 @@ type UpdateMediaCommand =
   | { kind: "remove"; id: string }
   | { kind: "setCover"; id: string }
   | { kind: "move"; id: string; direction: "left" | "right" }
+  | { kind: "replaceAll"; images: ComposerImage[] }
   | { kind: "upsert"; image: ComposerImage; existingId?: string };
 
 type UseComposerMediaParams = {
@@ -69,6 +70,10 @@ export function useComposerMedia({
         const fromIndex = prev.findIndex((image) => image.id === command.id);
         const toIndex = command.direction === "left" ? fromIndex - 1 : fromIndex + 1;
         return moveItemToIndex(prev, fromIndex, toIndex);
+      }
+
+      if (command.kind === "replaceAll") {
+        return command.images.slice(0, maxImages);
       }
 
       if (command.existingId) {

@@ -10,6 +10,8 @@ import {
   Images,
   LayoutTemplate,
   RefreshCcw,
+  PenLine,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -32,7 +34,9 @@ import { ComposerShell } from "./post-composer/ComposerShell";
 import {
   clampCropTransform,
   MAX_COMPOSER_IMAGES,
+  moveItemToIndex,
   POST_COMPOSER_TYPES,
+  type ComposerImage,
   type CropTransform,
   type PostComposerMetadata,
   type PostType,
@@ -161,6 +165,10 @@ export function PostComposer({
 
   const hasPendingCrop = Boolean(cropDomain.activeCropItem) || cropDomain.cropQueue.length > 0;
   const canSubmit = Boolean(textDomain.text.trim() || mediaDomain.hasImages);
+  const selectedTypeLabel = composerTypes.find((item) => item.value === type)?.label ?? "Kategori";
+  const [dialogMediaDraft, setDialogMediaDraft] = useState<ComposerImage[] | null>(null);
+  const [dialogCoverDirty, setDialogCoverDirty] = useState(false);
+  const [dialogReorderDirty, setDialogReorderDirty] = useState(false);
 
   const resetComposer = ({ clearDraft = true }: { clearDraft?: boolean } = {}) => {
     lifecycleDomain.resetLifecycle();
@@ -191,6 +199,16 @@ export function PostComposer({
       images: mediaDomain.images.map((image) => image.file),
       metadata: {
         media_aspect_ratio: mediaDomain.hasImages ? mediaDomain.mediaAspectRatio : undefined,
+        composer_mode: mediaDomain.hasImages ? mediaDomain.composerMode : undefined,
+        cover_index: mediaDomain.hasImages ? 0 : undefined,
+        media_order: mediaDomain.images.map((image) => image.id),
+        crop_transforms: mediaDomain.images.map((image) => ({
+          id: image.id,
+          x: image.transform.x,
+          y: image.transform.y,
+          scale: image.transform.scale,
+          aspect_ratio: image.aspectRatio,
+        })),
       },
       hasPendingCrop,
     });
@@ -242,6 +260,63 @@ export function PostComposer({
   const cropDragRef = useRef<{ pointerId: number; startX: number; startY: number; origin: CropTransform } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (!cropDomain.activeCropItem?.existingId) {
+      setDialogMediaDraft(null);
+      setDialogCoverDirty(false);
+      setDialogReorderDirty(false);
+      return;
+    }
+    setDialogMediaDraft(mediaDomain.images);
+    setDialogCoverDirty(false);
+    setDialogReorderDirty(false);
+  }, [cropDomain.activeCropItem?.existingId, mediaDomain.images]);
+
+  const updateDialogDraftOrder = (updater: (prev: ComposerImage[]) => ComposerImage[]) => {
+    setDialogMediaDraft((prev) => {
+      const base = prev ?? mediaDomain.images;
+      return updater(base);
+    });
+  };
+
+  const commitDialogDraft = () => {
+    if (!dialogMediaDraft || !cropDomain.activeCropItem?.existingId) return;
+    mediaDomain.updateMedia({ kind: "replaceAll", images: dialogMediaDraft });
+  };
+
+  const closeCropDialogWithoutSave = () => {
+    cropDomain.closeCropDialog();
+    setDialogMediaDraft(null);
+    setDialogCoverDirty(false);
+    setDialogReorderDirty(false);
+  };
+
+  const handleCropSave = async () => {
+    if (dialogMediaDraft && cropDomain.activeCropItem?.existingId) {
+      commitDialogDraft();
+      if (dialogCoverDirty) {
+        analytics.trackCoverSet({
+          postType: type,
+          source: "dialog",
+          mediaCount: dialogMediaDraft.length,
+        });
+      }
+      if (dialogReorderDirty) {
+        const toIndex = dialogMediaDraft.findIndex((item) => item.id === cropDomain.activeCropItem?.existingId);
+        analytics.trackMediaReordered({
+          postType: type,
+          source: "dialog",
+          mediaCount: dialogMediaDraft.length,
+          toIndex,
+        });
+      }
+    }
+    await cropDomain.applyCrop();
+    setDialogMediaDraft(null);
+    setDialogCoverDirty(false);
+    setDialogReorderDirty(false);
+  };
+
   const handleCropPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!cropDomain.activeCropItem || cropDomain.cropBusy) return;
     cropDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, origin: cropDomain.cropTransform };
@@ -279,6 +354,7 @@ export function PostComposer({
       <button
         type="button"
         title="Pilih Gambar"
+        aria-label="Pilih gambar"
         onClick={openImagePicker}
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
@@ -294,7 +370,17 @@ export function PostComposer({
         <button
           type="button"
           title="Ubah Mode Tampilan Gambar"
-          onClick={() => mediaDomain.setComposerMode(mediaDomain.composerMode === "carousel" ? "free" : "carousel")}
+          aria-label="Ubah mode tampilan gambar"
+          onClick={() => {
+            const nextMode = mediaDomain.composerMode === "carousel" ? "free" : "carousel";
+            mediaDomain.setComposerMode(nextMode);
+            analytics.trackModeSelected({
+              postType: type,
+              composerMode: nextMode,
+              hasMedia: mediaDomain.hasImages,
+              mediaCount: mediaDomain.images.length,
+            });
+          }}
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
             "bg-surface-muted/50 text-foreground/60 hover:bg-surface-muted hover:text-foreground"
@@ -307,9 +393,10 @@ export function PostComposer({
       <button
         type="button"
         title="Kategori Konten"
+        aria-label="Pilih kategori konten"
         onClick={() => lifecycleDomain.togglePanel("category")}
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all",
+          "flex h-10 shrink-0 select-none items-center gap-1.5 rounded-full px-3 transition-all",
           lifecycleDomain.activePanel === "category"
             ? "bg-brand/10 text-brand"
             : type !== "user_post" 
@@ -317,7 +404,12 @@ export function PostComposer({
               : "bg-surface-muted/50 text-foreground/50 hover:bg-surface-muted hover:text-foreground"
         )}
       >
-        <AlignLeft className="h-4 w-4" />
+        <div className="flex h-5 w-5 items-center justify-center">
+          <PenLine className="h-4 w-4" />
+        </div>
+        <span className="text-[11px] font-bold tracking-wide">
+          {selectedTypeLabel}
+        </span>
       </button>
     </div>
   );
@@ -355,9 +447,32 @@ export function PostComposer({
               composerMode={mediaDomain.composerMode}
               mediaAspectRatio={mediaDomain.mediaAspectRatio}
               onReopenCrop={cropDomain.reopenCropForImage}
-              onSetCover={(id) => mediaDomain.updateMedia({ kind: "setCover", id })}
-              onMoveImage={(id, direction) => mediaDomain.updateMedia({ kind: "move", id, direction })}
-              onRemoveImage={(id) => mediaDomain.updateMedia({ kind: "remove", id })}
+              onSetCover={(id) => {
+                mediaDomain.updateMedia({ kind: "setCover", id });
+                analytics.trackCoverSet({
+                  postType: type,
+                  source: "strip",
+                  mediaCount: mediaDomain.images.length,
+                });
+              }}
+              onMoveImage={(id, direction) => {
+                const fromIndex = mediaDomain.images.findIndex((image) => image.id === id);
+                const toIndex = direction === "left" ? fromIndex - 1 : fromIndex + 1;
+                mediaDomain.updateMedia({ kind: "move", id, direction });
+                analytics.trackMediaReordered({
+                  postType: type,
+                  source: "strip",
+                  mediaCount: mediaDomain.images.length,
+                  fromIndex,
+                  toIndex,
+                });
+              }}
+              onRemoveImage={(id) => {
+                mediaDomain.updateMedia({ kind: "remove", id });
+                if (cropDomain.activeCropItem?.existingId === id) {
+                  closeCropDialogWithoutSave();
+                }
+              }}
               onAddImageContextual={openImagePicker}
             />
 
@@ -389,9 +504,17 @@ export function PostComposer({
                         <select
                           value={type}
                           onChange={(event) => {
-                            setType(event.target.value as PostType);
+                            const nextType = event.target.value as PostType;
+                            setType(nextType);
                             submitDomain.clearSubmitError();
                             lifecycleDomain.togglePanel("category");
+                            analytics.trackModeSelected({
+                              postType: nextType,
+                              source: "post_type_dropdown",
+                              hasMedia: mediaDomain.hasImages,
+                              mediaCount: mediaDomain.images.length,
+                              composerMode: mediaDomain.composerMode,
+                            });
                           }}
                           className="h-10 w-full appearance-none rounded-full border border-border/60 bg-white px-4 pr-10 text-[13px] font-semibold text-foreground/80 outline-none focus:ring-2 focus:ring-brand/30"
                         >
@@ -433,16 +556,21 @@ export function PostComposer({
                   </div>
                 ) : null}
 
-                {/* Mobile Floating Action Toolbar (Hidden on Desktop) */}
-                <div className="md:hidden flex items-center justify-between px-6 pb-2">
-                   {renderActionTools(true)}
-                </div>
-
                 <ComposerActionBar
                   canSubmit={canSubmit}
                   isSubmitting={submitDomain.isSubmitting}
                   statusSlot={draftStatusSlot}
-                  onCancel={() => resetComposer({ clearDraft: true })}
+                  actionSlot={<div className="md:hidden flex">{renderActionTools(true)}</div>}
+                  onCancel={() => {
+                    analytics.trackComposerCancel({
+                      postType: type,
+                      hasMedia: mediaDomain.hasImages,
+                      mediaCount: mediaDomain.images.length,
+                      textLength: textDomain.text.trim().length,
+                      reason: "action_bar_cancel",
+                    });
+                    resetComposer({ clearDraft: true });
+                  }}
                   onSubmit={() => void handleSubmit()}
                 />
               </div>
@@ -458,7 +586,7 @@ export function PostComposer({
         )}
       </div>
 
-      <Dialog open={!!cropDomain.activeCropItem} onOpenChange={(open) => (!open ? cropDomain.closeCropDialog() : null)}>
+      <Dialog open={!!cropDomain.activeCropItem} onOpenChange={(open) => (!open ? closeCropDialogWithoutSave() : null)}>
         <DialogContent
           className="grid max-h-[calc(100dvh-0.5rem)] w-[calc(100vw-0.5rem)] max-w-[820px] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[1.4rem] border-border/60 bg-background p-0 sm:max-h-[calc(100dvh-1.5rem)] sm:w-full sm:rounded-[40px]"
           onPointerDownOutside={(event) => event.preventDefault()}
@@ -504,6 +632,74 @@ export function PostComposer({
                     />
                   ) : null}
                 </div>
+                
+                {/* Reorder and Cover Controls (Only shown for existing images, not new unsaved ones) */}
+                {cropDomain.activeCropItem?.existingId && (dialogMediaDraft ?? mediaDomain.images).length > 0 && (
+                  <div className="flex items-center justify-between px-2">
+                    <button
+                      type="button"
+                      aria-label="Jadikan gambar sebagai cover"
+                      onClick={() => {
+                        const existingId = cropDomain.activeCropItem?.existingId;
+                        if (!existingId) return;
+                        updateDialogDraftOrder((prev) => {
+                          const fromIndex = prev.findIndex((item) => item.id === existingId);
+                          return moveItemToIndex(prev, fromIndex, 0);
+                        });
+                        setDialogCoverDirty(true);
+                      }}
+                      className={cn(
+                        "flex shrink-0 select-none items-center gap-1.5 rounded-full px-3 py-1.5 transition-all",
+                        (dialogMediaDraft ?? mediaDomain.images)[0]?.id === cropDomain.activeCropItem.existingId
+                          ? "bg-amber-50 text-amber-600 ring-1 ring-amber-200"
+                          : "bg-surface-muted/50 text-foreground/50 hover:bg-surface-muted hover:text-foreground"
+                      )}
+                    >
+                      <Star className="h-3 w-3" />
+                      <span className="text-[10px] font-bold">Jadikan Cover</span>
+                    </button>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        aria-label="Geser gambar ke kiri"
+                        onClick={() => {
+                          const existingId = cropDomain.activeCropItem?.existingId;
+                          if (!existingId) return;
+                          updateDialogDraftOrder((prev) => {
+                            const fromIndex = prev.findIndex((item) => item.id === existingId);
+                            return moveItemToIndex(prev, fromIndex, fromIndex - 1);
+                          });
+                          setDialogReorderDirty(true);
+                        }}
+                        disabled={(dialogMediaDraft ?? mediaDomain.images).findIndex(img => img.id === cropDomain.activeCropItem!.existingId) <= 0}
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-muted/80 text-foreground hover:bg-surface-muted disabled:opacity-30"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Geser gambar ke kanan"
+                        onClick={() => {
+                          const existingId = cropDomain.activeCropItem?.existingId;
+                          if (!existingId) return;
+                          updateDialogDraftOrder((prev) => {
+                            const fromIndex = prev.findIndex((item) => item.id === existingId);
+                            return moveItemToIndex(prev, fromIndex, fromIndex + 1);
+                          });
+                          setDialogReorderDirty(true);
+                        }}
+                        disabled={
+                          (dialogMediaDraft ?? mediaDomain.images).findIndex(img => img.id === cropDomain.activeCropItem!.existingId) === -1 ||
+                          (dialogMediaDraft ?? mediaDomain.images).findIndex(img => img.id === cropDomain.activeCropItem!.existingId) === (dialogMediaDraft ?? mediaDomain.images).length - 1
+                        }
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-muted/80 text-foreground hover:bg-surface-muted disabled:opacity-30"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
@@ -553,11 +749,11 @@ export function PostComposer({
             </div>
           </div>
           <DialogFooter className="border-t border-border/20 px-5 pb-5 pt-4 sm:px-6">
-            <Button variant="ghost" onClick={cropDomain.closeCropDialog} disabled={cropDomain.cropBusy} className="h-10 rounded-full text-[12px] font-bold">
+            <Button variant="ghost" onClick={closeCropDialogWithoutSave} disabled={cropDomain.cropBusy} className="h-10 rounded-full text-[12px] font-bold">
               Batal
             </Button>
             <Button
-              onClick={() => void cropDomain.applyCrop()}
+              onClick={() => void handleCropSave()}
               disabled={cropDomain.cropBusy || !cropDomain.activeCropItem}
               className="h-10 rounded-full px-8 text-[12px] font-black tracking-wider shadow-sm"
             >

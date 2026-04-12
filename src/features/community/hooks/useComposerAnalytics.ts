@@ -6,6 +6,10 @@ export type ComposerAnalyticsEventName =
   | "composer_typing_start"
   | "composer_attach_media"
   | "composer_crop_applied"
+  | "composer_mode_selected"
+  | "composer_media_reordered"
+  | "composer_cover_set"
+  | "composer_cancel"
   | "composer_submit_success"
   | "composer_submit_failure"
   | "composer_draft_restored";
@@ -15,7 +19,11 @@ export type ComposerAnalyticsPayload = {
   hasMedia?: boolean;
   mediaCount?: number;
   mediaAspectRatio?: string;
+  composerMode?: string;
   textLength?: number;
+  source?: string;
+  fromIndex?: number;
+  toIndex?: number;
   reason?: string;
   restoredDraftAgeMinutes?: number;
   experiments?: Record<string, string>;
@@ -96,6 +104,34 @@ export function useComposerAnalytics({ tracker = defaultTracker, experiments }: 
     [track]
   );
 
+  const trackModeSelected = useCallback(
+    (payload: ComposerAnalyticsPayload) => {
+      track("composer_mode_selected", payload);
+    },
+    [track]
+  );
+
+  const trackMediaReordered = useCallback(
+    (payload: ComposerAnalyticsPayload) => {
+      track("composer_media_reordered", payload);
+    },
+    [track]
+  );
+
+  const trackCoverSet = useCallback(
+    (payload: ComposerAnalyticsPayload) => {
+      track("composer_cover_set", payload);
+    },
+    [track]
+  );
+
+  const trackComposerCancel = useCallback(
+    (payload: ComposerAnalyticsPayload) => {
+      track("composer_cancel", payload);
+    },
+    [track]
+  );
+
   const trackSubmitSuccess = useCallback(
     (payload: ComposerAnalyticsPayload) => {
       track("composer_submit_success", payload);
@@ -121,6 +157,10 @@ export function useComposerAnalytics({ tracker = defaultTracker, experiments }: 
     trackTypingStart,
     trackAttachMedia,
     trackCropApplied,
+    trackModeSelected,
+    trackMediaReordered,
+    trackCoverSet,
+    trackComposerCancel,
     trackSubmitSuccess,
     trackSubmitFailure,
     trackDraftRestored,

@@ -8,6 +8,16 @@ export type ComposerLifecycleState = "idle" | "expanded" | "typing" | "media-att
 
 export type PostComposerMetadata = {
   media_aspect_ratio?: MediaAspectRatio;
+  composer_mode?: ComposerMode;
+  cover_index?: number;
+  media_order?: string[];
+  crop_transforms?: Array<{
+    id: string;
+    x: number;
+    y: number;
+    scale: number;
+    aspect_ratio: MediaAspectRatio;
+  }>;
 };
 
 export type CropTransform = {

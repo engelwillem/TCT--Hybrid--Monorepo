@@ -59,7 +59,7 @@ export function ComposerMediaStrip({
               ) : null}
             </button>
             
-            {/* Quick Context Action - Appears on hover for desktop, persistent for mobile */}
+             {/* Quick Context Action - Appears on hover for desktop, persistent for mobile */}
             <div className="absolute right-1 top-1 flex flex-col gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
               <button
                 type="button"
@@ -67,34 +67,12 @@ export function ComposerMediaStrip({
                   e.stopPropagation();
                   onRemoveImage(image.id);
                 }}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md hover:bg-black/80"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-black/90"
                 aria-label="Remove image"
               >
                 <X className="h-3 w-3" />
               </button>
             </div>
-
-             {/* Order controls */}
-             {images.length > 1 && (
-               <div className="absolute bottom-1 right-1 flex gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onMoveImage(image.id, "left"); }}
-                    disabled={index === 0}
-                    className="flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md disabled:opacity-0"
-                  >
-                    <GripVertical className="h-3 w-3 rotate-90" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onMoveImage(image.id, "right"); }}
-                    disabled={index === images.length - 1}
-                    className="flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md disabled:opacity-0"
-                  >
-                    <GripVertical className="h-3 w-3 rotate-90" />
-                  </button>
-               </div>
-             )}
           </div>
         );
       })}

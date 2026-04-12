@@ -160,6 +160,11 @@ export function useComposerCrop({
       return;
     }
 
+    const hasOverflowSelection = files.length > availableSlots;
+    if (hasOverflowSelection) {
+      onError(`Maksimal ${maxImages} gambar per post.`);
+    }
+
     const nextFiles = files.slice(0, availableSlots);
     try {
       const prepared = await Promise.all(
@@ -175,7 +180,9 @@ export function useComposerCrop({
           };
         })
       );
-      onError(null);
+      if (!hasOverflowSelection) {
+        onError(null);
+      }
       prepared.forEach((item) => {
         const image: ComposerImage = {
           id: item.id,
@@ -274,6 +281,7 @@ export function useComposerCrop({
       onCropApplied?.();
       closeCropDialog();
     } catch {
+      onError("Gagal menyiapkan hasil crop. Coba ulangi.");
       setCropBusy(false);
     }
   };
