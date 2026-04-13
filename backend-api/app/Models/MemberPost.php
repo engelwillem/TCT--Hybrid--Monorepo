@@ -12,6 +12,9 @@ class MemberPost extends Model
     protected $fillable = [
         'user_id',
         'type',
+        'status',
+        'repost_count',
+        'last_reposted_by',
         'source_type',
         'title',
         'text',
@@ -22,13 +25,16 @@ class MemberPost extends Model
         'is_featured',
         'daily_content_id',
         'expires_at',
+        'activated_at',
         'hidden_at',
         'hidden_by',
     ];
 
     protected $casts = [
+        'activated_at' => 'datetime',
         'expires_at' => 'datetime', // This cast type is correct for a datetime column
         'hidden_at' => 'datetime',
+        'repost_count' => 'integer',
         'metadata' => 'array',
         'media_paths' => 'array',
         'type' => \App\Enums\PostType::class,
@@ -42,10 +48,22 @@ class MemberPost extends Model
     {
         return $query->whereNull('hidden_at')
             ->where(function ($q) {
-                $q->where('expires_at', '>', now())
+                $q->where(function ($statusAware) {
+                    $statusAware->where('status', 'active')
+                        ->where(function ($window) {
+                            $window->where('expires_at', '>', now())
+                                ->orWhereNull('expires_at');
+                        });
+                })
                     ->orWhere(function ($legacy) {
-                        $legacy->whereNull('expires_at')
-                            ->where('created_at', '>', now()->subDay());
+                        $legacy->whereNull('status')
+                            ->where(function ($legacyWindow) {
+                                $legacyWindow->where('expires_at', '>', now())
+                                    ->orWhere(function ($fallback) {
+                                        $fallback->whereNull('expires_at')
+                                            ->where('created_at', '>', now()->subDay());
+                                    });
+                            });
                     });
             });
     }
@@ -152,6 +170,11 @@ class MemberPost extends Model
     public function hiddenBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'hidden_by');
+    }
+
+    public function lastRepostedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_reposted_by');
     }
 
     public function comments(): HasMany

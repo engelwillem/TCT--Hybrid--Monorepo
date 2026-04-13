@@ -3,8 +3,6 @@
 import {
   Suspense,
   startTransition,
-  type PointerEvent as ReactPointerEvent,
-  type TouchEvent as ReactTouchEvent,
   useCallback,
   useDeferredValue,
   useEffect,
@@ -42,7 +40,12 @@ import {
   resolveCommunityFeedCacheScope,
   writeCommunityFeedCache,
 } from "../utils/community-feed-cache";
-import { DISCUSSION_WINDOW_MS, partitionCommunityPostsByAge, sortByNewest } from "../utils/community-lifecycle";
+import {
+  DISCUSSION_WINDOW_MS,
+  partitionCommunityPostsByAge,
+  resolvePostPublicDate,
+  sortByNewest,
+} from "../utils/community-lifecycle";
 import { isPrivateRenunganArchive } from "../utils/private-renungan-archive";
 
 type ArchiveCategory = CommunityArchiveCategory;
@@ -56,7 +59,6 @@ const slugifyRef = (ref: string) =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const CATEGORY_SWIPE_THRESHOLD_PX = 36;
 const POST_SUBMIT_CUE_DURATION_MS = 8000;
 const POST_SCROLL_TOP_OFFSET_PX = 116;
 
@@ -74,6 +76,12 @@ function toMonthLabel(value?: string | null): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Tanpa tanggal";
   return new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(date);
+}
+
+function getArchiveSortLabel(sort: ArchiveSort): string {
+  if (sort === "popular") return "Terpopuler";
+  if (sort === "relevant") return "Paling relevan";
+  return "Terbaru";
 }
 
 function SmartPostComposer({
@@ -152,12 +160,11 @@ export function CommunityPage() {
   const archiveRailRef = useRef<HTMLDivElement | null>(null);
   const discussionPostRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrolledToLastPostedRef = useRef<string | null>(null);
-  const archiveRailTouchRef = useRef<{ startX: number; startY: number; hasStepped: boolean } | null>(null);
-  const archiveRailDragRef = useRef<{ pointerId: number; startX: number; startY: number; hasStepped: boolean } | null>(null);
   const [archiveRailHovered, setArchiveRailHovered] = useState(false);
 
   const deferredArchiveSearchQuery = useDeferredValue(archiveSearchQuery);
   const narrowColumnClassName = "mx-auto w-full max-w-3xl";
+  const galleryColumnClassName = "mx-auto w-full max-w-6xl";
   const pageShellClassName = "mx-auto w-full max-w-7xl px-3 pb-28 md:px-6 lg:px-8";
   const composerCurrentUser = useMemo<CommunityUser | undefined>(() => {
     const id = String(profileId || "").trim();
@@ -462,84 +469,6 @@ export function CommunityPage() {
   }, [activeArchiveCategoryIndex, centerArchiveCategoryChip]);
 
   const canLoopArchiveCategories = COMMUNITY_ARCHIVE_CATEGORIES.length > 1;
-
-  const handleArchiveRailTouchStart = useCallback((event: ReactTouchEvent<HTMLDivElement>) => {
-    if (archiveRailDragRef.current) return;
-    const touch = event.touches[0];
-    if (!touch) return;
-    archiveRailTouchRef.current = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      hasStepped: false,
-    };
-  }, []);
-
-  const handleArchiveRailTouchMove = useCallback(
-    (event: ReactTouchEvent<HTMLDivElement>) => {
-      if (archiveRailDragRef.current) return;
-      const state = archiveRailTouchRef.current;
-      const touch = event.touches[0];
-      if (!state || !touch || state.hasStepped) return;
-
-      const deltaX = touch.clientX - state.startX;
-      const deltaY = touch.clientY - state.startY;
-      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY) + 8;
-
-      if (!isHorizontal || Math.abs(deltaX) < CATEGORY_SWIPE_THRESHOLD_PX) return;
-
-      stepArchiveCategory(deltaX < 0 ? "next" : "prev");
-      archiveRailTouchRef.current = {
-        ...state,
-        hasStepped: true,
-      };
-    },
-    [stepArchiveCategory]
-  );
-
-  const handleArchiveRailTouchEnd = useCallback(() => {
-    archiveRailTouchRef.current = null;
-  }, []);
-
-  const handleArchiveRailPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!canLoopArchiveCategories) return;
-    if (event.pointerType === "touch") return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-
-    archiveRailDragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      hasStepped: false,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }, [canLoopArchiveCategories]);
-
-  const handleArchiveRailPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (event.pointerType === "touch") return;
-      const state = archiveRailDragRef.current;
-      if (!state || state.pointerId !== event.pointerId || state.hasStepped) return;
-
-      const deltaX = event.clientX - state.startX;
-      const deltaY = event.clientY - state.startY;
-      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY) + 8;
-      if (!isHorizontal || Math.abs(deltaX) < CATEGORY_SWIPE_THRESHOLD_PX) return;
-
-      stepArchiveCategory(deltaX < 0 ? "next" : "prev");
-      archiveRailDragRef.current = { ...state, hasStepped: true };
-    },
-    [stepArchiveCategory]
-  );
-
-  const handleArchiveRailPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "touch") return;
-    const state = archiveRailDragRef.current;
-    if (!state || state.pointerId !== event.pointerId) return;
-    archiveRailDragRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }, []);
 
   const revealArchiveRailControls = useCallback(() => {
     setArchiveRailHovered(true);
@@ -1135,7 +1064,7 @@ export function CommunityPage() {
       (Number(post.counts.bookmarks) || 0) * 4;
 
     const calcRecency = (post: CommunityPost) => {
-      const timestamp = new Date(post.createdAt).getTime();
+      const timestamp = new Date(resolvePostPublicDate(post) || post.createdAt).getTime();
       if (Number.isNaN(timestamp)) return 0;
       return timestamp;
     };
@@ -1166,7 +1095,8 @@ export function CommunityPage() {
     const groups = new Map<string, { monthLabel: string; posts: CommunityPost[] }>();
 
     filteredArchivePosts.forEach((post) => {
-      const monthKey = toMonthKey(post.createdAt);
+      const publicDate = resolvePostPublicDate(post);
+      const monthKey = toMonthKey(publicDate);
       const current = groups.get(monthKey);
       if (current) {
         current.posts.push(post);
@@ -1174,7 +1104,7 @@ export function CommunityPage() {
       }
 
       groups.set(monthKey, {
-        monthLabel: toMonthLabel(post.createdAt),
+        monthLabel: toMonthLabel(publicDate),
         posts: [post],
       });
     });
@@ -1201,6 +1131,43 @@ export function CommunityPage() {
     const activeCategory = COMMUNITY_ARCHIVE_CATEGORIES.find((item) => item.key === archiveCategory);
     return activeCategory?.label || "Semua";
   }, [archiveCategory, deferredArchiveSearchQuery]);
+
+  const archiveEmptyCopy = useMemo(() => {
+    const query = deferredArchiveSearchQuery.trim();
+    const hasQuery = query.length > 0;
+    const activeCategory = COMMUNITY_ARCHIVE_CATEGORIES.find((item) => item.key === archiveCategory);
+    const activeCategoryLabel = activeCategory?.label || "Semua";
+    const activeSortLabel = getArchiveSortLabel(archiveSort);
+
+    if (!hasQuery && archiveCategory === "all" && archiveSort === "newest") {
+      return {
+        title: "Arsip belum tersedia",
+        description: "",
+      };
+    }
+
+    if (hasQuery) {
+      return {
+        title: `Tidak ada hasil untuk "${query}"`,
+        description:
+          archiveCategory === "all"
+            ? `Coba kata kunci lain atau ubah urutan dari ${activeSortLabel}.`
+            : `Tidak ada hasil di kategori ${activeCategoryLabel}. Coba kata kunci lain atau ubah urutan.`,
+      };
+    }
+
+    if (archiveCategory !== "all") {
+      return {
+        title: `Belum ada konten di ${activeCategoryLabel}`,
+        description: `Kategori ini kosong untuk urutan ${activeSortLabel}.`,
+      };
+    }
+
+    return {
+      title: "Arsip belum tersedia",
+      description: `Belum ada konten untuk urutan ${activeSortLabel}.`,
+    };
+  }, [archiveCategory, archiveSort, deferredArchiveSearchQuery]);
 
   const archiveStateTone = useMemo(() => {
     if (fetchError === "Unauthorized") {
@@ -1378,11 +1345,11 @@ export function CommunityPage() {
           </TabsContent>
 
           <TabsContent value="archive" className="mt-0 overflow-visible outline-none">
-            <div className="space-y-8">
+            <div className={cn(galleryColumnClassName, "space-y-8")}>
               <section className="relative z-20">
-                <div className="overflow-visible rounded-[30px] border border-white/75 bg-white/80 p-4 shadow-[0_20px_70px_-38px_rgba(15,23,42,0.42)] backdrop-blur-xl md:p-5">
+                <div className="overflow-visible rounded-[30px] border border-white/75 bg-white/80 p-4 shadow-[0_20px_70px_-38px_rgba(15,23,42,0.42)] backdrop-blur-xl md:p-5 lg:p-6">
                     <div className="flex min-w-0 flex-col gap-4">
-                      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-end">
+                      <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(250px,320px)] xl:items-end">
                       <div className="min-w-0 space-y-1">
                         <h2 className="tct-serif text-[28px] leading-tight tracking-tight text-slate-900">
                           Galeri Talks Komunitas
@@ -1397,7 +1364,7 @@ export function CommunityPage() {
                       </div>
                     </div>
 
-                    <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)]">
+                    <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(250px,320px)]">
                       <label className="group relative flex w-full min-w-0 flex-1 items-center gap-3 rounded-[22px] border border-slate-200/85 bg-slate-50/90 px-4 py-3 shadow-inner transition-colors focus-within:border-brand/30 focus-within:bg-white">
                         <Search className="h-4 w-4 text-slate-400 transition-colors group-focus-within:text-brand" />
                         <input
@@ -1427,7 +1394,7 @@ export function CommunityPage() {
                         <select
                           value={archiveSort}
                           onChange={(event) => setArchiveSort(event.target.value as ArchiveSort)}
-                          className="min-w-0 w-full truncate bg-transparent pr-1 text-[13px] font-semibold text-slate-800 outline-none"
+                          className="min-w-0 w-full bg-transparent pr-1 text-[13px] font-semibold text-slate-800 outline-none"
                           aria-label="Urutkan konten GALERY"
                         >
                           <option value="newest">Terbaru</option>
@@ -1443,20 +1410,6 @@ export function CommunityPage() {
                         onMouseEnter={revealArchiveRailControls}
                         onMouseMove={revealArchiveRailControls}
                         onPointerEnter={revealArchiveRailControls}
-                        onPointerDown={handleArchiveRailPointerDown}
-                        onPointerMove={(event) => {
-                          revealArchiveRailControls();
-                          handleArchiveRailPointerMove(event);
-                        }}
-                        onPointerUp={handleArchiveRailPointerUp}
-                        onPointerCancel={handleArchiveRailPointerUp}
-                        onTouchStart={(event) => {
-                          revealArchiveRailControls();
-                          handleArchiveRailTouchStart(event);
-                        }}
-                        onTouchMove={handleArchiveRailTouchMove}
-                        onTouchEnd={handleArchiveRailTouchEnd}
-                        onTouchCancel={handleArchiveRailTouchEnd}
                         onFocusCapture={revealArchiveRailControls}
                         onMouseLeave={() => setArchiveRailHovered(false)}
                       >
@@ -1563,7 +1516,7 @@ export function CommunityPage() {
               </section>
 
               {isLoading ? (
-                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+                <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                   {Array.from({ length: 8 }).map((_, index) => (
                     <Card key={index} className="overflow-hidden rounded-[28px] border border-white/70 bg-white/78 p-5 backdrop-blur-xl">
                       <div className="space-y-4">
@@ -1623,7 +1576,10 @@ export function CommunityPage() {
                       <Search className="h-5 w-5" />
                     </div>
                     <div className="relative space-y-2">
-                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">Arsip belum tersedia</h3>
+                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">{archiveEmptyCopy.title}</h3>
+                      {archiveEmptyCopy.description ? (
+                        <p className="max-w-2xl text-sm leading-6 text-slate-600">{archiveEmptyCopy.description}</p>
+                      ) : null}
                     </div>
                     <div className="relative flex flex-wrap gap-3">
                       <button
@@ -1656,7 +1612,7 @@ export function CommunityPage() {
                         <h3 className="text-[13px] font-black uppercase tracking-[0.18em] text-slate-500">{group.monthLabel}</h3>
                         <div className="h-px flex-1 bg-slate-200/80" />
                       </header>
-                      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+                      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                         {group.posts.map((post) => (
                           <div key={post.id} className="min-w-0">
                             <CommunityArchiveGalleryCard

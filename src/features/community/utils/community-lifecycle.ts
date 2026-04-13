@@ -13,11 +13,24 @@ function resolveCreatedAtMs(post: CommunityPost): number {
   return parseTimestamp(post.createdAt);
 }
 
+function resolvePublicAtMs(post: CommunityPost): number {
+  const explicitPublicAt = parseTimestamp(post.publicAt);
+  if (explicitPublicAt > 0) return explicitPublicAt;
+
+  const explicitActivatedAt = parseTimestamp(post.activatedAt);
+  if (explicitActivatedAt > 0) return explicitActivatedAt;
+
+  return resolveCreatedAtMs(post);
+}
+
 function resolveActivatedAtMs(post: CommunityPost): number {
+  const explicitActivatedAt = parseTimestamp(post.activatedAt);
+  if (explicitActivatedAt > 0) return explicitActivatedAt;
+
   const metadataActivatedAt = parseTimestamp(post.metadata?.last_activated_at);
   if (metadataActivatedAt > 0) return metadataActivatedAt;
 
-  return resolveCreatedAtMs(post);
+  return resolvePublicAtMs(post);
 }
 
 function resolveActiveUntilMs(post: CommunityPost): number {
@@ -57,8 +70,12 @@ export function sortByNewest(posts: CommunityPost[]): CommunityPost[] {
     const bActiveUntilMs = resolveActiveUntilMs(b);
     if (aActiveUntilMs !== bActiveUntilMs) return bActiveUntilMs - aActiveUntilMs;
 
-    const aCreatedMs = resolveCreatedAtMs(a);
-    const bCreatedMs = resolveCreatedAtMs(b);
-    return bCreatedMs - aCreatedMs;
+    const aPublicMs = resolvePublicAtMs(a);
+    const bPublicMs = resolvePublicAtMs(b);
+    return bPublicMs - aPublicMs;
   });
+}
+
+export function resolvePostPublicDate(post: CommunityPost): string | undefined {
+  return post.publicAt || post.activatedAt || post.createdAt;
 }

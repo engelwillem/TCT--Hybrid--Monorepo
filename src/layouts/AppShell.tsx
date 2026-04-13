@@ -142,6 +142,7 @@ function ShellFrame({
   const isAuthSurface = isAuthSurfacePath(pathname);
   const isReader = isVersehubPath(pathname);
   const isTodayRitual = isTodayRitualPath(pathname);
+  const isCommunitySurface = pathname === "/community" || pathname.startsWith("/community/");
   const centerMobileBrand = pathname === "/profile" || pathname === "/community";
 
   if (isLanding) {
@@ -212,7 +213,8 @@ function ShellFrame({
     <div className="tct-global-background relative min-h-screen overflow-x-hidden text-foreground touch-pan-y">
       <div
         className={cn(
-          "relative z-10 mx-auto w-full max-w-6xl overflow-x-clip px-4",
+          "relative z-10 mx-auto w-full px-4",
+          isCommunitySurface ? "max-w-[1560px] overflow-visible md:px-6 lg:px-8" : "max-w-6xl overflow-x-clip",
           isReader ? "py-4 md:py-6" : "py-6 md:py-8"
         )}
       >

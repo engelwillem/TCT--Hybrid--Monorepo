@@ -51,6 +51,7 @@ function appendNestedFormData(formData: FormData, keyPrefix: string, value: unkn
 interface ApiPost {
   id: string;
   type: string;
+  status?: string;
   type_label?: string;
   text: string;
   title?: string | null;
@@ -86,6 +87,10 @@ interface ApiPost {
   } | null;
   createdAt?: string;
   created_at: string;
+  activatedAt?: string | null;
+  activated_at?: string | null;
+  publicAt?: string | null;
+  public_at?: string | null;
   expiresAt?: string | null;
   expires_at?: string | null;
   author: {
@@ -189,6 +194,7 @@ const normalizeCommunityAssetUrl = (value?: string | null): string | undefined =
 const mapApiPost = (post: ApiPost): CommunityPost => ({
   id: String(post.id),
   type: post.type,
+  status: post.status ? String(post.status) : undefined,
   type_label: post.type_label || post.type,
   text: post.text || "",
   title: post.title ?? undefined,
@@ -209,6 +215,8 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
     : null,
   metadata: post.metadata ?? undefined,
   createdAt: post.created_at || post.createdAt || "",
+  activatedAt: post.activated_at ?? post.activatedAt ?? undefined,
+  publicAt: post.public_at ?? post.publicAt ?? undefined,
   expiresAt: post.expires_at ?? post.expiresAt ?? undefined,
   author: {
     id: String(post.author?.id || ""),

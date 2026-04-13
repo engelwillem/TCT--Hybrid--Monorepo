@@ -69,6 +69,7 @@ class TodayFeedService
                     ->where('user_id', $user?->id ?? 0),
             ])
             ->orderByDesc('expires_at')
+            ->orderByDesc('activated_at')
             ->orderByDesc('created_at')
             ->limit($fetchLimit)
             ->get();
@@ -104,6 +105,11 @@ class TodayFeedService
             'metadata' => $p->metadata,
             'createdAt' => $p->created_at?->toIso8601String(),
             'created_at' => $p->created_at?->toIso8601String(),
+            'activatedAt' => $p->activated_at?->toIso8601String(),
+            'activated_at' => $p->activated_at?->toIso8601String(),
+            'publicAt' => ($p->activated_at ?? $p->created_at)?->toIso8601String(),
+            'public_at' => ($p->activated_at ?? $p->created_at)?->toIso8601String(),
+            'status' => (string) ($p->status ?: ($p->expires_at?->isFuture() ? 'active' : 'gallery')),
             'expiresAt' => $p->expires_at?->toIso8601String(),
             'expires_at' => $p->expires_at?->toIso8601String(),
             'author' => [

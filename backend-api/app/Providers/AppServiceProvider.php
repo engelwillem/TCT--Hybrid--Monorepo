@@ -3,11 +3,15 @@
 namespace App\Providers;
 
 use App\Filament\Auth\Responses\AdminLoginResponse;
+use App\Events\Community\PostRepostedToTalks;
+use App\Listeners\Community\InvalidateCommunityPostCaches;
+use App\Listeners\Community\RecordPostRepostedAnalytics;
 use App\Services\Mentor\MentorDriverInterface;
 use App\Services\Mentor\TemplateMentorDriver;
 use App\Support\RichContentSanitizer;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse as FilamentLoginResponseContract;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\HtmlSanitizer\HtmlSanitizer;
@@ -55,6 +59,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(PostRepostedToTalks::class, RecordPostRepostedAnalytics::class);
+        Event::listen(PostRepostedToTalks::class, InvalidateCommunityPostCaches::class);
+
         // Prefetching can feel "heavy" on local/dev or low-end devices because
         // it injects many <link rel="prefetch"> tags and loads them (waterfall).
         // Disable it for local so navigation feels instant again.

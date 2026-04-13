@@ -9,6 +9,7 @@ use App\Models\MemberPostBookmark;
 use App\Models\MemberPostComment;
 use App\Models\User;
 use App\Notifications\MemberPostCommentReplyNotification;
+use App\Services\Community\CommunityRepostService;
 use App\Services\Interaction\SpiritualInteractionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class CommunityApiController extends Controller
 {
     public function __construct(
         private readonly SpiritualInteractionService $interactionService,
+        private readonly CommunityRepostService $communityRepostService,
     ) {}
 
     public function index(Request $request, \App\Services\TodayFeedService $feedService): JsonResponse
@@ -37,8 +39,11 @@ class CommunityApiController extends Controller
         $archivePosts = MemberPost::query()
             ->whereNull('hidden_at')
             ->where(function ($query) use ($now) {
-                $query->whereNotNull('expires_at')
-                    ->where('expires_at', '<=', $now)
+                $query->where('status', 'gallery')
+                    ->orWhere(function ($expired) use ($now) {
+                        $expired->whereNotNull('expires_at')
+                            ->where('expires_at', '<=', $now);
+                    })
                     ->orWhere(function ($legacy) use ($now) {
                         $legacy->whereNull('expires_at')
                             ->where('created_at', '<=', $now->copy()->subDay());
@@ -58,6 +63,7 @@ class CommunityApiController extends Controller
                 'bookmarks as is_bookmarked_by_me' => fn ($q) => $q
                     ->where('user_id', $user?->id ?? 0),
             ])
+            ->orderByDesc('activated_at')
             ->orderByDesc('expires_at')
             ->orderByDesc('created_at')
             ->limit(120)
@@ -104,9 +110,11 @@ class CommunityApiController extends Controller
         $post = MemberPost::query()->create([
             'user_id' => $user->id,
             'type' => $validated['type'] ?? 'user_post',
+            'status' => 'active',
             'text' => trim((string) ($validated['text'] ?? '')),
             'image_path' => $mediaPaths[0] ?? null,
             'media_paths' => ! empty($mediaPaths) ? $mediaPaths : null,
+            'activated_at' => Carbon::now(),
             'metadata' => array_merge($validated['metadata'] ?? [], [
                 'last_activated_at' => Carbon::now()->toIso8601String(),
             ]),
@@ -253,7 +261,7 @@ class CommunityApiController extends Controller
         ]);
     }
 
-    public function repost(MemberPost $memberPost): JsonResponse
+    public function repost(Request $request, MemberPost $memberPost): JsonResponse
     {
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
@@ -261,21 +269,18 @@ class CommunityApiController extends Controller
         abort_if($memberPost->hidden_at !== null, 404);
         $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
 
-        $now = Carbon::now();
-        $metadata = is_array($memberPost->metadata) ? $memberPost->metadata : [];
-        $metadata['last_activated_at'] = $now->toIso8601String();
-        $metadata['last_reposted_at'] = $now->toIso8601String();
+        $repost = $this->communityRepostService->repostToTalks(
+            memberPost: $memberPost,
+            actorId: (int) $user->id,
+            requestId: $request->header('X-Request-Id'),
+            sourceSurface: 'gallery'
+        );
 
-        $memberPost->forceFill([
-            'metadata' => $metadata,
-            'expires_at' => $now->copy()->addDay(),
-        ])->save();
-
-        $fresh = $this->reloadPost($memberPost->id, $user->id);
+        $fresh = $this->reloadPost((int) $repost['post']->id, (int) $user->id);
 
         return response()->json([
             'data' => [
-                'status' => 'reactivated',
+                'status' => (string) $repost['result'],
                 'post' => $this->serializePost($fresh, $user),
             ],
         ]);
@@ -586,6 +591,7 @@ class CommunityApiController extends Controller
         return [
             'id' => (string) $post->id,
             'type' => (string) ($post->type->value ?? 'user_post'),
+            'status' => (string) ($post->status ?: ($post->expires_at?->isFuture() ? 'active' : 'gallery')),
             'text' => (string) ($post->text ?? ''),
             'imageUrl' => $this->communityMediaUrl($post->image_path),
             'mediaPaths' => collect($post->media_paths ?? [])
@@ -595,6 +601,10 @@ class CommunityApiController extends Controller
                 ->all(),
             'createdAt' => $post->created_at?->toIso8601String(),
             'created_at' => $post->created_at?->toIso8601String(),
+            'activatedAt' => $post->activated_at?->toIso8601String(),
+            'activated_at' => $post->activated_at?->toIso8601String(),
+            'publicAt' => ($post->activated_at ?? $post->created_at)?->toIso8601String(),
+            'public_at' => ($post->activated_at ?? $post->created_at)?->toIso8601String(),
             'expiresAt' => $post->expires_at?->toIso8601String(),
             'expires_at' => $post->expires_at?->toIso8601String(),
             'author' => [

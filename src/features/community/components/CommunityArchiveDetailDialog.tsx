@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { CommunityPost } from "../types";
 import { CommunityImageCarousel } from "./CommunityImageCarousel";
 import { MemberPostActionBar } from "./MemberPostActionBar";
+import { resolvePostPublicDate } from "../utils/community-lifecycle";
 
 const CATEGORY_STYLES: Record<string, { label: string; badgeClassName: string }> = {
   quote: {
@@ -91,7 +92,7 @@ export function CommunityArchiveDetailDialog({
                 <Archive className="h-3.5 w-3.5" />
                 <span>GALERY</span>
                 <span>•</span>
-                <span>{formatArchiveDate(post.createdAt)}</span>
+                <span>{formatArchiveDate(resolvePostPublicDate(post) || post.createdAt)}</span>
               </div>
               <h3 className="text-[20px] font-black leading-tight tracking-tight text-slate-900">
                 {post.title || "Detail postingan"}

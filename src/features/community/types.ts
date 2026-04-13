@@ -21,6 +21,7 @@ export interface CommunityComment {
 export interface CommunityPost {
   id: string;
   type: string;
+  status?: "active" | "gallery" | string;
   type_label: string;
   text: string;
   title?: string | null;
@@ -28,6 +29,8 @@ export interface CommunityPost {
   thumbPath?: string | null;
   mediaPaths?: string[] | null;
   createdAt: string;
+  activatedAt?: string | null;
+  publicAt?: string | null;
   expiresAt?: string | null;
   author: CommunityUser;
   counts: {
