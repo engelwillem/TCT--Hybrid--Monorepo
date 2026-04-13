@@ -65,6 +65,7 @@ function buildDisplayContent(post: CommunityPost, title: string | null): string 
 type CommunityArchiveGalleryCardProps = {
   post: CommunityPost;
   onOpen: () => void;
+  onOpenComments: () => void;
   onBookmark: () => void;
   onPray: () => void;
   onRepost: () => void | Promise<void>;
@@ -75,6 +76,7 @@ type CommunityArchiveGalleryCardProps = {
 export function CommunityArchiveGalleryCard({
   post,
   onOpen,
+  onOpenComments,
   onBookmark,
   onPray,
   onRepost,
@@ -122,12 +124,12 @@ export function CommunityArchiveGalleryCard({
       onKeyDown={handleCardKeyDown}
       aria-label={`Buka Arsip: ${title || authorName}`}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[32px] md:rounded-[40px] border-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4",
+        "group relative flex min-w-0 flex-col overflow-hidden rounded-[32px] border-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4 md:rounded-[40px]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-4 focus-visible:ring-offset-white",
         "bg-slate-50/60 ring-1 ring-border/50"
       )}
     >
-      <CardContent className="relative flex flex-col p-5 md:p-6">
+      <CardContent className="relative flex min-w-0 flex-col p-5 md:p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface ring-1 ring-border/40 shadow-sm">
@@ -141,14 +143,14 @@ export function CommunityArchiveGalleryCard({
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="leading-none text-[14px] font-black tracking-tight text-foreground/90">{authorName}</span>
+                <span className="max-w-[10rem] truncate leading-none text-[14px] font-black tracking-tight text-foreground/90 md:max-w-[14rem]">{authorName}</span>
               </div>
               <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
                 <span>{formatArchiveDate(post.createdAt)}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Archive className="h-3 w-3" />
-                  History
+                  GALERY
                 </span>
               </div>
             </div>
@@ -206,7 +208,7 @@ export function CommunityArchiveGalleryCard({
             bookmarked={post.isBookmarked}
             bookmarkLabel="Simpan"
             onPray={onPray}
-            onOpenComments={onOpen}
+            onOpenComments={onOpenComments}
             onShare={() => {
               void onShare();
             }}
@@ -221,7 +223,7 @@ export function CommunityArchiveGalleryCard({
               void onRepost();
             }}
             disabled={reposting}
-            aria-label={reposting ? "Mengaktifkan ulang arsip" : "Aktifkan ulang arsip ke Talks"}
+            aria-label={reposting ? "Memproses Repost ke Talks" : "Repost ke Talks"}
             className={cn(
               "mt-2 inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-[11px] font-semibold transition-colors",
               reposting
@@ -230,7 +232,7 @@ export function CommunityArchiveGalleryCard({
             )}
           >
             <Repeat2 className="h-3.5 w-3.5" />
-            <span>{reposting ? "Mengaktifkan..." : "Aktifkan"}</span>
+            <span>{reposting ? "Memproses..." : "Repost ke Talks"}</span>
           </button>
         </div>
       </CardContent>

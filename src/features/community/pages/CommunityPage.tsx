@@ -34,6 +34,7 @@ import { PostComposer } from "../components/PostComposer";
 import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityArchiveGalleryCard } from "../components/CommunityArchiveGalleryCard";
+import { CommunityArchiveDetailDialog } from "../components/CommunityArchiveDetailDialog";
 import type { BookmarkCategory, CommunityPost, CommunityUser } from "../types";
 import {
   buildCommunityFeedCacheKey,
@@ -45,6 +46,7 @@ import { DISCUSSION_WINDOW_MS, partitionCommunityPostsByAge, sortByNewest } from
 import { isPrivateRenunganArchive } from "../utils/private-renungan-archive";
 
 type ArchiveCategory = CommunityArchiveCategory;
+type ArchiveSort = "newest" | "popular" | "relevant";
 
 const slugifyRef = (ref: string) =>
   ref
@@ -57,6 +59,22 @@ const slugifyRef = (ref: string) =>
 const CATEGORY_SWIPE_THRESHOLD_PX = 36;
 const POST_SUBMIT_CUE_DURATION_MS = 8000;
 const POST_SCROLL_TOP_OFFSET_PX = 116;
+
+function toMonthKey(value?: string | null): string {
+  if (!value) return "unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "unknown";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function toMonthLabel(value?: string | null): string {
+  if (!value) return "Tanpa tanggal";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Tanpa tanggal";
+  return new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(date);
+}
 
 function SmartPostComposer({
   onPost,
@@ -115,6 +133,8 @@ export function CommunityPage() {
   const [activeTab, setActiveTab] = useState<"discussions" | "archive" | "bookmarks">("discussions");
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
   const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
+  const [archiveSort, setArchiveSort] = useState<ArchiveSort>("newest");
+  const [activeArchiveDetailPostId, setActiveArchiveDetailPostId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [rituals, setRituals] = useState<any>(null);
@@ -348,6 +368,12 @@ export function CommunityPage() {
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "archive" && activeArchiveDetailPostId) {
+      setActiveArchiveDetailPostId(null);
+    }
+  }, [activeArchiveDetailPostId, activeTab]);
 
   useEffect(() => {
     if (!lastPostedId) return;
@@ -911,6 +937,7 @@ export function CommunityPage() {
         const nowMs = Date.now();
         setTimelineNowMs(nowMs);
         setActiveTab("discussions");
+        setActiveArchiveDetailPostId(null);
 
         if (updatedPost) {
           setPosts((prev) => {
@@ -927,7 +954,7 @@ export function CommunityPage() {
           await fetchData();
         }
 
-        showToast("Post berhasil diaktifkan kembali ke Diskusi.", "success");
+        showToast("Berhasil Repost ke Talks", "success");
       } catch (error) {
         console.error("Failed to repost post", error);
         try {
@@ -939,7 +966,8 @@ export function CommunityPage() {
             setPosts(latest.posts);
             setArchivePosts(latest.archivePosts);
             persistFeedCache(latest.posts, latest.archivePosts);
-            showToast("Post berhasil diaktifkan kembali ke Diskusi.", "success");
+            setActiveArchiveDetailPostId(null);
+            showToast("Berhasil Repost ke Talks", "success");
             return;
           }
         } catch (fallbackError) {
@@ -1084,8 +1112,7 @@ export function CommunityPage() {
 
   const filteredArchivePosts = useMemo(() => {
     const normalizedQuery = deferredArchiveSearchQuery.trim().toLowerCase();
-
-    return publicArchivePosts.filter((post) => {
+    const filtered = publicArchivePosts.filter((post) => {
       if (archiveCategory !== "all" && post.type !== archiveCategory) {
         return false;
       }
@@ -1101,7 +1128,70 @@ export function CommunityPage() {
 
       return haystack.includes(normalizedQuery);
     });
-  }, [archiveCategory, deferredArchiveSearchQuery, publicArchivePosts]);
+
+    const calcEngagement = (post: CommunityPost) =>
+      (Number(post.counts.likes) || 0) * 2 +
+      (Number(post.counts.comments) || 0) * 3 +
+      (Number(post.counts.bookmarks) || 0) * 4;
+
+    const calcRecency = (post: CommunityPost) => {
+      const timestamp = new Date(post.createdAt).getTime();
+      if (Number.isNaN(timestamp)) return 0;
+      return timestamp;
+    };
+
+    const calcRelevance = (post: CommunityPost) => {
+      const engagement = calcEngagement(post);
+      const recencyScore = calcRecency(post) / 1000;
+      const habitBoost =
+        (post.isLiked ? 120 : 0) +
+        (post.isBookmarked ? 180 : 0) +
+        (post.author?.isFollowing ? 80 : 0);
+      const queryBoost = normalizedQuery ? 150 : 60;
+      return engagement + recencyScore + habitBoost + queryBoost;
+    };
+
+    return [...filtered].sort((a, b) => {
+      if (archiveSort === "popular") {
+        return calcEngagement(b) - calcEngagement(a) || calcRecency(b) - calcRecency(a);
+      }
+      if (archiveSort === "relevant") {
+        return calcRelevance(b) - calcRelevance(a) || calcRecency(b) - calcRecency(a);
+      }
+      return calcRecency(b) - calcRecency(a);
+    });
+  }, [archiveCategory, archiveSort, deferredArchiveSearchQuery, publicArchivePosts]);
+
+  const groupedArchivePosts = useMemo(() => {
+    const groups = new Map<string, { monthLabel: string; posts: CommunityPost[] }>();
+
+    filteredArchivePosts.forEach((post) => {
+      const monthKey = toMonthKey(post.createdAt);
+      const current = groups.get(monthKey);
+      if (current) {
+        current.posts.push(post);
+        return;
+      }
+
+      groups.set(monthKey, {
+        monthLabel: toMonthLabel(post.createdAt),
+        posts: [post],
+      });
+    });
+
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, value]) => ({
+        monthKey: key,
+        monthLabel: value.monthLabel,
+        posts: value.posts,
+      }));
+  }, [filteredArchivePosts]);
+
+  const activeArchiveDetailPost = useMemo(
+    () => publicArchivePosts.find((post) => post.id === activeArchiveDetailPostId) ?? null,
+    [activeArchiveDetailPostId, publicArchivePosts]
+  );
 
   const archiveResultLabel = useMemo(() => {
     if (deferredArchiveSearchQuery.trim()) {
@@ -1166,7 +1256,7 @@ export function CommunityPage() {
             <TabsList className="relative flex h-[56px] w-full items-center justify-between overflow-hidden rounded-[24px] bg-background/60 p-1 text-foreground shadow-sm ring-1 ring-border/50 backdrop-blur-2xl">
               {[
                 { id: "discussions", label: "Talks" },
-                { id: "archive", label: "History" },
+                { id: "archive", label: "GALERY" },
                 { id: "bookmarks", label: "Bookmarks" },
               ].map((tab) => (
                 <TabsTrigger
@@ -1295,8 +1385,9 @@ export function CommunityPage() {
                       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                       <div className="space-y-1">
                         <h2 className="tct-serif text-[28px] leading-tight tracking-tight text-slate-900">
-                          Galeri Komunitas
+                          Galeri Talks Komunitas
                         </h2>
+                        <p className="text-[13px] font-medium text-slate-500">Postingan lama Talks ada di sini</p>
                       </div>
 
                       <div className="rounded-[22px] bg-slate-950/[0.045] px-4 py-3 text-left md:min-w-[220px]">
@@ -1306,7 +1397,7 @@ export function CommunityPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 md:flex-row">
                       <label className="group relative flex w-full min-w-0 flex-1 items-center gap-3 rounded-[22px] border border-slate-200/85 bg-slate-50/90 px-4 py-3 shadow-inner transition-colors focus-within:border-brand/30 focus-within:bg-white">
                         <Search className="h-4 w-4 text-slate-400 transition-colors group-focus-within:text-brand" />
                         <input
@@ -1317,7 +1408,7 @@ export function CommunityPage() {
                           }}
                           placeholder="Cari judul, isi singkat, atau kategori..."
                           className="w-full bg-transparent text-[15px] text-slate-800 outline-none placeholder:text-slate-400"
-                          aria-label="Cari arsip komunitas"
+                          aria-label="Cari konten GALERY"
                         />
                         {archiveSearchQuery ? (
                           <button
@@ -1329,6 +1420,20 @@ export function CommunityPage() {
                             <X className="h-4 w-4" />
                           </button>
                         ) : null}
+                      </label>
+
+                      <label className="flex min-h-12 items-center gap-3 rounded-[18px] border border-slate-200/80 bg-white px-3.5 md:w-[230px]">
+                        <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Urutkan</span>
+                        <select
+                          value={archiveSort}
+                          onChange={(event) => setArchiveSort(event.target.value as ArchiveSort)}
+                          className="w-full bg-transparent text-[13px] font-semibold text-slate-800 outline-none"
+                          aria-label="Urutkan konten GALERY"
+                        >
+                          <option value="newest">Terbaru</option>
+                          <option value="popular">Terpopuler</option>
+                          <option value="relevant">Paling relevan</option>
+                        </select>
                       </label>
                     </div>
 
@@ -1365,8 +1470,8 @@ export function CommunityPage() {
                           className={cn(
                             "absolute left-1 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200/80 bg-white/58 text-sky-600 shadow-[0_16px_34px_-18px_rgba(14,165,233,0.7)] backdrop-blur-xl transition-all duration-300 ease-out md:h-11 md:w-11 md:bg-white/44 md:text-sky-500",
                             archiveRailHovered
-                              ? "opacity-100 scale-100 translate-x-0 md:opacity-100"
-                              : "opacity-80 scale-[0.96] md:translate-x-1 md:opacity-0",
+                              ? "opacity-100 scale-100 translate-x-0"
+                              : "opacity-80 scale-[0.96]",
                             canLoopArchiveCategories ? "" : "pointer-events-none border-slate-200/70 text-slate-300 shadow-none"
                           )}
                           aria-label="Geser kategori ke kiri"
@@ -1381,8 +1486,8 @@ export function CommunityPage() {
                           className={cn(
                             "absolute right-1 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200/80 bg-white/58 text-sky-600 shadow-[0_16px_34px_-18px_rgba(14,165,233,0.7)] backdrop-blur-xl transition-all duration-300 ease-out md:h-11 md:w-11 md:bg-white/44 md:text-sky-500",
                             archiveRailHovered
-                              ? "opacity-100 scale-100 translate-x-0 md:opacity-100"
-                              : "opacity-80 scale-[0.96] md:-translate-x-1 md:opacity-0",
+                              ? "opacity-100 scale-100 translate-x-0"
+                              : "opacity-80 scale-[0.96]",
                             canLoopArchiveCategories ? "" : "pointer-events-none border-slate-200/70 text-slate-300 shadow-none"
                           )}
                           aria-label="Geser kategori ke kanan"
@@ -1394,7 +1499,7 @@ export function CommunityPage() {
                           <div
                             ref={archiveRailRef}
                             style={{ touchAction: 'pan-y' }}
-                            className="flex snap-x snap-mandatory items-center gap-2 overflow-x-hidden overscroll-x-contain px-10 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                            className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto overscroll-x-contain px-10 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                           >
                           {COMMUNITY_ARCHIVE_CATEGORIES.map((item) => {
                             const active = archiveCategory === (item.key as ArchiveCategory);
@@ -1458,7 +1563,7 @@ export function CommunityPage() {
               </section>
 
               {isLoading ? (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                   {Array.from({ length: 8 }).map((_, index) => (
                     <Card key={index} className="overflow-hidden rounded-[28px] border border-white/70 bg-white/78 p-5 backdrop-blur-xl">
                       <div className="space-y-4">
@@ -1493,7 +1598,7 @@ export function CommunityPage() {
                         onClick={() => fetchData()}
                         className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#00A9D6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0095BE]"
                       >
-                        Muat ulang arsip
+                        Refresh
                       </button>
                       <button
                         type="button"
@@ -1518,54 +1623,57 @@ export function CommunityPage() {
                       <Search className="h-5 w-5" />
                     </div>
                     <div className="relative space-y-2">
-                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">
-                        {deferredArchiveSearchQuery.trim() ? "Tidak ada hasil yang cocok." : "Arsip belum tersedia."}
-                      </h3>
-                      {deferredArchiveSearchQuery.trim() ? (
-                        <p className="max-w-2xl text-sm leading-6 text-slate-600">
-                          Coba kata kunci lain, atau kembalikan filter ke Semua agar lebih banyak cerita muncul.
-                        </p>
-                      ) : null}
+                      <h3 className="text-2xl font-bold tracking-tight text-slate-900">Arsip belum tersedia</h3>
                     </div>
                     <div className="relative flex flex-wrap gap-3">
-                      {archiveCategory !== "all" || deferredArchiveSearchQuery.trim() ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setArchiveCategory("all");
-                            startTransition(() => setArchiveSearchQuery(""));
-                          }}
-                          className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#00A9D6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0095BE]"
-                        >
-                          Reset pencarian
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setArchiveCategory("all");
+                          setArchiveSort("newest");
+                          startTransition(() => setArchiveSearchQuery(""));
+                        }}
+                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#00A9D6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0095BE] disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={archiveCategory === "all" && !deferredArchiveSearchQuery.trim() && archiveSort === "newest"}
+                      >
+                        Reset pencarian
+                      </button>
                       <button
                         type="button"
                         onClick={() => fetchData()}
                         className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900"
                       >
-                        Muat ulang
+                        Refresh
                       </button>
                     </div>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                    {filteredArchivePosts.map((post) => (
-                      <CommunityArchiveGalleryCard
-                        key={post.id}
-                        post={post}
-                        onOpen={() => handleOpenComments(post.id)}
-                        onPray={() => toggleLike(post.id)}
-                        onBookmark={() => toggleBookmark(post.id)}
-                        onRepost={() => handleRepostFromArchive(post)}
-                        reposting={repostBusyPostId === post.id}
-                        onShare={() => handleShare(post.id, post.text)}
-                      />
-                    ))}
-                  </div>
+                  {groupedArchivePosts.map((group) => (
+                    <section key={group.monthKey} className="space-y-3">
+                      <header className="flex items-center gap-3 px-1">
+                        <h3 className="text-[13px] font-black uppercase tracking-[0.18em] text-slate-500">{group.monthLabel}</h3>
+                        <div className="h-px flex-1 bg-slate-200/80" />
+                      </header>
+                      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+                        {group.posts.map((post) => (
+                          <div key={post.id} className="min-w-0">
+                            <CommunityArchiveGalleryCard
+                              post={post}
+                              onOpen={() => setActiveArchiveDetailPostId(post.id)}
+                              onOpenComments={() => handleOpenComments(post.id)}
+                              onPray={() => toggleLike(post.id)}
+                              onBookmark={() => toggleBookmark(post.id)}
+                              onRepost={() => handleRepostFromArchive(post)}
+                              reposting={repostBusyPostId === post.id}
+                              onShare={() => handleShare(post.id, post.text)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
                 </div>
               )}
             </div>
@@ -1695,6 +1803,35 @@ export function CommunityPage() {
         onOpenChange={(open) => !open && setActiveCommentPostId(null)}
         postId={activeCommentPostId}
         onCommentsUpdated={handleCommentsUpdated}
+      />
+
+      <CommunityArchiveDetailDialog
+        open={Boolean(activeArchiveDetailPostId)}
+        onOpenChange={(open) => {
+          if (!open) setActiveArchiveDetailPostId(null);
+        }}
+        post={activeArchiveDetailPost}
+        onOpenComments={() => {
+          if (!activeArchiveDetailPost?.id) return;
+          handleOpenComments(activeArchiveDetailPost.id);
+        }}
+        onPray={() => {
+          if (!activeArchiveDetailPost?.id) return;
+          void toggleLike(activeArchiveDetailPost.id);
+        }}
+        onBookmark={() => {
+          if (!activeArchiveDetailPost?.id) return;
+          void toggleBookmark(activeArchiveDetailPost.id);
+        }}
+        onRepost={() => {
+          if (!activeArchiveDetailPost) return;
+          return handleRepostFromArchive(activeArchiveDetailPost);
+        }}
+        reposting={activeArchiveDetailPost ? repostBusyPostId === activeArchiveDetailPost.id : false}
+        onShare={() => {
+          if (!activeArchiveDetailPost?.id) return;
+          return handleShare(activeArchiveDetailPost.id, activeArchiveDetailPost.text);
+        }}
       />
 
       <AuthExecutionGate

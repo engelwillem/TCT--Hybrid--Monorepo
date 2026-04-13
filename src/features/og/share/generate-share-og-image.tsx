@@ -1,7 +1,7 @@
 import { ImageResponse } from "@vercel/og";
 import type { ShareOGPayload } from "./types";
 
-const OG_SIZE = { width: 1200, height: 630 } as const;
+const OG_SIZE = { width: 840, height: 440 } as const;
 
 const sansStack =
   "Geist, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica Neue, Arial, sans-serif";
@@ -45,8 +45,7 @@ function ScriptureBlock({
   eyebrow: string;
   serifFamily: string;
 }) {
-  // Clamp body text so it fits inside the card (≤220 chars)
-  const displayBody = body.length > 220 ? body.slice(0, 217) + "…" : body;
+  const displayBody = body.length > 180 ? body.slice(0, 177) + "…" : body;
 
   return (
     <div
@@ -113,28 +112,14 @@ function ScriptureBlock({
         </div>
       </div>
 
-      {/* MIDDLE: The Verse — editorial, oversized serif */}
-      <div style={{ display: "flex", flexDirection: "column", maxWidth: 960, gap: 0 }}>
-        {/* Decorative quotation mark */}
-        <p
-          style={{
-            margin: "0 0 -28px 0",
-            fontSize: 160,
-            lineHeight: 1,
-            color: "rgba(0, 169, 214, 0.12)",
-            fontFamily: serifFamily,
-            fontWeight: 400,
-          }}
-        >
-          "
-        </p>
-
+        {/* MIDDLE: Verse content */}
+        <div style={{ display: "flex", flexDirection: "column", maxWidth: 960, gap: 0 }}>
         {/* The verse body */}
         <p
           style={{
             margin: 0,
-            fontSize: 52,
-            lineHeight: 1.22,
+            fontSize: 44,
+            lineHeight: 1.18,
             letterSpacing: "-0.015em",
             color: "#0E1C38",
             fontFamily: serifFamily,
@@ -159,7 +144,7 @@ function ScriptureBlock({
               margin: 0,
               fontSize: 18,
               fontWeight: 700,
-              color: "rgba(16, 34, 70, 0.45)",
+              color: "#3A5B85",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               fontFamily: sansStack,
@@ -173,7 +158,7 @@ function ScriptureBlock({
                 margin: 0,
                 fontSize: 14,
                 fontWeight: 500,
-                color: "rgba(16, 34, 70, 0.28)",
+                color: "#56749B",
                 letterSpacing: "0.06em",
                 fontFamily: sansStack,
               }}
@@ -191,7 +176,7 @@ function ScriptureBlock({
           justifyContent: "space-between",
           alignItems: "center",
           paddingTop: 16,
-          borderTop: "1px solid rgba(16, 34, 70, 0.08)",
+          borderTop: "1px solid #D9E8FB",
         }}
       >
         <p
@@ -199,7 +184,7 @@ function ScriptureBlock({
             margin: 0,
             fontSize: 15,
             fontWeight: 600,
-            color: "rgba(16, 34, 70, 0.3)",
+            color: "#4E709A",
             fontFamily: sansStack,
             letterSpacing: "0.04em",
           }}
@@ -212,7 +197,7 @@ function ScriptureBlock({
             margin: 0,
             fontSize: 15,
             fontWeight: 600,
-            color: "rgba(16, 34, 70, 0.25)",
+            color: "#5C7CA4",
             fontFamily: sansStack,
             letterSpacing: "0.06em",
           }}
@@ -377,8 +362,7 @@ export async function generateShareOGImage(payload: ShareOGPayload) {
   const serifFontData = await loadSerifFont();
   const serifFamily = serifFontData ? "DM Serif Display" : "Geist";
 
-  // Background: always a premium cream for share cards
-  const bg = "#F8F6F1"; // warm cream — like quality paper
+  const bg = "#F4F8FF";
 
   const fonts = [
     ...(fallbackSansFont
@@ -408,49 +392,17 @@ export async function generateShareOGImage(payload: ShareOGPayload) {
           overflow: "hidden",
         }}
       >
-        {/* Grain texture */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="100%"
-          height="100%"
-          style={{ position: "absolute", top: 0, left: 0, opacity: 0.06 }}
-        >
-          <filter id="grn">
-            <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#grn)" />
-        </svg>
-
-        {/* Subtle radial glow — top-right corner accent */}
+        {/* Keep background low-complexity to reduce PNG file size */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background:
-              "radial-gradient(ellipse 55% 55% at 95% -5%, rgba(0, 169, 214, 0.1) 0%, transparent 60%)",
+            background: "linear-gradient(180deg, #F4F8FF 0%, #EEF5FF 100%)",
           }}
         />
 
-        {/* Large watermark "T." */}
-        <p
-          style={{
-            position: "absolute",
-            bottom: -80,
-            right: 60,
-            margin: 0,
-            fontSize: 480,
-            lineHeight: 1,
-            fontWeight: 800,
-            color: "rgba(14, 28, 56, 0.025)",
-            fontFamily: sansStack,
-            userSelect: "none",
-          }}
-        >
-          T.
-        </p>
-
         {/* Content — sits on top of all backgrounds */}
-        <div style={{ position: "relative", zIndex: 10, display: "flex", width: "100%", height: "100%" }}>
+        <div style={{ position: "relative", display: "flex", width: "100%", height: "100%" }}>
           {payload.kind === "scripture" ? (
             <ScriptureBlock
               eyebrow={payload.eyebrow ?? "VerseHub"}

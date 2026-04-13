@@ -3,8 +3,8 @@ import { OGContainer, OGFooter, OGTopVisual, OGVerseBlock } from './layout';
 import type { TodayOGData } from './types';
 
 const OG_SIZE = {
-  width: 1200,
-  height: 630,
+  width: 840,
+  height: 440,
 } as const;
 
 async function loadSerifFont(): Promise<ArrayBuffer | null> {

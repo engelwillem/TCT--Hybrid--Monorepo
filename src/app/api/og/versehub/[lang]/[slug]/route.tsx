@@ -4,8 +4,8 @@ import { fetchVerseShareData } from '@/lib/share-content';
 export const runtime = 'edge';
 export const contentType = 'image/png';
 export const size = {
-  width: 1200,
-  height: 630,
+  width: 840,
+  height: 440,
 };
 
 type RouteContext = {
