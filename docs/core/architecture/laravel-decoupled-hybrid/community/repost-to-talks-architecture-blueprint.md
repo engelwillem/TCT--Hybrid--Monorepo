@@ -310,4 +310,17 @@ Cases:
 
 ---
 
+## 17. Post-Release Operations (Week 1)
+Paket monitor metrik GALERY + dashboard minimum minggu pertama ada di:
+- `docs/CORE/architecture/laravel-decoupled-hybrid/community/galery-post-release-monitoring-week1.md`
+
+Ruang lingkup paket:
+- checklist operasional harian,
+- SQL widget dashboard minimum,
+- guardrail threshold,
+- runtime command,
+- incident playbook singkat.
+
+---
+
 *Blueprint ini adalah hasil merge final dokumentasi arsitektur dan keputusan produk menjadi satu acuan implementasi.*
