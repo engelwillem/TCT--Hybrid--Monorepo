@@ -1381,23 +1381,23 @@ export function CommunityPage() {
             <div className="space-y-8">
               <section className="relative z-20">
                 <div className="overflow-visible rounded-[30px] border border-white/75 bg-white/80 p-4 shadow-[0_20px_70px_-38px_rgba(15,23,42,0.42)] backdrop-blur-xl md:p-5">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                      <div className="space-y-1">
+                    <div className="flex min-w-0 flex-col gap-4">
+                      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-end">
+                      <div className="min-w-0 space-y-1">
                         <h2 className="tct-serif text-[28px] leading-tight tracking-tight text-slate-900">
                           Galeri Talks Komunitas
                         </h2>
                         <p className="text-[13px] font-medium text-slate-500">Postingan lama Talks ada di sini</p>
                       </div>
 
-                      <div className="rounded-[22px] bg-slate-950/[0.045] px-4 py-3 text-left md:min-w-[220px]">
+                      <div className="min-w-0 rounded-[22px] bg-slate-950/[0.045] px-4 py-3 text-left">
                         <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Hasil terlihat</p>
                         <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{filteredArchivePosts.length}</p>
-                        <p className="mt-1 text-sm text-slate-500">{archiveResultLabel}</p>
+                        <p className="mt-1 truncate text-sm text-slate-500">{archiveResultLabel}</p>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 md:flex-row">
+                    <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)]">
                       <label className="group relative flex w-full min-w-0 flex-1 items-center gap-3 rounded-[22px] border border-slate-200/85 bg-slate-50/90 px-4 py-3 shadow-inner transition-colors focus-within:border-brand/30 focus-within:bg-white">
                         <Search className="h-4 w-4 text-slate-400 transition-colors group-focus-within:text-brand" />
                         <input
@@ -1422,12 +1422,12 @@ export function CommunityPage() {
                         ) : null}
                       </label>
 
-                      <label className="flex min-h-12 items-center gap-3 rounded-[18px] border border-slate-200/80 bg-white px-3.5 md:w-[230px]">
-                        <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Urutkan</span>
+                      <label className="flex min-h-12 min-w-0 items-center gap-2 rounded-[18px] border border-slate-200/80 bg-white px-3.5">
+                        <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Urutkan</span>
                         <select
                           value={archiveSort}
                           onChange={(event) => setArchiveSort(event.target.value as ArchiveSort)}
-                          className="w-full bg-transparent text-[13px] font-semibold text-slate-800 outline-none"
+                          className="min-w-0 w-full truncate bg-transparent pr-1 text-[13px] font-semibold text-slate-800 outline-none"
                           aria-label="Urutkan konten GALERY"
                         >
                           <option value="newest">Terbaru</option>
