@@ -202,8 +202,8 @@ const mapApiPost = (post: ApiPost): CommunityPost => ({
   bookmark_category: post.bookmark_category
     ? {
         id: String(post.bookmark_category.id || ""),
-        name: String(post.bookmark_category.name || "Arsip"),
-        slug: String(post.bookmark_category.slug || "arsip"),
+        name: String(post.bookmark_category.name || "History"),
+        slug: String(post.bookmark_category.slug || "history"),
         is_default: Boolean(post.bookmark_category.is_default),
       }
     : null,

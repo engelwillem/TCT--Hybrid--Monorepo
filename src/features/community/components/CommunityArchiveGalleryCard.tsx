@@ -90,6 +90,7 @@ export function CommunityArchiveGalleryCard({
   const displayContent = useMemo(() => buildDisplayContent(post, title), [post, title]);
   const authorName = String(post.author?.name || "Chosen People");
   const authorAvatar = post.author?.avatarUrl;
+  const hasBodyCopy = Boolean(title || displayContent);
 
   const mediaList = useMemo(() => {
     const list = Array.isArray(post.mediaPaths) ? post.mediaPaths.filter(Boolean) : [];
@@ -121,12 +122,12 @@ export function CommunityArchiveGalleryCard({
       onKeyDown={handleCardKeyDown}
       aria-label={`Buka Arsip: ${title || authorName}`}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-[32px] md:rounded-[40px] border-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4",
+        "group relative flex flex-col overflow-hidden rounded-[32px] md:rounded-[40px] border-0 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-premium animate-in fade-in slide-in-from-bottom-4",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-4 focus-visible:ring-offset-white",
         "bg-slate-50/60 ring-1 ring-border/50"
       )}
     >
-      <CardContent className="relative flex flex-1 flex-col p-5 md:p-6">
+      <CardContent className="relative flex flex-col p-5 md:p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface ring-1 ring-border/40 shadow-sm">
@@ -147,7 +148,7 @@ export function CommunityArchiveGalleryCard({
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Archive className="h-3 w-3" />
-                  Arsip
+                  History
                 </span>
               </div>
             </div>
@@ -168,15 +169,15 @@ export function CommunityArchiveGalleryCard({
             <CommunityImageCarousel
               images={mediaList}
               altBase={authorName ? `Arsip oleh ${authorName}` : "Gambar arsip"}
-              uiVariant="default"
+              uiVariant="archive"
               showCounter={mediaList.length > 1}
             />
           </div>
         ) : null}
 
-        <div className="flex-1">
+        <div className={cn(hasBodyCopy ? "space-y-2" : "")}>
           {title ? (
-            <h3 className="mb-2 line-clamp-2 text-[18px] font-bold leading-[1.3] tracking-tight text-slate-900 md:text-[20px]">{title}</h3>
+            <h3 className="line-clamp-2 text-[18px] font-bold leading-[1.3] tracking-tight text-slate-900 md:text-[20px]">{title}</h3>
           ) : null}
           {displayContent ? (
             <p
@@ -195,7 +196,7 @@ export function CommunityArchiveGalleryCard({
           ) : null}
         </div>
 
-        <div data-interactive="true" className="mt-6 border-t border-border/60 pt-4">
+        <div data-interactive="true" className={cn("border-t border-border/60 pt-4", hasBodyCopy || !hasMedia ? "mt-6" : "mt-4")}>
           <MemberPostActionBar
             postType={post.type}
             ariaLabelContext="archive"

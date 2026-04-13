@@ -13,7 +13,7 @@ import {
   useState,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -476,6 +476,7 @@ export function CommunityPage() {
 
   const handleArchiveRailPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (!canLoopArchiveCategories) return;
+    if (event.pointerType === "touch") return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
 
     archiveRailDragRef.current = {
@@ -489,6 +490,7 @@ export function CommunityPage() {
 
   const handleArchiveRailPointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "touch") return;
       const state = archiveRailDragRef.current;
       if (!state || state.pointerId !== event.pointerId || state.hasStepped) return;
 
@@ -504,6 +506,7 @@ export function CommunityPage() {
   );
 
   const handleArchiveRailPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     const state = archiveRailDragRef.current;
     if (!state || state.pointerId !== event.pointerId) return;
     archiveRailDragRef.current = null;
@@ -927,6 +930,21 @@ export function CommunityPage() {
         showToast("Post berhasil diaktifkan kembali ke Diskusi.", "success");
       } catch (error) {
         console.error("Failed to repost post", error);
+        try {
+          const latest = await CommunityService.listPosts();
+          const movedToDiscussion = latest.posts.some((item) => item.id === post.id);
+          if (movedToDiscussion) {
+            setTimelineNowMs(Date.now());
+            setActiveTab("discussions");
+            setPosts(latest.posts);
+            setArchivePosts(latest.archivePosts);
+            persistFeedCache(latest.posts, latest.archivePosts);
+            showToast("Post berhasil diaktifkan kembali ke Diskusi.", "success");
+            return;
+          }
+        } catch (fallbackError) {
+          console.error("Failed to verify repost fallback state", fallbackError);
+        }
         const rawMessage = error instanceof Error ? error.message : "";
         if (rawMessage.includes("401") || rawMessage.includes("403")) {
           showToast("Sesi akun berakhir. Silakan masuk lagi.", "error");
@@ -1272,7 +1290,7 @@ export function CommunityPage() {
           <TabsContent value="archive" className="mt-0 overflow-visible outline-none">
             <div className="space-y-8">
               <section className="relative z-20">
-                <div className="overflow-hidden rounded-[30px] border border-white/75 bg-white/80 p-4 shadow-[0_20px_70px_-38px_rgba(15,23,42,0.42)] backdrop-blur-xl md:p-5">
+                <div className="overflow-visible rounded-[30px] border border-white/75 bg-white/80 p-4 shadow-[0_20px_70px_-38px_rgba(15,23,42,0.42)] backdrop-blur-xl md:p-5">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                       <div className="space-y-1">
@@ -1288,7 +1306,7 @@ export function CommunityPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center">
+                    <div className="flex flex-col gap-3">
                       <label className="group relative flex w-full min-w-0 flex-1 items-center gap-3 rounded-[22px] border border-slate-200/85 bg-slate-50/90 px-4 py-3 shadow-inner transition-colors focus-within:border-brand/30 focus-within:bg-white">
                         <Search className="h-4 w-4 text-slate-400 transition-colors group-focus-within:text-brand" />
                         <input
@@ -1312,11 +1330,6 @@ export function CommunityPage() {
                           </button>
                         ) : null}
                       </label>
-
-                      <div className="inline-flex w-fit max-w-full shrink-0 self-start items-center gap-2 rounded-full bg-slate-950/[0.045] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        <SlidersHorizontal className="h-3.5 w-3.5" />
-                        Filter cepat
-                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -1539,17 +1552,6 @@ export function CommunityPage() {
                 </Card>
               ) : (
                 <div className="space-y-5">
-                  <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm leading-6 text-slate-600">
-                      {filteredArchivePosts.length} cerita siap dibaca dengan kategori{" "}
-                      <span className="font-semibold text-slate-900">{archiveResultLabel}</span>.
-                    </p>
-                    <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Gallery view
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     {filteredArchivePosts.map((post) => (
                       <CommunityArchiveGalleryCard

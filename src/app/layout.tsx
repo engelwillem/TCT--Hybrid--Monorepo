@@ -9,9 +9,9 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 const APP_NAME = 'The Chosen Talks';
 const TAGLINE = 'The Chosen People';
 const DEFAULT_TITLE = `${APP_NAME} - ${TAGLINE}`;
-const DEFAULT_DESCRIPTION = 'Komunitas web app untuk Chosen People: ayat harian, komunitas iman, dan perjalanan rohani bertumbuh bersama.';
+const DEFAULT_DESCRIPTION = 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman The Chosen Talks.';
 const SITE_URL = getPrimarySiteUrl();
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og/versehub-bg.png`;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/api/og/home`;
 
 export const viewport: Viewport = {
   themeColor: '#f8fafc',
@@ -81,6 +81,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     other: {
       'app-name': APP_NAME,
+      'apple-mobile-web-app-capable': 'yes',
+      'apple-mobile-web-app-status-bar-style': 'default',
+      'apple-mobile-web-app-title': 'The Chosen Talks',
+      'mobile-web-app-capable': 'yes',
     },
   };
 }

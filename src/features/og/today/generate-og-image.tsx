@@ -19,9 +19,50 @@ async function loadSerifFont(): Promise<ArrayBuffer | null> {
   }
 }
 
+async function loadFallbackSansFont(): Promise<ArrayBuffer | null> {
+  try {
+    const res = await fetch(new URL('../Geist-Regular.ttf', import.meta.url));
+    if (!res.ok) return null;
+    return await res.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
 export async function generateOGImage(data: TodayOGData) {
+  const fallbackSansFont = await loadFallbackSansFont();
   const serifFont = await loadSerifFont();
-  const serifFamily = serifFont ? 'DM Serif Display' : 'serif';
+  const serifFamily = serifFont ? 'DM Serif Display' : 'Geist';
+
+  const fonts = [
+    ...(fallbackSansFont
+      ? [
+          {
+            name: 'Geist',
+            data: fallbackSansFont,
+            style: 'normal' as const,
+            weight: 400 as const,
+          },
+        ]
+      : []),
+    ...(serifFont
+      ? [
+          {
+            name: 'DM Serif Display',
+            data: serifFont,
+            style: 'normal' as const,
+            weight: 400 as const,
+          },
+        ]
+      : []),
+  ];
+
+  const options = fonts.length > 0
+    ? {
+        ...OG_SIZE,
+        fonts,
+      }
+    : OG_SIZE;
 
   return new ImageResponse(
     (
@@ -37,19 +78,6 @@ export async function generateOGImage(data: TodayOGData) {
         <OGFooter />
       </OGContainer>
     ),
-    {
-      ...OG_SIZE,
-      fonts: serifFont
-        ? [
-            {
-              name: 'DM Serif Display',
-              data: serifFont,
-              style: 'normal',
-              weight: 400,
-            },
-          ]
-        : [],
-    }
+    options
   );
 }
-

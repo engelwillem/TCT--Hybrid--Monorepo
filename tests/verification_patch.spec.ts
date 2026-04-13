@@ -114,7 +114,7 @@ test.describe('Verification Patch', () => {
 
   test('Vertical scroll in rail: rail should have touch-action pan-y', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.click('button:has-text("Arsip")');
+    await page.click('button:has-text("History")');
     
     const rail = page.locator('div[style*="touch-action: pan-y"]');
     await expect(rail).toBeVisible();

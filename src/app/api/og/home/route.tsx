@@ -11,4 +11,3 @@ export const size = {
 export async function GET() {
   return generateHomeOGImage();
 }
-

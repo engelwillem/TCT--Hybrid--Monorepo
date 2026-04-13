@@ -4,14 +4,14 @@ import { loadTodaySessionContentWithDiagnostics } from "@/features/today-ritual/
 
 export const revalidate = 300;
 export const metadata: Metadata = {
-  title: "Renungan",
-  description: "Ritual renungan harian yang tenang untuk menerima, mendoakan, dan menyimpan firman.",
+  title: "Renungan Harian",
+  description: "Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan doakan hari ini bersama komunitas The Chosen Talks.",
   openGraph: {
-    title: "Renungan — The Chosen Talks",
-    description: "Ritual renungan harian yang tenang untuk menerima, mendoakan, dan menyimpan firman.",
+    title: "Renungan Harian — The Chosen Talks",
+    description: "Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan doakan hari ini.",
     images: [
       {
-        url: "/og/today-share.png",
+        url: "/api/og/today",
         width: 1200,
         height: 630,
         alt: "Renungan harian — The Chosen Talks",
@@ -20,9 +20,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Renungan — The Chosen Talks",
-    description: "Ritual renungan harian yang tenang untuk menerima, mendoakan, dan menyimpan firman.",
-    images: ["/og/today-share.png"],
+    title: "Renungan Harian — The Chosen Talks",
+    description: "Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan doakan hari ini.",
+    images: ["/api/og/today"],
   },
 };
 
