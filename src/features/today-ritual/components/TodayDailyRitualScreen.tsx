@@ -480,13 +480,13 @@ export default function TodayDailyRitualScreen({
   });
 
   const handleMentorHelpful = () => {
-    if (mentorFeedback === 'helpful') return;
+    if (mentorFeedback !== null) return;
     setMentorFeedback('helpful');
     void trackRenunganTelemetryEvent('renungan_result_helpful', buildMentorOutcomeMeta());
   };
 
   const handleMentorNotHelpful = () => {
-    if (mentorFeedback === 'not_helpful') return;
+    if (mentorFeedback !== null) return;
     setMentorFeedback('not_helpful');
     void trackRenunganTelemetryEvent('renungan_result_not_helpful', {
       ...buildMentorOutcomeMeta(),
