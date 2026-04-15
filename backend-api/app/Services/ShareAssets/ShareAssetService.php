@@ -129,11 +129,11 @@ class ShareAssetService
                 // Non-fatal
             }
 
-            // Return safe in-memory fallback — share must not break completely
-            $fallback = $this->copyGenerator->generate($surface, $sourceData);
+            // Return safe in-memory fallback without calling AI again.
+            $fallback = $this->buildSafeFallbackCopy($surface, $sourceData);
 
             return [
-                'status'            => 'ready',
+                'status'            => 'failed',
                 'revision'          => $revision,
                 'asset_id'          => null,
                 'share_title'       => $fallback['title'],
@@ -224,6 +224,36 @@ class ShareAssetService
             'renungan'  => 'scripture',
             'community' => empty($sourceData['media_paths']) ? 'scripture' : 'media',
             default     => 'scripture',
+        };
+    }
+
+    /**
+     * @param  array<string, mixed> $sourceData
+     * @return array{title: string, description: string, eyebrow: string}
+     */
+    private function buildSafeFallbackCopy(string $surface, array $sourceData): array
+    {
+        return match ($surface) {
+            'renungan' => [
+                'title'       => (string) ($sourceData['verse_reference'] ?? 'Renungan Pribadi'),
+                'description' => 'Satu firman yang menemani hari ini dari The Chosen Talks.',
+                'eyebrow'     => 'Renungan Hari Ini',
+            ],
+            'versehub' => [
+                'title'       => (string) ($sourceData['verse_reference'] ?? 'VerseHub'),
+                'description' => 'Firman yang dibagikan dari The Chosen Talks.',
+                'eyebrow'     => 'Firman Hari Ini',
+            ],
+            'community' => [
+                'title'       => 'Dari Komunitas',
+                'description' => 'Cerita dan refleksi yang menguatkan dari anggota komunitas.',
+                'eyebrow'     => 'Community Share',
+            ],
+            default => [
+                'title'       => 'The Chosen Talks',
+                'description' => 'Komunitas iman digital yang hangat dan relevan.',
+                'eyebrow'     => 'The Chosen Talks',
+            ],
         };
     }
 }

@@ -1,13 +1,17 @@
 import type {NextConfig} from 'next';
 
+const isWindowsHost = process.platform === 'win32';
+
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
-  experimental: {
-    // Keep production builds in-process on Windows to avoid flaky worker failures.
-    webpackBuildWorker: false,
-    cpus: 1,
-  },
+  // Keep production builds in-process only on native Windows hosts to avoid flaky worker failures.
+  experimental: isWindowsHost
+    ? {
+        webpackBuildWorker: false,
+        cpus: 1,
+      }
+    : {},
   images: {
     remotePatterns: [
       {

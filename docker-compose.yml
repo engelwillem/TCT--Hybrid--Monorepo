@@ -63,7 +63,7 @@ services:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/v1/community/posts"]
       start_period: 10m
       interval: 20s
-      timeout: 5s
+      timeout: 30s
       retries: 10
     command: ["bash", "/workspace/docker/backend/start.sh"]
 
