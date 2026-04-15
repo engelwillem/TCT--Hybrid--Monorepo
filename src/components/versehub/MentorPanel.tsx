@@ -44,6 +44,7 @@ interface AskResult {
     study_guidance?: string;
     related_refs?: string[];
     confidence?: string;
+    grounding_note?: string | null;
     scripture_basis?: {
         anchor_ref?: string | null;
         anchor_text_excerpt?: string | null;
@@ -56,6 +57,12 @@ interface AskResult {
     };
     mentor_label?: string;
     disclaimer_id?: string;
+    session?: {
+        id?: number;
+        type?: string;
+        turn_count?: number;
+        updated_at?: string;
+    } | null;
 }
 
 interface MentorPanelProps {
@@ -77,6 +84,20 @@ interface MentorPanelProps {
 }
 
 type Tab = 'reflect' | 'connect' | 'context' | 'ask';
+type AskMode =
+    | 'explain_simply'
+    | 'practical_meaning'
+    | 'prayer_from_verse'
+    | 'related_verses'
+    | 'tradition_context_note';
+
+const ASK_MODE_OPTIONS: Array<{ value: AskMode; label: string }> = [
+    { value: 'explain_simply', label: 'Jelaskan sederhana' },
+    { value: 'practical_meaning', label: 'Makna praktis' },
+    { value: 'prayer_from_verse', label: 'Doa dari ayat' },
+    { value: 'related_verses', label: 'Ayat terkait' },
+    { value: 'tradition_context_note', label: 'Catatan tradisi/konteks' },
+];
 
 export default function MentorPanel({
     verseRef,
@@ -98,6 +119,7 @@ export default function MentorPanel({
     const [insightsFetched, setInsightsFetched] = useState(false);
 
     const [question, setQuestion] = useState('');
+    const [askMode, setAskMode] = useState<AskMode>('explain_simply');
     const [askResult, setAskResult] = useState<AskResult | null>(null);
     const [askLoading, setAskLoading] = useState(false);
     const [askError, setAskError] = useState<string | null>(null);
@@ -162,8 +184,8 @@ export default function MentorPanel({
             headers: buildAppAuthHeaders({ contentType: 'application/json' }),
             body: JSON.stringify({ 
                 question: q,
-                verse_id: verseRef,
-                ...mentorRequestContext,
+                mode: askMode,
+                context: mentorRequestContext,
             }),
         })
             .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
@@ -438,6 +460,22 @@ export default function MentorPanel({
                                             maxLength={400}
                                             className="w-full resize-none rounded-2xl bg-slate-50 px-3.5 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-amber-300"
                                         />
+                                        <div>
+                                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                                                Mode bantuan
+                                            </p>
+                                            <select
+                                                value={askMode}
+                                                onChange={(event) => setAskMode(event.target.value as AskMode)}
+                                                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-amber-300"
+                                            >
+                                                {ASK_MODE_OPTIONS.map((option) => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-[10px] text-slate-400">
                                                 {question.length}/400
@@ -481,6 +519,12 @@ export default function MentorPanel({
                                                 {askResult.answer}
                                             </div>
 
+                                            {askResult.grounding_note && (
+                                                <p className="px-1 text-[11px] leading-relaxed text-slate-500">
+                                                    {askResult.grounding_note}
+                                                </p>
+                                            )}
+
                                             {/* Interpretation Layer */}
                                             {askResult.interpretation && (
                                                 <div className="space-y-1.5 px-1">
@@ -518,6 +562,11 @@ export default function MentorPanel({
                                                         ))}
                                                     </div>
                                                 </div>
+                                            ) : null}
+                                            {askResult.session?.turn_count ? (
+                                                <p className="px-1 text-[10px] uppercase tracking-widest text-slate-400">
+                                                    Sesi mentor aktif • {askResult.session.turn_count} interaksi
+                                                </p>
                                             ) : null}
                                             <button
                                                 type="button"

@@ -139,16 +139,12 @@ export default function LoginPage() {
         <section className="hidden rounded-[2.25rem] border border-white/70 bg-white/70 p-8 shadow-soft backdrop-blur-xl lg:block">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">TheChosenTalks</p>
           <h2 className="mt-4 tct-serif text-4xl font-bold leading-[1.05] tracking-tight text-slate-900">
-            Ruang tenang untuk
-            <br />
-            melanjutkan ritme
-            <br />
-            rohanimu.
+            Platform rohani modern untuk pengalaman imanmu.
           </h2>
           <p className="mt-5 text-sm font-medium leading-relaxed text-slate-600">
             {isSignup
               ? "Mulai akunmu untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh bersama komunitas."
-              : "Login untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh konsisten bersama komunitas."}
+              : "Login untuk menggunakan fitur platform, dan bertumbuh konsisten bersama komunitas."}
           </p>
         </section>
 

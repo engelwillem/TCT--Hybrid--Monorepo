@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\BibleVerse;
+use App\Services\AI\RenunganAIService;
 use App\Services\RenunganPastoralInterpretationService;
-use App\Services\Renungan\RenunganMentorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +21,7 @@ class RenunganPersonalizationController extends Controller
 
     public function __construct(
         private RenunganPastoralInterpretationService $pastoralInterpretationService,
-        private RenunganMentorService $renunganMentorService,
+        private RenunganAIService $renunganAIService,
     ) {
     }
 
@@ -290,10 +290,14 @@ class RenunganPersonalizationController extends Controller
         $validated = $request->validate([
             'text' => ['required', 'string', 'min:3', 'max:5000'],
             'lang' => ['nullable', 'string', 'in:id,en'],
+            'mode' => ['nullable', 'string', 'in:calm_heart,practical_step,short_prayer,deep_reflection'],
+            'storage_mode' => ['nullable', 'string', 'in:standard,no_raw_storage'],
         ]);
 
         $reflectionText = trim((string) $validated['text']);
         $lang = (($validated['lang'] ?? 'id') === 'en') ? 'id' : 'id';
+        $responseMode = (string) ($validated['mode'] ?? 'calm_heart');
+        $storageMode = (string) ($validated['storage_mode'] ?? 'standard');
 
         $analysis = $this->analyzeReflection($reflectionText);
         $searchTerms = $this->buildSearchTerms($reflectionText, $analysis);
@@ -402,7 +406,7 @@ class RenunganPersonalizationController extends Controller
             ],
         ];
 
-        $mentorResult = $this->renunganMentorService->generate([
+        $mentorResult = $this->renunganAIService->generate([
             'reflection_text' => $reflectionText,
             'legacy_meditation' => $meditation,
             'verse_reference' => (string) ($primary?->reference ?? 'Mazmur 55:23'),
@@ -411,17 +415,24 @@ class RenunganPersonalizationController extends Controller
             'interpretation' => $interpretation,
             'generation_plan' => $generationPlan,
             'quality' => $quality,
+            'response_mode' => $responseMode,
+            'storage_mode' => $storageMode,
         ]);
 
         $responsePayload['data']['mentor_opening'] = (string) ($mentorResult['mentor_opening'] ?? '');
         $responsePayload['data']['meditation'] = (string) ($mentorResult['meditation'] ?? $meditation);
         $responsePayload['data']['prayer_prompt'] = (string) ($mentorResult['prayer_prompt'] ?? '');
         $responsePayload['data']['follow_up_question'] = (string) ($mentorResult['follow_up_question'] ?? '');
+        $responsePayload['data']['follow_up_prompts'] = (array) ($mentorResult['follow_up_prompts'] ?? []);
         $responsePayload['data']['confidence'] = (string) ($mentorResult['confidence'] ?? 'medium');
         $responsePayload['data']['safety_notes'] = (array) ($mentorResult['safety_notes'] ?? []);
         $responsePayload['data']['request_id'] = (string) ($mentorResult['request_id'] ?? $requestId);
         $responsePayload['data']['driver'] = (string) data_get($mentorResult, 'meta.driver', 'template');
         $responsePayload['data']['used_fallback'] = (bool) data_get($mentorResult, 'meta.used_fallback', true);
+        $responsePayload['data']['response_mode'] = (string) ($mentorResult['response_mode'] ?? $responseMode);
+        $responsePayload['data']['safety'] = (array) ($mentorResult['safety'] ?? []);
+        $responsePayload['data']['privacy'] = (array) ($mentorResult['privacy'] ?? []);
+        $responsePayload['data']['ai_pipeline'] = (array) ($mentorResult['pipeline'] ?? []);
 
         $requestDurationMs = $this->elapsedMs($requestStartedAt);
         $initialQualityReasons = array_values(array_unique((array) ($initialQuality['reasons'] ?? [])));

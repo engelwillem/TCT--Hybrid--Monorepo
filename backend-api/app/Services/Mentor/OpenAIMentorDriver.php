@@ -2,13 +2,18 @@
 
 namespace App\Services\Mentor;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Http;
+use App\Services\AI\AIProviderInterface;
+use App\Services\AI\PromptRegistry;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class OpenAIMentorDriver implements MentorDriverInterface
 {
+    public function __construct(
+        private readonly AIProviderInterface $provider,
+        private readonly PromptRegistry $prompts,
+    ) {
+    }
+
     public function getInsights(
         string $bookCode,
         int $chapter,
@@ -19,7 +24,7 @@ class OpenAIMentorDriver implements MentorDriverInterface
             [
                 [
                     'role' => 'system',
-                    'content' => 'You are Scripture Guide. Return concise, scripture-centered Indonesian JSON only.',
+                    'content' => $this->prompts->system('versehub.mentor').' Return concise, scripture-centered Indonesian JSON only.',
                 ],
                 [
                     'role' => 'user',
@@ -79,21 +84,42 @@ class OpenAIMentorDriver implements MentorDriverInterface
     {
         $ref = (string) ($verseContext['ref'] ?? 'ayat ini');
         $text = trim((string) ($verseContext['text'] ?? ''));
+        $threadTurns = collect((array) data_get($verseContext, 'thread_context.turns', []))
+            ->filter(fn ($turn) => is_array($turn))
+            ->map(function (array $turn): array {
+                return [
+                    'q' => trim((string) ($turn['q'] ?? '')),
+                    'a' => trim((string) ($turn['a'] ?? '')),
+                ];
+            })
+            ->filter(fn (array $turn) => $turn['q'] !== '' || $turn['a'] !== '')
+            ->values()
+            ->all();
 
         $payload = $this->requestJson(
             [
                 [
                     'role' => 'system',
-                    'content' => 'You are Scripture Guide. Keep answer scripture-based, transparent, concise, and non-authoritarian.',
+                    'content' => $this->prompts->system('versehub.mentor'),
                 ],
                 [
                     'role' => 'user',
                     'content' => sprintf(
-                        "Pertanyaan: %s\nRujukan: %s\nTeks: %s\nKembalikan JSON dengan keys: answer, interpretation, study_guidance, related_refs (array slug), confidence.",
+                        "Pertanyaan: %s\nRujukan: %s\nTeks: %s\nMode: %s\nKembalikan JSON dengan keys: answer, interpretation, study_guidance, related_refs (array slug), confidence.",
                         trim($question),
                         $ref,
-                        $text !== '' ? $text : '(tidak tersedia)'
+                        $text !== '' ? $text : '(tidak tersedia)',
+                        (string) ($verseContext['assist_mode'] ?? 'explain_simply')
                     ),
+                ],
+                [
+                    'role' => 'user',
+                    'content' => 'Konteks sesi mentor sebelumnya (jika ada): '.json_encode([
+                        'thread_context' => [
+                            'session_id' => data_get($verseContext, 'thread_context.session_id'),
+                            'turns' => $threadTurns,
+                        ],
+                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ],
             ],
             [
@@ -141,45 +167,13 @@ class OpenAIMentorDriver implements MentorDriverInterface
      */
     private function requestJson(array $messages, array $format): array
     {
-        $apiKey = trim((string) config('versehub_mentor.openai.api_key'));
-        if ($apiKey === '') {
-            throw new RuntimeException('VERSEHUB mentor OpenAI API key is not configured.');
-        }
+        $response = $this->provider->requestJson($messages, [
+            'model' => (string) config('versehub_mentor.openai.model', 'gpt-4o-mini'),
+            'temperature' => (float) config('versehub_mentor.openai.temperature', 0.4),
+            'max_output_tokens' => (int) config('versehub_mentor.openai.max_tokens', 600),
+            'format' => $format,
+        ]);
 
-        $response = Http::acceptJson()
-            ->asJson()
-            ->timeout(20)
-            ->withToken($apiKey)
-            ->post('https://api.openai.com/v1/responses', [
-                'model' => (string) config('versehub_mentor.openai.model', 'gpt-4o-mini'),
-                'input' => $messages,
-                'temperature' => (float) config('versehub_mentor.openai.temperature', 0.4),
-                'max_output_tokens' => (int) config('versehub_mentor.openai.max_tokens', 600),
-                'text' => [
-                    'format' => $format,
-                ],
-            ]);
-
-        if (! $response->successful()) {
-            throw new RuntimeException('OpenAI responses request failed with status '.$response->status());
-        }
-
-        $json = $response->json();
-        if (! is_array($json)) {
-            throw new RuntimeException('OpenAI responses payload is not JSON object.');
-        }
-
-        $outputText = trim((string) Arr::get($json, 'output_text', ''));
-        if ($outputText === '') {
-            $outputText = trim((string) Arr::get($json, 'output.0.content.0.text', ''));
-        }
-
-        $parsed = json_decode($outputText, true);
-        if (! is_array($parsed)) {
-            throw new RuntimeException('OpenAI responses output is not valid JSON.');
-        }
-
-        return $parsed;
+        return (array) ($response['data'] ?? []);
     }
 }
-

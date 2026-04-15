@@ -290,6 +290,81 @@ async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, attem
 }
 
 export const CommunityService = {
+  async aiAssist(
+    mode:
+      | "compose_refine"
+      | "compose_prayer_request"
+      | "compose_structured_reflection"
+      | "compose_title_caption"
+      | "compose_verse_suggestions"
+      | "reply_empathy"
+      | "reply_prayer"
+      | "moderate"
+      | "tag"
+      | "summarize",
+    text: string,
+    context?: Record<string, unknown>
+  ): Promise<{
+    output_text: string;
+    tone: string;
+    suggestions: string[];
+    moderation: string[];
+    tags?: string[];
+    summary?: string | null;
+    verse_refs?: string[];
+    safety?: { risk_level?: "low" | "medium" | "high"; flags?: string[] };
+    request_id?: string | null;
+    used_fallback?: boolean;
+  }> {
+    const response = await fetch("/api/community/ai/assist", {
+      method: "POST",
+      headers: {
+        ...buildHeaders(true),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode,
+        text,
+        context: context ?? {},
+      }),
+    });
+
+    await assertOk(response, "Failed to generate AI assist");
+    const payload = (await response.json()) as ApiEnvelope<{
+      output_text?: string;
+      tone?: string;
+      suggestions?: string[];
+      moderation?: string[];
+      tags?: string[];
+      summary?: string | null;
+      verse_refs?: string[];
+      safety?: { risk_level?: "low" | "medium" | "high"; flags?: string[] };
+      request_id?: string | null;
+      used_fallback?: boolean;
+    }>;
+
+    return {
+      output_text: String(payload?.data?.output_text || "").trim(),
+      tone: String(payload?.data?.tone || "pastoral").trim(),
+      suggestions: Array.isArray(payload?.data?.suggestions)
+        ? payload.data.suggestions.map((item) => String(item).trim()).filter(Boolean)
+        : [],
+      moderation: Array.isArray(payload?.data?.moderation)
+        ? payload.data.moderation.map((item) => String(item).trim()).filter(Boolean)
+        : [],
+      tags: Array.isArray(payload?.data?.tags)
+        ? payload.data.tags.map((item) => String(item).trim()).filter(Boolean)
+        : [],
+      summary: typeof payload?.data?.summary === "string" ? payload.data.summary : null,
+      verse_refs: Array.isArray(payload?.data?.verse_refs)
+        ? payload.data.verse_refs.map((item) => String(item).trim()).filter(Boolean)
+        : [],
+      safety: payload?.data?.safety,
+      request_id: payload?.data?.request_id ?? null,
+      used_fallback: Boolean(payload?.data?.used_fallback),
+    };
+  },
+
   async listPosts(): Promise<{
     posts: CommunityPost[];
     archivePosts: CommunityPost[];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CommunityApiController;
+use App\Http\Controllers\Api\V1\CommunityAIController;
 use App\Http\Controllers\Api\V1\CommunityComposerAnalyticsController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
@@ -95,6 +96,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/analytics/community/composer', [CommunityComposerAnalyticsController::class, 'index']);
 
         Route::post('/community/posts', [CommunityApiController::class, 'store']);
+        Route::post('/community/ai/assist', [CommunityAIController::class, 'assist']);
         Route::post('/renungan/share', [RenunganShareController::class, 'store']);
         Route::delete('/renungan/share/{token}', [RenunganShareController::class, 'destroy']);
         Route::post('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsStore']);

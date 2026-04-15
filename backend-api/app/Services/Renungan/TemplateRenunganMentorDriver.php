@@ -16,6 +16,7 @@ class TemplateRenunganMentorDriver implements RenunganMentorDriverInterface
         $theme = (string) ($analysis['primary_theme'] ?? 'direction');
         $emotion = (string) ($analysis['primary_emotion'] ?? 'confused');
         $intent = (string) ($analysis['intent'] ?? 'guidance');
+        $responseMode = (string) ($context['response_mode'] ?? 'calm_heart');
         $shortReflection = Str::limit(
             preg_replace('/\s+/', ' ', $reflection) ?? $reflection,
             120,
@@ -39,13 +40,21 @@ class TemplateRenunganMentorDriver implements RenunganMentorDriverInterface
             $safetyNotes[] = 'Kamu berhak menata batas sehat sambil tetap menjaga hati agar tidak dikuasai kepahitan.';
         }
 
+        $modeMeditation = match ($responseMode) {
+            'short_prayer' => "Tuhan, di tengah {$intent} ini, tenangkan hatiku, tuntun langkahku, dan jagai pikiranku dalam damai-Mu.",
+            'practical_step' => 'Hari ini pilih satu langkah kecil yang jujur: tenangkan diri, berdoa singkat, lalu lakukan keputusan paling benar yang bisa kamu kerjakan sekarang.',
+            'deep_reflection' => "Dalam {$verseReference}, Tuhan tidak menolak hatimu yang rapuh. Ia mengundangmu memandang situasi ini bukan dari panik, melainkan dari kasih yang setia.",
+            default => null,
+        };
+
         return [
             'mentor_opening' => $shortReflection !== ''
                 ? "Terima kasih sudah jujur. Saya menangkap pergumulanmu: {$shortReflection}"
                 : 'Terima kasih sudah membuka hati. Mari kita jalani renungan ini pelan-pelan.',
-            'meditation' => $legacyMeditation !== ''
-                ? $legacyMeditation
-                : "Dalam {$verseReference}, Tuhan mengundangmu untuk melangkah dengan tenang dan jujur di hadapan-Nya.",
+            'meditation' => $modeMeditation
+                ?: ($legacyMeditation !== ''
+                    ? $legacyMeditation
+                    : "Dalam {$verseReference}, Tuhan mengundangmu untuk melangkah dengan tenang dan jujur di hadapan-Nya."),
             'prayer_prompt' => "Tuhan, tuntun aku menanggapi {$intent} dengan hati yang lembut, jernih, dan taat.",
             'follow_up_question' => $followUp,
             'confidence' => in_array($emotion, ['hostile', 'angry'], true) ? 'medium' : 'high',
@@ -54,4 +63,3 @@ class TemplateRenunganMentorDriver implements RenunganMentorDriverInterface
         ];
     }
 }
-

@@ -6,6 +6,9 @@ use App\Filament\Auth\Responses\AdminLoginResponse;
 use App\Events\Community\PostRepostedToTalks;
 use App\Listeners\Community\InvalidateCommunityPostCaches;
 use App\Listeners\Community\RecordPostRepostedAnalytics;
+use App\Services\AI\AIProviderInterface;
+use App\Services\AI\NullAIProvider;
+use App\Services\AI\OpenAIResponsesClient;
 use App\Services\Mentor\ClaudeMentorDriver;
 use App\Services\Mentor\MentorDriverInterface;
 use App\Services\Mentor\OpenAIMentorDriver;
@@ -48,6 +51,15 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(RichContentSanitizer::class);
+        $this->app->bind(AIProviderInterface::class, function () {
+            $provider = strtolower((string) config('ai.provider', 'openai'));
+
+            if ($provider === 'openai') {
+                return $this->app->make(OpenAIResponsesClient::class);
+            }
+
+            return $this->app->make(NullAIProvider::class);
+        });
 
         // Override Filament login response so we can send security notifications.
         $this->app->bind(FilamentLoginResponseContract::class, AdminLoginResponse::class);
@@ -57,21 +69,21 @@ class AppServiceProvider extends ServiceProvider
 
             if ($configuredDriver === 'openai') {
                 if (trim((string) config('versehub_mentor.openai.api_key')) !== '') {
-                    return new OpenAIMentorDriver;
+                    return $this->app->make(OpenAIMentorDriver::class);
                 }
 
-                return new TemplateMentorDriver;
+                return $this->app->make(TemplateMentorDriver::class);
             }
 
             if ($configuredDriver === 'claude') {
                 if (trim((string) config('versehub_mentor.claude.api_key')) !== '') {
-                    return new ClaudeMentorDriver;
+                    return $this->app->make(ClaudeMentorDriver::class);
                 }
 
-                return new TemplateMentorDriver;
+                return $this->app->make(TemplateMentorDriver::class);
             }
 
-            return new TemplateMentorDriver;
+            return $this->app->make(TemplateMentorDriver::class);
         });
     }
 

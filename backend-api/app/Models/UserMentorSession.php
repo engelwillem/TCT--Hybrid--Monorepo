@@ -10,6 +10,10 @@ class UserMentorSession extends Model
     protected $fillable = [
         'user_id',
         'verse_ref',
+        'lang',
+        'question',
+        'answer_summary',
+        'insight_type',
         'session_type',
         'summary',
         'metadata',

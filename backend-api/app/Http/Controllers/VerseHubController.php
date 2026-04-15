@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BibleVerse;
-use App\Services\VerseHubMentorService;
+use App\Services\AI\VerseHubAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -72,7 +72,7 @@ class VerseHubController extends Controller
      * Scripture Guide: Mentor Insights API endpoint.
      * Returns contextual questions and theme connections for a given verse.
      */
-    public function mentorInsights(Request $request, string $lang, string $ref, VerseHubMentorService $mentor)
+    public function mentorInsights(Request $request, string $lang, string $ref, VerseHubAIService $mentor)
     {
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
@@ -132,12 +132,13 @@ class VerseHubController extends Controller
      * Scripture Guide: Free-text Ask flow.
      * Rate-limited to 10/hour per authenticated user.
      */
-    public function mentorAsk(Request $request, string $lang, string $ref, VerseHubMentorService $mentor)
+    public function mentorAsk(Request $request, string $lang, string $ref, VerseHubAIService $mentor)
     {
         abort_unless(in_array($lang, ['id', 'en'], true), 404);
 
         $validated = $request->validate([
             'question' => ['required', 'string', 'min:3', 'max:400'],
+            'mode' => ['nullable', 'string', 'in:explain_simply,practical_meaning,prayer_from_verse,related_verses,tradition_context_note'],
         ]);
 
         $normalized = $this->normalizeRef($lang, $ref);
@@ -178,10 +179,11 @@ class VerseHubController extends Controller
             'lang' => $lang,
         ];
 
-        $result = $mentor->askScriptureGuide(
-            $validated['question'],
-            $verseContext,
-            $request->user()
+        $result = $mentor->ask(
+            question: $validated['question'],
+            verseContext: $verseContext,
+            user: $request->user(),
+            assistMode: (string) ($validated['mode'] ?? 'explain_simply')
         );
 
         return response()->json($result);

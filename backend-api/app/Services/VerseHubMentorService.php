@@ -56,29 +56,26 @@ class VerseHubMentorService
         array $verseContext = [],
         ?Authenticatable $user = null
     ): array {
+        $driverContext = $verseContext;
+        $threadContext = $this->buildThreadContext($user, $verseContext);
+        if (! empty($threadContext)) {
+            $driverContext['thread_context'] = $threadContext;
+        }
+
         try {
-            $result = $this->driver->answerQuestion($question, $verseContext);
+            $result = $this->driver->answerQuestion($question, $driverContext);
         } catch (\Throwable $e) {
             Log::warning('VerseHubMentorService: ask fallback triggered', ['error' => $e->getMessage()]);
             $result = $this->fallbackAnswer($question);
         }
 
         $normalized = $this->normalizeAskResult($result, $verseContext);
+        $sessionMeta = null;
 
         // Record session if authenticated.
         if ($user && isset($verseContext['ref'])) {
             try {
-                UserMentorSession::create([
-                    'user_id' => $user->getAuthIdentifier(),
-                    'verse_ref' => $verseContext['ref'],
-                    'session_type' => 'ask',
-                    'summary' => mb_substr((string) ($normalized['answer'] ?? ''), 0, 500),
-                    'metadata' => [
-                        'question' => $question,
-                        'related_refs' => $normalized['related_refs'] ?? [],
-                        'confidence' => $normalized['confidence'] ?? 'unknown',
-                    ],
-                ]);
+                $sessionMeta = $this->upsertThreadSession($user, $verseContext, $question, $normalized);
             } catch (\Throwable $e) {
                 Log::error('VerseHubMentorService: failed to record session', ['error' => $e->getMessage()]);
             }
@@ -87,6 +84,7 @@ class VerseHubMentorService
         return array_merge($normalized, [
             'mentor_label' => config('versehub_mentor.label', 'Scripture Guide'),
             'disclaimer_id' => config('versehub_mentor.disclaimer_id'),
+            'session' => $sessionMeta,
         ]);
     }
 
@@ -181,6 +179,9 @@ class VerseHubMentorService
             'study_guidance' => $studyGuidance !== '' ? $studyGuidance : null,
             'related_refs' => $relatedRefs,
             'confidence' => (string) ($result['confidence'] ?? 'interpretive'),
+            'grounding_note' => $anchorRef
+                ? 'Jawaban diprioritaskan pada ayat utama, lalu diperkaya rujukan terkait seperlunya.'
+                : 'Jawaban diberikan secara hati-hati; verifikasi kembali dengan teks Alkitab penuh.',
             'scripture_basis' => [
                 'anchor_ref' => $anchorRef,
                 'anchor_text_excerpt' => $anchorTextExcerpt,
@@ -191,6 +192,115 @@ class VerseHubMentorService
                 'interpretation' => $interpretation !== '' ? $interpretation : null,
                 'study_guidance' => $studyGuidance !== '' ? $studyGuidance : null,
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildThreadContext(?Authenticatable $user, array $verseContext): array
+    {
+        if (! $user || ! isset($verseContext['ref'])) {
+            return [];
+        }
+
+        $session = UserMentorSession::query()
+            ->where('user_id', $user->getAuthIdentifier())
+            ->where('verse_ref', (string) $verseContext['ref'])
+            ->where('lang', (string) ($verseContext['lang'] ?? 'id'))
+            ->where('session_type', 'threaded_mentor')
+            ->where('is_archived', false)
+            ->latest('updated_at')
+            ->first();
+
+        if (! $session) {
+            return [];
+        }
+
+        $turns = collect((array) data_get($session->metadata, 'thread.turns', []))
+            ->filter(fn ($turn) => is_array($turn))
+            ->map(function (array $turn): array {
+                return [
+                    'q' => trim((string) ($turn['q'] ?? '')),
+                    'a' => trim((string) ($turn['a'] ?? '')),
+                ];
+            })
+            ->filter(fn (array $turn) => $turn['q'] !== '' || $turn['a'] !== '')
+            ->take(-3)
+            ->values()
+            ->all();
+
+        return [
+            'session_id' => $session->id,
+            'turns' => $turns,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $verseContext
+     * @param  array<string, mixed>  $normalized
+     * @return array<string, mixed>
+     */
+    private function upsertThreadSession(Authenticatable $user, array $verseContext, string $question, array $normalized): array
+    {
+        $verseRef = (string) ($verseContext['ref'] ?? '');
+        $lang = (string) ($verseContext['lang'] ?? 'id');
+        $assistMode = (string) ($verseContext['assist_mode'] ?? 'explain_simply');
+        $answer = trim((string) ($normalized['answer'] ?? ''));
+
+        $session = UserMentorSession::query()
+            ->where('user_id', $user->getAuthIdentifier())
+            ->where('verse_ref', $verseRef)
+            ->where('lang', $lang)
+            ->where('session_type', 'threaded_mentor')
+            ->where('is_archived', false)
+            ->latest('updated_at')
+            ->first();
+
+        if (! $session) {
+            $session = new UserMentorSession([
+                'user_id' => $user->getAuthIdentifier(),
+                'verse_ref' => $verseRef,
+                'lang' => $lang,
+                'insight_type' => 'ask',
+                'session_type' => 'threaded_mentor',
+                'is_archived' => false,
+            ]);
+        }
+
+        $turns = collect((array) data_get($session->metadata, 'thread.turns', []))
+            ->filter(fn ($turn) => is_array($turn))
+            ->values()
+            ->all();
+
+        $turns[] = [
+            'at' => now()->toIso8601String(),
+            'mode' => $assistMode,
+            'q' => Str::limit(trim($question), 300, '…'),
+            'a' => Str::limit($answer, 500, '…'),
+        ];
+        $turns = array_slice($turns, -6);
+
+        $session->question = Str::limit(trim($question), 500, '…');
+        $session->answer_summary = Str::limit($answer, 500, '…');
+        $session->summary = Str::limit($answer, 500, '…');
+        $session->metadata = [
+            'assist_mode' => $assistMode,
+            'related_refs' => $normalized['related_refs'] ?? [],
+            'confidence' => $normalized['confidence'] ?? 'unknown',
+            'thread' => [
+                'turns' => $turns,
+                'turn_count' => count($turns),
+                'last_mode' => $assistMode,
+            ],
+        ];
+        $session->save();
+
+        return [
+            'id' => $session->id,
+            'type' => 'threaded_mentor',
+            'turn_count' => count($turns),
+            'updated_at' => optional($session->updated_at)->toIso8601String(),
         ];
     }
 

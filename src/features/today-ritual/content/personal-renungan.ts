@@ -9,9 +9,30 @@ export type RenunganMatch = {
   followUpQuestion?: string;
   confidence?: number | string | null;
   safetyNotes?: string[];
+  followUpPrompts?: string[];
   requestId?: string | null;
   driver?: "openai" | "template" | "claude" | string | null;
   usedFallback?: boolean;
+  responseMode?: "calm_heart" | "practical_step" | "short_prayer" | "deep_reflection" | string | null;
+  safety?: {
+    risk_level?: "low" | "medium" | "high";
+    flags?: string[];
+  };
+  privacy?: {
+    storage_mode?: "standard" | "no_raw_storage" | string;
+    raw_input_persisted?: boolean;
+    input_hash?: string;
+  };
+  aiPipeline?: {
+    steps?: string[];
+    grounding?: {
+      anchor_ref?: string | null;
+    };
+    safety?: {
+      risk_level?: "low" | "medium" | "high";
+      urgency?: "routine" | "watch" | "priority" | string;
+    };
+  };
   relatedVerses?: Array<{
     reference: string;
     text: string;
@@ -233,6 +254,8 @@ export async function generatePersonalRenungan(
   sessionContent: TodaySessionContent,
   options?: {
     signal?: AbortSignal;
+    mode?: "calm_heart" | "practical_step" | "short_prayer" | "deep_reflection";
+    storageMode?: "standard" | "no_raw_storage";
     onTelemetry?: (event: PersonalRenunganTelemetryEvent) => void;
   }
 ): Promise<RenunganMatch> {
@@ -258,6 +281,8 @@ export async function generatePersonalRenungan(
       body: JSON.stringify({
         text: clean,
         lang: "id",
+        mode: options?.mode ?? "calm_heart",
+        storage_mode: options?.storageMode ?? "standard",
       }),
     });
 
@@ -281,8 +306,13 @@ export async function generatePersonalRenungan(
         mentor_opening?: string;
         prayer_prompt?: string;
         follow_up_question?: string;
+        follow_up_prompts?: string[];
         confidence?: number | string | null;
         safety_notes?: unknown[];
+        response_mode?: string | null;
+        safety?: RenunganMatch["safety"];
+        privacy?: RenunganMatch["privacy"];
+        ai_pipeline?: RenunganMatch["aiPipeline"];
         request_id?: string | null;
         driver?: string | null;
         used_fallback?: boolean;
@@ -300,6 +330,11 @@ export async function generatePersonalRenungan(
     const mentorOpening = String(payload?.data?.mentor_opening || "").trim();
     const prayerPrompt = String(payload?.data?.prayer_prompt || "").trim();
     const followUpQuestion = String(payload?.data?.follow_up_question || "").trim();
+    const followUpPrompts = Array.isArray(payload?.data?.follow_up_prompts)
+      ? payload.data.follow_up_prompts
+          .map((item) => String(item ?? "").trim())
+          .filter((item) => item.length > 0)
+      : [];
     const confidence = payload?.data?.confidence ?? null;
     const safetyNotes = Array.isArray(payload?.data?.safety_notes)
       ? payload.data.safety_notes
@@ -311,6 +346,7 @@ export async function generatePersonalRenungan(
       payload?.data?.driver ||
       payload?.data?.mentor?.driver ||
       null;
+    const responseMode = payload?.data?.response_mode ?? null;
     const usedFallback =
       typeof payload?.data?.used_fallback === "boolean"
         ? payload.data.used_fallback
@@ -349,11 +385,16 @@ export async function generatePersonalRenungan(
       mentorOpening: mentorOpening || undefined,
       prayerPrompt: prayerPrompt || undefined,
       followUpQuestion: followUpQuestion || undefined,
+      followUpPrompts,
       confidence,
       safetyNotes,
       requestId: outputRequestId || null,
       driver,
       usedFallback,
+      responseMode,
+      safety: payload?.data?.safety,
+      privacy: payload?.data?.privacy,
+      aiPipeline: payload?.data?.ai_pipeline,
       verseText,
       verseReference,
       relatedVerses: Array.isArray(payload?.data?.related_verses)
