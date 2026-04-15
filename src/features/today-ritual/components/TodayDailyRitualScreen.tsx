@@ -28,6 +28,7 @@ import ReflectPrompt from './ReflectPrompt';
 import TodayShareActionBar from './TodayShareActionBar';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
 import { createRenunganShareToken } from '@/lib/renungan-share';
+import { prepareRenunganShareAsset } from '@/lib/share-assets';
 import { EmotionalStatePicker } from "@/components/core/EmotionalStatePicker";
 import { SurfaceBridgeAction } from "@/components/core/SurfaceBridgeAction";
 import { AIToneNotice } from "@/components/core/AIToneNotice";
@@ -172,6 +173,25 @@ export default function TodayDailyRitualScreen({
       };
       const nextPath = String(payload?.data?.share_path || "").trim();
       if (!nextPath) return personalSharePath;
+
+      // Enforce share-asset prepare so returned URL is versioned with ?v=<revision>.
+      const token = nextPath.split("/").filter(Boolean).pop();
+      if (token) {
+        try {
+          const preparePromise = prepareRenunganShareAsset(token);
+          const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+          const prepared = await Promise.race([preparePromise, timeoutPromise]);
+          if (prepared?.shareUrl) {
+            const preparedUrl = new URL(prepared.shareUrl, window.location.origin);
+            const preparedPath = `${preparedUrl.pathname}${preparedUrl.search}`;
+            setSnapshotSharePath(preparedPath);
+            return preparedPath;
+          }
+        } catch {
+          // non-fatal
+        }
+      }
+
       setSnapshotSharePath(nextPath);
       return nextPath;
     } catch {

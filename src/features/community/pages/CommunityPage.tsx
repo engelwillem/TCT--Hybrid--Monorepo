@@ -129,7 +129,7 @@ function SmartPostComposer({
 
 export function CommunityPage() {
   const router = useRouter();
-  const { isAuthenticated, isRestoring, profileEmail, profileId, profileName, avatarUrl } = useAuthSession();
+  const { status: authStatus, isAuthenticated, isRestoring, profileEmail, profileId, profileName, avatarUrl } = useAuthSession();
   const currentUserId = useMemo(() => String(profileId || "").trim(), [profileId]);
   const communityCacheScope = useMemo(
     () =>
@@ -514,20 +514,22 @@ export function CommunityPage() {
     images: File[] = [],
     metadata?: PostComposerMetadata
   ): Promise<ComposerSubmitResult> => {
-    if (isRestoring) {
+    const isAuthSessionReadyForSubmit = authStatus === "authenticated" && !isRestoring && Boolean(currentUserId);
+    if (!isAuthSessionReadyForSubmit) {
+      if (!isAuthenticated) {
+        openAuthGate("share");
+        return {
+          ok: false,
+          kind: "auth",
+          message: "Masuk dulu untuk membagikan tulisanmu.",
+          status: 401,
+        };
+      }
+
       return {
         ok: false,
         kind: "network",
-        message: "Sesi masih dipulihkan. Coba lagi beberapa detik.",
-      };
-    }
-    if (!isAuthenticated) {
-      openAuthGate("share");
-      return {
-        ok: false,
-        kind: "auth",
-        message: "Masuk dulu untuk membagikan tulisanmu.",
-        status: 401,
+        message: "Sesi akun belum siap. Coba lagi beberapa detik.",
       };
     }
 
@@ -624,7 +626,27 @@ export function CommunityPage() {
         };
       }
 
-      if (status === 503 || status === 504 || status === 502) {
+      if (status === 413) {
+        return {
+          ok: false,
+          kind: "validation",
+          message: "Ukuran total unggahan terlalu besar. Kurangi jumlah atau ukuran gambar.",
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      if (status === 408 || status === 504) {
+        return {
+          ok: false,
+          kind: "network",
+          message: "Unggahan terlalu lama. Coba lagi dengan gambar yang lebih ringan.",
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      if (status === 503 || status === 502) {
         return {
           ok: false,
           kind: "network",
@@ -640,6 +662,24 @@ export function CommunityPage() {
           kind: "storage",
           message: "Penyimpanan gambar sedang bermasalah. Coba lagi beberapa saat.",
           status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      const normalizedMessage = rawMessage.toLowerCase();
+      const isLikelyNetworkDrop =
+        !status &&
+        (
+          normalizedMessage.includes("failed to fetch") ||
+          normalizedMessage.includes("networkerror") ||
+          normalizedMessage.includes("network request failed") ||
+          normalizedMessage.includes("load failed")
+        );
+      if (isLikelyNetworkDrop) {
+        return {
+          ok: false,
+          kind: "network",
+          message: "Koneksi ke server upload terputus. Coba lagi.",
           diagnostics: imageDiagnostics,
         };
       }

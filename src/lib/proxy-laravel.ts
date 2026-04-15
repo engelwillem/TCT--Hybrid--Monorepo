@@ -30,6 +30,24 @@ function decodeRequestJson(body?: ArrayBuffer, contentType?: string | null): Rec
   }
 }
 
+function summarizeMultipartUpload(body?: ArrayBuffer, contentType?: string | null): {
+  fileCount: number;
+  totalFileBytes: number;
+} | null {
+  if (!body || !contentType?.toLowerCase().includes("multipart/form-data")) return null;
+
+  try {
+    const text = Buffer.from(body).toString("latin1");
+    const fileCount = (text.match(/name="images\[\]"/g) ?? []).length;
+    return {
+      fileCount,
+      totalFileBytes: body.byteLength,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function extractResponseToken(responseBody: ArrayBuffer | null, contentType?: string | null): string | null {
   if (!responseBody || !contentType?.includes("application/json")) return null;
 
@@ -114,17 +132,6 @@ export async function proxyLaravel(
     const xsrfToken = request.headers.get("x-xsrf-token") || request.headers.get("X-XSRF-TOKEN");
     const accept = request.headers.get("accept");
 
-    console.info("[proxy-laravel] request", {
-      requestId,
-      method: request.method,
-      sourcePath: requestUrl.pathname,
-      targetPath: targetPathname,
-      hasAuth: Boolean(authorization),
-      hasSessionCookieAuth: Boolean(sessionCookieToken),
-      hasCookie: Boolean(cookie),
-      hasXsrf: Boolean(xsrfToken),
-    });
-    
     // We only read the body for methods that typically have one
     const hasBody = !["GET", "HEAD", "OPTIONS"].includes(request.method);
     
@@ -137,6 +144,24 @@ export async function proxyLaravel(
       }
     }
     const requestBodyJson = decodeRequestJson(body, contentType);
+    const multipartUpload = summarizeMultipartUpload(body, contentType);
+    const contentLengthHeader = Number(request.headers.get("content-length") || 0);
+    const uploadBytes = body?.byteLength || contentLengthHeader || 0;
+
+    console.info("[proxy-laravel] request", {
+      requestId,
+      method: request.method,
+      sourcePath: requestUrl.pathname,
+      targetPath: targetPathname,
+      hasAuth: Boolean(authorization),
+      hasSessionCookieAuth: Boolean(sessionCookieToken),
+      hasCookie: Boolean(cookie),
+      hasXsrf: Boolean(xsrfToken),
+      contentType: contentType || null,
+      uploadFileCount: multipartUpload?.fileCount ?? 0,
+      uploadBytes,
+      uploadBodyBytes: multipartUpload?.totalFileBytes ?? uploadBytes,
+    });
 
     // Append query strings from the original Next.js request if they exist
     const url = new URL(request.url);
@@ -157,7 +182,7 @@ export async function proxyLaravel(
         ...(authorization ? { Authorization: authorization } : {}),
         ...(!authorization && sessionCookieToken ? { Authorization: `Bearer ${sessionCookieToken}` } : {}),
         ...(cookie ? { Cookie: cookie } : {}),
-        ...(upstreamRequestId ? { "X-Request-Id": upstreamRequestId } : {}),
+        "X-Request-Id": upstreamRequestId || requestId,
         ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
         ...(accept ? { Accept: accept } : { Accept: "application/json" }),
       },
@@ -168,6 +193,10 @@ export async function proxyLaravel(
       method: request.method,
       targetPath: targetPathname,
       status: response.status,
+      contentType: contentType || null,
+      uploadFileCount: multipartUpload?.fileCount ?? 0,
+      uploadBytes,
+      uploadBodyBytes: multipartUpload?.totalFileBytes ?? uploadBytes,
     });
 
     // 3. Clone headers for the proxy response
@@ -186,6 +215,9 @@ export async function proxyLaravel(
       const value = response.headers.get(header);
       if (value) responseHeaders.set(header, value);
     });
+    if (!responseHeaders.has("x-request-id")) {
+      responseHeaders.set("x-request-id", requestId);
+    }
 
     // Handle multiple Set-Cookie headers properly using getSetCookie()
     if (typeof response.headers.getSetCookie === "function") {

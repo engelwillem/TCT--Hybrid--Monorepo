@@ -3,6 +3,7 @@ import {
   buildImageId,
   clampCropTransform,
   DEFAULT_CROP_TRANSFORM,
+  MAX_COMPOSER_TOTAL_UPLOAD_BYTES,
   readFileAsDataUrl,
   type ComposerImage,
   type ComposerMode,
@@ -22,9 +23,82 @@ type UseComposerCropParams = {
   onApplyCroppedImage: (payload: { image: ComposerImage; existingId?: string }) => void;
   onSelectMediaAspectRatio: (ratio: MediaAspectRatio) => void;
   onError: (message: string | null) => void;
+  existingImageTotalBytes?: number;
   onMediaAttached?: (count: number) => void;
   onCropApplied?: () => void;
 };
+
+const NORMALIZED_IMAGE_MAX_DIMENSION = 1600;
+const NORMALIZED_IMAGE_TYPE = "image/jpeg";
+const NORMALIZED_IMAGE_QUALITY = 0.82;
+const TOTAL_IMAGE_PAYLOAD_ERROR =
+  "Total ukuran gambar terlalu besar. Kurangi jumlah gambar atau gunakan gambar yang lebih ringan.";
+
+export function clampFilesToTotalPayload(
+  files: File[],
+  startingBytes: number,
+  maxTotalBytes: number = MAX_COMPOSER_TOTAL_UPLOAD_BYTES
+): { accepted: File[]; overflowed: boolean; totalBytes: number } {
+  let runningTotal = Math.max(0, startingBytes);
+  const accepted: File[] = [];
+  let overflowed = false;
+
+  for (const file of files) {
+    if (runningTotal + file.size > maxTotalBytes) {
+      overflowed = true;
+      continue;
+    }
+
+    runningTotal += file.size;
+    accepted.push(file);
+  }
+
+  return { accepted, overflowed, totalBytes: runningTotal };
+}
+
+async function normalizeImageFile(file: File): Promise<File> {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Gagal memuat gambar."));
+      nextImage.src = objectUrl;
+    });
+
+    const largestDimension = Math.max(image.naturalWidth, image.naturalHeight);
+    const shouldResize = largestDimension > NORMALIZED_IMAGE_MAX_DIMENSION;
+    const resizeScale = shouldResize ? NORMALIZED_IMAGE_MAX_DIMENSION / largestDimension : 1;
+    const targetWidth = Math.max(1, Math.round(image.naturalWidth * resizeScale));
+    const targetHeight = Math.max(1, Math.round(image.naturalHeight * resizeScale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Canvas normalisasi tidak tersedia.");
+    }
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, NORMALIZED_IMAGE_TYPE, NORMALIZED_IMAGE_QUALITY)
+    );
+    if (!blob) {
+      throw new Error("Gagal menyiapkan gambar.");
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "");
+    return new File([blob], `${baseName}-community.jpg`, {
+      type: NORMALIZED_IMAGE_TYPE,
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
 
 export function useComposerCrop({
   composerMode,
@@ -35,6 +109,7 @@ export function useComposerCrop({
   onApplyCroppedImage,
   onSelectMediaAspectRatio,
   onError,
+  existingImageTotalBytes = 0,
   onMediaAttached,
   onCropApplied,
 }: UseComposerCropParams) {
@@ -167,35 +242,61 @@ export function useComposerCrop({
 
     const nextFiles = files.slice(0, availableSlots);
     try {
-      const prepared = await Promise.all(
-        nextFiles.map(async (file) => {
-          const source = await readFileAsDataUrl(file);
-          const transform = await resolveSmartFitTransform(source, cropPreset.ratio);
-          return {
-            id: buildImageId(file),
-            file,
-            source,
-            aspectRatio: mediaAspectRatio,
-            transform,
-          };
-        })
-      );
-      if (!hasOverflowSelection) {
+      const prepared: Array<{
+        id: string;
+        file: File;
+        originalFile: File;
+        source: string;
+        aspectRatio: MediaAspectRatio;
+        transform: CropTransform;
+      }> = [];
+      let runningTotalBytes = Math.max(0, existingImageTotalBytes);
+      let overflowedByTotalSize = false;
+
+      for (const file of nextFiles) {
+        const source = await readFileAsDataUrl(file);
+        const normalizedFile = await normalizeImageFile(file);
+
+        if (runningTotalBytes + normalizedFile.size > MAX_COMPOSER_TOTAL_UPLOAD_BYTES) {
+          overflowedByTotalSize = true;
+          continue;
+        }
+
+        runningTotalBytes += normalizedFile.size;
+        const transform = await resolveSmartFitTransform(source, cropPreset.ratio);
+        prepared.push({
+          id: buildImageId(normalizedFile),
+          file: normalizedFile,
+          originalFile: file,
+          source,
+          aspectRatio: mediaAspectRatio,
+          transform,
+        });
+      }
+
+      if (overflowedByTotalSize) {
+        onError(TOTAL_IMAGE_PAYLOAD_ERROR);
+      } else if (hasOverflowSelection) {
+        onError(`Maksimal ${maxImages} gambar per post.`);
+      } else {
         onError(null);
       }
+
       prepared.forEach((item) => {
         const image: ComposerImage = {
           id: item.id,
           file: item.file,
           aspectRatio: item.aspectRatio,
-          originalFile: item.file,
+          originalFile: item.originalFile,
           originalSource: item.source,
           transform: item.transform,
         };
 
         onApplyCroppedImage({ image });
       });
-      onMediaAttached?.(prepared.length);
+      if (prepared.length > 0) {
+        onMediaAttached?.(prepared.length);
+      }
     } catch {
       onError("Gagal memuat gambar. Coba pilih ulang file.");
     }

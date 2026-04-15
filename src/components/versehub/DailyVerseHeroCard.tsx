@@ -5,6 +5,7 @@ import { Bookmark, Share2, Book } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DailyVerse } from '@/types/versehub-daily';
 import { getVerseShareUrl } from '@/lib/share';
+import { prepareVersehubShareAsset } from '@/lib/share-assets';
 
 const isIos = () => typeof navigator !== 'undefined' && /iP(hone|od|ad)/.test(navigator.userAgent || '');
 
@@ -200,17 +201,30 @@ export default function DailyVerseHeroCard({
 
     const shareVerse = async () => {
         const shareTitle = `${heroRefLabel} • VerseHub`;
+        let preparedUrl = canonicalUrl;
+        if (verse?.ref) {
+            try {
+                const preparePromise = prepareVersehubShareAsset('id', verse.ref);
+                const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+                const prepared = await Promise.race([preparePromise, timeoutPromise]);
+                if (prepared?.shareUrl) {
+                    preparedUrl = prepared.shareUrl;
+                }
+            } catch {
+                // non-fatal
+            }
+        }
         try {
             if (navigator.share) {
                 await navigator.share({
                     title: shareTitle,
                     text: heroQuote,
-                    url: canonicalUrl,
+                    url: preparedUrl,
                 });
                 return;
             }
 
-            const waUrl = `https://wa.me/?text=${encodeURIComponent(`${shareTitle} ${canonicalUrl}`)}`;
+            const waUrl = `https://wa.me/?text=${encodeURIComponent(`${shareTitle} ${preparedUrl}`)}`;
             if (isIos()) {
                 window.location.assign(waUrl);
                 return;
@@ -219,11 +233,11 @@ export default function DailyVerseHeroCard({
         } catch {
             try {
                 if (navigator.clipboard && window.isSecureContext) {
-                    await navigator.clipboard.writeText(canonicalUrl);
+                    await navigator.clipboard.writeText(preparedUrl);
                     return;
                 }
                 const ta = document.createElement('textarea');
-                ta.value = canonicalUrl;
+                ta.value = preparedUrl;
                 ta.setAttribute('readonly', '');
                 ta.style.position = 'fixed';
                 ta.style.left = '-9999px';

@@ -6,6 +6,7 @@ import { Share2, X } from "lucide-react";
 import AmbienceController from "@/components/versehub/AmbienceController";
 import MentorPanel from "@/components/versehub/MentorPanel";
 import { getVerseShareUrl } from "@/lib/share";
+import { prepareVersehubShareAsset } from "@/lib/share-assets";
 import { cn } from "@/lib/utils";
 import type { Book, OverlayType, SanctuaryScene, Verse, VerseData } from "@/features/versehub/types";
 
@@ -73,8 +74,19 @@ export function VersehubOverlayController({
   verseData,
 }: VersehubOverlayControllerProps) {
   const handleShareVerse = async (slug: string) => {
-    const url = getVerseShareUrl(lang, slug);
+    let url = getVerseShareUrl(lang, slug);
     const title = `VerseHub ${slug.replace(/-/g, " ").toUpperCase()}`;
+
+    try {
+      const preparePromise = prepareVersehubShareAsset(lang, slug);
+      const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+      const prepared = await Promise.race([preparePromise, timeoutPromise]);
+      if (prepared?.shareUrl) {
+        url = prepared.shareUrl;
+      }
+    } catch {
+      // non-fatal
+    }
 
     try {
       if (typeof navigator !== "undefined" && navigator.share) {

@@ -279,14 +279,30 @@ async function assertOk(response: Response, message: string): Promise<void> {
 }
 
 async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, attempts = 2): Promise<Response> {
-  let response = await fetch(input, init);
+  const retryableStatuses = new Set([502, 503, 504]);
+  let lastError: unknown = null;
 
-  for (let attempt = 1; attempt < attempts && response.status >= 500; attempt += 1) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(input, init);
+      if (!retryableStatuses.has(response.status) || attempt === attempts) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+      const isTransientNetworkError =
+        error instanceof TypeError ||
+        (error instanceof DOMException && error.name === "AbortError");
+
+      if (!isTransientNetworkError || attempt === attempts) {
+        throw error;
+      }
+    }
+
     await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
-    response = await fetch(input, init);
   }
 
-  return response;
+  throw (lastError instanceof Error ? lastError : new Error("Fetch request failed"));
 }
 
 export const CommunityService = {
@@ -407,11 +423,11 @@ export const CommunityService = {
       formData.append('images[]', file);
     });
 
-    const response = await fetch("/api/community/posts", {
+    const response = await fetchWithRetry("/api/community/posts", {
       method: "POST",
       headers: buildHeaders(true),
       body: formData,
-    });
+    }, 3);
 
     await assertOk(response, "Failed to create post");
     const payload = await response.json() as ApiEnvelope<{ post: ApiPost }>;

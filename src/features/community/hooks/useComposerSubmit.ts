@@ -4,6 +4,7 @@ import type {
   PostComposerMetadata,
   PostType,
 } from "../components/post-composer/types";
+import { MAX_COMPOSER_TOTAL_UPLOAD_BYTES } from "../components/post-composer/types";
 
 type SubmitSnapshot = {
   text: string;
@@ -25,6 +26,7 @@ type UseComposerSubmitParams = {
 const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_UPLOAD_IMAGES = 5;
 const ALLOWED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const MAX_TOTAL_UPLOAD_SIZE_BYTES = MAX_COMPOSER_TOTAL_UPLOAD_BYTES;
 
 type ComposerSubmitFailure = Exclude<ComposerSubmitResult, { ok: true }>;
 
@@ -57,6 +59,16 @@ function validateImages(images: File[]): ComposerSubmitFailure | null {
         status: 422,
       };
     }
+  }
+
+  const totalSize = images.reduce((sum, file) => sum + file.size, 0);
+  if (totalSize > MAX_TOTAL_UPLOAD_SIZE_BYTES) {
+    return {
+      ok: false,
+      kind: "validation",
+      message: "Total ukuran gambar terlalu besar. Kurangi jumlah gambar atau gunakan gambar yang lebih ringan.",
+      status: 413,
+    };
   }
 
   return null;

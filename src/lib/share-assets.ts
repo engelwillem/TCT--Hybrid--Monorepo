@@ -36,16 +36,21 @@ type PrepareApiResponse = {
 };
 
 function mapResponse(data: PrepareApiResponse['data'], fallbackShareUrl: string): ShareAssetResult {
+  const revision = String(data?.revision ?? '');
+  const shareUrl =
+    data?.share_url ??
+    (revision ? `${fallbackShareUrl}${fallbackShareUrl.includes('?') ? '&' : '?'}v=${encodeURIComponent(revision)}` : fallbackShareUrl);
+
   return {
     status:           (data?.status as ShareAssetResult['status']) ?? 'ready',
-    revision:         String(data?.revision ?? ''),
+    revision,
     assetId:          data?.asset_id ?? null,
     shareTitle:       data?.share_title ?? null,
     shareDescription: data?.share_description ?? null,
     shareEyebrow:     data?.share_eyebrow ?? null,
     finalOgImageUrl:  data?.final_og_image_url ?? null,
     fromCache:        Boolean(data?.from_cache),
-    shareUrl:         data?.share_url ?? fallbackShareUrl,
+    shareUrl,
   };
 }
 

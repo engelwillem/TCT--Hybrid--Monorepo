@@ -118,6 +118,7 @@ export function PostComposer({
     mediaAspectRatio: mediaDomain.mediaAspectRatio,
     cropPreset: mediaDomain.cropPreset,
     imageCount: mediaDomain.images.length,
+    existingImageTotalBytes: mediaDomain.images.reduce((sum, image) => sum + image.file.size, 0),
     maxImages: MAX_COMPOSER_IMAGES,
     onApplyCroppedImage: ({ image, existingId }) => {
       mediaDomain.updateMedia({ kind: "upsert", image, existingId });

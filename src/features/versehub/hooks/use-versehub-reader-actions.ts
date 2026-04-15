@@ -3,6 +3,7 @@
 import { useEffect, type Dispatch, type SetStateAction } from "react";
 import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { getVerseShareUrl } from "@/lib/share";
+import { prepareVersehubShareAsset } from "@/lib/share-assets";
 import { trackVersehubEvent } from "@/features/versehub/analytics";
 import type { VerseData } from "@/features/versehub/types";
 
@@ -270,11 +271,23 @@ export function useVersehubReaderActions({
 
   const handleShare = async () => {
     if (!verseData || !initialVerseRef) return;
+    let shareUrl = getVerseShareUrl(lang, initialVerseRef);
+
+    try {
+      const preparePromise = prepareVersehubShareAsset(lang, initialVerseRef);
+      const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+      const prepared = await Promise.race([preparePromise, timeoutPromise]);
+      if (prepared?.shareUrl) {
+        shareUrl = prepared.shareUrl;
+      }
+    } catch {
+      // non-fatal
+    }
 
     const shareData = {
       title: verseData.reference,
       text: `${verseData.reference}\n\n"${verseData.text}"\n\nBuka di VerseHub:`,
-      url: getVerseShareUrl(lang, initialVerseRef),
+      url: shareUrl,
     };
 
     try {

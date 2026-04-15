@@ -5,6 +5,7 @@ import ActionBar from '@/components/ActionBar';
 import { useUser } from '@/firebase/auth/use-user';
 import { useEffect, useMemo, useState } from 'react';
 import { getVerseShareUrl } from '@/lib/share';
+import { prepareVersehubShareAsset } from '@/lib/share-assets';
 
 export type FeaturedVerse = {
     ref: string;
@@ -122,8 +123,20 @@ export default function VerseHubFeaturedCard({
     }, [reactionKey, liked, bookmarked]);
 
     const onShare = async () => {
-        const url = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${shareOrigin}${verseHref}`;
+        let url = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${shareOrigin}${verseHref}`;
         const title = verse?.reference || 'VerseHub';
+        if (verse?.ref) {
+            try {
+                const preparePromise = prepareVersehubShareAsset('id', verse.ref);
+                const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+                const prepared = await Promise.race([preparePromise, timeoutPromise]);
+                if (prepared?.shareUrl) {
+                    url = prepared.shareUrl;
+                }
+            } catch {
+                // non-fatal
+            }
+        }
 
         try {
             if (navigator.share) {

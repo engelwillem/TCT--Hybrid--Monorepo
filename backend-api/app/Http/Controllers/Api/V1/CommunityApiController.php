@@ -111,6 +111,8 @@ class CommunityApiController extends Controller
         /** @var User|null $user */
         $user = Auth::guard('sanctum')->user();
         abort_unless($user, 401);
+        $requestId = trim((string) ($request->header('x-request-id') ?: Str::uuid()->toString()));
+        $contentType = (string) ($request->header('content-type') ?? '');
 
         $validated = $request->validate([
             'text' => ['required_without:images', 'nullable', 'string', 'max:5000'],
@@ -123,14 +125,35 @@ class CommunityApiController extends Controller
         ]);
 
         $mediaPaths = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $file) {
+        $imageFiles = $request->hasFile('images') ? (array) $request->file('images') : [];
+        $fileCount = count($imageFiles);
+        $totalFileBytes = (int) collect($imageFiles)->sum(function ($file) {
+            return is_object($file) && method_exists($file, 'getSize') ? (int) $file->getSize() : 0;
+        });
+
+        if ($fileCount > 0) {
+            Log::info('community_post_upload_received', [
+                'request_id' => $requestId,
+                'user_id' => $user->id,
+                'file_count' => $fileCount,
+                'total_file_bytes' => $totalFileBytes,
+                'content_type' => $contentType,
+            ]);
+        }
+
+        if (! empty($imageFiles)) {
+            foreach ($imageFiles as $index => $file) {
                 try {
                     $path = $file->store('community/posts', 'public');
                 } catch (\Throwable $exception) {
                     Log::error('community_post_upload_exception', [
+                        'request_id' => $requestId,
                         'user_id' => $user->id,
                         'index' => $index,
+                        'file_count' => $fileCount,
+                        'total_file_bytes' => $totalFileBytes,
+                        'content_type' => $contentType,
+                        'status' => 500,
                         'original_name' => $file->getClientOriginalName(),
                         'mime' => $file->getMimeType(),
                         'size' => $file->getSize(),
@@ -144,8 +167,13 @@ class CommunityApiController extends Controller
 
                 if (! is_string($path) || trim($path) === '') {
                     Log::error('community_post_upload_failed', [
+                        'request_id' => $requestId,
                         'user_id' => $user->id,
                         'index' => $index,
+                        'file_count' => $fileCount,
+                        'total_file_bytes' => $totalFileBytes,
+                        'content_type' => $contentType,
+                        'status' => 500,
                         'original_name' => $file->getClientOriginalName(),
                         'mime' => $file->getMimeType(),
                         'size' => $file->getSize(),
@@ -179,6 +207,17 @@ class CommunityApiController extends Controller
         ]);
 
         $fresh = $this->reloadPost($post->id, $user->id);
+        if ($fileCount > 0) {
+            Log::info('community_post_upload_stored', [
+                'request_id' => $requestId,
+                'user_id' => $user->id,
+                'file_count' => $fileCount,
+                'total_file_bytes' => $totalFileBytes,
+                'content_type' => $contentType,
+                'status' => 201,
+                'post_id' => (string) $post->id,
+            ]);
+        }
 
         return response()->json([
             'data' => [

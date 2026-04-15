@@ -93,6 +93,7 @@ export const FREE_UPLOAD_RATIO_PRESETS: RatioPreset[] = [
 
 export const DEFAULT_CROP_TRANSFORM: CropTransform = { x: 0, y: 0, scale: 1 };
 export const MAX_COMPOSER_IMAGES = 5;
+export const MAX_COMPOSER_TOTAL_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 export function clampCropTransform(
   transform: CropTransform,

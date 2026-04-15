@@ -7,6 +7,7 @@ import ActionBar from '@/components/ActionBar';
 import { cn } from '@/lib/utils';
 import { CommunityService } from '@/services/community.service';
 import { getCommunityShareUrl } from '@/lib/share';
+import { prepareCommunityShareAsset } from '@/lib/share-assets';
 import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
 
 export default function UserPostCard({
@@ -184,16 +185,31 @@ export default function UserPostCard({
                         onOpenComments={() => { }}
                         onShare={() => {
                             if (!postId) return;
-                            const shareUrl = getCommunityShareUrl(postId);
-                            if (navigator.share) {
-                                navigator.share({
-                                    title: userName,
-                                    text: content,
-                                    url: shareUrl
-                                });
-                            } else {
-                                window.open(`https://wa.me/?text=${encodeURIComponent(`${content} ${shareUrl}`)}`, '_blank', 'noopener,noreferrer');
-                            }
+                            void (async () => {
+                                let shareUrl = getCommunityShareUrl(postId);
+                                try {
+                                    const preparePromise = prepareCommunityShareAsset(postId);
+                                    const timeoutPromise = new Promise<null>((resolve) =>
+                                        window.setTimeout(() => resolve(null), 1500)
+                                    );
+                                    const prepared = await Promise.race([preparePromise, timeoutPromise]);
+                                    if (prepared?.shareUrl) {
+                                        shareUrl = prepared.shareUrl;
+                                    }
+                                } catch {
+                                    // non-fatal
+                                }
+
+                                if (navigator.share) {
+                                    navigator.share({
+                                        title: userName,
+                                        text: content,
+                                        url: shareUrl
+                                    });
+                                } else {
+                                    window.open(`https://wa.me/?text=${encodeURIComponent(`${content} ${shareUrl}`)}`, '_blank', 'noopener,noreferrer');
+                                }
+                            })();
                         }}
                         onBookmark={() => { }}
                     />
