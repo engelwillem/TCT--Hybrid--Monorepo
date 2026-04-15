@@ -1,4 +1,5 @@
 import { callLaravelApi } from '@/lib/laravel-api';
+import type { ShareOGPayload } from '@/features/og/share/types';
 
 type VerseShareData = {
   ref: string;
@@ -246,7 +247,10 @@ export async function fetchRenunganShareSnapshot(token: string): Promise<Renunga
 // Payload builders
 // ---------------------------------------------------------------------------
 
-export function buildCommunitySharePayload(post: CommunitySharePost, snapshot?: ShareAssetSnapshot | null) {
+export function buildCommunitySharePayload(
+  post: CommunitySharePost,
+  snapshot?: ShareAssetSnapshot | null,
+): ShareOGPayload {
   const rawPreviewIndex = post.metadata?.preview_media_index;
   const selectedPreviewIndex =
     Number.isInteger(rawPreviewIndex) && Number(rawPreviewIndex) >= 0 ? Number(rawPreviewIndex) : 0;
@@ -263,12 +267,22 @@ export function buildCommunitySharePayload(post: CommunitySharePost, snapshot?: 
   const meta = reference ? `${reference} • ${post.author.name}` : `${post.author.name} • Community`;
   const imageUrl = snapshot?.final_og_image_url || mediaUrl;
 
+  if (imageUrl) {
+    return {
+      kind: 'media',
+      title,
+      body,
+      meta,
+      imageUrl,
+      eyebrow,
+    };
+  }
+
   return {
-    kind: (imageUrl ? 'media' : 'scripture') as 'media' | 'scripture',
+    kind: 'scripture',
     title,
     body,
     meta,
-    imageUrl,
     eyebrow,
   };
 }
