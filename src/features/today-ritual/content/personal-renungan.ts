@@ -1,4 +1,5 @@
 import type { TodaySessionContent } from "./today-session.types";
+import type { EmotionalEntryState } from "@/features/ux-architecture/types";
 
 export type RenunganMatch = {
   verseText: string;
@@ -256,6 +257,7 @@ export async function generatePersonalRenungan(
     signal?: AbortSignal;
     mode?: "calm_heart" | "practical_step" | "short_prayer" | "deep_reflection";
     storageMode?: "standard" | "no_raw_storage";
+    entryState?: EmotionalEntryState | null;
     onTelemetry?: (event: PersonalRenunganTelemetryEvent) => void;
   }
 ): Promise<RenunganMatch> {
@@ -282,6 +284,7 @@ export async function generatePersonalRenungan(
         text: clean,
         lang: "id",
         mode: options?.mode ?? "calm_heart",
+        entry_state: options?.entryState ?? null,
         storage_mode: options?.storageMode ?? "standard",
       }),
     });

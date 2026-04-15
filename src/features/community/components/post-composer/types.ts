@@ -20,6 +20,23 @@ export type PostComposerMetadata = {
   }>;
 };
 
+export type ComposerSubmitFailureKind =
+  | "auth"
+  | "validation"
+  | "storage"
+  | "network"
+  | "unknown";
+
+export type ComposerSubmitResult =
+  | { ok: true }
+  | {
+      ok: false;
+      kind: ComposerSubmitFailureKind;
+      message: string;
+      status?: number;
+      diagnostics?: Record<string, unknown>;
+    };
+
 export type CropTransform = {
   x: number;
   y: number;

@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -123,8 +124,38 @@ class CommunityApiController extends Controller
 
         $mediaPaths = [];
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $path = $file->store('community/posts', 'public');
+            foreach ($request->file('images') as $index => $file) {
+                try {
+                    $path = $file->store('community/posts', 'public');
+                } catch (\Throwable $exception) {
+                    Log::error('community_post_upload_exception', [
+                        'user_id' => $user->id,
+                        'index' => $index,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                        'message' => $exception->getMessage(),
+                    ]);
+
+                    return response()->json([
+                        'message' => 'Penyimpanan gambar sedang bermasalah. Coba lagi beberapa saat.',
+                    ], 500);
+                }
+
+                if (! is_string($path) || trim($path) === '') {
+                    Log::error('community_post_upload_failed', [
+                        'user_id' => $user->id,
+                        'index' => $index,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                    ]);
+
+                    return response()->json([
+                        'message' => 'Gagal menyimpan gambar yang diunggah.',
+                    ], 500);
+                }
+
                 $mediaPaths[] = '/storage/'.ltrim($path, '/');
             }
         }

@@ -3,11 +3,15 @@
 use App\Http\Controllers\Api\V1\CommunityApiController;
 use App\Http\Controllers\Api\V1\CommunityAIController;
 use App\Http\Controllers\Api\V1\CommunityComposerAnalyticsController;
+use App\Http\Controllers\Api\V1\CommunityShareAssetController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
 use App\Http\Controllers\Api\V1\TodayApiController;
 use App\Http\Controllers\Api\V1\RenunganPersonalizationController;
 use App\Http\Controllers\Api\V1\RenunganShareController;
+use App\Http\Controllers\Api\V1\RenunganShareAssetController;
+use App\Http\Controllers\Api\V1\ShareAssetReadController;
 use App\Http\Controllers\Api\V1\TodaySessionController;
+use App\Http\Controllers\Api\V1\VersehubShareAssetController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelMembershipController;
@@ -49,6 +53,17 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/community/posts', [CommunityApiController::class, 'index']);
     Route::get('/community/media/{path}', [CommunityApiController::class, 'media'])->where('path', '.*');
     Route::get('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsIndex']);
+    // Single-post share payload — does NOT load full feed
+    Route::get('/community/posts/{memberPost}/share', [CommunityShareAssetController::class, 'show']);
+    // Share asset prepare — called on user intent, NEVER by crawlers
+    Route::post('/community/posts/{memberPost}/share-assets/prepare', [CommunityShareAssetController::class, 'prepare']);
+    Route::post('/versehub/{lang}/{slug}/share-assets/prepare', [VersehubShareAssetController::class, 'prepare'])
+        ->whereIn('lang', ['id', 'en'])
+        ->where('slug', '[a-z0-9]+(?:[-_.][a-z0-9]+)*');
+    Route::post('/renungan/share/{token}/prepare', [RenunganShareAssetController::class, 'prepare']);
+    // Read-only snapshot for OG routes — crawler-safe, no AI calls
+    Route::get('/share-assets/{surface}/{subject}/snapshot', [ShareAssetReadController::class, 'snapshot'])
+        ->where('subject', '.*');
 
     Route::get('/study-paths/{lang}', [StudyPathController::class, 'index'])
         ->whereIn('lang', ['id', 'en']);

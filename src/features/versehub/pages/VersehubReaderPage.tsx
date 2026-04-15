@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { VersehubLandingView } from "@/features/versehub/components/VersehubLandingView";
 import { VerseFocusCard } from "@/features/versehub/components/VerseFocusCard";
@@ -16,6 +16,8 @@ import { useVersehubReaderChrome } from "@/features/versehub/hooks/use-versehub-
 import { useVersehubReaderData } from "@/features/versehub/hooks/use-versehub-reader-data";
 import { landingContentPadding, readerContentPadding } from "@/features/versehub/constants";
 import type { OverlayType, Verse } from "@/features/versehub/types";
+import { parseVersehubBridgeContext } from "@/ai/versehub/resolve-versehub-request";
+import { resolveVersehubUiHints } from "@/ai/versehub/resolve-versehub-ui";
 
 interface VersehubReaderPageProps {
   lang: string;
@@ -33,6 +35,7 @@ export function VersehubReaderPage({
   initialVerseRef = null,
 }: VersehubReaderPageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { identity, status: authStatus, isAuthenticated } = useAuthSession();
   const lang = initialLang || "id";
   const [overlay, setOverlay] = useState<OverlayType>(null);
@@ -44,6 +47,11 @@ export function VersehubReaderPage({
   const [isSavingChapterReflection, setIsSavingChapterReflection] = useState(false);
   const [isSharingInsight, setIsSharingInsight] = useState(false);
   const [guidedMood, setGuidedMood] = useState<GuidedMoodKey | null>(null);
+  const bridgeContext = useMemo(
+    () => parseVersehubBridgeContext(new URLSearchParams(searchParams?.toString() ?? "")),
+    [searchParams]
+  );
+  const bridgeUiHints = useMemo(() => resolveVersehubUiHints(bridgeContext), [bridgeContext]);
 
   const {
     activeBook,
@@ -271,6 +279,13 @@ export function VersehubReaderPage({
               liveDateLabel={liveDateLabel}
               memberName={memberName}
               activeMood={activeMood}
+              bridgeContext={{
+                source: bridgeContext.source ?? null,
+                intent: bridgeContext.intent ?? null,
+                verseRef: bridgeContext.verseRef ?? null,
+              }}
+              bridgeUiHints={bridgeUiHints}
+              onBridgeReturnToRenungan={() => router.push("/renungan?source=versehub&intent=regulate")}
             />
           )}
         </>

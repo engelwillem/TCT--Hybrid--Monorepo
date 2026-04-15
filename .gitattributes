@@ -20,6 +20,7 @@
 
 # Export Cleanup (Exclude from Zip/Archive)
 docs/ export-ignore
+docs/CORE/architecture/ export-ignore
 node_modules/ export-ignore
 .next/ export-ignore
 .next-stale-*/ export-ignore
@@ -27,6 +28,9 @@ node_modules/ export-ignore
 .playwright-mcp/ export-ignore
 .idx/ export-ignore
 tmp/ export-ignore
+tmp_*.html export-ignore
+tmp_*.json export-ignore
+tmp_*.txt export-ignore
 test-results/ export-ignore
 backend-api/vendor/ export-ignore
 backend-api/node_modules/ export-ignore

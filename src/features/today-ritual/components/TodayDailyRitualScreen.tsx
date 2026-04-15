@@ -28,6 +28,17 @@ import ReflectPrompt from './ReflectPrompt';
 import TodayShareActionBar from './TodayShareActionBar';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
 import { createRenunganShareToken } from '@/lib/renungan-share';
+import { EmotionalStatePicker } from "@/components/core/EmotionalStatePicker";
+import { SurfaceBridgeAction } from "@/components/core/SurfaceBridgeAction";
+import { AIToneNotice } from "@/components/core/AIToneNotice";
+import { resolveRenunganBehavior } from "@/ai/renungan/resolve-renungan-request";
+import { resolveRenunganFollowUps } from "@/ai/renungan/resolve-renungan-ui";
+import { buildVersehubClarifyUrl } from "@/ai/bridges/build-bridge-context";
+import {
+  type EmotionalEntryState,
+  type RenunganMode,
+  EMOTIONAL_STATE_PROMPT_SEEDS,
+} from "@/features/ux-architecture/types";
 
 interface TodayDailyRitualScreenProps {
   sessionContent: TodaySessionContent;
@@ -39,6 +50,13 @@ const GENERATION_STATUS_STEPS = [
   "Merangkai renungan...",
   "Menyusun doa penutup...",
 ] as const;
+
+const RENUNGAN_MODE_OPTIONS: Array<{ value: RenunganMode; label: string }> = [
+  { value: "calm_heart", label: "Tenangkan hati" },
+  { value: "practical_step", label: "Langkah kecil" },
+  { value: "short_prayer", label: "Doa singkat" },
+  { value: "deep_reflection", label: "Renungan lebih dalam" },
+];
 
 function buildArchiveText(
   reflectionText: string,
@@ -90,6 +108,8 @@ export default function TodayDailyRitualScreen({
   const [bookmarkSuccessNote, setBookmarkSuccessNote] = useState<string | null>(null);
   const [activeActionText, setActiveActionText] = useState<string | null>(null);
   const [isGeneratingRenungan, setIsGeneratingRenungan] = useState(false);
+  const [entryState, setEntryState] = useState<EmotionalEntryState | null>(null);
+  const [renunganMode, setRenunganMode] = useState<RenunganMode>("calm_heart");
   const [mentorFeedback, setMentorFeedback] = useState<'helpful' | 'not_helpful' | null>(null);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [renunganGenerationLabel, setRenunganGenerationLabel] = useState<string>(
@@ -178,6 +198,24 @@ export default function TodayDailyRitualScreen({
       setHasStarted(true);
     }
   }, [reflectionText, isReflectDone, isPrayerCompleted]);
+
+  const renunganBehavior = useMemo(
+    () =>
+      resolveRenunganBehavior({
+        entryState,
+        selectedMode: renunganMode,
+        reflectionText,
+      }),
+    [entryState, reflectionText, renunganMode]
+  );
+  const renunganFollowUps = useMemo(() => {
+    const items = resolveRenunganFollowUps(entryState);
+    return items.slice(0, renunganBehavior.maxVisibleFollowUps);
+  }, [entryState, renunganBehavior.maxVisibleFollowUps]);
+
+  useEffect(() => {
+    setRenunganMode(resolveRenunganBehavior({ entryState, selectedMode: null }).mode);
+  }, [entryState]);
 
   useEffect(() => {
     if (ritualStage === 'reflect') {
@@ -363,15 +401,18 @@ export default function TodayDailyRitualScreen({
     setHasStarted(true);
   };
 
-  const handleContinueReflect = async () => {
+  const handleContinueReflect = async (overrideReflectionText?: string, overrideMode?: RenunganMode) => {
     if (isAuthRestoring) return;
     if (!isAuthenticated) {
       router.push('/login?next=/renungan');
       return;
     }
 
-    const reflection = reflectionText.trim();
+    const reflection = (overrideReflectionText ?? reflectionText).trim();
     if (!reflection || isGeneratingRenungan) return;
+    if (overrideReflectionText && !reflectionText.trim()) {
+      setReflectionText(reflection);
+    }
     setMentorFeedback(null);
     setIsFollowUpOpen(false);
     const cacheKey = normalizeReflectionForCache(reflection);
@@ -448,6 +489,8 @@ export default function TodayDailyRitualScreen({
         ? prepared
         : (await generatePersonalRenungan(reflection, sessionContent, {
             onTelemetry: handleGenerationTelemetry,
+            mode: overrideMode ?? renunganBehavior.mode,
+            entryState,
           }));
       setPersonalRenungan(generated);
       void trackRenunganTelemetryEvent('renungan_request_succeeded', {
@@ -468,6 +511,17 @@ export default function TodayDailyRitualScreen({
       generationStageTimersRef.current = [];
       setIsGeneratingRenungan(false);
     }
+  };
+
+  const handleSkipTextSubmit = () => {
+    const seed = EMOTIONAL_STATE_PROMPT_SEEDS[entryState ?? "neutral"];
+    void handleContinueReflect(seed);
+  };
+
+  const handleRegenerateByMode = (nextMode: RenunganMode) => {
+    setRenunganMode(nextMode);
+    if (!reflectionText.trim()) return;
+    void handleContinueReflect(reflectionText, nextMode);
   };
 
   const buildMentorOutcomeMeta = () => ({
@@ -521,14 +575,17 @@ export default function TodayDailyRitualScreen({
     void trackFunnelEvent('continue_to_versehub', {
       surface: 'renungan',
       meta: {
-        target: '/versehub/id',
+        target: '/versehub/id?source=renungan&intent=clarify',
         mode: 'landing',
       },
     });
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem('tct:versehub:auto-open');
-    }
-    router.push('/versehub/id');
+    router.push(
+      buildVersehubClarifyUrl({
+        verseRef: personalRenungan.verseReference,
+        source: "renungan",
+        entryState,
+      })
+    );
   };
 
   return (
@@ -640,6 +697,40 @@ export default function TodayDailyRitualScreen({
                     </div>
                   ) : null}
 
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {renunganFollowUps.includes("make_prayer") ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRegenerateByMode("short_prayer")}
+                        disabled={isGeneratingRenungan}
+                        className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
+                      >
+                        Jadikan doa
+                      </button>
+                    ) : null}
+                    {renunganFollowUps.includes("small_step") ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRegenerateByMode("practical_step")}
+                        disabled={isGeneratingRenungan}
+                        className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
+                      >
+                        Beri langkah kecil
+                      </button>
+                    ) : null}
+                    {renunganFollowUps.includes("open_versehub") ? (
+                      <SurfaceBridgeAction
+                        target="versehub"
+                        label="Lihat makna ayat ini"
+                        href={buildVersehubClarifyUrl({
+                          verseRef: personalRenungan.verseReference,
+                          source: "renungan",
+                          entryState,
+                        })}
+                      />
+                    ) : null}
+                  </div>
+
                   <div className="mt-6 rounded-2xl border border-slate-100/80 bg-slate-50/60 px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <button
@@ -740,16 +831,49 @@ export default function TodayDailyRitualScreen({
                   transition={m.tx.calm}
                 >
                   <ReflectPrompt
-                    prompt="Apa satu hal yang ingin kamu serahkan kepada Tuhan hari ini?"
-                    placeholder="ketik disini..."
+                    prompt="Apa satu hal yang sedang kamu rasakan hari ini?"
+                    placeholder="Kalau ingin, tulis sedikit apa yang sedang kamu rasakan."
                     ctaLabel="Doakan"
                     sealedLabel="Telah didoakan"
                     value={activeActionText ?? ''}
                     onChange={setReflectionText}
                     onContinue={() => void handleContinueReflect()}
+                    secondaryAction={{
+                      label: "Lewati tulisan, beri satu pegangan",
+                      onClick: handleSkipTextSubmit,
+                      disabled: isGeneratingRenungan,
+                    }}
                     isDone={isReflectDone}
                     isSubmitting={isGeneratingRenungan}
                     submittingLabel={renunganGenerationLabel}
+                    beforeInputSlot={
+                      <div className="space-y-4">
+                        <EmotionalStatePicker
+                          value={entryState}
+                          onChange={setEntryState}
+                        />
+                        <div className="space-y-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Mode bantuan</p>
+                          <div className="flex flex-wrap gap-2">
+                            {RENUNGAN_MODE_OPTIONS.map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setRenunganMode(option.value)}
+                                className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                                  renunganMode === option.value
+                                    ? "border-slate-800 bg-slate-900 text-white"
+                                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <AIToneNotice tone="gentle" text="Boleh singkat. Boleh juga kosong. Kita ambil satu langkah kecil saja." />
+                      </div>
+                    }
                   />
                 </motion.div>
               ) : null}
@@ -809,14 +933,24 @@ export default function TodayDailyRitualScreen({
                   </p>
                 ) : null}
 
-                <div className="mt-6">
+                <div className="mt-6 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleContinueToVersehub}
-                    className="text-[11px] font-black uppercase tracking-[0.24em] text-[#0284c7] underline-offset-2 transition-colors hover:text-[#0ea5e9] hover:underline"
+                    className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
                   >
-                    Lanjut ke Versehub
+                    Lanjut ke VerseHub
                   </button>
+                  <SurfaceBridgeAction
+                    target="community"
+                    label="Bagikan nanti"
+                    href={`/community?intent=reflection&source=renungan&verseRef=${encodeURIComponent(personalRenungan.verseReference)}&text=${encodeURIComponent(personalRenungan.meditation)}`}
+                  />
+                  <SurfaceBridgeAction
+                    target="renungan"
+                    label="Cukup sampai sini"
+                    href="/renungan"
+                  />
                 </div>
               </div>
             </motion.section>

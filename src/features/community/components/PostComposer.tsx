@@ -15,6 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { CommunityService } from "@/services/community.service";
+import { AIToneNotice } from "@/components/core/AIToneNotice";
+import { resolveVisibleCommunityActions, type CommunityComposerMode } from "@/ai/community/resolve-community-request";
+import type { EmotionalEntryState } from "@/ai/core/contracts";
 import { useComposerAnalytics } from "../hooks/useComposerAnalytics";
 import { readComposerDraftSeed, useComposerDraft } from "../hooks/useComposerDraft";
 import { useComposerCrop } from "../hooks/useComposerCrop";
@@ -35,6 +39,7 @@ import {
   moveItemToIndex,
   POST_COMPOSER_TYPES,
   type ComposerImage,
+  type ComposerSubmitResult,
   type CropTransform,
   type PostComposerMetadata,
   type PostType,
@@ -47,13 +52,14 @@ interface PostComposerProps {
     type: PostType,
     images?: File[],
     metadata?: PostComposerMetadata
-  ) => Promise<boolean | void> | boolean | void;
+  ) => Promise<ComposerSubmitResult> | ComposerSubmitResult;
   currentUser?: CommunityUser;
   className?: string;
   channels?: Array<{ id: string; slug: string; title: string }>;
   initialText?: string;
   initialType?: PostType;
   initialExpanded?: boolean;
+  entryState?: EmotionalEntryState | null;
 }
 
 export function PostComposer({
@@ -64,6 +70,7 @@ export function PostComposer({
   initialText = "",
   initialType = "user_post",
   initialExpanded = false,
+  entryState = null,
 }: PostComposerProps) {
   void channels;
   void currentUser;
@@ -72,6 +79,11 @@ export function PostComposer({
   const draftSeed = useMemo(() => (canRestoreDraft ? readComposerDraftSeed() : null), [canRestoreDraft]);
 
   const [type, setType] = useState<PostType>(draftSeed?.type ?? initialType);
+  const composerMode = useMemo<CommunityComposerMode>(() => {
+    if (type === "prayer_request") return "prayer_request";
+    if (type === "reflection" || type === "testimony") return "reflection";
+    return "default";
+  }, [type]);
   const composerTypes = POST_COMPOSER_TYPES;
   const experiments = useComposerExperiments();
 
@@ -137,7 +149,10 @@ export function PostComposer({
     canRestore: canRestoreDraft,
   });
 
-  const { restoredDraftAt, isSaving, lastSavedAt, markDraftRestored, clearDraft } = draftDomain;
+  const { restoredDraftAt, isSaving, lastSavedAt, markDraftRestored, clearDraft, saveDraftNow } = draftDomain;
+  const [isAiAssisting, setIsAiAssisting] = useState(false);
+  const [aiAssistError, setAiAssistError] = useState<string | null>(null);
+  const [aiAssistSuggestions, setAiAssistSuggestions] = useState<string[]>([]);
   const draftAgeLabel = useMemo(() => formatRelativeTime(restoredDraftAt), [restoredDraftAt]);
   const lastSavedLabel = useMemo(() => formatRelativeTime(lastSavedAt), [lastSavedAt]);
 
@@ -164,19 +179,66 @@ export function PostComposer({
 
   const hasPendingCrop = Boolean(cropDomain.activeCropItem) || cropDomain.cropQueue.length > 0;
   const canSubmit = Boolean(textDomain.text.trim() || mediaDomain.hasImages);
+  const visibleAiActions = useMemo(
+    () => resolveVisibleCommunityActions({ mode: composerMode, entryState }),
+    [composerMode, entryState]
+  );
   const [dialogMediaDraft, setDialogMediaDraft] = useState<ComposerImage[] | null>(null);
   const [dialogCoverDirty, setDialogCoverDirty] = useState(false);
   const [dialogReorderDirty, setDialogReorderDirty] = useState(false);
 
-  const resetComposer = ({ clearDraft = true }: { clearDraft?: boolean } = {}) => {
+  const resetComposer = ({ clearDraft: shouldClearDraft = true }: { clearDraft?: boolean } = {}) => {
     lifecycleDomain.resetLifecycle();
     textDomain.resetText();
     mediaDomain.resetMedia();
     cropDomain.resetCropState();
     submitDomain.clearSubmitError();
     analytics.resetSessionDedupe();
-    if (clearDraft) {
-      draftDomain.clearDraft();
+    setAiAssistError(null);
+    setAiAssistSuggestions([]);
+    if (shouldClearDraft) {
+      clearDraft();
+    }
+  };
+
+  const handleAiAssist = async (
+    action: "refine" | "shorten" | "make_prayer_request" | "gentler_tone"
+  ) => {
+    const seedText = textDomain.text.trim();
+    if (!seedText || isAiAssisting) return;
+
+    setIsAiAssisting(true);
+    setAiAssistError(null);
+    setAiAssistSuggestions([]);
+
+    try {
+      const modeMap = {
+        refine: "compose_refine",
+        shorten: "compose_refine",
+        make_prayer_request: "compose_prayer_request",
+        gentler_tone: "compose_refine",
+      } as const;
+      const contextMap: Record<typeof action, Record<string, unknown>> = {
+        refine: { intent: "community_safe_refine" },
+        shorten: { intent: "community_shorten", max_length: 240 },
+        make_prayer_request: { intent: "community_prayer_request" },
+        gentler_tone: { intent: "community_gentler_tone" },
+      };
+
+      const response = await CommunityService.aiAssist(modeMap[action], seedText, contextMap[action]);
+      if (!response.output_text) {
+        setAiAssistError("AI belum memberi saran. Coba lagi sebentar.");
+        return;
+      }
+      textDomain.updateText(response.output_text);
+      if (action === "make_prayer_request") {
+        setType("prayer_request");
+      }
+      setAiAssistSuggestions(response.suggestions.slice(0, 2));
+    } catch {
+      setAiAssistError("Bantuan AI belum tersedia sekarang. Kamu tetap bisa lanjut posting.");
+    } finally {
+      setIsAiAssisting(false);
     }
   };
 
@@ -545,11 +607,80 @@ export function PostComposer({
                   </div>
                 ) : null}
 
+                {lifecycleDomain.isExpanded ? (
+                  <div className="mx-6 mb-4 rounded-[18px] border border-slate-200/80 bg-slate-50/65 px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      {visibleAiActions.includes("refine") ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleAiAssist("refine")}
+                          disabled={isAiAssisting || textDomain.text.trim().length < 3}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                        >
+                          Perhalus tulisan
+                        </button>
+                      ) : null}
+                      {visibleAiActions.includes("shorten") ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleAiAssist("shorten")}
+                          disabled={isAiAssisting || textDomain.text.trim().length < 3}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                        >
+                          Ringkas
+                        </button>
+                      ) : null}
+                      {visibleAiActions.includes("make_prayer_request") ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleAiAssist("make_prayer_request")}
+                          disabled={isAiAssisting || textDomain.text.trim().length < 3}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                        >
+                          Jadi prayer request
+                        </button>
+                      ) : null}
+                      {visibleAiActions.includes("gentler_tone") ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleAiAssist("gentler_tone")}
+                          disabled={isAiAssisting || textDomain.text.trim().length < 3}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                        >
+                          Nada lebih lembut
+                        </button>
+                      ) : null}
+                    </div>
+                    <AIToneNotice
+                      tone="assistive"
+                      className="mt-2"
+                      text={isAiAssisting ? "AI sedang merapikan draft..." : "AI hanya memberi saran. Kamu tetap pegang suara utamamu."}
+                    />
+                    {aiAssistError ? (
+                      <p className="mt-2 text-[11px] font-medium text-rose-600">{aiAssistError}</p>
+                    ) : null}
+                    {aiAssistSuggestions.length > 0 ? (
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        Saran: {aiAssistSuggestions.join(" • ")}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <ComposerActionBar
                   canSubmit={canSubmit}
                   isSubmitting={submitDomain.isSubmitting}
                   statusSlot={draftStatusSlot}
-                  actionSlot={null}
+                  actionSlot={
+                    <button
+                      type="button"
+                      onClick={saveDraftNow}
+                      disabled={!textDomain.text.trim().length || isSaving}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
+                    >
+                      Simpan draf
+                    </button>
+                  }
                   onCancel={() => {
                     analytics.trackComposerCancel({
                       postType: type,

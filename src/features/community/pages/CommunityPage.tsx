@@ -16,10 +16,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { SurfaceBridgeAction } from "@/components/core/SurfaceBridgeAction";
+import type { EmotionalEntryState } from "@/ai/core/contracts";
 import { CommunityService } from "@/services/community.service";
 import { useAuthSession } from "@/auth/use-auth-session";
 import { subscribeDataMutation } from "@/lib/mutation-sync";
 import { buildWhatsAppShareUrl, copyToClipboard, getCommunityShareUrl } from "@/lib/share";
+import { prepareCommunityShareAsset } from "@/lib/share-assets";
 import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 import {
   COMMUNITY_ARCHIVE_CATEGORIES,
@@ -29,6 +32,7 @@ import {
 import { CommentsSheet } from "../components/CommentsSheet";
 import { MemberPostCard } from "../components/MemberPostCard";
 import { PostComposer } from "../components/PostComposer";
+import type { ComposerSubmitResult, PostComposerMetadata } from "../components/post-composer/types";
 import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityArchiveGalleryCard } from "../components/CommunityArchiveGalleryCard";
@@ -91,13 +95,22 @@ function SmartPostComposer({
     text: string,
     type: CommunityComposerType,
     images?: File[],
-    metadata?: { media_aspect_ratio?: string }
-  ) => Promise<boolean>;
+    metadata?: PostComposerMetadata
+  ) => Promise<ComposerSubmitResult>;
   currentUser?: CommunityUser;
 }) {
   const searchParams = useSearchParams();
   const intent = searchParams?.get("intent");
   const text = searchParams?.get("text") || "";
+  const entryStateRaw = searchParams?.get("entryState");
+  const entryState: EmotionalEntryState | null =
+    entryStateRaw === "overwhelmed" ||
+    entryStateRaw === "disconnected" ||
+    entryStateRaw === "clarity" ||
+    entryStateRaw === "connect" ||
+    entryStateRaw === "neutral"
+      ? entryStateRaw
+      : null;
 
   const isReflection = intent === "reflection";
   const initialExpanded = isReflection || text.length > 0;
@@ -109,6 +122,7 @@ function SmartPostComposer({
       initialType={isReflection ? "reflection" : "user_post"}
       initialText={text}
       initialExpanded={initialExpanded}
+      entryState={entryState}
     />
   );
 }
@@ -498,12 +512,23 @@ export function CommunityPage() {
     text: string,
     type: CommunityComposerType,
     images: File[] = [],
-    metadata?: { media_aspect_ratio?: string }
-  ) => {
-    if (isRestoring) return false;
+    metadata?: PostComposerMetadata
+  ): Promise<ComposerSubmitResult> => {
+    if (isRestoring) {
+      return {
+        ok: false,
+        kind: "network",
+        message: "Sesi masih dipulihkan. Coba lagi beberapa detik.",
+      };
+    }
     if (!isAuthenticated) {
       openAuthGate("share");
-      return false;
+      return {
+        ok: false,
+        kind: "auth",
+        message: "Masuk dulu untuk membagikan tulisanmu.",
+        status: 401,
+      };
     }
 
     try {
@@ -541,19 +566,91 @@ export function CommunityPage() {
         return nextPosts;
       });
       showToast("Berhasil membagikan!", "success");
-      return true;
+      return { ok: true };
     } catch (error) {
-      console.error("Failed to create post", error);
-      const rawMessage = error instanceof Error ? error.message : "";
-      if (rawMessage.includes("422")) {
-        const hint = rawMessage.split(" - ")[1]?.trim() || "Periksa teks, kategori, dan jumlah gambar (maks 5).";
-        showToast(hint, "error");
-      } else if (rawMessage.includes("401") || rawMessage.includes("403")) {
-        showToast("Sesi akun berakhir. Silakan masuk lagi.", "error");
-      } else {
-        showToast("Gagal membagikan post. Coba lagi.", "error");
+      const rawMessage = error instanceof Error ? error.message : String(error ?? "");
+      const explicitStatus =
+        typeof error === "object" && error !== null && "status" in error
+          ? Number((error as { status?: number }).status)
+          : undefined;
+      const statusMatch = rawMessage.match(/:\s*(\d{3})(?:\b|[^0-9])/);
+      const status = Number.isFinite(explicitStatus) && explicitStatus
+        ? explicitStatus
+        : statusMatch
+          ? Number(statusMatch[1])
+          : undefined;
+      const detail = rawMessage.split(" - ")[1]?.trim() || "";
+
+      const imageDiagnostics = {
+        imageCount: images.length,
+        imageSizes: images.map((f) => f.size),
+        imageTypes: images.map((f) => f.type),
+        textLength: text.trim().length,
+        postType: type,
+        status: status ?? null,
+      };
+
+      if (process.env.NODE_ENV !== "production") {
+        console.error("community_post_submit_failed", {
+          ...imageDiagnostics,
+          message: rawMessage,
+        });
       }
-      return false;
+
+      if (status === 401 || status === 403) {
+        return {
+          ok: false,
+          kind: "auth",
+          message: "Sesi akun berakhir. Silakan masuk lagi.",
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      if (status === 422) {
+        const lowerDetail = detail.toLowerCase();
+        let message = detail || "Periksa teks, kategori, dan jumlah gambar (maks 5).";
+        if (lowerDetail.includes("must not be greater than 5120") || lowerDetail.includes("maks") || lowerDetail.includes("size")) {
+          message = "Ukuran gambar terlalu besar. Maksimal 5MB per gambar.";
+        } else if (lowerDetail.includes("mimes") || lowerDetail.includes("image")) {
+          message = "Format gambar tidak didukung. Gunakan PNG, JPG, atau WEBP.";
+        }
+        return {
+          ok: false,
+          kind: "validation",
+          message,
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      if (status === 503 || status === 504 || status === 502) {
+        return {
+          ok: false,
+          kind: "network",
+          message: "Server belum terhubung. Coba lagi beberapa saat.",
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      if (status === 500 && images.length > 0) {
+        return {
+          ok: false,
+          kind: "storage",
+          message: "Penyimpanan gambar sedang bermasalah. Coba lagi beberapa saat.",
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      return {
+        ok: false,
+        kind: "unknown",
+        message: "Gagal membagikan post. Coba lagi.",
+        status,
+        diagnostics: imageDiagnostics,
+      };
     }
   };
 
@@ -820,27 +917,40 @@ export function CommunityPage() {
   };
 
   const handleShare = async (postId: string, text?: string | null) => {
-    const url = getCommunityShareUrl(postId);
     const shortText = text ? `${text.substring(0, 100)}...` : "Bagikan pos inspirasi ini.";
+
+    // Prepare share asset first → get versioned URL (no bypass)
+    // 1.5s timeout so UX stays responsive; fallback to unversioned URL
+    let shareUrl = getCommunityShareUrl(postId);
+    try {
+      const preparePromise = prepareCommunityShareAsset(postId);
+      const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+      const result = await Promise.race([preparePromise, timeoutPromise]);
+      if (result?.shareUrl) {
+        shareUrl = result.shareUrl;
+      }
+    } catch {
+      // non-fatal: use unversioned fallback
+    }
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: "TheChosenTalks Community",
           text: shortText,
-          url,
+          url: shareUrl,
         });
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") {
           console.error("Error sharing:", err);
         }
       }
     } else {
-      const copied = await copyToClipboard(url);
+      const copied = await copyToClipboard(shareUrl);
       if (copied) {
         showToast("Tautan disalin ke papan klip!", "success");
       } else {
-        window.open(buildWhatsAppShareUrl(`${shortText} ${url}`), "_blank", "noopener,noreferrer");
+        window.open(buildWhatsAppShareUrl(`${shortText} ${shareUrl}`), "_blank", "noopener,noreferrer");
       }
     }
   };
@@ -1264,6 +1374,15 @@ export function CommunityPage() {
               <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-[32px] bg-surface-muted" />}>
                 <SmartPostComposer onPost={handlePost} currentUser={composerCurrentUser} />
               </Suspense>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-3">
+                <p className="text-[12px] leading-relaxed text-slate-600">
+                  Kalau mulai terasa penuh, kamu bisa lanjut dulu di ruang privat.
+                </p>
+                <div className="mt-2">
+                  <SurfaceBridgeAction target="renungan" label="Lanjut privat di Renungan" href="/renungan?source=community&intent=regulate" />
+                </div>
+              </div>
 
               {isLoading ? (
                 <div className="space-y-6">

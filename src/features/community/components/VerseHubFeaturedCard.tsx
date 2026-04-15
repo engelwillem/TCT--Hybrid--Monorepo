@@ -5,6 +5,7 @@ import { ActionBar } from "./ActionBar";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { getVerseShareUrl } from "@/lib/share";
+import { prepareVersehubShareAsset } from "@/lib/share-assets";
 
 export type FeaturedVerse = {
   ref: string;
@@ -129,8 +130,23 @@ export function VerseHubFeaturedCard({
   }, [reactionKey, liked, bookmarked]);
 
   const onShare = async () => {
-    const url = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${shareOrigin}${verseHref}`;
+    // Start with unversioned URL as fallback
+    let url = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${shareOrigin}${verseHref}`;
     const title = verse?.reference || "VerseHub";
+
+    // Prepare share asset → get versioned URL (1.5s timeout)
+    if (verse?.ref) {
+      try {
+        const preparePromise = prepareVersehubShareAsset('id', verse.ref);
+        const timeoutPromise = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1500));
+        const result = await Promise.race([preparePromise, timeoutPromise]);
+        if (result?.shareUrl) {
+          url = result.shareUrl;
+        }
+      } catch {
+        // non-fatal
+      }
+    }
 
     try {
       if (navigator.share) {
@@ -142,7 +158,7 @@ export function VerseHubFeaturedCard({
         return;
       }
     } catch {
-      // ignore and fallback
+      // ignore
     }
   };
 

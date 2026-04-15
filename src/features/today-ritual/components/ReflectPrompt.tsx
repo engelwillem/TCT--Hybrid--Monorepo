@@ -3,6 +3,7 @@
 import { useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMotionConfig } from '../hooks/useMotionConfig';
+import type { ReactNode } from "react";
 
 interface ReflectPromptProps {
   title?: string | null;
@@ -16,6 +17,12 @@ interface ReflectPromptProps {
   isDone: boolean;
   isSubmitting?: boolean;
   submittingLabel?: string;
+  beforeInputSlot?: ReactNode;
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+  };
 }
 
 export default function ReflectPrompt({
@@ -30,6 +37,8 @@ export default function ReflectPrompt({
   isDone,
   isSubmitting = false,
   submittingLabel = "Mendoakan...",
+  beforeInputSlot,
+  secondaryAction,
 }: ReflectPromptProps) {
   const m = useMotionConfig();
   const isFilled = value.trim().length > 0;
@@ -60,6 +69,8 @@ export default function ReflectPrompt({
         {prompt}
       </label>
 
+      {beforeInputSlot ? <div className="mb-5">{beforeInputSlot}</div> : null}
+
       <AnimatePresence mode="wait">
         {!isDone ? (
           <motion.div
@@ -78,7 +89,7 @@ export default function ReflectPrompt({
               onChange={(e) => onChange(e.target.value)}
               className="min-h-[120px] w-full resize-none rounded-2xl bg-black/[0.03] px-5 py-4 text-[15px] leading-[1.6] text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-black/[0.1] transition-colors"
             />
-            <div className="mt-4 flex justify-start">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
                 data-testid="today-reflection-submit"
                 disabled={!isFilled || isSubmitting}
@@ -95,6 +106,16 @@ export default function ReflectPrompt({
                   {isSubmitting ? submittingLabel : ctaLabel}
                 </span>
               </button>
+              {secondaryAction ? (
+                <button
+                  type="button"
+                  disabled={Boolean(secondaryAction.disabled) || isSubmitting}
+                  onClick={secondaryAction.onClick}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-[10px] text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {secondaryAction.label}
+                </button>
+              ) : null}
             </div>
           </motion.div>
         ) : (

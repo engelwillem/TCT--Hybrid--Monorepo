@@ -6,6 +6,8 @@ import { TCTLogo } from "@/components/brand/TCTLogo";
 import { MOOD_QUICK_STARTS } from "@/features/versehub/constants";
 import { MoodQuickStart } from "@/features/versehub/components/MoodQuickStart";
 import type { SanctuaryScene } from "@/features/versehub/types";
+import { AIToneNotice } from "@/components/core/AIToneNotice";
+import type { VersehubUiHints } from "@/ai/versehub/resolve-versehub-ui";
 
 interface VersehubLandingViewProps {
     activeScene: SanctuaryScene;
@@ -23,6 +25,13 @@ interface VersehubLandingViewProps {
     liveDateLabel: string;
     memberName: string | null;
     activeMood: string;
+    bridgeContext?: {
+        source: "renungan" | "community" | "versehub" | null;
+        intent: "clarify" | "regulate" | "connect" | null;
+        verseRef?: string | null;
+    };
+    bridgeUiHints?: VersehubUiHints;
+    onBridgeReturnToRenungan?: () => void;
 }
 
 export function VersehubLandingView({
@@ -39,6 +48,9 @@ export function VersehubLandingView({
     liveDateLabel,
     memberName,
     activeMood,
+    bridgeContext,
+    bridgeUiHints,
+    onBridgeReturnToRenungan,
 }: VersehubLandingViewProps) {
     return (
         <div className="relative flex flex-1 flex-col bg-transparent">
@@ -86,6 +98,32 @@ export function VersehubLandingView({
                                 activeMood={activeMood}
                                 onSelect={onQuickStartMood}
                             />
+
+                            {bridgeUiHints?.showClarifyCard ? (
+                                <div className="mt-7 w-full max-w-[380px] rounded-3xl border border-indigo-100 bg-indigo-50/70 px-5 py-4 text-left shadow-[0_20px_45px_-35px_rgba(67,56,202,0.4)]">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-indigo-700/80">
+                                        Jalur Kejelasan
+                                    </p>
+                                    <p className="mt-2 text-[13px] leading-relaxed text-indigo-900/85">
+                                        {bridgeUiHints?.introLabel || "Kamu datang untuk memahami firman dengan lebih jernih."}
+                                        {bridgeContext?.verseRef ? ` Fokus ayat: ${bridgeContext.verseRef}.` : ""}
+                                    </p>
+                                    <AIToneNotice
+                                        tone="grounded"
+                                        className="mt-2 text-indigo-800/70"
+                                        text="Di VerseHub, AI fokus pada teks, konteks, dan aplikasi sederhana."
+                                    />
+                                    {onBridgeReturnToRenungan ? (
+                                        <button
+                                            type="button"
+                                            onClick={onBridgeReturnToRenungan}
+                                            className="mt-3 rounded-full border border-indigo-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                                        >
+                                            Kembali ke Renungan privat
+                                        </button>
+                                    ) : null}
+                                </div>
+                            ) : null}
 
                             <div className="mt-10 flex w-full max-w-[340px] flex-col items-center gap-5">
                                 <button

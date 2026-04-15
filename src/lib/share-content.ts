@@ -20,6 +20,19 @@ export type RenunganShareSnapshot = {
   expires_at?: string | null;
 };
 
+export type ShareAssetSnapshot = {
+  revision: string;
+  surface: string;
+  status: string;
+  share_title: string | null;
+  share_description: string | null;
+  share_eyebrow: string | null;
+  og_style: string;
+  final_og_image_url: string | null;
+  source_image_url: string | null;
+  share_meta: Record<string, unknown> | null;
+};
+
 type CommunitySharePost = {
   id: string;
   type: string;
@@ -88,23 +101,19 @@ function resolveApiOrigin(): string {
 function extractKnownAssetPath(pathname: string): string | null {
   if (!pathname) return null;
   const normalized = pathname.startsWith('/') ? pathname : `/${pathname}`;
-  if (normalized.startsWith('/api/v1/community/media/')) {
-    return normalized;
-  }
-  if (normalized.startsWith('/storage/community/posts/')) {
+  if (normalized.startsWith('/api/v1/community/media/')) return normalized;
+  if (normalized.startsWith('/storage/community/posts/'))
     return normalized.replace('/storage/community/posts/', '/api/v1/community/media/community/posts/');
-  }
-  if (normalized.startsWith('/storage/') || normalized.startsWith('/api/v1/avatar/')) {
-    return normalized;
-  }
-  const communityMediaMarker = normalized.indexOf('/api/v1/community/media/');
-  if (communityMediaMarker >= 0) return normalized.slice(communityMediaMarker);
-  const communityStorageMarker = normalized.indexOf('/storage/community/posts/');
-  if (communityStorageMarker >= 0) return normalized.slice(communityStorageMarker).replace('/storage/community/posts/', '/api/v1/community/media/community/posts/');
-  const storageMarker = normalized.indexOf('/storage/');
-  if (storageMarker >= 0) return normalized.slice(storageMarker);
-  const avatarMarker = normalized.indexOf('/api/v1/avatar/');
-  if (avatarMarker >= 0) return normalized.slice(avatarMarker);
+  if (normalized.startsWith('/storage/') || normalized.startsWith('/api/v1/avatar/')) return normalized;
+  const m1 = normalized.indexOf('/api/v1/community/media/');
+  if (m1 >= 0) return normalized.slice(m1);
+  const m2 = normalized.indexOf('/storage/community/posts/');
+  if (m2 >= 0)
+    return normalized.slice(m2).replace('/storage/community/posts/', '/api/v1/community/media/community/posts/');
+  const m3 = normalized.indexOf('/storage/');
+  if (m3 >= 0) return normalized.slice(m3);
+  const m4 = normalized.indexOf('/api/v1/avatar/');
+  if (m4 >= 0) return normalized.slice(m4);
   return null;
 }
 
@@ -112,15 +121,11 @@ function normalizeCommunityAssetUrl(value?: string | null): string | undefined {
   const raw = String(value || '').trim();
   if (!raw) return undefined;
   if (raw.startsWith('blob:') || raw.startsWith('data:image/')) return raw;
-
   const apiOrigin = resolveApiOrigin();
-
   try {
     const parsed = new URL(raw);
     const knownPath = extractKnownAssetPath(parsed.pathname);
-    if (knownPath) {
-      return `${apiOrigin}${knownPath}${parsed.search}${parsed.hash}`;
-    }
+    if (knownPath) return `${apiOrigin}${knownPath}${parsed.search}${parsed.hash}`;
     return parsed.toString();
   } catch {
     const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\/+/, '')}`;
@@ -136,6 +141,38 @@ function truncateText(value: string, maxLength = 220): string {
   return `${clean.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
+// ---------------------------------------------------------------------------
+// Snapshot-first fetch (for OG routes — no AI calls)
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch a ready ShareAsset snapshot for OG route rendering.
+ * Returns null if not found → caller must use template fallback.
+ * NEVER triggers AI generation.
+ */
+export async function fetchShareAssetSnapshot(
+  surface: string,
+  subjectId: string,
+  revision?: string | null,
+): Promise<ShareAssetSnapshot | null> {
+  try {
+    const encodedSubject = encodeURIComponent(subjectId);
+    const queryParam = revision ? `?v=${encodeURIComponent(revision)}` : '';
+    const response = await callLaravelApi(
+      `/api/v1/share-assets/${surface}/${encodedSubject}/snapshot${queryParam}`,
+    );
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { data?: ShareAssetSnapshot };
+    return payload?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Verse share data
+// ---------------------------------------------------------------------------
+
 export async function fetchVerseShareData(lang: string, slug: string): Promise<VerseShareData | null> {
   try {
     const response = await callLaravelApi(`/versehub/${lang}/${slug}`);
@@ -148,18 +185,16 @@ export async function fetchVerseShareData(lang: string, slug: string): Promise<V
   }
 }
 
+// ---------------------------------------------------------------------------
+// Community share post (single-post, no full feed)
+// ---------------------------------------------------------------------------
+
 export async function fetchCommunitySharePost(postId: string): Promise<CommunitySharePost | null> {
   try {
-    const response = await callLaravelApi('/api/v1/community/posts');
+    const response = await callLaravelApi(`/api/v1/community/posts/${encodeURIComponent(postId)}/share`);
     if (!response.ok) return null;
-    const payload = (await response.json()) as {
-      data?: { posts?: CommunityApiPost[]; archivePosts?: CommunityApiPost[] };
-    };
-    const allPosts = [
-      ...(Array.isArray(payload?.data?.posts) ? payload.data.posts : []),
-      ...(Array.isArray(payload?.data?.archivePosts) ? payload.data.archivePosts : []),
-    ];
-    const matched = allPosts.find((item) => String(item.id) === String(postId));
+    const payload = (await response.json()) as { data?: { post?: CommunityApiPost } };
+    const matched = payload?.data?.post;
     if (!matched) return null;
 
     return {
@@ -180,7 +215,7 @@ export async function fetchCommunitySharePost(postId: string): Promise<Community
         name: matched.author?.name || 'Member',
         avatarUrl: normalizeCommunityAssetUrl(matched.author?.avatarUrl || matched.author?.avatar_url) ?? null,
         isOfficial: Boolean(
-          matched.author?.isOfficial || matched.author?.is_official || matched.author?.is_admin
+          matched.author?.isOfficial || matched.author?.is_official || matched.author?.is_admin,
         ),
       },
     };
@@ -188,6 +223,10 @@ export async function fetchCommunitySharePost(postId: string): Promise<Community
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Renungan snapshot
+// ---------------------------------------------------------------------------
 
 export async function fetchRenunganShareSnapshot(token: string): Promise<RenunganShareSnapshot | null> {
   try {
@@ -203,38 +242,33 @@ export async function fetchRenunganShareSnapshot(token: string): Promise<Renunga
   }
 }
 
-export function buildCommunitySharePayload(post: CommunitySharePost) {
+// ---------------------------------------------------------------------------
+// Payload builders
+// ---------------------------------------------------------------------------
+
+export function buildCommunitySharePayload(post: CommunitySharePost, snapshot?: ShareAssetSnapshot | null) {
   const rawPreviewIndex = post.metadata?.preview_media_index;
   const selectedPreviewIndex =
     Number.isInteger(rawPreviewIndex) && Number(rawPreviewIndex) >= 0 ? Number(rawPreviewIndex) : 0;
   const selectedMediaUrl = post.mediaPaths[selectedPreviewIndex] || null;
   const mediaUrl =
-    selectedMediaUrl ||
-    post.thumbPath ||
-    post.mediaPaths[0] ||
-    post.imageUrl ||
-    post.metadata?.imageUrl ||
-    null;
+    selectedMediaUrl || post.thumbPath || post.mediaPaths[0] || post.imageUrl || post.metadata?.imageUrl || null;
   const text = truncateText(post.text || post.metadata?.quote || post.title || '');
   const reference = post.metadata?.reference || post.metadata?.ref || null;
 
-  if (mediaUrl) {
-    return {
-      kind: 'media' as const,
-      title: post.title || post.type_label || 'Community',
-      body: text || 'Bagikan momen dan cerita yang menguatkan bersama komunitas.',
-      meta: reference ? `${reference} • ${post.author.name}` : `${post.author.name} • Community`,
-      imageUrl: mediaUrl,
-      eyebrow: 'Community Share',
-    };
-  }
+  // Prefer AI-generated copy from snapshot if available
+  const title = snapshot?.share_title || post.title || post.type_label || 'Community';
+  const body = snapshot?.share_description || text || 'Bagikan momen dan cerita yang menguatkan bersama komunitas.';
+  const eyebrow = snapshot?.share_eyebrow || 'Community Share';
+  const meta = reference ? `${reference} • ${post.author.name}` : `${post.author.name} • Community`;
+  const imageUrl = snapshot?.final_og_image_url || mediaUrl;
 
   return {
-    kind: 'scripture' as const,
-    title: post.title || post.type_label || 'Community Reflection',
-    body: post.metadata?.quote || text || 'Bagikan refleksi yang menguatkan iman hari ini.',
-    meta: reference ? `${reference} • ${post.author.name}` : `${post.author.name} • Community`,
-    imageUrl: mediaUrl,
-    eyebrow: post.type === 'reflection' ? 'Shared Reflection' : 'Community Share',
+    kind: (imageUrl ? 'media' : 'scripture') as 'media' | 'scripture',
+    title,
+    body,
+    meta,
+    imageUrl,
+    eyebrow,
   };
 }

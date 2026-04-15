@@ -15,6 +15,7 @@ out/
 build/
 *.tsbuildinfo
 .phpunit.result.cache
+backend-api/.phpunit.result.cache
 
 # Environment and secrets
 .env
@@ -36,7 +37,6 @@ auth.json
 *.log
 *.tmp
 tmp/
-.tmp/
 test-results/
 .tmp-*
 tmp-*
@@ -63,9 +63,11 @@ backend-api/step_failures.txt
 backend-api/test_output.txt
 
 # Local Audit, Reports, and Prompts (Keep Local Only)
+docs/CORE/architecture/
 docs/CORE/PROMPT WEB TCT TERBARU/
 docs/core/PROMPT WEB TCT TERBARU/
 docs/CORE/Development/Gambar Referensi/
+docs/CORE/QA Full Audit/
 docs/QA Full Audit/
 docs/audit/
 docs/quarantine/
@@ -106,36 +108,28 @@ routes_list*.txt
 .gemini/
 .agent/
 .agents/
-.next/
-.next-stale-*/
-.vite/
-.playwright-mcp/
 .idx/
-! .idx/
-! .idx/**
+!.idx/
+!.idx/**
 
 # OS files
 .DS_Store
 Thumbs.db
 
 # Laravel Specific
-backend-api/.env
 backend-api/storage/*.key
 backend-api/database/*.sqlite
 backend-api/public/storage
 backend-api/public/hot
 backend-api/public/build
-backend-api/vendor/
-backend-api/.phpunit.result.cache
 
 # Application Specific Cleanup
 public/og/*.png
 !public/og/README.md
 current_versehub.png
-docs/CORE/architecture/PRODUCT_ROADMAP_P0_P1_P2_2026-04-05.md
-docs/CORE/architecture/SANITIZATION_CONTRACT_AUDIT_2026-04-06.md
-docs/CORE/architecture/TCT_EXECUTIVE_AUDIT_P0_P1_P2_2026-04-06.md
-docs/CORE/architecture/TECHNICAL_DEBT_REGISTER_2026-04-05.md
+tmp_*.html
+tmp_*.json
+tmp_*.txt
 installed_software.txt
 .codex-devstudio.err
 .codex-devturbo.err
@@ -143,19 +137,9 @@ installed_software.txt
 root_error.png
 .codex-layout.tsx.bak
 .codex-page.tsx.bak
-docs/CORE/architecture/laravel-decoupled-hybrid/TECH STACK TCT.md
 docs/CORE/implementation/DOCKER COMMAND.md
-docs/CORE/architecture/laravel-decoupled-hybrid/renungan/Design Landing Page Renungan.png
-docs/CORE/architecture/laravel-decoupled-hybrid/renungan/hero-bible-candle-placeholder.webp
-docs/CORE/architecture/laravel-decoupled-hybrid/renungan/hero-landing-placeholder.webp
-docs/CORE/architecture/laravel-decoupled-hybrid/renungan/noise-soft.png
 
 # Local DB parity and design scratch artifacts
 backups/
 public/renungan/
-docs/CORE/architecture/laravel-decoupled-hybrid/renungan/
-docs/CORE/architecture/laravel-decoupled-hybrid/versehub/VerseHub Design Flow Tombol Emotion *.png
-docs/CORE/architecture/laravel-decoupled-hybrid/ARSITEKTUR.md
 docs/CORE/Development/MARKETING STRATEGY.md
-docs/CORE/architecture/laravel-decoupled-hybrid/MentorAI/IMPLEMENTASI MENTOR AI.md
-docs/CORE/architecture/laravel-decoupled-hybrid/MentorAI/PLAN MENTOR AI.md

@@ -1,37 +1,50 @@
-import { generateShareOGImage } from "@/features/og/share/generate-share-og-image";
-import { parseRenunganShareToken } from "@/lib/renungan-share";
-import { fetchRenunganShareSnapshot } from "@/lib/share-content";
+import { generateShareOGImage } from '@/features/og/share/generate-share-og-image';
+import { parseRenunganShareToken } from '@/lib/renungan-share';
+import { fetchRenunganShareSnapshot, fetchShareAssetSnapshot } from '@/lib/share-content';
 
-export const runtime = "edge";
-export const contentType = "image/png";
-export const size = {
-  width: 1200,
-  height: 630,
-};
+export const runtime = 'edge';
+export const contentType = 'image/png';
+export const size = { width: 1200, height: 630 };
 
-type RouteContext = {
-  params: Promise<{ token: string }>;
-};
+type RouteContext = { params: Promise<{ token: string }> };
 
-export async function GET(_: Request, { params }: RouteContext) {
+export async function GET(request: Request, { params }: RouteContext) {
   const { token } = await params;
-  const snapshot = await fetchRenunganShareSnapshot(token);
-  const payload =
-    snapshot
-      ? {
-          verseReference: snapshot.verse_reference,
-          verseText: snapshot.verse_text,
-          meditationExcerpt: snapshot.meditation_excerpt,
-          theme: snapshot.theme ?? undefined,
-        }
-      : parseRenunganShareToken(token);
+
+  // Read revision from ?v= (set by versioned share URL)
+  const { searchParams } = new URL(request.url);
+  const revision = searchParams.get('v') ?? undefined;
+
+  // 1. Snapshot-first: read ready ShareAsset — NO AI call here
+  const snapshot = await fetchShareAssetSnapshot('renungan', token, revision);
+  if (snapshot?.status === 'ready' && (snapshot.share_title || snapshot.final_og_image_url)) {
+    return generateShareOGImage({
+      kind: 'scripture',
+      title: snapshot.share_title || 'Renungan Pribadi',
+      body: snapshot.share_description || 'Renungan dari The Chosen Talks.',
+      meta: snapshot.share_eyebrow || 'The Chosen Talks',
+      imageUrl: snapshot.final_og_image_url ?? null,
+      eyebrow: snapshot.share_eyebrow || 'Renungan Share',
+    });
+  }
+
+  // 2. Fallback: fetch raw renungan snapshot from backend
+  const rawSnapshot = await fetchRenunganShareSnapshot(token);
+  const payload = rawSnapshot
+    ? {
+        verseReference: rawSnapshot.verse_reference,
+        verseText: rawSnapshot.verse_text,
+        meditationExcerpt: rawSnapshot.meditation_excerpt,
+        theme: rawSnapshot.theme ?? undefined,
+      }
+    : parseRenunganShareToken(token); // final fallback: try to decode base64 token
 
   return generateShareOGImage({
-    kind: "scripture",
-    title: payload?.verseReference || "Renungan Pribadi",
-    body: payload?.meditationExcerpt || "Renungan dari The Chosen Talks.",
-    meta: payload?.theme || "The Chosen Talks",
+    kind: 'scripture',
+    title: payload?.verseReference || 'Renungan Pribadi',
+    body: payload?.meditationExcerpt || 'Renungan dari The Chosen Talks.',
+    meta: payload?.theme || 'The Chosen Talks',
     imageUrl: null,
-    eyebrow: "Renungan Share",
+    eyebrow: 'Renungan Share',
   });
 }

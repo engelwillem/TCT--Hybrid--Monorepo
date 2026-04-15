@@ -75,6 +75,27 @@ export function useComposerDraft({ text, type, composerMode, mediaAspectRatio, c
     setIsSaving(false);
   }, []);
 
+  const saveDraftNow = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (!canRestore || !text.trim()) return;
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    const now = Date.now();
+    const payload: DraftPayload = {
+      version: 1,
+      savedAt: now,
+      text,
+      type,
+      composerMode,
+      mediaAspectRatio,
+    };
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    setLastSavedAt(now);
+    setIsSaving(false);
+  }, [canRestore, composerMode, mediaAspectRatio, text, type]);
+
   const shouldPersist = useMemo(() => {
     if (!canRestore) return false;
     return Boolean(text.trim());
@@ -130,6 +151,7 @@ export function useComposerDraft({ text, type, composerMode, mediaAspectRatio, c
     lastSavedAt,
     markDraftRestored,
     clearDraft,
+    saveDraftNow,
   };
 }
 
