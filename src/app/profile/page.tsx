@@ -39,6 +39,17 @@ type OpsGatewayData = {
     statusHref?: string;
 };
 
+type SpiritualHighlightsData = {
+    window_days?: number;
+    session_count?: number;
+    has_data?: boolean;
+    summary?: string | null;
+    latest_session_at?: string | null;
+    top_emotion?: string | null;
+    top_theme?: string | null;
+    top_verse_reference?: string | null;
+};
+
 type ApiProfilePayload = {
     data?: {
         user?: {
@@ -50,6 +61,7 @@ type ApiProfilePayload = {
             avatar_url?: string | null;
         };
         opsGateway?: OpsGatewayData;
+        spiritualHighlights?: SpiritualHighlightsData | null;
         twoFactor?: {
             enabled?: boolean;
             recoveryCodesRemaining?: number;
@@ -351,6 +363,7 @@ export default function ProfilePage() {
     });
 
     const [opsGateway, setOpsGateway] = useState<OpsGatewayData | null>(null);
+    const [spiritualHighlights, setSpiritualHighlights] = useState<SpiritualHighlightsData | null>(null);
     const [journeyBadge, setJourneyBadge] = useState(0);
     const [profileData, setProfileData] = useState({
         name: user.name,
@@ -587,6 +600,9 @@ export default function ProfilePage() {
                 });
                 if (payload?.data && 'opsGateway' in payload.data) {
                     setOpsGateway(payload.data.opsGateway || null);
+                }
+                if (payload?.data && 'spiritualHighlights' in payload.data) {
+                    setSpiritualHighlights(payload.data.spiritualHighlights || null);
                 }
                 setProfileData({
                     name: nextUser.name,
@@ -1412,6 +1428,39 @@ export default function ProfilePage() {
                             <p className="text-[10px] px-4 font-medium text-muted-foreground leading-relaxed italic">
                                 * Halaman Journey menyediakan visualisasi progres dan riwayat interaksi Alkitab Anda secara mendalam.
                             </p>
+                        </div>
+                    </AccordionCard>
+                    </div>
+
+                    <div id="profile-spiritual-highlights">
+                    <AccordionCard title="Spiritual Highlights">
+                        <div className="pt-2">
+                            {spiritualHighlights?.has_data ? (
+                                <div className="rounded-[24px] border border-border/60 bg-surface px-5 py-5 shadow-soft">
+                                    <p className="text-[15px] leading-7 text-foreground/85">
+                                        {spiritualHighlights.summary}
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <span className="rounded-full border border-sky-200/70 bg-sky-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700/90">
+                                            {spiritualHighlights.window_days ?? 7} hari terakhir
+                                        </span>
+                                        <span className="rounded-full border border-border/60 bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-foreground/60">
+                                            {spiritualHighlights.session_count ?? 0} sesi renungan
+                                        </span>
+                                        {spiritualHighlights.top_verse_reference ? (
+                                            <span className="rounded-full border border-emerald-200/70 bg-emerald-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700/90">
+                                                Ayat: {spiritualHighlights.top_verse_reference}
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="rounded-[24px] border border-border/60 bg-surface px-5 py-5 shadow-soft">
+                                    <p className="text-[14px] leading-7 text-muted-foreground">
+                                        Belum ada cukup jejak dalam 7 hari terakhir. Lanjutkan renunganmu, lalu highlights rohanimu akan tampil di sini secara bertahap.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </AccordionCard>
                     </div>

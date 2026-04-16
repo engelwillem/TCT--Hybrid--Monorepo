@@ -228,6 +228,11 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasMany(UserStudyPathProgress::class);
     }
 
+    public function spiritualSessionMemories(): HasMany
+    {
+        return $this->hasMany(SpiritualSessionMemory::class);
+    }
+
     public function activeStudyPaths(): BelongsToMany
     {
         return $this->belongsToMany(StudyPath::class, 'user_study_path_progress', 'user_id', 'path_id')

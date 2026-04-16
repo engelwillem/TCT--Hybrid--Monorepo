@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BibleVerse;
 use App\Services\AI\RenunganAIService;
 use App\Services\RenunganPastoralInterpretationService;
+use App\Services\SpiritualSessionMemoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,7 @@ use Illuminate\Support\Str;
 class RenunganPersonalizationController extends Controller
 {
     private const PIPELINE_VERSION = 'renungan.v2.1.telemetry';
+    private const VERSE_CANDIDATE_LIMIT = 160;
     private const DEBUG_FORCE_HEADER = 'x-renungan-debug-force';
     private const DEBUG_TELEMETRY_HEADER = 'x-renungan-debug-telemetry';
 
@@ -22,6 +24,7 @@ class RenunganPersonalizationController extends Controller
     public function __construct(
         private RenunganPastoralInterpretationService $pastoralInterpretationService,
         private RenunganAIService $renunganAIService,
+        private SpiritualSessionMemoryService $spiritualSessionMemoryService,
     ) {
     }
 
@@ -299,13 +302,23 @@ class RenunganPersonalizationController extends Controller
         $responseMode = (string) ($validated['mode'] ?? 'calm_heart');
         $storageMode = (string) ($validated['storage_mode'] ?? 'standard');
 
+        $analysisStartedAt = microtime(true);
         $analysis = $this->analyzeReflection($reflectionText);
+        $analysisDurationMs = $this->elapsedMs($analysisStartedAt);
         $searchTerms = $this->buildSearchTerms($reflectionText, $analysis);
+
+        $verseQueryStartedAt = microtime(true);
         $candidates = $this->queryVerseCandidates($lang, $searchTerms);
+        $verseQueryDurationMs = $this->elapsedMs($verseQueryStartedAt);
+
+        $verseSelectionStartedAt = microtime(true);
         $selected = $this->selectCorrelatedVerses($candidates, $searchTerms, $analysis, $reflectionText);
+        $verseSelectionDurationMs = $this->elapsedMs($verseSelectionStartedAt);
+        $fallbackVerseUsed = false;
 
         if (empty($selected)) {
             $fallback = BibleVerse::query()
+                ->select(['id', 'reference', 'text', 'book_code', 'chapter', 'verse'])
                 ->where('provider', 'ayt')
                 ->where('lang', $lang)
                 ->where('book_code', 'mzm')
@@ -314,14 +327,19 @@ class RenunganPersonalizationController extends Controller
                 ->first();
             if ($fallback) {
                 $selected = [$fallback];
+                $fallbackVerseUsed = true;
             }
         }
+        $selectedVerseCount = count($selected);
 
         $primary = $selected[0] ?? null;
+        $interpretationStartedAt = microtime(true);
         $interpretation = $this->pastoralInterpretationService->buildInterpretation($selected, $analysis, $reflectionText, $lang);
         if (! is_array($interpretation) || empty($interpretation['verse_main_message'])) {
             $interpretation = $this->buildPastoralInterpretationContext($primary, $analysis, $reflectionText);
         }
+        $interpretationDurationMs = $this->elapsedMs($interpretationStartedAt);
+
         $generationStartedAt = microtime(true);
         $generationPlan = $this->buildGenerationPlan($reflectionText, $analysis, $interpretation);
         $meditation = $this->composeMeditation(
@@ -359,13 +377,12 @@ class RenunganPersonalizationController extends Controller
         if (! ($quality['passed'] ?? false)) {
             $meditation = $this->composeSafeFallbackMeditation($analysis);
             $this->usedFallbackContent = true;
-            $quality = $this->evaluateMeditationQuality($meditation, $reflectionText, $analysis, $generationPlan);
-            $quality['passed'] = false;
             $quality['reasons'] = array_values(array_unique(array_merge(
                 (array) ($quality['reasons'] ?? []),
                 ['rewrite_failed_to_improve'],
                 ['fallback_due_to_invalid_output']
             )));
+            $quality['passed'] = false;
         } elseif (! ($initialQuality['passed'] ?? false)) {
             $quality['reasons'] = array_values(array_unique(array_merge(
                 (array) ($quality['reasons'] ?? []),
@@ -374,13 +391,16 @@ class RenunganPersonalizationController extends Controller
         }
         $evaluationDurationMs = $this->elapsedMs($evaluationStartedAt);
 
-        $relatedVerses = collect($selected)
-            ->map(fn (BibleVerse $verse) => [
+        $relatedVerses = [];
+        foreach ($selected as $verse) {
+            if (! $verse instanceof BibleVerse) {
+                continue;
+            }
+            $relatedVerses[] = [
                 'reference' => (string) ($verse->reference ?? ''),
                 'text' => (string) ($verse->text ?? ''),
-            ])
-            ->values()
-            ->all();
+            ];
+        }
 
         $responsePayload = [
             'data' => [
@@ -406,6 +426,7 @@ class RenunganPersonalizationController extends Controller
             ],
         ];
 
+        $mentorStartedAt = microtime(true);
         $mentorResult = $this->renunganAIService->generate([
             'reflection_text' => $reflectionText,
             'legacy_meditation' => $meditation,
@@ -418,6 +439,7 @@ class RenunganPersonalizationController extends Controller
             'response_mode' => $responseMode,
             'storage_mode' => $storageMode,
         ]);
+        $mentorDurationMs = $this->elapsedMs($mentorStartedAt);
 
         $responsePayload['data']['mentor_opening'] = (string) ($mentorResult['mentor_opening'] ?? '');
         $responsePayload['data']['meditation'] = (string) ($mentorResult['meditation'] ?? $meditation);
@@ -446,11 +468,21 @@ class RenunganPersonalizationController extends Controller
             'word_count_bucket' => $this->bucketWordCount($reflectionText),
             'ambiguity_bucket' => $this->bucketAmbiguity((array) ($analysis['theme_scores'] ?? []), (array) ($analysis['emotion_scores'] ?? [])),
             'emotional_intensity_bucket' => $this->bucketIntensity((int) ($analysis['intensity'] ?? 1)),
+            'analysis_duration_ms' => $analysisDurationMs,
+            'verse_query_duration_ms' => $verseQueryDurationMs,
+            'verse_selection_duration_ms' => $verseSelectionDurationMs,
+            'interpretation_duration_ms' => $interpretationDurationMs,
             'generation_duration_ms' => $generationDurationMs,
             'evaluation_duration_ms' => $evaluationDurationMs,
+            'mentor_duration_ms' => $mentorDurationMs,
             'total_duration_ms' => $requestDurationMs,
             'backend_latency_bucket' => $this->bucketBackendLatency($requestDurationMs),
+            'candidate_count' => $candidates->count(),
+            'selected_verse_count' => $selectedVerseCount,
+            'fallback_verse_used' => $fallbackVerseUsed,
+            'fallback_meditation_used' => $this->usedFallbackContent,
             'rewrite_triggered' => $rewriteCount > 0,
+            'quality_rewrite_triggered' => $rewriteCount > 0,
             'rewrite_count' => $rewriteCount,
             'quality_passed_initial' => (bool) ($initialQuality['passed'] ?? false),
             'quality_passed_final' => (bool) ($quality['passed'] ?? false),
@@ -467,6 +499,10 @@ class RenunganPersonalizationController extends Controller
             'debug_force_mode' => $debugForceMode,
             'contains_raw_reflection' => false,
             'mentor_driver' => (string) data_get($mentorResult, 'meta.driver', 'template'),
+            'mentor_provider' => (string) data_get($mentorResult, 'meta.driver', 'template'),
+            'mentor_model' => data_get($mentorResult, 'meta.model'),
+            'mentor_success' => ! (bool) data_get($mentorResult, 'meta.used_fallback', true),
+            'mentor_fallback' => (bool) data_get($mentorResult, 'meta.used_fallback', true),
             'mentor_used_fallback' => (bool) data_get($mentorResult, 'meta.used_fallback', true),
             'mentor_fallback_reason' => data_get($mentorResult, 'meta.fallback_reason'),
             'mentor_latency_ms' => (int) data_get($mentorResult, 'meta.latency_ms', 0),
@@ -476,6 +512,7 @@ class RenunganPersonalizationController extends Controller
         if ($this->shouldIncludeDebugTelemetry($request)) {
             $responsePayload['data']['generation']['telemetry_debug'] = $telemetryContext;
         }
+        $this->persistSessionMemory($request, $analysis, $responsePayload);
 
         return response()
             ->json($responsePayload)
@@ -674,7 +711,11 @@ class RenunganPersonalizationController extends Controller
             return collect();
         }
 
+        $candidateLimit = (int) config('renungan.performance.verse_candidate_limit', self::VERSE_CANDIDATE_LIMIT);
+        $candidateLimit = max(40, min(280, $candidateLimit));
+
         return BibleVerse::query()
+            ->select(['id', 'reference', 'text', 'book_code', 'chapter', 'verse'])
             ->where('provider', 'ayt')
             ->where('lang', $lang)
             ->where(function ($query) use ($searchTerms): void {
@@ -683,10 +724,8 @@ class RenunganPersonalizationController extends Controller
                         ->orWhere('reference', 'like', '%'.$term.'%');
                 }
             })
-            ->orderBy('book_code')
-            ->orderBy('chapter')
-            ->orderBy('verse')
-            ->limit(280)
+            ->orderBy('id')
+            ->limit($candidateLimit)
             ->get();
     }
 
@@ -1542,6 +1581,47 @@ class RenunganPersonalizationController extends Controller
         $safeTelemetry['contains_raw_reflection'] = false;
 
         Log::info('renungan.personalization.telemetry', $safeTelemetry);
+    }
+
+    /**
+     * @param  array<string, mixed>  $analysis
+     * @param  array<string, mixed>  $responsePayload
+     */
+    private function persistSessionMemory(Request $request, array $analysis, array $responsePayload): void
+    {
+        $user = $request->user();
+        if (! $user) {
+            return;
+        }
+
+        $data = (array) ($responsePayload['data'] ?? []);
+        $verse = (array) ($data['verse'] ?? []);
+        $generation = (array) ($data['generation'] ?? []);
+
+        try {
+            $this->spiritualSessionMemoryService->rememberFromRenungan($user, [
+                'dominant_emotion' => $analysis['primary_emotion'] ?? null,
+                'reflection_theme' => $analysis['primary_theme'] ?? null,
+                'primary_verse_reference' => $verse['reference'] ?? null,
+                'primary_verse_text' => $verse['text'] ?? null,
+                'interpretation_focus' => data_get($generation, 'pastoral_angle')
+                    ?? data_get($data, 'interpretation.pastoral_application'),
+                'pipeline_version' => self::PIPELINE_VERSION,
+                'meta' => [
+                    'request_id' => $data['request_id'] ?? null,
+                    'driver' => $data['driver'] ?? null,
+                    'used_fallback' => $data['used_fallback'] ?? null,
+                    'response_mode' => $data['response_mode'] ?? null,
+                ],
+            ]);
+        } catch (\Throwable $exception) {
+            Log::warning('renungan.session_memory.persist_failed', [
+                'user_id' => $user->id,
+                'request_id' => $data['request_id'] ?? null,
+                'pipeline_version' => self::PIPELINE_VERSION,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     private function roundScores(array $scores): array

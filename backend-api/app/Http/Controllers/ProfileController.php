@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\SsDay;
 use App\Models\User;
 use App\Services\Security\TwoFactorService;
+use App\Services\SpiritualSessionMemoryService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
@@ -40,11 +41,12 @@ class ProfileController extends Controller
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): JsonResponse
+    public function edit(Request $request, SpiritualSessionMemoryService $spiritualSessionMemoryService): JsonResponse
     {
         $user = $request->user();
         $isAdminViewer = (bool) ($request->user()?->is_admin ?? false);
         $opsGateway = $isAdminViewer ? $this->buildOpsGatewaySummary() : null;
+        $spiritualHighlights = $user ? $spiritualSessionMemoryService->getSevenDayHighlights($user) : null;
         $twoFactor = [
             'enabled' => filled($request->user()?->app_authentication_secret),
             'recoveryCodesRemaining' => is_array($request->user()?->app_authentication_recovery_codes)
@@ -65,6 +67,7 @@ class ProfileController extends Controller
                 'mustVerifyEmail' => $user instanceof MustVerifyEmail,
                 'status' => session('status'),
                 'opsGateway' => $opsGateway,
+                'spiritualHighlights' => $spiritualHighlights,
                 'twoFactor' => $twoFactor,
             ],
         ]);

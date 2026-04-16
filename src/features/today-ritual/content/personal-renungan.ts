@@ -145,10 +145,6 @@ function sanitizeReflectionText(text: string): string {
   return text.trim().toLowerCase();
 }
 
-export function normalizeReflectionForCache(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 function cleanMeditationText(input: string): string {
   const normalized = input
     .replace(/\s+/g, " ")
@@ -417,21 +413,4 @@ export async function generatePersonalRenungan(
     options?.onTelemetry?.({ type: "fallback_triggered", reason: "network_error" });
     return buildPersonalRenunganFallback(reflectionText, sessionContent);
   }
-}
-
-export async function preparePersonalRenungan(
-  reflectionText: string,
-  sessionContent: TodaySessionContent,
-  options?: {
-    signal?: AbortSignal;
-    onTelemetry?: (event: PersonalRenunganTelemetryEvent) => void;
-  }
-): Promise<RenunganMatch | null> {
-  const clean = normalizeReflectionForCache(reflectionText);
-  if (clean.length < 3) {
-    return null;
-  }
-
-  const generated = await generatePersonalRenungan(clean, sessionContent, options);
-  return generated;
 }

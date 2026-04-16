@@ -26,9 +26,23 @@ class RenunganPersonalizationTelemetryTest extends TestCase
                         'request_id',
                         'pipeline_version',
                         'input_length_bucket',
+                        'analysis_duration_ms',
+                        'verse_query_duration_ms',
+                        'verse_selection_duration_ms',
+                        'interpretation_duration_ms',
                         'generation_duration_ms',
                         'evaluation_duration_ms',
+                        'mentor_duration_ms',
                         'total_duration_ms',
+                        'candidate_count',
+                        'selected_verse_count',
+                        'fallback_verse_used',
+                        'fallback_meditation_used',
+                        'quality_rewrite_triggered',
+                        'mentor_provider',
+                        'mentor_model',
+                        'mentor_success',
+                        'mentor_fallback',
                         'rewrite_triggered',
                         'quality_passed_initial',
                         'quality_passed_final',
@@ -45,6 +59,14 @@ class RenunganPersonalizationTelemetryTest extends TestCase
         $serialized = json_encode($telemetry);
         $this->assertIsString($serialized);
         $this->assertStringNotContainsString('bingung soal keputusan kerja', (string) $serialized);
+        $this->assertIsInt($telemetry['candidate_count'] ?? null);
+        $this->assertIsInt($telemetry['selected_verse_count'] ?? null);
+        $this->assertIsBool($telemetry['fallback_verse_used'] ?? null);
+        $this->assertIsBool($telemetry['fallback_meditation_used'] ?? null);
+        $this->assertIsBool($telemetry['quality_rewrite_triggered'] ?? null);
+        $this->assertIsBool($telemetry['mentor_success'] ?? null);
+        $this->assertIsBool($telemetry['mentor_fallback'] ?? null);
+        $this->assertIsString($telemetry['mentor_provider'] ?? '');
     }
 
     public function test_force_rewrite_debug_mode_marks_rewrite_triggered(): void

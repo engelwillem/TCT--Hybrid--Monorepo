@@ -41,6 +41,7 @@ class RenunganMentorService
                 return $normalized + [
                     'meta' => [
                         'driver' => 'openai',
+                        'model' => (string) config('renungan_mentor.openai.model', 'gpt-4o-mini'),
                         'used_fallback' => false,
                         'fallback_reason' => null,
                         'latency_ms' => $this->elapsedMs($startedAt),
@@ -59,6 +60,9 @@ class RenunganMentorService
         return $fallback + [
             'meta' => [
                 'driver' => $driverName === 'openai' ? 'openai' : 'template',
+                'model' => $driverName === 'openai'
+                    ? (string) config('renungan_mentor.openai.model', 'gpt-4o-mini')
+                    : null,
                 'used_fallback' => true,
                 'fallback_reason' => $fallbackReason ?? ($driverName === 'template' ? 'template_driver_selected' : 'unknown'),
                 'latency_ms' => $this->elapsedMs($startedAt),
@@ -140,4 +144,3 @@ class RenunganMentorService
         return (int) round((microtime(true) - $startedAt) * 1000);
     }
 }
-
