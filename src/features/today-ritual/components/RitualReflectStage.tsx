@@ -67,20 +67,20 @@ export function RitualReflectStage({
             isSubmitting={isSubmitting}
             submittingLabel={submittingLabel}
             beforeInputSlot={
-              <div className="space-y-4">
+              <div className="flex flex-col gap-6">
                 <EmotionalStatePicker value={entryState} onChange={onEntryStateChange} />
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Mode bantuan</p>
-                  <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2.5">
+                  <p className="text-[13px] font-medium text-slate-500">Mode bantuan</p>
+                  <div className="flex flex-nowrap overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1 gap-2.5">
                     {RENUNGAN_MODE_OPTIONS.map((option) => (
                       <button
                         key={option.value}
                         type="button"
                         onClick={() => onModeChange(option.value)}
-                        className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                        className={`flex-shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
                           renunganMode === option.value
-                            ? "border-slate-800 bg-slate-900 text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                            ? "border-slate-800 bg-slate-900 text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
                         }`}
                       >
                         {option.label}

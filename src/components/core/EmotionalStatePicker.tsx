@@ -20,9 +20,9 @@ const ORDERED_STATES: EmotionalEntryState[] = [
 
 export function EmotionalStatePicker({ value, onChange, compact = false, className }: EmotionalStatePickerProps) {
   return (
-    <div className={cn("space-y-2", className)}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Hari ini kamu merasa...</p>
-      <div className={cn("flex flex-wrap gap-2", compact ? "gap-1.5" : "gap-2")}>
+    <div className={cn("flex flex-col gap-2.5", className)}>
+      <p className="text-[13px] font-medium text-slate-500">Hari ini kamu merasa...</p>
+      <div className={cn("flex flex-nowrap overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1", compact ? "gap-2" : "gap-2.5")}>
         {ORDERED_STATES.map((state) => {
           const active = value === state;
           return (
@@ -31,11 +31,11 @@ export function EmotionalStatePicker({ value, onChange, compact = false, classNa
               type="button"
               onClick={() => onChange(state)}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-left text-[12px] font-semibold transition-all",
+                "flex-shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-left text-[13px] font-medium transition-all",
                 active
-                  ? "border-sky-200 bg-sky-50 text-sky-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-800",
-                compact ? "px-2.5 py-1 text-[11px]" : ""
+                  ? "border-sky-200 bg-sky-50 text-sky-700 shadow-sm"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800",
+                compact ? "px-3 py-1.5 text-[12px]" : ""
               )}
             >
               {EMOTIONAL_STATE_LABELS[state]}

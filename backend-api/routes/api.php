@@ -55,12 +55,18 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsIndex']);
     // Single-post share payload — does NOT load full feed
     Route::get('/community/posts/{memberPost}/share', [CommunityShareAssetController::class, 'show']);
-    // Share asset prepare — called on user intent, NEVER by crawlers
-    Route::post('/community/posts/{memberPost}/share-assets/prepare', [CommunityShareAssetController::class, 'prepare']);
-    Route::post('/versehub/{lang}/{slug}/share-assets/prepare', [VersehubShareAssetController::class, 'prepare'])
-        ->whereIn('lang', ['id', 'en'])
-        ->where('slug', '[a-z0-9]+(?:[-_.][a-z0-9]+)*');
-    Route::post('/renungan/share/{token}/prepare', [RenunganShareAssetController::class, 'prepare']);
+    // Share asset prepare — called on user intent, NEVER by crawlers.
+    // Auth is enforced first, then Laravel named limiter becomes final enforcement.
+    Route::middleware(['auth:sanctum', 'throttle:share-prepare'])->group(function (): void {
+        Route::post('/community/posts/{memberPost}/share-assets/prepare', [CommunityShareAssetController::class, 'prepare'])
+            ->name('community.share.prepare');
+        Route::post('/versehub/{lang}/{slug}/share-assets/prepare', [VersehubShareAssetController::class, 'prepare'])
+            ->whereIn('lang', ['id', 'en'])
+            ->where('slug', '[a-z0-9]+(?:[-_.][a-z0-9]+)*')
+            ->name('versehub.share.prepare');
+        Route::post('/renungan/share/{token}/prepare', [RenunganShareAssetController::class, 'prepare'])
+            ->name('renungan.share.prepare');
+    });
     // Read-only snapshot for OG routes — crawler-safe, no AI calls
     Route::get('/share-assets/{surface}/{subject}/snapshot', [ShareAssetReadController::class, 'snapshot'])
         ->where('subject', '.*');
