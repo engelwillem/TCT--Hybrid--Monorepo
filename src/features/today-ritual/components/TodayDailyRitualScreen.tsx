@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpenText, Bookmark } from 'lucide-react';
-import Link from 'next/link';
+import { BookOpenText } from 'lucide-react';
 import { useAuthSession } from '@/auth/use-auth-session';
 import { CommunityService } from '@/services/community.service';
 import type { TodaySessionContent } from '../content/today-session.types';
@@ -14,25 +12,24 @@ import {
   generatePersonalRenungan,
 } from '../content/personal-renungan';
 import {
-  bucketInputLength,
   buildSafeRenunganTelemetryMeta,
   trackRenunganTelemetryEvent,
 } from '../analytics';
 import { useTodayRitualProgress } from '../hooks/useTodayRitualProgress';
 import { useMotionConfig } from '../hooks/useMotionConfig';
+import { useRitualActions } from '../hooks/useRitualActions';
 import TodayHeader from './TodayHeader';
 import ReceiveVerse from './ReceiveVerse';
-import ReflectPrompt from './ReflectPrompt';
-import TodayShareActionBar from './TodayShareActionBar';
 import { trackFunnelEvent } from '@/lib/funnel-analytics';
 import { createRenunganShareToken } from '@/lib/renungan-share';
 import { prepareRenunganShareAsset } from '@/lib/share-assets';
-import { EmotionalStatePicker } from "@/components/core/EmotionalStatePicker";
-import { SurfaceBridgeAction } from "@/components/core/SurfaceBridgeAction";
-import { AIToneNotice } from "@/components/core/AIToneNotice";
 import { resolveRenunganBehavior } from "@/ai/renungan/resolve-renungan-request";
 import { resolveRenunganFollowUps } from "@/ai/renungan/resolve-renungan-ui";
-import { buildVersehubClarifyUrl } from "@/ai/bridges/build-bridge-context";
+import { buildArchiveText } from "../utils/build-archive-text";
+import { RitualParityBanner } from "./RitualParityBanner";
+import { RitualReflectStage } from "./RitualReflectStage";
+import { RitualCompletionSection } from "./RitualCompletionSection";
+import { RitualMeditationCard } from "./RitualMeditationCard";
 import {
   type EmotionalEntryState,
   type RenunganMode,
@@ -41,46 +38,15 @@ import {
 
 interface TodayDailyRitualScreenProps {
   sessionContent: TodaySessionContent;
-  showOfflineBanner?: boolean;
+  parityStatus?: "healthy" | "fallback" | "degraded";
 }
 
 const RENUNGAN_LOADING_LABEL = "Menyiapkan renungan...";
 
-const RENUNGAN_MODE_OPTIONS: Array<{ value: RenunganMode; label: string }> = [
-  { value: "calm_heart", label: "Tenangkan hati" },
-  { value: "practical_step", label: "Langkah kecil" },
-  { value: "short_prayer", label: "Doa singkat" },
-  { value: "deep_reflection", label: "Renungan lebih dalam" },
-];
-
-function buildArchiveText(
-  reflectionText: string,
-  meditation: string,
-  verseText: string,
-  verseReference: string
-): string {
-  return [
-    "Renungan Pribadiku",
-    "",
-    "Isi Hati",
-    reflectionText.trim(),
-    "",
-    "Renungan",
-    meditation.trim(),
-    "",
-    "Ayat",
-    verseText.trim(),
-    verseReference.trim(),
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
-
 export default function TodayDailyRitualScreen({
   sessionContent,
-  showOfflineBanner = false,
+  parityStatus = "healthy",
 }: TodayDailyRitualScreenProps) {
-  const router = useRouter();
   const m = useMotionConfig();
   const { identity, status: authStatus, isAuthenticated } = useAuthSession();
   const ritualSessionScope =
@@ -101,7 +67,6 @@ export default function TodayDailyRitualScreen({
   const [syncedPostId, setSyncedPostId] = useState<string | null>(null);
   const [bookmarkError, setBookmarkError] = useState<string | null>(null);
   const [bookmarkSuccessNote, setBookmarkSuccessNote] = useState<string | null>(null);
-  const [activeActionText, setActiveActionText] = useState<string | null>(null);
   const [isGeneratingRenungan, setIsGeneratingRenungan] = useState(false);
   const [entryState, setEntryState] = useState<EmotionalEntryState | null>(null);
   const [renunganMode, setRenunganMode] = useState<RenunganMode>("calm_heart");
@@ -221,14 +186,6 @@ export default function TodayDailyRitualScreen({
   }, [entryState]);
 
   useEffect(() => {
-    if (ritualStage === 'reflect') {
-      setActiveActionText(reflectionText);
-      return;
-    }
-    setActiveActionText(null);
-  }, [reflectionText, ritualStage]);
-
-  useEffect(() => {
     if (isHydrating || !isReflectDone || isPrayerCompleted) return;
     const timerId = window.setTimeout(() => {
       meditationRef.current?.focus({ preventScroll: false });
@@ -315,28 +272,8 @@ export default function TodayDailyRitualScreen({
     }
   };
 
-  const handleStartRenungan = () => {
-    if (isAuthRestoring) return;
-    if (!isAuthenticated) {
-      router.push('/login?next=/renungan');
-      return;
-    }
-
-    void trackFunnelEvent('renungan_start', {
-      surface: 'renungan',
-      meta: {
-        source: 'start_cta',
-      },
-    });
-    setHasStarted(true);
-  };
-
   const handleContinueReflect = async (overrideReflectionText?: string, overrideMode?: RenunganMode) => {
-    if (isAuthRestoring) return;
-    if (!isAuthenticated) {
-      router.push('/login?next=/renungan');
-      return;
-    }
+    if (!ensureAuthenticatedRitual()) return;
 
     const reflection = (overrideReflectionText ?? reflectionText).trim();
     if (!reflection || isGeneratingRenungan) return;
@@ -418,70 +355,49 @@ export default function TodayDailyRitualScreen({
     if (!reflectionText.trim()) return;
     void handleContinueReflect(reflectionText, nextMode);
   };
-
-  const buildMentorOutcomeMeta = () => ({
-    request_id: personalRenungan.requestId ?? null,
-    confidence: personalRenungan.confidence ?? null,
-    driver: personalRenungan.driver ?? null,
-    used_fallback: personalRenungan.usedFallback ?? false,
-    has_follow_up_question: Boolean(personalRenungan.followUpQuestion),
-    input_length_bucket: bucketInputLength(reflectionText.trim().length),
-  });
-
-  const handleMentorHelpful = () => {
-    if (mentorFeedback !== null) return;
-    setMentorFeedback('helpful');
-    void trackRenunganTelemetryEvent('renungan_result_helpful', buildMentorOutcomeMeta());
-  };
-
-  const handleMentorNotHelpful = () => {
-    if (mentorFeedback !== null) return;
-    setMentorFeedback('not_helpful');
-    void trackRenunganTelemetryEvent('renungan_result_not_helpful', {
-      ...buildMentorOutcomeMeta(),
-      reason: 'other',
-    });
-  };
-
-  const handleOpenFollowUp = () => {
-    if (isFollowUpOpen || !personalRenungan.followUpQuestion) return;
-    setIsFollowUpOpen(true);
-    void trackRenunganTelemetryEvent('renungan_followup_opened', buildMentorOutcomeMeta());
-  };
-
-  const handleCompletePrayer = () => {
-    if (isAuthRestoring) return;
-    if (!isAuthenticated) {
-      router.push('/login?next=/renungan');
-      return;
-    }
-
-    void trackFunnelEvent('renungan_complete', {
-      surface: 'renungan',
-      meta: {
-        source: 'prayer_submit',
-        has_reflection_text: reflectionText.trim().length > 0,
+  const ritualActionsContext = useMemo(
+    () => ({
+      auth: {
+        isAuthenticated,
+        isAuthRestoring,
       },
-    });
-    completePrayer();
-  };
-
-  const handleContinueToVersehub = () => {
-    void trackFunnelEvent('continue_to_versehub', {
-      surface: 'renungan',
-      meta: {
-        target: '/versehub/id?source=renungan&intent=clarify',
-        mode: 'landing',
-      },
-    });
-    router.push(
-      buildVersehubClarifyUrl({
-        verseRef: personalRenungan.verseReference,
-        source: "renungan",
+      reflection: {
+        reflectionText,
         entryState,
-      })
-    );
-  };
+      },
+      mentor: {
+        personalRenungan,
+        mentorFeedback,
+        isFollowUpOpen,
+      },
+    }),
+    [
+      entryState,
+      isAuthenticated,
+      isAuthRestoring,
+      isFollowUpOpen,
+      mentorFeedback,
+      personalRenungan,
+      reflectionText,
+    ]
+  );
+  const {
+    ensureAuthenticatedRitual,
+    handleStartRenungan,
+    handleCompletePrayer,
+    handleContinueToVersehub,
+    handleMentorHelpful,
+    handleMentorNotHelpful,
+    handleOpenFollowUp,
+  } = useRitualActions({
+    context: ritualActionsContext,
+    handlers: {
+      completePrayer,
+      setHasStarted,
+      setMentorFeedback,
+      setIsFollowUpOpen,
+    },
+  });
 
   return (
     <div
@@ -515,13 +431,7 @@ export default function TodayDailyRitualScreen({
           isAuthRestoring={isAuthRestoring}
         />
 
-        {showOfflineBanner ? (
-          <div className="px-6 pt-2">
-            <div className="rounded-full border border-sky-200/65 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(239,246,255,0.72))] px-4 py-2 text-[12px] font-medium text-slate-600 shadow-[0_12px_30px_-24px_rgba(14,165,233,0.35)] backdrop-blur-xl">
-              Menampilkan renungan offline. Sambungkan internet untuk pembaruan terbaru.
-            </div>
-          </div>
-        ) : null}
+        <RitualParityBanner parityStatus={parityStatus} />
 
         <main className="pb-[env(safe-area-inset-bottom,32px)] pt-8 flex flex-col">
           <AnimatePresence mode="wait">
@@ -551,145 +461,24 @@ export default function TodayDailyRitualScreen({
                 transition={m.reduce ? m.tx.calm : { ...m.tx.calm, duration: 0.82 }}
                 className="mt-6 px-6 focus:outline-none"
               >
-                <div className="rounded-[34px] border border-white/70 bg-white/92 px-6 py-7 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.26)] backdrop-blur-xl">
-                  <div className="flex items-center gap-3 text-[#0f172a]/55">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7f4ff] text-[#0ea5e9]">
-                      <BookOpenText className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#0ea5e9]">
-                        Renungan Pribadi
-                      </p>
-                      <p className="mt-1 text-[13px] font-medium text-foreground/45">
-                        Disusun dari isi hati yang baru saja kamu doakan.
-                      </p>
-                    </div>
-                  </div>
-
-                  {personalRenungan.mentorOpening ? (
-                    <p className="mt-5 text-[14px] leading-7 text-foreground/60">
-                      {personalRenungan.mentorOpening}
-                    </p>
-                  ) : null}
-
-                  <motion.p
-                    className="mt-6 tct-serif break-words whitespace-pre-line text-[23px] leading-[1.7] tracking-[-0.01em] text-foreground/88"
-                    initial={{ opacity: 0, filter: 'blur(8px)' }}
-                    animate={{ opacity: 1, filter: 'blur(0px)' }}
-                    transition={m.reduce ? m.tx.calm : { ...m.tx.slow, delay: 0.08 }}
-                  >
-                    {personalRenungan.meditation}
-                  </motion.p>
-
-                  {personalRenungan.prayerPrompt ? (
-                    <div className="mt-6 rounded-2xl border border-sky-100/70 bg-sky-50/65 px-4 py-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700/80">
-                        Doa singkat untuk dibawa
-                      </p>
-                      <p className="mt-2 text-[14px] leading-7 text-foreground/72">
-                        {personalRenungan.prayerPrompt}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {renunganFollowUps.includes("make_prayer") ? (
-                      <button
-                        type="button"
-                        onClick={() => handleRegenerateByMode("short_prayer")}
-                        disabled={isGeneratingRenungan}
-                        className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
-                      >
-                        Jadikan doa
-                      </button>
-                    ) : null}
-                    {renunganFollowUps.includes("small_step") ? (
-                      <button
-                        type="button"
-                        onClick={() => handleRegenerateByMode("practical_step")}
-                        disabled={isGeneratingRenungan}
-                        className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
-                      >
-                        Beri langkah kecil
-                      </button>
-                    ) : null}
-                    {renunganFollowUps.includes("open_versehub") ? (
-                      <SurfaceBridgeAction
-                        target="versehub"
-                        label="Lihat makna ayat ini"
-                        href={buildVersehubClarifyUrl({
-                          verseRef: personalRenungan.verseReference,
-                          source: "renungan",
-                          entryState,
-                        })}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-slate-100/80 bg-slate-50/60 px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleMentorHelpful}
-                        className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
-                          mentorFeedback === 'helpful'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-white text-slate-700 hover:bg-emerald-50'
-                        }`}
-                      >
-                        Ini membantu
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleMentorNotHelpful}
-                        className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
-                          mentorFeedback === 'not_helpful'
-                            ? 'bg-rose-100 text-rose-700'
-                            : 'bg-white text-slate-700 hover:bg-rose-50'
-                        }`}
-                      >
-                        Belum pas
-                      </button>
-                      {personalRenungan.followUpQuestion ? (
-                        <button
-                          type="button"
-                          onClick={handleOpenFollowUp}
-                          className="rounded-full bg-white px-3.5 py-1.5 text-[12px] font-semibold text-sky-700 transition-colors hover:bg-sky-50"
-                        >
-                          Lanjut refleksi
-                        </button>
-                      ) : null}
-                    </div>
-
-                    {isFollowUpOpen && personalRenungan.followUpQuestion ? (
-                      <div className="mt-3 rounded-xl border border-sky-100/90 bg-white px-3.5 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-700/80">
-                          Pertanyaan lanjutan
-                        </p>
-                        <p className="mt-1.5 text-[14px] leading-7 text-foreground/75">
-                          {personalRenungan.followUpQuestion}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-8 flex justify-start">
-                    {!isPrayerCompleted && (
-                      <motion.button
-                        data-testid="today-prayer-submit"
-                        onClick={handleCompletePrayer}
-                        className="group inline-flex items-center rounded-full bg-[#0f172a] px-7 py-3 text-[15px] font-semibold text-white shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)] transition-all duration-400 ease-out hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] hover:shadow-[0_24px_48px_-24px_rgba(14,165,233,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-[0.98]"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={m.reduce ? m.tx.base : { ...m.tx.base, delay: 0.22 }}
-                      >
-                        <span className="transition-transform duration-400 ease-out group-hover:translate-x-[1px]">
-                          Amin
-                        </span>
-                      </motion.button>
-                    )}
-                  </div>
-                </div>
+                <RitualMeditationCard
+                  personalRenungan={personalRenungan}
+                  renunganFollowUps={renunganFollowUps}
+                  isGeneratingRenungan={isGeneratingRenungan}
+                  mentorFeedback={mentorFeedback}
+                  isFollowUpOpen={isFollowUpOpen}
+                  entryState={entryState}
+                  isPrayerCompleted={isPrayerCompleted}
+                  reduceMotion={m.reduce}
+                  transitionCalm={m.tx.calm}
+                  transitionSlow={m.tx.slow}
+                  transitionBase={m.tx.base}
+                  onRegenerateByMode={handleRegenerateByMode}
+                  onMentorHelpful={handleMentorHelpful}
+                  onMentorNotHelpful={handleMentorNotHelpful}
+                  onOpenFollowUp={handleOpenFollowUp}
+                  onCompletePrayer={handleCompletePrayer}
+                />
               </motion.section>
             )}
           </AnimatePresence>
@@ -716,140 +505,42 @@ export default function TodayDailyRitualScreen({
                   </span>
                 </motion.button>
               ) : null}
-
-              {ritualStage === 'reflect' ? (
-                <motion.div
-                  key="ritual-reflect"
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10, transition: m.tx.micro }}
-                  transition={m.tx.calm}
-                >
-                  <ReflectPrompt
-                    prompt="Apa satu hal yang sedang kamu rasakan hari ini?"
-                    placeholder="Kalau ingin, tulis sedikit apa yang sedang kamu rasakan."
-                    ctaLabel="Doakan"
-                    sealedLabel="Telah didoakan"
-                    value={activeActionText ?? ''}
-                    onChange={setReflectionText}
-                    onContinue={() => void handleContinueReflect()}
-                    secondaryAction={{
-                      label: "Lewati tulisan, beri satu pegangan",
-                      onClick: handleSkipTextSubmit,
-                      disabled: isGeneratingRenungan,
-                    }}
-                    isDone={isReflectDone}
-                    isSubmitting={isGeneratingRenungan}
-                    submittingLabel={RENUNGAN_LOADING_LABEL}
-                    beforeInputSlot={
-                      <div className="space-y-4">
-                        <EmotionalStatePicker
-                          value={entryState}
-                          onChange={setEntryState}
-                        />
-                        <div className="space-y-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Mode bantuan</p>
-                          <div className="flex flex-wrap gap-2">
-                            {RENUNGAN_MODE_OPTIONS.map((option) => (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => setRenunganMode(option.value)}
-                                className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors ${
-                                  renunganMode === option.value
-                                    ? "border-slate-800 bg-slate-900 text-white"
-                                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-800"
-                                }`}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <AIToneNotice tone="gentle" text="Boleh singkat. Boleh juga kosong. Kita ambil satu langkah kecil saja." />
-                      </div>
-                    }
-                  />
-                </motion.div>
-              ) : null}
             </AnimatePresence>
+            <RitualReflectStage
+              show={ritualStage === 'reflect'}
+              isDone={isReflectDone}
+              isSubmitting={isGeneratingRenungan}
+              activeActionText={ritualStage === 'reflect' ? reflectionText : ''}
+              entryState={entryState}
+              renunganMode={renunganMode}
+              submittingLabel={RENUNGAN_LOADING_LABEL}
+              transitionCalm={m.tx.calm}
+              transitionMicro={m.tx.micro}
+              onEntryStateChange={setEntryState}
+              onModeChange={setRenunganMode}
+              onTextChange={setReflectionText}
+              onContinue={() => void handleContinueReflect()}
+              onSkip={handleSkipTextSubmit}
+            />
           </section>
-
-          {isPrayerCompleted && (
-            <motion.section
-              ref={verseRevealRef}
-              tabIndex={-1}
-              initial={{ opacity: 0, y: 22, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={m.reduce ? m.tx.calm : { ...m.tx.slow, delay: 0.08 }}
-              className="mt-14 sm:mt-20 px-4 sm:px-6 pb-6 sm:pb-8 focus:outline-none"
-            >
-              <div className="rounded-[28px] sm:rounded-[36px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,250,255,0.94))] px-4 sm:px-6 py-6 sm:py-8 shadow-[0_32px_110px_-60px_rgba(14,116,144,0.35)] backdrop-blur-xl">
-                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#0284c7]">
-                  Ayat untukmu hari ini
-                </p>
-                <blockquote className="mt-4 sm:mt-5 tct-serif text-[22px] sm:text-[25px] leading-[1.58] sm:leading-[1.65] tracking-[-0.015em] text-foreground/92">
-                  “{personalRenungan.verseText}”
-                </blockquote>
-                <div className="mt-6 h-px w-10 bg-foreground/15" aria-hidden="true" />
-                <p className="mt-4 text-[12px] font-semibold tracking-[0.18em] text-foreground/42">
-                  {personalRenungan.verseReference}
-                </p>
-
-                <TodayShareActionBar
-                  shareText={personalShareText}
-                  sharePath={personalSharePath}
-                  isAuthenticated={isAuthenticated}
-                  isRestoring={isAuthRestoring}
-                  resolveSharePath={resolvePersonalSharePath}
-                  onBookmark={handleBookmarkReflection}
-                />
-
-                <div className="mt-4 flex items-start gap-2 text-[13px] leading-6 text-foreground/45">
-                  <Bookmark className="mt-0.5 h-4 w-4 shrink-0 text-foreground/35" />
-                  <p>
-                    Bookmark akan menyimpan renungan ini ke tab <span className="font-semibold text-foreground/68">Bookmarks pribadimu</span> di{' '}
-                    <Link
-                      href="/community"
-                      className="font-semibold text-[#0284c7] underline-offset-2 transition-colors hover:text-[#0ea5e9] hover:underline"
-                    >
-                      Community
-                    </Link>
-                    .
-                  </p>
-                </div>
-
-                {bookmarkError ? (
-                  <p className="mt-3 text-[13px] font-medium text-rose-500">{bookmarkError}</p>
-                ) : null}
-                {bookmarkSuccessNote ? (
-                  <p className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-[13px] font-medium text-emerald-700">
-                    {bookmarkSuccessNote}
-                  </p>
-                ) : null}
-
-                <div className="mt-6 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleContinueToVersehub}
-                    className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
-                  >
-                    Lanjut ke VerseHub
-                  </button>
-                  <SurfaceBridgeAction
-                    target="community"
-                    label="Bagikan nanti"
-                    href={`/community?intent=reflection&source=renungan&verseRef=${encodeURIComponent(personalRenungan.verseReference)}&text=${encodeURIComponent(personalRenungan.meditation)}`}
-                  />
-                  <SurfaceBridgeAction
-                    target="renungan"
-                    label="Cukup sampai sini"
-                    href="/renungan"
-                  />
-                </div>
-              </div>
-            </motion.section>
-          )}
+          <RitualCompletionSection
+            isVisible={isPrayerCompleted}
+            sectionRef={verseRevealRef}
+            reduceMotion={m.reduce}
+            transitionCalm={m.tx.calm}
+            transitionSlow={m.tx.slow}
+            personalRenungan={personalRenungan}
+            personalShareText={personalShareText}
+            personalSharePath={personalSharePath}
+            isAuthenticated={isAuthenticated}
+            isAuthRestoring={isAuthRestoring}
+            bookmarkError={bookmarkError}
+            bookmarkSuccessNote={bookmarkSuccessNote}
+            entryState={entryState}
+            onContinueToVersehub={handleContinueToVersehub}
+            onResolveSharePath={resolvePersonalSharePath}
+            onBookmark={handleBookmarkReflection}
+          />
         </main>
       </div>
     </div>

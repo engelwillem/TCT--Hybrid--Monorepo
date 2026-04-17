@@ -16,7 +16,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/auth/use-auth-session";
-import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
+import { fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { subscribeDataMutation } from "@/lib/mutation-sync";
 import MobileAppLayout from "@/layouts/MobileAppLayout";
 import SegmentedTabs from "@/components/core/SegmentedTabs";
@@ -169,7 +169,9 @@ export default function InboxPage() {
     try {
       const res = await fetchWithAppAuth(`/api/inbox/messages/${messageId}/approve`, {
         method: "POST",
-        headers: buildAppAuthHeaders({ contentType: "application/json" }),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({}),
       });
 

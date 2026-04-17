@@ -27,10 +27,27 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { buildAppAuthHeaders } from '@/lib/app-auth-fetch';
-import { clearAppAccessToken, getAppAccessToken, setAppAccessToken, setAppAuthUser } from '@/services/app-auth-token';
+import { fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import { clearAppAccessToken, setAppAccessToken, setAppAuthUser } from '@/services/app-auth-token';
 import { DEFAULT_SAVED_AVATAR_TRANSFORM, loadSavedAvatarTransform, saveAvatarTransform } from '@/lib/avatar-presentation';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+    AVATAR_EDITOR_LIMIT,
+    AVATAR_EDITOR_VIEWPORT,
+    AVATAR_TRANSFORM_LIMIT,
+    buildAvatarCandidates,
+    clampEditorTransform,
+    clampTransform,
+    cropAvatarFile,
+    DEFAULT_AVATAR_TRANSFORM,
+    dedupeCandidates,
+    getInitials,
+    loadImageDimensions,
+    pickRenderableAvatarCandidate,
+    readFileAsDataUrl,
+    type AvatarImageSize,
+    type AvatarTransform,
+} from '@/features/profile/avatar-utils';
 
 type OpsGatewayData = {
     status: 'Healthy' | 'Needs Attention' | 'High Risk' | string;
@@ -81,248 +98,6 @@ type FirebaseSyncPayload = {
         };
     };
 };
-
-type AvatarTransform = {
-    x: number;
-    y: number;
-    scale: number;
-};
-
-type AvatarImageSize = {
-    width: number;
-    height: number;
-};
-
-const DEFAULT_AVATAR_TRANSFORM: AvatarTransform = {
-    x: 0,
-    y: 0,
-    scale: 1,
-};
-
-const AVATAR_TRANSFORM_LIMIT = {
-    offset: 42,
-    minScale: 1,
-    maxScale: 1.6,
-};
-
-const AVATAR_EDITOR_VIEWPORT = 280;
-const AVATAR_EDITOR_LIMIT = {
-    offset: 180,
-    minScale: 1,
-    maxScale: 3,
-};
-
-const API_BASE_FALLBACK = 'https://api.thechoosentalks.org';
-const WEB_BASE_FALLBACK = 'https://www.thechoosentalks.org';
-const ADMIN_BASE_FALLBACK = 'https://admin.thechoosentalks.org';
-
-function resolveBaseUrl(
-    raw: string | undefined,
-    fallback: string,
-): string {
-    const value = String(raw || '').trim();
-    if (!value) return fallback;
-    try {
-        return new URL(value).origin;
-    } catch {
-        return fallback;
-    }
-}
-
-function dedupeCandidates(values: Array<string | null | undefined>): string[] {
-    const seen = new Set<string>();
-    const result: string[] = [];
-    for (const raw of values) {
-        const value = String(raw || '').trim();
-        if (!value || seen.has(value)) continue;
-        seen.add(value);
-        result.push(value);
-    }
-    return result;
-}
-
-function buildAvatarCandidates(rawUrl: string | null | undefined): string[] {
-    const candidate = String(rawUrl || '').trim();
-    if (!candidate) return [];
-
-    if (candidate.startsWith('data:image/')) {
-        return [candidate];
-    }
-
-    const apiBase = resolveBaseUrl(
-        process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL,
-        API_BASE_FALLBACK,
-    );
-    const webBase = resolveBaseUrl(process.env.NEXT_PUBLIC_APP_URL, WEB_BASE_FALLBACK);
-    const adminBase = resolveBaseUrl(process.env.NEXT_PUBLIC_ADMIN_BASE_URL, ADMIN_BASE_FALLBACK);
-
-    try {
-        const url = new URL(candidate);
-        const path = `${url.pathname}${url.search}${url.hash}`;
-        if (!url.pathname.startsWith('/storage/')) {
-            return [url.toString()];
-        }
-        return dedupeCandidates([
-            new URL(path, apiBase).toString(),
-            new URL(path, webBase).toString(),
-            new URL(path, adminBase).toString(),
-            url.toString(),
-        ]);
-    } catch {
-        const path = candidate.startsWith('/') ? candidate : `/${candidate.replace(/^\/+/, '')}`;
-        const withApi = (() => {
-            try {
-                return new URL(path, apiBase).toString();
-            } catch {
-                return null;
-            }
-        })();
-        const withWeb = (() => {
-            try {
-                return new URL(path, webBase).toString();
-            } catch {
-                return null;
-            }
-        })();
-        const withAdmin = (() => {
-            try {
-                return new URL(path, adminBase).toString();
-            } catch {
-                return null;
-            }
-        })();
-        return dedupeCandidates([withApi, withWeb, withAdmin, path]);
-    }
-}
-
-function canRenderAvatarImmediately(url: string): boolean {
-    return url.startsWith('blob:') || url.startsWith('data:image/');
-}
-
-function probeAvatarImage(url: string, timeoutMs = 6000): Promise<boolean> {
-    if (canRenderAvatarImmediately(url)) return Promise.resolve(true);
-
-    return new Promise((resolve) => {
-        const img = new Image();
-        let settled = false;
-        const done = (ok: boolean) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timer);
-            resolve(ok);
-        };
-
-        const timer = window.setTimeout(() => done(false), timeoutMs);
-        img.onload = () => done(true);
-        img.onerror = () => done(false);
-        img.src = url;
-    });
-}
-
-async function pickRenderableAvatarCandidate(candidates: string[]): Promise<string | null> {
-    const deduped = dedupeCandidates(candidates);
-    for (const candidate of deduped) {
-        // eslint-disable-next-line no-await-in-loop
-        const ok = await probeAvatarImage(candidate);
-        if (ok) return candidate;
-    }
-    return null;
-}
-
-function getInitials(rawName: string): string {
-    const parts = String(rawName || '')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-    if (parts.length === 0) return 'U';
-    if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
-    return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
-}
-
-function clampTransform(next: AvatarTransform): AvatarTransform {
-    const offset = AVATAR_TRANSFORM_LIMIT.offset;
-    const minScale = AVATAR_TRANSFORM_LIMIT.minScale;
-    const maxScale = AVATAR_TRANSFORM_LIMIT.maxScale;
-    return {
-        x: Math.max(-offset, Math.min(offset, Number(next.x) || 0)),
-        y: Math.max(-offset, Math.min(offset, Number(next.y) || 0)),
-        scale: Math.max(minScale, Math.min(maxScale, Number(next.scale) || 1)),
-    };
-}
-
-function clampEditorTransform(next: AvatarTransform): AvatarTransform {
-    const offset = AVATAR_EDITOR_LIMIT.offset;
-    return {
-        x: Math.max(-offset, Math.min(offset, Number(next.x) || 0)),
-        y: Math.max(-offset, Math.min(offset, Number(next.y) || 0)),
-        scale: Math.max(AVATAR_EDITOR_LIMIT.minScale, Math.min(AVATAR_EDITOR_LIMIT.maxScale, Number(next.scale) || 1)),
-    };
-}
-
-function readFileAsDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(reader.error || new Error('Gagal membaca file.'));
-        reader.readAsDataURL(file);
-    });
-}
-
-function loadImageDimensions(source: string): Promise<AvatarImageSize> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve({
-            width: img.naturalWidth || img.width,
-            height: img.naturalHeight || img.height,
-        });
-        img.onerror = () => reject(new Error('Gagal memuat dimensi gambar.'));
-        img.src = source;
-    });
-}
-
-async function cropAvatarFile(
-    source: string,
-    fileName: string,
-    transform: AvatarTransform,
-    imageSize?: AvatarImageSize | null,
-): Promise<File> {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error('Gagal memuat gambar untuk crop.'));
-        img.src = source;
-    });
-
-    const outputSize = 512;
-    const canvas = document.createElement('canvas');
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas crop tidak tersedia.');
-
-    const naturalWidth = imageSize?.width || image.naturalWidth;
-    const naturalHeight = imageSize?.height || image.naturalHeight;
-    const containScale = Math.min(outputSize / naturalWidth, outputSize / naturalHeight);
-    const finalScale = containScale * transform.scale;
-    const drawWidth = naturalWidth * finalScale;
-    const drawHeight = naturalHeight * finalScale;
-    const movementRatio = outputSize / AVATAR_EDITOR_VIEWPORT;
-    const drawX = (outputSize - drawWidth) / 2 + (transform.x * movementRatio);
-    const drawY = (outputSize - drawHeight) / 2 + (transform.y * movementRatio);
-
-    ctx.clearRect(0, 0, outputSize, outputSize);
-    ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, 'image/jpeg', 0.92);
-    });
-
-    if (!blob) throw new Error('Gagal membuat hasil crop avatar.');
-
-    const safeBaseName = fileName.replace(/\.[^.]+$/, '') || 'avatar';
-    return new File([blob], `${safeBaseName}-avatar.jpg`, { type: 'image/jpeg' });
-}
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -500,35 +275,29 @@ export default function ProfilePage() {
     };
 
     const fetchWithApiAuth = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response | null> => {
-        const makeRequest = async (includeBearerFallback = false) => {
-            const headers = new Headers(init.headers);
-            headers.set('Accept', headers.get('Accept') || 'application/json');
-            if (includeBearerFallback) {
-                const token = getAppAccessToken();
-                if (token) {
-                    headers.set('Authorization', `Bearer ${token}`);
-                }
-            }
-            return fetch(input, {
-                ...init,
-                headers,
-            });
-        };
-
-        let response = await makeRequest(false);
+        let response = await fetchWithAppAuth(input, init, {
+            includeBearerFallback: false,
+            clearLocalSessionOnUnauthorized: false,
+        });
         if (response.status !== 401) {
             return response;
         }
 
         if (authUser && !authUser.isAnonymous) {
             await syncFirebaseAccessToken(true);
-            response = await makeRequest(false);
+            response = await fetchWithAppAuth(input, init, {
+                includeBearerFallback: false,
+                clearLocalSessionOnUnauthorized: false,
+            });
             if (response.status !== 401) {
                 return response;
             }
         }
 
-        response = await makeRequest(true);
+        response = await fetchWithAppAuth(input, init, {
+            includeBearerFallback: true,
+            clearLocalSessionOnUnauthorized: false,
+        });
         if (response.status === 401) {
             clearAppAccessToken();
         }
@@ -666,9 +435,8 @@ export default function ProfilePage() {
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', {
+            await fetchWithAppAuth('/api/auth/logout', {
                 method: 'POST',
-                headers: buildAppAuthHeaders(),
             });
         } catch {
             // ignore backend logout failure, still clear local session

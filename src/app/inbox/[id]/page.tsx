@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Send, MoreVertical, Smile, Image as ImageIcon, ArrowLeft, Loader2, CheckCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthSession } from '@/auth/use-auth-session';
-import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import { fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { subscribeDataMutation } from '@/lib/mutation-sync';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -159,7 +159,9 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
         try {
             const response = await fetchWithAppAuth('/api/inbox/messages', {
                 method: 'POST',
-                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
                     recipient_id: partner.id,
                     body,
@@ -197,7 +199,9 @@ export default function InboxThreadPage({ params }: { params: Promise<{ id: stri
         try {
             const response = await fetchWithAppAuth(`/api/users/${partner.id}/follow`, {
                 method: 'POST',
-                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({}),
             });
 

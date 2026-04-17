@@ -5,26 +5,31 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\BibleVerse;
 use App\Services\AI\RenunganAIService;
+use App\Services\Renungan\RenunganPersonalizationPayloadAssembler;
+use App\Services\Renungan\RenunganPersonalizationRequestMapper;
+use App\Services\Renungan\RenunganPersonalizationResponseFinalizer;
+use App\Services\Renungan\RenunganPersonalizationTelemetryBuilder;
+use App\Services\Renungan\RenunganSearchTermBuilder;
 use App\Services\RenunganPastoralInterpretationService;
-use App\Services\SpiritualSessionMemoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RenunganPersonalizationController extends Controller
 {
     private const PIPELINE_VERSION = 'renungan.v2.1.telemetry';
     private const VERSE_CANDIDATE_LIMIT = 160;
-    private const DEBUG_FORCE_HEADER = 'x-renungan-debug-force';
-    private const DEBUG_TELEMETRY_HEADER = 'x-renungan-debug-telemetry';
 
     private bool $usedFallbackContent = false;
 
     public function __construct(
         private RenunganPastoralInterpretationService $pastoralInterpretationService,
         private RenunganAIService $renunganAIService,
-        private SpiritualSessionMemoryService $spiritualSessionMemoryService,
+        private RenunganPersonalizationRequestMapper $requestMapper,
+        private RenunganPersonalizationPayloadAssembler $payloadAssembler,
+        private RenunganPersonalizationTelemetryBuilder $telemetryBuilder,
+        private RenunganSearchTermBuilder $searchTermBuilder,
+        private RenunganPersonalizationResponseFinalizer $responseFinalizer,
     ) {
     }
 
@@ -287,25 +292,23 @@ class RenunganPersonalizationController extends Controller
     {
         $requestStartedAt = microtime(true);
         $this->usedFallbackContent = false;
-        $requestId = $this->resolveRequestId($request);
-        $debugForceMode = $this->resolveDebugForceMode($request);
-
-        $validated = $request->validate([
-            'text' => ['required', 'string', 'min:3', 'max:5000'],
-            'lang' => ['nullable', 'string', 'in:id,en'],
-            'mode' => ['nullable', 'string', 'in:calm_heart,practical_step,short_prayer,deep_reflection'],
-            'storage_mode' => ['nullable', 'string', 'in:standard,no_raw_storage'],
-        ]);
-
-        $reflectionText = trim((string) $validated['text']);
-        $lang = (($validated['lang'] ?? 'id') === 'en') ? 'id' : 'id';
-        $responseMode = (string) ($validated['mode'] ?? 'calm_heart');
-        $storageMode = (string) ($validated['storage_mode'] ?? 'standard');
+        $requestContext = $this->requestMapper->map($request);
+        $requestId = $requestContext['request_id'];
+        $debugForceMode = $requestContext['debug_force_mode'];
+        $reflectionText = $requestContext['reflection_text'];
+        $lang = $requestContext['lang'];
+        $responseMode = $requestContext['response_mode'];
+        $storageMode = $requestContext['storage_mode'];
 
         $analysisStartedAt = microtime(true);
         $analysis = $this->analyzeReflection($reflectionText);
         $analysisDurationMs = $this->elapsedMs($analysisStartedAt);
-        $searchTerms = $this->buildSearchTerms($reflectionText, $analysis);
+        $searchTerms = $this->searchTermBuilder->build(
+            $reflectionText,
+            $analysis,
+            self::THEME_PROFILES,
+            self::STOP_WORDS
+        );
 
         $verseQueryStartedAt = microtime(true);
         $candidates = $this->queryVerseCandidates($lang, $searchTerms);
@@ -391,40 +394,15 @@ class RenunganPersonalizationController extends Controller
         }
         $evaluationDurationMs = $this->elapsedMs($evaluationStartedAt);
 
-        $relatedVerses = [];
-        foreach ($selected as $verse) {
-            if (! $verse instanceof BibleVerse) {
-                continue;
-            }
-            $relatedVerses[] = [
-                'reference' => (string) ($verse->reference ?? ''),
-                'text' => (string) ($verse->text ?? ''),
-            ];
-        }
-
-        $responsePayload = [
-            'data' => [
-                'meditation' => $meditation,
-                'verse' => [
-                    'reference' => (string) ($primary?->reference ?? 'Mazmur 55:23'),
-                    'text' => (string) ($primary?->text ?? 'Serahkanlah kuatirmu kepada TUHAN, maka Ia akan memelihara engkau.'),
-                ],
-                'related_verses' => $relatedVerses,
-                'analysis' => $analysis,
-                'interpretation' => $interpretation,
-                'generation' => [
-                    'intent_summary' => (string) ($generationPlan['intent_summary'] ?? ''),
-                    'heart_diagnosis' => (string) ($generationPlan['heart_diagnosis'] ?? ''),
-                    'pastoral_angle' => (string) ($generationPlan['pastoral_angle'] ?? ''),
-                    'outline' => [
-                        'opening' => (string) ($generationPlan['outline']['opening'] ?? ''),
-                        'body' => (string) ($generationPlan['outline']['body'] ?? ''),
-                        'closing' => (string) ($generationPlan['outline']['closing'] ?? ''),
-                    ],
-                    'quality' => $quality,
-                ],
-            ],
-        ];
+        $responsePayload = $this->payloadAssembler->buildInitialPayload(
+            $meditation,
+            $selected,
+            $primary,
+            $analysis,
+            $interpretation,
+            $generationPlan,
+            $quality
+        );
 
         $mentorStartedAt = microtime(true);
         $mentorResult = $this->renunganAIService->generate([
@@ -441,33 +419,24 @@ class RenunganPersonalizationController extends Controller
         ]);
         $mentorDurationMs = $this->elapsedMs($mentorStartedAt);
 
-        $responsePayload['data']['mentor_opening'] = (string) ($mentorResult['mentor_opening'] ?? '');
-        $responsePayload['data']['meditation'] = (string) ($mentorResult['meditation'] ?? $meditation);
-        $responsePayload['data']['prayer_prompt'] = (string) ($mentorResult['prayer_prompt'] ?? '');
-        $responsePayload['data']['follow_up_question'] = (string) ($mentorResult['follow_up_question'] ?? '');
-        $responsePayload['data']['follow_up_prompts'] = (array) ($mentorResult['follow_up_prompts'] ?? []);
-        $responsePayload['data']['confidence'] = (string) ($mentorResult['confidence'] ?? 'medium');
-        $responsePayload['data']['safety_notes'] = (array) ($mentorResult['safety_notes'] ?? []);
-        $responsePayload['data']['request_id'] = (string) ($mentorResult['request_id'] ?? $requestId);
-        $responsePayload['data']['driver'] = (string) data_get($mentorResult, 'meta.driver', 'template');
-        $responsePayload['data']['used_fallback'] = (bool) data_get($mentorResult, 'meta.used_fallback', true);
-        $responsePayload['data']['response_mode'] = (string) ($mentorResult['response_mode'] ?? $responseMode);
-        $responsePayload['data']['safety'] = (array) ($mentorResult['safety'] ?? []);
-        $responsePayload['data']['privacy'] = (array) ($mentorResult['privacy'] ?? []);
-        $responsePayload['data']['ai_pipeline'] = (array) ($mentorResult['pipeline'] ?? []);
+        $responsePayload = $this->payloadAssembler->withMentorResult(
+            $responsePayload,
+            $mentorResult,
+            $meditation,
+            $requestId,
+            $responseMode
+        );
 
         $requestDurationMs = $this->elapsedMs($requestStartedAt);
-        $initialQualityReasons = array_values(array_unique((array) ($initialQuality['reasons'] ?? [])));
-        $qualityReasons = array_values(array_unique((array) ($quality['reasons'] ?? [])));
-        $telemetryContext = [
+        $telemetryContext = $this->telemetryBuilder->build([
             'request_id' => $requestId,
-            'timestamp' => now()->toIso8601String(),
             'pipeline_version' => self::PIPELINE_VERSION,
-            'environment' => app()->environment(),
-            'input_length_bucket' => $this->bucketInputLength($reflectionText),
-            'word_count_bucket' => $this->bucketWordCount($reflectionText),
-            'ambiguity_bucket' => $this->bucketAmbiguity((array) ($analysis['theme_scores'] ?? []), (array) ($analysis['emotion_scores'] ?? [])),
-            'emotional_intensity_bucket' => $this->bucketIntensity((int) ($analysis['intensity'] ?? 1)),
+            'debug_force_mode' => $debugForceMode,
+            'reflection_text' => $reflectionText,
+            'analysis' => $analysis,
+            'initial_quality' => $initialQuality,
+            'quality' => $quality,
+            'mentor_result' => $mentorResult,
             'analysis_duration_ms' => $analysisDurationMs,
             'verse_query_duration_ms' => $verseQueryDurationMs,
             'verse_selection_duration_ms' => $verseSelectionDurationMs,
@@ -476,43 +445,21 @@ class RenunganPersonalizationController extends Controller
             'evaluation_duration_ms' => $evaluationDurationMs,
             'mentor_duration_ms' => $mentorDurationMs,
             'total_duration_ms' => $requestDurationMs,
-            'backend_latency_bucket' => $this->bucketBackendLatency($requestDurationMs),
             'candidate_count' => $candidates->count(),
             'selected_verse_count' => $selectedVerseCount,
             'fallback_verse_used' => $fallbackVerseUsed,
-            'fallback_meditation_used' => $this->usedFallbackContent,
-            'rewrite_triggered' => $rewriteCount > 0,
-            'quality_rewrite_triggered' => $rewriteCount > 0,
-            'rewrite_count' => $rewriteCount,
-            'quality_passed_initial' => (bool) ($initialQuality['passed'] ?? false),
-            'quality_passed_final' => (bool) ($quality['passed'] ?? false),
-            'initial_evaluation_reasons' => $initialQualityReasons,
-            'evaluation_reasons' => $qualityReasons,
-            'failure_reasons' => array_values(array_filter(
-                $qualityReasons,
-                fn (string $reason): bool => ! in_array($reason, ['rewrite_improved_output'], true)
-            )),
             'used_fallback_content' => $this->usedFallbackContent,
+            'rewrite_count' => $rewriteCount,
             'verse_reference' => (string) ($primary?->reference ?? ''),
-            'primary_theme' => (string) ($analysis['primary_theme'] ?? ''),
-            'intent' => (string) ($analysis['intent'] ?? ''),
-            'debug_force_mode' => $debugForceMode,
-            'contains_raw_reflection' => false,
-            'mentor_driver' => (string) data_get($mentorResult, 'meta.driver', 'template'),
-            'mentor_provider' => (string) data_get($mentorResult, 'meta.driver', 'template'),
-            'mentor_model' => data_get($mentorResult, 'meta.model'),
-            'mentor_success' => ! (bool) data_get($mentorResult, 'meta.used_fallback', true),
-            'mentor_fallback' => (bool) data_get($mentorResult, 'meta.used_fallback', true),
-            'mentor_used_fallback' => (bool) data_get($mentorResult, 'meta.used_fallback', true),
-            'mentor_fallback_reason' => data_get($mentorResult, 'meta.fallback_reason'),
-            'mentor_latency_ms' => (int) data_get($mentorResult, 'meta.latency_ms', 0),
-            'mentor_request_id' => (string) ($mentorResult['request_id'] ?? ''),
-        ];
-        $this->logRenunganTelemetry($telemetryContext);
-        if ($this->shouldIncludeDebugTelemetry($request)) {
-            $responsePayload['data']['generation']['telemetry_debug'] = $telemetryContext;
-        }
-        $this->persistSessionMemory($request, $analysis, $responsePayload);
+        ]);
+        $responsePayload = $this->responseFinalizer->finalize(
+            $request,
+            $analysis,
+            $responsePayload,
+            $telemetryContext,
+            (bool) $requestContext['include_debug_telemetry'],
+            self::PIPELINE_VERSION
+        );
 
         return response()
             ->json($responsePayload)
@@ -628,81 +575,6 @@ class RenunganPersonalizationController extends Controller
             'theme_scores' => $this->roundScores($themeScores),
             'emotion_scores' => $this->roundScores($emotionScores),
         ];
-    }
-
-    private function buildSearchTerms(string $text, array $analysis): array
-    {
-        $normalized = $this->normalizeText($text);
-        $tokens = collect(explode(' ', $normalized))
-            ->filter(fn (string $token) => strlen($token) >= 3)
-            ->reject(fn (string $token) => in_array($token, self::STOP_WORDS, true))
-            ->take(12)
-            ->values()
-            ->all();
-
-        $primaryTheme = (string) ($analysis['primary_theme'] ?? 'direction');
-        $secondaryThemes = (array) ($analysis['secondary_themes'] ?? []);
-        $primaryEmotion = (string) ($analysis['primary_emotion'] ?? 'confused');
-        $intent = (string) ($analysis['intent'] ?? 'guidance');
-        $contextFlags = (array) ($analysis['context_flags'] ?? []);
-
-        $themeTerms = self::THEME_PROFILES[$primaryTheme]['verse_hints'] ?? ['percaya', 'pengharapan'];
-        $secondaryTerms = collect($secondaryThemes)
-            ->flatMap(fn (string $theme) => self::THEME_PROFILES[$theme]['verse_hints'] ?? [])
-            ->take(4)
-            ->values()
-            ->all();
-
-        $emotionHints = [
-            'positive' => ['sukacita', 'bersyukur', 'pujilah'],
-            'tender' => ['menyertai', 'pelihara', 'dekat'],
-            'fearful' => ['damai', 'tenang', 'jangan takut'],
-            'exhausted' => ['kekuatan', 'istirahat', 'ditopang'],
-            'guilty' => ['ampuni', 'anugerah', 'dipulihkan'],
-            'confused' => ['hikmat', 'tuntun', 'jalan'],
-            'angry' => ['lambat marah', 'lemah lembut', 'damai'],
-            'hostile' => ['jangan membalas', 'jaga lidah', 'damai'],
-            'resentful' => ['kasih', 'cukup', 'syukur'],
-            'sad' => ['penghiburan', 'dekat', 'air mata'],
-            'hopeful' => ['pengharapan', 'setia', 'janji'],
-        ][$primaryEmotion] ?? ['percaya', 'setia'];
-
-        $intentHints = [
-            'express_gratitude' => ['puji', 'syukur', 'kemuliaan'],
-            'seek_comfort' => ['penghiburan', 'dekat', 'menyertai'],
-            'confess' => ['pemulihan', 'pengampunan', 'damai'],
-            'lament' => ['ratap', 'penghiburan', 'damai'],
-            'process_anger' => ['lambat marah', 'kendali diri', 'damai'],
-            'seek_reconciliation' => ['mengampuni', 'damai', 'kasih'],
-            'seek_release' => ['lepaskan', 'damai', 'pulih'],
-            'seek_peace' => ['damai', 'tenang', 'percaya'],
-            'guidance' => ['hikmat', 'tuntunan', 'arah'],
-            'surrender_burden' => ['serahkan', 'percaya', 'damai'],
-        ][$intent] ?? ['percaya', 'pengharapan'];
-
-        $contextTerms = [];
-        if (($contextFlags['has_family_terms'] ?? false) && ($contextFlags['has_longing_terms'] ?? false)) {
-            $contextTerms = ['keluarga', 'pelihara', 'lindungi', 'menyertai'];
-        } elseif (
-            ($contextFlags['has_ministry_terms'] ?? false)
-            || ($contextFlags['has_church_hurt_terms'] ?? false)
-            || ($contextFlags['has_exploitation_terms'] ?? false)
-            || ($contextFlags['has_authority_wound_terms'] ?? false)
-        ) {
-            $contextTerms = ['hikmat', 'pulihkan', 'teguhkan', 'damai', 'kebenaran', 'jangan tawar hati'];
-        } elseif (($contextFlags['has_harm_terms'] ?? false) || ($contextFlags['has_anger_terms'] ?? false)) {
-            $contextTerms = ['lambat marah', 'jaga lidah', 'jangan membalas', 'damai'];
-        } elseif (($contextFlags['has_conflict_terms'] ?? false)) {
-            $contextTerms = ['kasih', 'damai', 'mengampuni'];
-        }
-
-        return collect(array_merge($tokens, $themeTerms, $secondaryTerms, $emotionHints, $intentHints, $contextTerms))
-            ->map(fn (string $term) => trim($term))
-            ->filter()
-            ->unique()
-            ->take(22)
-            ->values()
-            ->all();
     }
 
     private function queryVerseCandidates(string $lang, array $searchTerms)
@@ -1475,153 +1347,9 @@ class RenunganPersonalizationController extends Controller
         return max(1, min(5, $intensity));
     }
 
-    private function resolveRequestId(Request $request): string
-    {
-        $headerRequestId = trim((string) $request->header('x-request-id'));
-        if ($headerRequestId !== '') {
-            return Str::limit($headerRequestId, 120, '');
-        }
-
-        return (string) Str::uuid();
-    }
-
-    private function resolveDebugForceMode(Request $request): ?string
-    {
-        if (! app()->environment(['local', 'testing'])) {
-            return null;
-        }
-
-        $mode = Str::lower(trim((string) $request->header(self::DEBUG_FORCE_HEADER, '')));
-        if (in_array($mode, ['rewrite', 'fallback'], true)) {
-            return $mode;
-        }
-
-        return null;
-    }
-
-    private function shouldIncludeDebugTelemetry(Request $request): bool
-    {
-        if (! app()->environment(['local', 'testing'])) {
-            return false;
-        }
-
-        return trim((string) $request->header(self::DEBUG_TELEMETRY_HEADER, '')) === '1';
-    }
-
     private function elapsedMs(float $startedAt): int
     {
         return (int) round((microtime(true) - $startedAt) * 1000);
-    }
-
-    private function bucketInputLength(string $reflectionText): string
-    {
-        $length = strlen(trim($reflectionText));
-        return match (true) {
-            $length <= 20 => 'xs_0_20',
-            $length <= 60 => 's_21_60',
-            $length <= 140 => 'm_61_140',
-            $length <= 280 => 'l_141_280',
-            default => 'xl_281_plus',
-        };
-    }
-
-    private function bucketWordCount(string $reflectionText): string
-    {
-        $count = str_word_count($reflectionText);
-        return match (true) {
-            $count <= 3 => 'w_0_3',
-            $count <= 8 => 'w_4_8',
-            $count <= 16 => 'w_9_16',
-            $count <= 32 => 'w_17_32',
-            default => 'w_33_plus',
-        };
-    }
-
-    private function bucketAmbiguity(array $themeScores, array $emotionScores): string
-    {
-        $themeSpread = count($themeScores);
-        $emotionSpread = count($emotionScores);
-        $topTheme = (float) (reset($themeScores) ?: 0.0);
-        $secondTheme = (float) (array_values($themeScores)[1] ?? 0.0);
-        $themeGap = $topTheme - $secondTheme;
-
-        if ($themeSpread >= 4 || $emotionSpread >= 4) {
-            return 'high';
-        }
-        if ($themeGap <= 0.6) {
-            return 'medium';
-        }
-
-        return 'low';
-    }
-
-    private function bucketIntensity(int $intensity): string
-    {
-        return match (true) {
-            $intensity <= 2 => 'low',
-            $intensity === 3 => 'medium',
-            default => 'high',
-        };
-    }
-
-    private function bucketBackendLatency(int $durationMs): string
-    {
-        return match (true) {
-            $durationMs < 400 => 'fast',
-            $durationMs < 1000 => 'normal',
-            $durationMs < 2200 => 'slow',
-            default => 'very_slow',
-        };
-    }
-
-    private function logRenunganTelemetry(array $telemetry): void
-    {
-        $safeTelemetry = $telemetry;
-        unset($safeTelemetry['reflection_text'], $safeTelemetry['input_text'], $safeTelemetry['raw_text']);
-        $safeTelemetry['contains_raw_reflection'] = false;
-
-        Log::info('renungan.personalization.telemetry', $safeTelemetry);
-    }
-
-    /**
-     * @param  array<string, mixed>  $analysis
-     * @param  array<string, mixed>  $responsePayload
-     */
-    private function persistSessionMemory(Request $request, array $analysis, array $responsePayload): void
-    {
-        $user = $request->user();
-        if (! $user) {
-            return;
-        }
-
-        $data = (array) ($responsePayload['data'] ?? []);
-        $verse = (array) ($data['verse'] ?? []);
-        $generation = (array) ($data['generation'] ?? []);
-
-        try {
-            $this->spiritualSessionMemoryService->rememberFromRenungan($user, [
-                'dominant_emotion' => $analysis['primary_emotion'] ?? null,
-                'reflection_theme' => $analysis['primary_theme'] ?? null,
-                'primary_verse_reference' => $verse['reference'] ?? null,
-                'primary_verse_text' => $verse['text'] ?? null,
-                'interpretation_focus' => data_get($generation, 'pastoral_angle')
-                    ?? data_get($data, 'interpretation.pastoral_application'),
-                'pipeline_version' => self::PIPELINE_VERSION,
-                'meta' => [
-                    'request_id' => $data['request_id'] ?? null,
-                    'driver' => $data['driver'] ?? null,
-                    'used_fallback' => $data['used_fallback'] ?? null,
-                    'response_mode' => $data['response_mode'] ?? null,
-                ],
-            ]);
-        } catch (\Throwable $exception) {
-            Log::warning('renungan.session_memory.persist_failed', [
-                'user_id' => $user->id,
-                'request_id' => $data['request_id'] ?? null,
-                'pipeline_version' => self::PIPELINE_VERSION,
-                'error' => $exception->getMessage(),
-            ]);
-        }
     }
 
     private function roundScores(array $scores): array

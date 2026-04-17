@@ -17,6 +17,8 @@ export type LoadedTodaySession = {
   diagnostics: {
     sourceStatus: 'external' | 'fallback_only';
     hasOfflineFallback: boolean;
+    warnCount: number;
+    recommendedActions: string[];
   };
 };
 
@@ -125,6 +127,8 @@ export async function loadTodaySessionContentWithDiagnostics(
     diagnostics: {
       sourceStatus: diagnostics.sourceStatus,
       hasOfflineFallback: diagnostics.sourceStatus === 'fallback_only',
+      warnCount: summary.warnCount,
+      recommendedActions: summary.recommendedActions,
     },
   };
 }

@@ -28,10 +28,17 @@ export const metadata: Metadata = {
 
 export default async function RenunganPage() {
   const loaded = await loadTodaySessionContentWithDiagnostics();
+  const parityStatus: "healthy" | "fallback" | "degraded" =
+    loaded.diagnostics.sourceStatus === "fallback_only"
+      ? "fallback"
+      : loaded.diagnostics.warnCount > 0
+        ? "degraded"
+        : "healthy";
+
   return (
     <TodayDailyRitualScreen
       sessionContent={loaded.content}
-      showOfflineBanner={loaded.diagnostics.hasOfflineFallback}
+      parityStatus={parityStatus}
     />
   );
 }

@@ -8,6 +8,7 @@
 import { CommunityPost, CommunityComment, BookmarkCategory } from "@/features/community/types";
 import { clearAppAccessToken, shouldInvalidateLocalSession } from "@/services/app-auth-token";
 import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
+import { resolveApiOrigin } from "@/lib/origin";
 
 class ApiError extends Error {
   constructor(
@@ -110,20 +111,6 @@ interface ApiPost {
   isLiked: boolean;
   isBookmarked: boolean;
 }
-
-const API_BASE_FALLBACK = "https://api.thechoosentalks.org";
-
-const resolveApiOrigin = (): string => {
-  const raw =
-    process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    API_BASE_FALLBACK;
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return API_BASE_FALLBACK;
-  }
-};
 
 const extractKnownAssetPath = (pathname: string): string | null => {
   if (!pathname) return null;

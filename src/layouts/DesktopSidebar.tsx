@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { TCTLogo } from '@/components/brand/TCTLogo';
 import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
+import { resolveApiOrigin } from '@/lib/origin';
 
 type NavItem = {
     id: string;
@@ -35,20 +36,6 @@ const ROUTE_MAP: Record<string, string> = {
     community: '/community',
     profile: '/profile',
 };
-
-const API_BASE_FALLBACK = 'https://api.thechoosentalks.org';
-
-function resolveApiOrigin(): string {
-    const raw =
-        process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL ||
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        API_BASE_FALLBACK;
-    try {
-        return new URL(raw).origin;
-    } catch {
-        return API_BASE_FALLBACK;
-    }
-}
 
 function extractKnownAvatarPath(pathname: string): string | null {
     if (!pathname) return null;
