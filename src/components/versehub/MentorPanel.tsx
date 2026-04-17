@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from 'react';
-import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import { fetchWithAppAuth } from '@/lib/app-auth-fetch';
 
 interface MentorInsights {
     reflection_questions?: string[];
@@ -141,7 +141,6 @@ export default function MentorPanel({
         setInsightsLoading(true);
 
         fetchWithAppAuth(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor`, {
-            headers: buildAppAuthHeaders(),
             cache: 'no-store',
         })
             .then((r) => (r.ok ? r.json() : null))
@@ -181,7 +180,9 @@ export default function MentorPanel({
 
         fetchWithAppAuth(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor/ask`, {
             method: 'POST',
-            headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ 
                 question: q,
                 mode: askMode,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type Dispatch, type SetStateAction } from "react";
-import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
+import { fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { getVerseShareUrl } from "@/lib/share";
 import { prepareVersehubShareAsset } from "@/lib/share-assets";
 import { trackVersehubEvent } from "@/features/versehub/analytics";
@@ -159,9 +159,9 @@ export function useVersehubReaderActions({
     try {
       const response = await fetchWithAppAuth(`/api/versehub/${lang}/reflections`, {
         method: "POST",
-        headers: buildAppAuthHeaders({
-          contentType: "application/json",
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           verse_ref: initialChapterRef,
           question_text: chapterReflectionQuestion,
@@ -218,9 +218,9 @@ export function useVersehubReaderActions({
     try {
       const response = await fetchWithAppAuth(`/api/versehub/${lang}/actions`, {
         method: "POST",
-        headers: buildAppAuthHeaders({
-          contentType: "application/json",
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           book: verseBookCode,
           chapter: verseChapterNumber,
@@ -251,9 +251,9 @@ export function useVersehubReaderActions({
     try {
       const response = await fetchWithAppAuth(`/api/versehub/${lang}/actions`, {
         method: "POST",
-        headers: buildAppAuthHeaders({
-          contentType: "application/json",
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           book: verseBookCode,
           chapter: verseChapterNumber,

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\BibleVerse;
 use App\Services\AI\VerseHubAIService;
+use App\Services\VerseHub\VerseHubMentorOgCopyBuilder;
+use App\Services\VerseHub\VerseHubResponseAssembler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +16,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerseHubController extends Controller
 {
+    private VerseHubResponseAssembler $responseAssembler;
+    private VerseHubMentorOgCopyBuilder $mentorOgCopyBuilder;
+
+    public function __construct(
+        ?VerseHubResponseAssembler $responseAssembler = null,
+        ?VerseHubMentorOgCopyBuilder $mentorOgCopyBuilder = null,
+    ) {
+        $this->responseAssembler = $responseAssembler ?? app(VerseHubResponseAssembler::class);
+        $this->mentorOgCopyBuilder = $mentorOgCopyBuilder ?? app(VerseHubMentorOgCopyBuilder::class);
+    }
+
     /**
      * Display a dedicated verse page that is share-friendly (WA/FB OG tags).
      *
@@ -116,16 +129,18 @@ class VerseHubController extends Controller
         // HARDENING: Add denominational context for deeper theological parity
         $denominationalContext = $mentor->getDenominationalContext($bookCode, $chapter, $verse);
 
-        return response()->json([
-            'ref' => $normalized['ref'],
-            'query' => $query,
-            'mentor_label' => config('versehub_mentor.label', 'Scripture Guide'),
-            'insights' => $insights,
-            'relationships' => $relationships,
-            'themes' => $themes,
-            'active_study_paths' => $studyPaths,
-            'denominational_context' => $denominationalContext,
-        ]);
+        return response()->json(
+            $this->responseAssembler->buildMentorInsightsPayload(
+                $normalized['ref'],
+                $query,
+                (string) config('versehub_mentor.label', 'Scripture Guide'),
+                $insights,
+                $relationships,
+                $themes,
+                $studyPaths,
+                $denominationalContext
+            )
+        );
     }
 
     /**
@@ -216,19 +231,13 @@ class VerseHubController extends Controller
 
         $verse = $this->fetchVerseForLang($lang, $query);
         $reference = (string) ($verse['reference'] ?? Str::upper($normalized['ref']));
+        $copy = $this->mentorOgCopyBuilder->build(
+            $reference,
+            (string) $request->query('q', ''),
+            (string) $request->query('summary', '')
+        );
 
-        $question = trim((string) $request->query('q', ''));
-        $summary = trim((string) $request->query('summary', ''));
-
-        $question = Str::limit(preg_replace('/\s+/', ' ', $question) ?? $question, 90, '…');
-        $summary = Str::limit(preg_replace('/\s+/', ' ', $summary) ?? $summary, 190, '…');
-
-        $title = $question !== '' ? "Ask the Bible: {$question}" : "Ask the Bible — {$reference}";
-        $subtitle = $summary !== ''
-            ? $summary
-            : "Scripture Guide membantu studi berbasis {$reference} secara transparan, tenang, dan berpusat pada teks Alkitab.";
-
-        $png = $this->renderAskOg($title, $subtitle);
+        $png = $this->renderAskOg($copy['title'], $copy['subtitle']);
 
         return new Response($png, 200, [
             'Content-Type' => 'image/png',
@@ -262,17 +271,14 @@ class VerseHubController extends Controller
 
         $canonical = $this->publicUrl("/versehub/{$lang}/{$normalized['ref']}");
 
-        $data = [
-            'lang' => $lang,
-            'ref' => $normalized['ref'],
-            'query' => $query,
-            'reference' => $verse['reference'] ?? Str::upper($normalized['ref']),
-            'text' => trim((string) ($verse['text'] ?? '')),
-            'translation_name' => $verse['translation_name'] ?? null,
-            'provider' => $verse['provider'] ?? null,
-            'og_image_url' => $ogPath,
-            'canonical_url' => $canonical,
-        ];
+        $data = $this->responseAssembler->buildReaderPayload(
+            $lang,
+            $normalized['ref'],
+            $query,
+            $verse,
+            $ogPath,
+            $canonical
+        );
 
         if ($request->expectsJson()) {
             return response()->json($data);

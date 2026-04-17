@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Bookmark, Heart, Loader2, MessageSquare, MessageSquareText, Reply, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerseData } from "@/features/versehub/types";
-import { buildAppAuthHeaders, fetchWithAppAuth } from "@/lib/app-auth-fetch";
+import { fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { useMutationRefreshTick } from "@/hooks/use-mutation-refresh-tick";
 
 interface VerseFocusCardProps {
@@ -115,9 +115,9 @@ export function VerseFocusCard({
     try {
       const response = await fetchWithAppAuth(commentEndpoint, {
         method: "POST",
-        headers: buildAppAuthHeaders({
-          contentType: "application/json",
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           body,
           reply_to_id: replyTo?.id ? Number(replyTo.id) : null,

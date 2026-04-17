@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\BibleVerse;
 use App\Services\AI\RenunganAIService;
+use App\Services\Renungan\RenunganMeditationQualityOrchestrator;
 use App\Services\Renungan\RenunganPersonalizationPayloadAssembler;
 use App\Services\Renungan\RenunganPersonalizationRequestMapper;
 use App\Services\Renungan\RenunganPersonalizationResponseFinalizer;
@@ -30,6 +31,7 @@ class RenunganPersonalizationController extends Controller
         private RenunganPersonalizationTelemetryBuilder $telemetryBuilder,
         private RenunganSearchTermBuilder $searchTermBuilder,
         private RenunganPersonalizationResponseFinalizer $responseFinalizer,
+        private RenunganMeditationQualityOrchestrator $qualityOrchestrator,
     ) {
     }
 
@@ -354,44 +356,18 @@ class RenunganPersonalizationController extends Controller
         );
         $generationDurationMs = $this->elapsedMs($generationStartedAt);
         $evaluationStartedAt = microtime(true);
-        $initialQuality = $this->evaluateMeditationQuality($meditation, $reflectionText, $analysis, $generationPlan);
-        if (in_array($debugForceMode, ['rewrite', 'fallback'], true)) {
-            $initialReasons = array_values(array_unique(array_merge(
-                (array) ($initialQuality['reasons'] ?? []),
-                ['debug_force_quality_fail_initial']
-            )));
-            $initialQuality['passed'] = false;
-            $initialQuality['reasons'] = $initialReasons;
-        }
-        $quality = $initialQuality;
-        $rewriteCount = 0;
-        if (! ($quality['passed'] ?? false)) {
-            $rewriteCount = 1;
-            $meditation = $this->rewriteMeditationFromPlan($reflectionText, $analysis, $interpretation, $generationPlan);
-            $quality = $this->evaluateMeditationQuality($meditation, $reflectionText, $analysis, $generationPlan);
-            if ($debugForceMode === 'fallback') {
-                $quality['passed'] = false;
-                $quality['reasons'] = array_values(array_unique(array_merge(
-                    (array) ($quality['reasons'] ?? []),
-                    ['debug_force_rewrite_failed']
-                )));
-            }
-        }
-        if (! ($quality['passed'] ?? false)) {
-            $meditation = $this->composeSafeFallbackMeditation($analysis);
-            $this->usedFallbackContent = true;
-            $quality['reasons'] = array_values(array_unique(array_merge(
-                (array) ($quality['reasons'] ?? []),
-                ['rewrite_failed_to_improve'],
-                ['fallback_due_to_invalid_output']
-            )));
-            $quality['passed'] = false;
-        } elseif (! ($initialQuality['passed'] ?? false)) {
-            $quality['reasons'] = array_values(array_unique(array_merge(
-                (array) ($quality['reasons'] ?? []),
-                ['rewrite_improved_output']
-            )));
-        }
+        $qualityResolution = $this->qualityOrchestrator->resolve(
+            $meditation,
+            $debugForceMode,
+            fn (string $text): array => $this->evaluateMeditationQuality($text, $reflectionText, $analysis, $generationPlan),
+            fn (): string => $this->rewriteMeditationFromPlan($reflectionText, $analysis, $interpretation, $generationPlan),
+            fn (): string => $this->composeSafeFallbackMeditation($analysis),
+        );
+        $meditation = $qualityResolution['meditation'];
+        $initialQuality = $qualityResolution['initial_quality'];
+        $quality = $qualityResolution['quality'];
+        $rewriteCount = $qualityResolution['rewrite_count'];
+        $this->usedFallbackContent = $qualityResolution['used_fallback_content'];
         $evaluationDurationMs = $this->elapsedMs($evaluationStartedAt);
 
         $responsePayload = $this->payloadAssembler->buildInitialPayload(

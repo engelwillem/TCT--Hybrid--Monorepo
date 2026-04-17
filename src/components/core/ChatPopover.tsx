@@ -5,7 +5,7 @@ import { useAuthSession } from '@/auth/use-auth-session';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { buildAppAuthHeaders, fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import { fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -81,9 +81,7 @@ export default function ChatPopover({
         if (!isAuthenticated) return;
 
         try {
-            const res = await fetchWithAppAuth('/api/inbox', {
-                headers: buildAppAuthHeaders(),
-            });
+            const res = await fetchWithAppAuth('/api/inbox');
             const json = await res.json();
             const data = (json?.inbox ?? emptyInbox()) as NonNullable<SharedInbox>;
             setLiveInbox(data);
@@ -117,7 +115,9 @@ export default function ChatPopover({
         try {
             const res = await fetchWithAppAuth(`/api/users/${partnerId}/follow`, {
                 method: 'POST',
-                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({}),
             });
 
@@ -144,7 +144,9 @@ export default function ChatPopover({
         try {
             const res = await fetchWithAppAuth(`/api/inbox/messages/${messageId}/approve`, {
                 method: 'POST',
-                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({}),
             });
 
@@ -173,7 +175,9 @@ export default function ChatPopover({
         try {
             const res = await fetchWithAppAuth('/api/inbox/messages', {
                 method: 'POST',
-                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
                     recipient_id: partnerId,
                     body,
@@ -203,7 +207,9 @@ export default function ChatPopover({
         try {
             const res = await fetchWithAppAuth('/api/inbox/read-all', {
                 method: 'POST',
-                headers: buildAppAuthHeaders({ contentType: 'application/json' }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({}),
             });
             const json = await res.json();
