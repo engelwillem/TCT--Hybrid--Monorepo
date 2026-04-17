@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { buildWhatsAppShareUrl, getVerseShareUrl } from "@/lib/share";
 import { ensureShareAssetReady } from "@/lib/share-assets";
@@ -75,6 +75,15 @@ export function useVersehubReaderActions({
   verseSegments,
 }: UseVersehubReaderActionsArgs) {
   const [isSharing, setIsSharing] = useState(false);
+  const shareAbortRef = useRef<AbortController | null>(null);
+
+  const handleCancelShare = () => {
+    if (shareAbortRef.current) {
+        shareAbortRef.current.abort();
+        shareAbortRef.current = null;
+    }
+    setIsSharing(false);
+  };
 
   useEffect(() => {
     setReflectionDrafts({});
@@ -276,14 +285,20 @@ export function useVersehubReaderActions({
     let shareUrl = getVerseShareUrl(lang, initialVerseRef);
 
     setIsSharing(true);
+    shareAbortRef.current = new AbortController();
     try {
-      const prepared = await ensureShareAssetReady("versehub", initialVerseRef, { lang });
+      const prepared = await ensureShareAssetReady("versehub", initialVerseRef, { 
+        lang,
+        signal: shareAbortRef.current.signal
+      });
       if (prepared?.shareUrl) {
         shareUrl = prepared.shareUrl;
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return;
       // non-fatal
     } finally {
+      shareAbortRef.current = null;
       setIsSharing(false);
     }
 
@@ -310,14 +325,20 @@ export function useVersehubReaderActions({
     let shareUrl = getVerseShareUrl(lang, initialVerseRef);
 
     setIsSharing(true);
+    shareAbortRef.current = new AbortController();
     try {
-      const prepared = await ensureShareAssetReady("versehub", initialVerseRef, { lang });
+      const prepared = await ensureShareAssetReady("versehub", initialVerseRef, { 
+        lang,
+        signal: shareAbortRef.current.signal
+      });
       if (prepared?.shareUrl) {
         shareUrl = prepared.shareUrl;
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return;
       // non-fatal
     } finally {
+      shareAbortRef.current = null;
       setIsSharing(false);
     }
 
@@ -336,6 +357,7 @@ export function useVersehubReaderActions({
     handleShare,
     handleShareWhatsApp,
     handleShareInsight,
+    handleCancelShare,
     isSharing,
   };
 }

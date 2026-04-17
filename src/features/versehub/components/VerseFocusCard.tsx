@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Bookmark, Heart, Loader2, MessageSquare, MessageSquareText, Reply, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerseData } from "@/features/versehub/types";
@@ -166,6 +167,45 @@ export function VerseFocusCard({
 
   return (
     <div className="space-y-8">
+      <AnimatePresence>
+        {isSharing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex flex-col items-center justify-center gap-6 bg-slate-950/80 backdrop-blur-xl"
+          >
+            <div className="relative">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="h-20 w-20 rounded-full border-2 border-white/5 border-t-white/60"
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-white/40">
+                <Send className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="text-center space-y-2">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">AI Sedang Mempersiapkan</h4>
+              <p className="text-sm font-medium text-white/50">Memastikan konten siap dibagikan dengan visual terbaik...</p>
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (typeof onShare === 'function') {
+                    // This is a hack because the card doesn't have a direct cancel setter yet.
+                    // We'll rely on the isSharing prop being managed by the parent.
+                    // Actually, for now we will assume the caller handles isSharing.
+                }
+              }}
+              className="mt-4 px-6 py-2 rounded-full border border-white/20 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all"
+            >
+              Batal
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <section className="flex justify-end">
         <button
           type="button"

@@ -37,6 +37,60 @@ type PrepareApiResponse = {
   };
 };
 
+const inFlightPreparePolls = new Map<string, Promise<ShareAssetResult | null>>();
+
+function createAbortError(): Error {
+  const error = new Error("Request aborted");
+  error.name = "AbortError";
+  return error;
+}
+
+function buildPollKey(surface: ShareSurface, subjectId: string, lang: string): string {
+  return `${surface}:${lang}:${subjectId}`;
+}
+
+async function sleepWithAbort(delayMs: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return;
+  }
+
+  if (signal.aborted) throw createAbortError();
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, delayMs);
+
+    const onAbort = () => {
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", onAbort);
+      reject(createAbortError());
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+async function awaitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) throw createAbortError();
+
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      const onAbort = () => {
+        signal.removeEventListener("abort", onAbort);
+        reject(createAbortError());
+      };
+
+      signal.addEventListener("abort", onAbort, { once: true });
+      promise.finally(() => signal.removeEventListener("abort", onAbort));
+    }),
+  ]);
+}
+
 function mapResponse(data: PrepareApiResponse['data'], fallbackShareUrl: string): ShareAssetResult {
   const revision = String(data?.revision ?? '');
   const shareUrl =
@@ -60,13 +114,14 @@ function mapResponse(data: PrepareApiResponse['data'], fallbackShareUrl: string)
  * Prepare a share asset for a community post.
  * Called when user clicks share — returns versioned share URL and OG image.
  */
-export async function prepareCommunityShareAsset(postId: string): Promise<ShareAssetResult | null> {
+export async function prepareCommunityShareAsset(postId: string, signal?: AbortSignal): Promise<ShareAssetResult | null> {
   const fallbackUrl = `/community/posts/${encodeURIComponent(postId)}/share`;
 
   try {
-    const response = await fetch(`/api/v1/community/posts/${encodeURIComponent(postId)}/share-assets/prepare`, {
+    const response = await fetch(`/api/community/posts/${encodeURIComponent(postId)}/share-assets/prepare`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      signal,
     });
 
     if (!response.ok) return null;
@@ -75,7 +130,8 @@ export async function prepareCommunityShareAsset(postId: string): Promise<ShareA
     if (!payload?.data) return null;
 
     return mapResponse(payload.data, fallbackUrl);
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') throw e;
     return null;
   }
 }
@@ -83,13 +139,14 @@ export async function prepareCommunityShareAsset(postId: string): Promise<ShareA
 /**
  * Prepare a share asset for a VerseHub verse.
  */
-export async function prepareVersehubShareAsset(lang: string, slug: string): Promise<ShareAssetResult | null> {
+export async function prepareVersehubShareAsset(lang: string, slug: string, signal?: AbortSignal): Promise<ShareAssetResult | null> {
   const fallbackUrl = `/versehub/${lang}/share/${encodeURIComponent(slug)}`;
 
   try {
-    const response = await fetch(`/api/v1/versehub/${lang}/${encodeURIComponent(slug)}/share-assets/prepare`, {
+    const response = await fetch(`/api/versehub/${lang}/${encodeURIComponent(slug)}/share-assets/prepare`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      signal,
     });
 
     if (!response.ok) return null;
@@ -98,7 +155,8 @@ export async function prepareVersehubShareAsset(lang: string, slug: string): Pro
     if (!payload?.data) return null;
 
     return mapResponse(payload.data, fallbackUrl);
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') throw e;
     return null;
   }
 }
@@ -106,13 +164,14 @@ export async function prepareVersehubShareAsset(lang: string, slug: string): Pro
 /**
  * Prepare a share asset for a Renungan snapshot.
  */
-export async function prepareRenunganShareAsset(token: string): Promise<ShareAssetResult | null> {
+export async function prepareRenunganShareAsset(token: string, signal?: AbortSignal): Promise<ShareAssetResult | null> {
   const fallbackUrl = `/renungan/share/${encodeURIComponent(token)}`;
 
   try {
-    const response = await fetch(`/api/v1/renungan/share/${encodeURIComponent(token)}/prepare`, {
+    const response = await fetch(`/api/renungan/share/${encodeURIComponent(token)}/prepare`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      signal,
     });
 
     if (!response.ok) return null;
@@ -121,7 +180,8 @@ export async function prepareRenunganShareAsset(token: string): Promise<ShareAss
     if (!payload?.data) return null;
 
     return mapResponse(payload.data, fallbackUrl);
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') throw e;
     return null;
   }
 }
@@ -135,36 +195,65 @@ export async function ensureShareAssetReady(
   config: {
     maxRetries?: number;
     delayMs?: number;
+    maxDelayMs?: number;
     lang?: string;
+    signal?: AbortSignal;
   } = {}
 ): Promise<ShareAssetResult | null> {
-  const { maxRetries = 5, delayMs = 1500, lang = 'id' } = config;
-  let attempts = 0;
-
-  while (attempts < maxRetries) {
-    let result: ShareAssetResult | null = null;
-
-    if (surface === 'community') {
-      result = await prepareCommunityShareAsset(subjectId);
-    } else if (surface === 'renungan') {
-      result = await prepareRenunganShareAsset(subjectId);
-    } else if (surface === 'versehub') {
-      result = await prepareVersehubShareAsset(lang, subjectId);
-    }
-
-    if (result && result.status === 'ready') {
-      return result;
-    }
-
-    if (result && result.status === 'failed') {
-      return result; // Don't retry on hard failure
-    }
-
-    attempts++;
-    if (attempts < maxRetries) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
+  const { maxRetries = 5, delayMs = 1500, maxDelayMs = 5000, lang = 'id', signal } = config;
+  const pollKey = buildPollKey(surface, subjectId, lang);
+  const existingPoll = inFlightPreparePolls.get(pollKey);
+  if (existingPoll) {
+    return await awaitWithAbort(existingPoll, signal);
   }
 
-  return null;
+  const pollPromise = (async () => {
+    let attempts = 0;
+    let nextDelayMs = delayMs;
+
+    while (attempts < maxRetries) {
+      if (signal?.aborted) throw createAbortError();
+
+      let result: ShareAssetResult | null = null;
+
+      try {
+        if (surface === 'community') {
+          result = await prepareCommunityShareAsset(subjectId, signal);
+        } else if (surface === 'renungan') {
+          result = await prepareRenunganShareAsset(subjectId, signal);
+        } else if (surface === 'versehub') {
+          result = await prepareVersehubShareAsset(lang, subjectId, signal);
+        }
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') throw e;
+        result = null;
+      }
+
+      if (result && result.status === 'ready') {
+        return result;
+      }
+
+      if (result && result.status === 'failed') {
+        return result;
+      }
+
+      attempts += 1;
+      if (attempts < maxRetries) {
+        const jitterMs = Math.floor(Math.random() * 250);
+        await sleepWithAbort(nextDelayMs + jitterMs, signal);
+        nextDelayMs = Math.min(maxDelayMs, Math.round(nextDelayMs * 1.7));
+      }
+    }
+
+    return null;
+  })();
+
+  inFlightPreparePolls.set(pollKey, pollPromise);
+  try {
+    return await awaitWithAbort(pollPromise, signal);
+  } finally {
+    if (inFlightPreparePolls.get(pollKey) === pollPromise) {
+      inFlightPreparePolls.delete(pollKey);
+    }
+  }
 }

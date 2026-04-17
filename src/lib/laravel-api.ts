@@ -10,6 +10,15 @@ const MISSING_BASE_PLACEHOLDER = "http://missing-laravel-api-base-url.local";
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://api.thechoosentalks.org";
 const DEFAULT_LOCAL_BASES = ["http://127.0.0.1:8000", "http://localhost:8000"];
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
+const DEFAULT_LARAVEL_TIMEOUT_MS = 8000;
+
+function getLaravelTimeoutMs(): number {
+  const raw = Number(process.env.LARAVEL_API_TIMEOUT_MS);
+  if (Number.isFinite(raw) && raw >= 1000) {
+    return Math.floor(raw);
+  }
+  return DEFAULT_LARAVEL_TIMEOUT_MS;
+}
 
 function extractHostname(value: string): string | null {
   try {
@@ -31,7 +40,10 @@ function isDeveloperMachineContext(): boolean {
   const isHostedEnvironment =
     process.env.VERCEL === "1" ||
     process.env.VERCEL_ENV !== undefined ||
-    process.env.CI === "true";
+    process.env.CI === "true" ||
+    process.env.NODE_ENV === "production" ||
+    process.env.APP_ENV === "production" ||
+    process.env.FIREBASE_CONFIG !== undefined;
 
   return hasLocalAppUrl && !isHostedEnvironment;
 }
@@ -117,6 +129,7 @@ export function isBaseUrlConfigured(): boolean {
 export async function callLaravelApi(path: string, init?: RequestInit): Promise<Response> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const baseCandidates = buildCandidateBaseUrls();
+  const timeoutMs = getLaravelTimeoutMs();
 
   let lastError: unknown = null;
   for (const baseUrl of baseCandidates) {
@@ -130,7 +143,7 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
     })();
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     const fetchOptions = {
       ...init,
       signal: controller.signal,
@@ -146,6 +159,7 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
       targetPath: targetPathname,
       hasBody: Boolean(fetchOptions.body),
       baseUrl,
+      timeoutMs,
     });
 
     try {

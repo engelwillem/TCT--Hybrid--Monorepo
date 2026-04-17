@@ -33,6 +33,7 @@
     "today:ready": "composer --working-dir backend-api today:ready",
     "today:ready:full": "npm run today:ready && npm run typecheck && npm run test:e2e -- tests/today.smoke.spec.ts",
     "smoke:prod": "powershell -ExecutionPolicy Bypass -File scripts/smoke-production.ps1",
+    "smoke:share-assets": "powershell -ExecutionPolicy Bypass -File scripts/smoke-share-assets-prepare.ps1",
     "verify:ai-sharing": "node scripts/verify-ai-sharing.mjs"
   },
   "dependencies": {

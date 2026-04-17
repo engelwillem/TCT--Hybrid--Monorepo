@@ -5,9 +5,22 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Share2, X } from "lucide-react";
 import AmbienceController from "@/components/versehub/AmbienceController";
 import MentorPanel from "@/components/versehub/MentorPanel";
-import { getVerseShareUrl } from "@/lib/share";
+import { getVerseShareUrl, buildWhatsAppShareUrl } from "@/lib/share";
 import { ensureShareAssetReady } from "@/lib/share-assets";
 import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
+
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+      <path
+        fill="currentColor"
+        d="M19.05 4.94A9.87 9.87 0 0 0 12.03 2 9.94 9.94 0 0 0 2.1 11.95c0 1.74.46 3.44 1.34 4.94L2 22l5.28-1.38a9.9 9.9 0 0 0 4.74 1.2h.01a9.95 9.95 0 0 0 9.94-9.94 9.83 9.83 0 0 0-2.92-6.94ZM12.03 20.1h-.01a8.19 8.19 0 0 1-4.18-1.14l-.3-.18-3.14.83.84-3.06-.2-.31a8.2 8.2 0 0 1-1.25-4.33 8.24 8.24 0 0 1 8.24-8.24 8.15 8.15 0 0 1 5.83 2.42 8.21 8.21 0 0 1 2.41 5.83 8.24 8.24 0 0 1-8.24 8.18Zm4.52-6.18c-.25-.13-1.46-.72-1.69-.81-.23-.08-.4-.12-.58.12-.16.25-.64.81-.78.98-.14.16-.29.18-.54.06-.25-.13-1.03-.38-1.96-1.2-.72-.64-1.2-1.43-1.35-1.67-.14-.25-.01-.38.1-.51.11-.11.25-.29.36-.43.12-.14.16-.24.25-.41.08-.16.04-.31-.02-.43-.07-.13-.57-1.37-.78-1.88-.21-.5-.42-.43-.58-.44h-.5c-.16 0-.43.07-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.55c.13.16 1.72 2.62 4.16 3.67.58.25 1.04.41 1.4.52.58.18 1.1.16 1.51.1.46-.06 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.17-.05-.09-.22-.16-.47-.29Z"
+      />
+    </svg>
+  );
+}
+
 import type { Book, OverlayType, SanctuaryScene, Verse, VerseData } from "@/features/versehub/types";
 
 interface VersehubOverlayControllerProps {
@@ -73,7 +86,16 @@ export function VersehubOverlayController({
   tab,
   verseData,
 }: VersehubOverlayControllerProps) {
-  const [shareBusyId, setShareBusyId] = useState<string | null>(null);
+const [shareBusyId, setShareBusyId] = useState<string | null>(null);
+  const shareAbortControllerRef = useRef<AbortController | null>(null);
+
+  const handleCancelShare = () => {
+    if (shareAbortControllerRef.current) {
+        shareAbortControllerRef.current.abort();
+        shareAbortControllerRef.current = null;
+    }
+    setShareBusyId(null);
+  };
 
   const handleShareVerse = async (slug: string) => {
     if (shareBusyId) return;
@@ -82,12 +104,17 @@ export function VersehubOverlayController({
     let url = getVerseShareUrl(lang, slug);
     const title = `VerseHub ${slug.replace(/-/g, " ").toUpperCase()}`;
 
+    shareAbortControllerRef.current = new AbortController();
     try {
-      const prepared = await ensureShareAssetReady("versehub", slug, { lang });
+      const prepared = await ensureShareAssetReady("versehub", slug, { 
+        lang,
+        signal: shareAbortControllerRef.current.signal
+      });
       if (prepared?.shareUrl) {
         url = prepared.shareUrl;
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return;
       // non-fatal
     } finally {
       setShareBusyId(null);
@@ -106,8 +133,69 @@ export function VersehubOverlayController({
     }
   };
 
+  const handleShareWhatsAppVerse = async (slug: string) => {
+    if (shareBusyId) return;
+    setShareBusyId(slug);
+
+    let url = getVerseShareUrl(lang, slug);
+    shareAbortControllerRef.current = new AbortController();
+    try {
+      const prepared = await ensureShareAssetReady("versehub", slug, { 
+        lang,
+        signal: shareAbortControllerRef.current.signal
+      });
+      if (prepared?.shareUrl) {
+        url = prepared.shareUrl;
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return;
+      // non-fatal
+    } finally {
+      setShareBusyId(null);
+    }
+
+    const shareText = `Renungkan Firman di VerseHub: ${url}`;
+    const waUrl = buildWhatsAppShareUrl(shareText);
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+  };
+
+
   return (
     <>
+      <AnimatePresence>
+        {shareBusyId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex flex-col items-center justify-center gap-6 bg-slate-950/80 backdrop-blur-xl"
+          >
+            <div className="relative">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="h-20 w-20 rounded-full border-2 border-white/5 border-t-white/60"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Share2 className="h-6 w-6 text-white/40" />
+              </div>
+            </div>
+            <div className="text-center space-y-2">
+              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">AI Sedang Mempersiapkan</h4>
+              <p className="text-sm font-medium text-white/50">Meningkatkan kualitas visual untuk dibagikan...</p>
+            </div>
+            
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleCancelShare}
+              className="mt-4 px-6 py-2 rounded-full border border-white/20 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all"
+            >
+              Batal
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {overlay === "explore" && (
           <div className="fixed inset-0 z-[60]">
@@ -331,6 +419,24 @@ export function VersehubOverlayController({
                           ) : (
                             <Share2 className="h-4 w-4" />
                           )}
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`WhatsApp ${activeBookLabel ?? "ayat"} pasal ${chapter}`}
+                          disabled={shareBusyId === `${activeBook}-${chapter}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            if (!activeBook) return;
+                            void handleShareWhatsAppVerse(`${activeBook}-${chapter}`);
+                          }}
+                          className={cn(
+                            "inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#25D366] transition",
+                            shareBusyId === `${activeBook}-${chapter}`
+                              ? "opacity-60 cursor-not-allowed"
+                              : "hover:bg-[#25D366]/10"
+                          )}
+                        >
+                          <WhatsAppIcon className="h-4 w-4" />
                         </button>
                       </div>
                     ))}
