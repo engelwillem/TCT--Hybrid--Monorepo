@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 backend-api/vendor/
+backend-api/node_modules/
 backend-api/.composer-cache/
 
 # Build outputs and local caches
@@ -13,6 +14,7 @@ backend-api/.composer-cache/
 dist/
 out/
 build/
+coverage/
 *.tsbuildinfo
 .phpunit.result.cache
 backend-api/.phpunit.result.cache
@@ -20,6 +22,7 @@ backend-api/.phpunit.result.cache
 # Environment and secrets
 .env
 .env.docker
+.env.docker.local
 .env.local
 .env.development.local
 .env.test.local
@@ -27,8 +30,10 @@ backend-api/.phpunit.result.cache
 backend-api/.env
 backend-api/.env.docker
 backend-api/.env.testing
-backend-api/.env.*.local
-backend-api/database/database.sqlite
+backend-api/.env.*
+backend-api/package-lock.json
+backend-api/package-lock.laravel.json
+backend-api/database/*.sqlite
 auth.json
 *.pem
 *.key
@@ -40,6 +45,7 @@ tmp/
 test-results/
 .tmp-*
 tmp-*
+tmp_*
 run_temp*.txt
 run_temp*.json
 temp_line.txt
@@ -52,31 +58,17 @@ push_error.txt
 tsc_*.log
 next-dev.err.log
 next-dev.out.log
-.tmp_*
 backend-api/storage/logs/*.log
 backend-api/serve.err.log
 backend-api/serve.out.log
 backend-api/bootstrap/cache/*.php
 backend-api/auth_test_output.txt
 backend-api/full_test_output.txt
-backend-api/step_failures.txt
-backend-api/test_output.txt
+backend-api/step_failures*.txt
+backend-api/test_output*.txt
+compose-resolved.yml
 
-# Local Audit, Reports, and Prompts (Keep Local Only)
-docs/CORE/architecture/
-docs/CORE/PROMPT WEB TCT TERBARU/
-docs/core/PROMPT WEB TCT TERBARU/
-docs/CORE/Development/Gambar Referensi/
-docs/CORE/QA Full Audit/
-docs/QA Full Audit/
-docs/audit/
-docs/quarantine/
-docs/archive/
-docs/legacy/
-docs/*.zip
-docs/*.rar
-docs/*.xlsx
-docs/*.pdf
+# Archives and local deliverables
 *.zip
 *.rar
 *.7z
@@ -86,19 +78,16 @@ deliverables/
 deliverable-*.zip
 TCT--Hybrid--Monorepo.zip
 
-# Specific Backend Root Logs
-backend-api/*.txt
-backend-api/step_failures*.txt
-backend-api/test_output*.txt
-
-# Developer Utility Scripts
-create_git_zip.py
-verify_patch_v5.py
-audit_*.py
-test_*.py
-dev_output*.txt
-tsc_output*.txt
-routes_list*.txt
+# Local documentation / audit workspace (do not add new docs by default)
+docs/**
+.github/
+backend-api/tests/
+backend-api/public/css/filament/
+backend-api/public/js/filament/
+backend-api/storage/framework/cache/
+backend-api/storage/framework/views/
+backend-api/storage/logs/
+.codex/
 
 # Tooling and editor state
 .vscode/
@@ -109,43 +98,26 @@ routes_list*.txt
 .agent/
 .agents/
 .idx/
-!.idx/
-!.idx/**
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Laravel Specific
+# Laravel specific generated files
 backend-api/storage/*.key
-backend-api/database/*.sqlite
 backend-api/public/storage
 backend-api/public/hot
 backend-api/public/build
 
-# Application Specific Cleanup
-public/og/*.png
-!public/og/README.md
+# Local artifacts at repo root
 current_versehub.png
-tmp_*.html
-tmp_*.json
-tmp_*.txt
-installed_software.txt
-.codex-devstudio.err
-.codex-devturbo.err
-.codex-globals.css.bak
 root_error.png
-.codex-layout.tsx.bak
-.codex-page.tsx.bak
-docs/CORE/implementation/DOCKER COMMAND.md
+installed_software.txt
+.codex-*.bak
+.codex-*.err
+.codex-*.log
+build_audit.log
 
-# Local DB parity and design scratch artifacts
+# Local scratch work
 backups/
 public/renungan/
-docs/CORE/Development/MARKETING STRATEGY.md
-docs/CORE/implementation/SCRIPT SET OPEN AI API KEY.md
-docs/CORE/implementation/SCRIPT TERMINAL CPANEL.md
-docs/monitoring/share-assets-alert-rules.md
-docs/monitoring/share-assets-dashboard.md
-docs/release/share-assets-release-checklist.md
-backend-api/docs/share-prepare-rate-limit-design.md
