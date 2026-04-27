@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Http;
 
 class WaReminderController extends Controller
 {
+    private const DEFAULT_MESSAGE_TEMPLATE = "Halo {nama}, hari ini jadwal kunjungan kami ya.\n\n> _{toko}_";
+
     public function sendReminder(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -96,7 +98,7 @@ class WaReminderController extends Controller
                 continue;
             }
 
-            $scheduleAt = $this->parseScheduleAt($date, $time);
+            $scheduleAt = $this->parseSheetDateTime($date, $time);
             if (! $scheduleAt) {
                 $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'format tanggal/jam tidak valid');
                 continue;
@@ -236,28 +238,103 @@ class WaReminderController extends Controller
         return trim((string) $value);
     }
 
-    private function parseScheduleAt(string $date, string $time): ?Carbon
+    private function parseSheetDateTime(string $date, string $time): ?Carbon
     {
-        $timezone = config('app.timezone');
-        $dateFormats = ['d/m/Y', 'd-m-Y', 'Y-m-d', 'm/d/Y'];
-        $timeFormats = ['H:i', 'H:i:s', 'g:i A', 'g:iA'];
+        $timezone = (string) config('app.timezone');
+        $dateValue = trim($date);
+        $timeValue = trim($time);
+
+        if ($dateValue === '' || $timeValue === '') {
+            return null;
+        }
+
+        $normalizedDate = $this->normalizeSheetDate($dateValue, $timezone);
+        $normalizedTime = $this->normalizeSheetTime($timeValue, $timezone);
+
+        if ($normalizedDate === null || $normalizedTime === null) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat(
+                'Y-m-d H:i:s',
+                "{$normalizedDate} {$normalizedTime}",
+                $timezone
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function normalizeSheetDate(string $dateValue, string $timezone): ?string
+    {
+        $dateFormats = ['d/m/Y', 'd-m-Y', 'Y-m-d', 'm/d/Y', 'n/j/Y'];
 
         foreach ($dateFormats as $dateFormat) {
-            foreach ($timeFormats as $timeFormat) {
-                try {
-                    return Carbon::createFromFormat(
-                        "{$dateFormat} {$timeFormat}",
-                        "{$date} {$time}",
-                        $timezone
-                    );
-                } catch (\Throwable) {
-                    continue;
-                }
+            try {
+                return Carbon::createFromFormat($dateFormat, $dateValue, $timezone)->format('Y-m-d');
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        if (is_numeric($dateValue)) {
+            $serial = (float) str_replace(',', '.', $dateValue);
+            $daySerial = (int) floor($serial);
+            if ($daySerial > 0) {
+                return Carbon::create(1899, 12, 30, 0, 0, 0, $timezone)
+                    ->addDays($daySerial)
+                    ->format('Y-m-d');
             }
         }
 
         try {
-            return Carbon::parse("{$date} {$time}", $timezone);
+            return Carbon::parse($dateValue, $timezone)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function normalizeSheetTime(string $timeValue, string $timezone): ?string
+    {
+        $plainTimePattern = '/^(?<h>\d{1,2}):(?<m>\d{2})(?::(?<s>\d{2}))?$/';
+        if (preg_match($plainTimePattern, $timeValue, $matches) === 1) {
+            $hour = (int) $matches['h'];
+            $minute = (int) $matches['m'];
+            $second = isset($matches['s']) ? (int) $matches['s'] : 0;
+
+            if ($hour > 23 || $minute > 59 || $second > 59) {
+                return null;
+            }
+
+            return sprintf('%02d:%02d:%02d', $hour, $minute, $second);
+        }
+
+        $ampmFormats = ['g:i A', 'g:iA', 'g:i:s A', 'g:i:sA'];
+        foreach ($ampmFormats as $ampmFormat) {
+            try {
+                return Carbon::createFromFormat($ampmFormat, strtoupper($timeValue), $timezone)->format('H:i:s');
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        if (is_numeric($timeValue)) {
+            $serial = (float) str_replace(',', '.', $timeValue);
+            if ($serial >= 0) {
+                $fraction = $serial - floor($serial);
+                $totalSeconds = (int) round($fraction * 86400);
+                $totalSeconds = $totalSeconds % 86400;
+                $hours = intdiv($totalSeconds, 3600);
+                $minutes = intdiv($totalSeconds % 3600, 60);
+                $seconds = $totalSeconds % 60;
+
+                return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+            }
+        }
+
+        try {
+            return Carbon::parse($timeValue, $timezone)->format('H:i:s');
         } catch (\Throwable) {
             return null;
         }
@@ -290,7 +367,11 @@ class WaReminderController extends Controller
         string $date,
         string $time
     ): string {
-        return strtr($template, [
+        $effectiveTemplate = trim($template) !== ''
+            ? $template
+            : self::DEFAULT_MESSAGE_TEMPLATE;
+
+        return strtr($effectiveTemplate, [
             '{nama}' => $name,
             '{toko}' => $toko,
             '{tanggal}' => $date,
