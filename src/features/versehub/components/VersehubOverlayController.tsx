@@ -3,23 +3,11 @@
 import type { Dispatch, SetStateAction } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Share2, X } from "lucide-react";
-import AmbienceController from "@/components/versehub/AmbienceController";
 import MentorPanel from "@/components/versehub/MentorPanel";
 import { getVerseShareUrl, buildWhatsAppShareUrl } from "@/lib/share";
 import { ensureShareAssetReady } from "@/lib/share-assets";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
-
-function WhatsAppIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
-      <path
-        fill="currentColor"
-        d="M19.05 4.94A9.87 9.87 0 0 0 12.03 2 9.94 9.94 0 0 0 2.1 11.95c0 1.74.46 3.44 1.34 4.94L2 22l5.28-1.38a9.9 9.9 0 0 0 4.74 1.2h.01a9.95 9.95 0 0 0 9.94-9.94 9.83 9.83 0 0 0-2.92-6.94ZM12.03 20.1h-.01a8.19 8.19 0 0 1-4.18-1.14l-.3-.18-3.14.83.84-3.06-.2-.31a8.2 8.2 0 0 1-1.25-4.33 8.24 8.24 0 0 1 8.24-8.24 8.15 8.15 0 0 1 5.83 2.42 8.21 8.21 0 0 1 2.41 5.83 8.24 8.24 0 0 1-8.24 8.18Zm4.52-6.18c-.25-.13-1.46-.72-1.69-.81-.23-.08-.4-.12-.58.12-.16.25-.64.81-.78.98-.14.16-.29.18-.54.06-.25-.13-1.03-.38-1.96-1.2-.72-.64-1.2-1.43-1.35-1.67-.14-.25-.01-.38.1-.51.11-.11.25-.29.36-.43.12-.14.16-.24.25-.41.08-.16.04-.31-.02-.43-.07-.13-.57-1.37-.78-1.88-.21-.5-.42-.43-.58-.44h-.5c-.16 0-.43.07-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.55c.13.16 1.72 2.62 4.16 3.67.58.25 1.04.41 1.4.52.58.18 1.1.16 1.51.1.46-.06 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.17-.05-.09-.22-.16-.47-.29Z"
-      />
-    </svg>
-  );
-}
 
 import type { Book, OverlayType, SanctuaryScene, Verse, VerseData } from "@/features/versehub/types";
 
@@ -28,14 +16,11 @@ interface VersehubOverlayControllerProps {
   activeBookLabel: string | null;
   activeMood: string;
   activeScene: SanctuaryScene;
-  audioMenuOpen: boolean;
   books: Book[];
   chapters: number[];
   error: string | null;
   firstBookLabel: string;
   firstChapterHref: string | null;
-  handleAmbienceMenuOpen: (isOpen: boolean) => void;
-  handlePlaybackStateChange: (args: { isPlaying: boolean; moodKey: string; trackTitle?: string }) => void;
   isLandingMode: boolean;
   lang: string;
   loadBookChapters: (bookCode: string) => Promise<void>;
@@ -46,11 +31,11 @@ interface VersehubOverlayControllerProps {
   onNavigate: (href: string) => void;
   overlay: OverlayType;
   selectedVerseReflection: string | null;
+  initialMentorContext: string | null;
   setActiveMood: Dispatch<SetStateAction<string>>;
   setOgOpen: Dispatch<SetStateAction<boolean>>;
   setOverlay: Dispatch<SetStateAction<OverlayType>>;
   setTab: Dispatch<SetStateAction<"ot" | "nt">>;
-  shouldShowChrome: boolean;
   tab: "ot" | "nt";
   verseData: VerseData | null;
 }
@@ -60,14 +45,11 @@ export function VersehubOverlayController({
   activeBookLabel,
   activeMood,
   activeScene,
-  audioMenuOpen,
   books,
   chapters,
   error,
   firstBookLabel,
   firstChapterHref,
-  handleAmbienceMenuOpen,
-  handlePlaybackStateChange,
   isLandingMode,
   lang,
   loadBookChapters,
@@ -78,11 +60,11 @@ export function VersehubOverlayController({
   onNavigate,
   overlay,
   selectedVerseReflection,
+  initialMentorContext,
   setActiveMood,
   setOgOpen,
   setOverlay,
   setTab,
-  shouldShowChrome,
   tab,
   verseData,
 }: VersehubOverlayControllerProps) {
@@ -95,42 +77,6 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
         shareAbortControllerRef.current = null;
     }
     setShareBusyId(null);
-  };
-
-  const handleShareVerse = async (slug: string) => {
-    if (shareBusyId) return;
-    setShareBusyId(slug);
-
-    let url = getVerseShareUrl(lang, slug);
-    const title = `VerseHub ${slug.replace(/-/g, " ").toUpperCase()}`;
-
-    shareAbortControllerRef.current = new AbortController();
-    try {
-      const prepared = await ensureShareAssetReady("versehub", slug, { 
-        lang,
-        signal: shareAbortControllerRef.current.signal
-      });
-      if (prepared?.shareUrl) {
-        url = prepared.shareUrl;
-      }
-    } catch (e) {
-      if (e instanceof Error && e.name === 'AbortError') return;
-      // non-fatal
-    } finally {
-      setShareBusyId(null);
-    }
-
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, url });
-        return;
-      }
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-      }
-    } catch {
-      // Ignore cancelled share action.
-    }
   };
 
   const handleShareWhatsAppVerse = async (slug: string) => {
@@ -381,64 +327,18 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {chapters.map((chapter) => (
-                      <div
+                      <button
                         key={chapter}
-                        className="inline-flex items-center gap-1 rounded-xl bg-[var(--vh-surface-elevated)] p-1"
+                        type="button"
+                        onClick={() => {
+                          if (!activeBook) return;
+                          setOverlay(null);
+                          onNavigate(`/versehub/${lang}/${activeBook}-${chapter}`);
+                        }}
+                        className="inline-flex h-8 min-w-8 items-center justify-center rounded-xl bg-[var(--vh-surface-elevated)] px-2 text-sm font-bold text-[var(--vh-text-primary)] transition hover:bg-[var(--vh-surface)]"
                       >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!activeBook) return;
-                            setOverlay(null);
-                            onNavigate(`/versehub/${lang}/${activeBook}-${chapter}`);
-                          }}
-                          className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-bold text-[var(--vh-text-primary)] transition hover:bg-[var(--vh-surface)]"
-                        >
-                          {chapter}
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Bagikan ${activeBookLabel ?? "ayat"} pasal ${chapter}`}
-                          disabled={shareBusyId === `${activeBook}-${chapter}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            if (!activeBook) return;
-                            void handleShareVerse(`${activeBook}-${chapter}`);
-                          }}
-                          className={cn(
-                            "inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--vh-text-secondary)] transition",
-                            shareBusyId === `${activeBook}-${chapter}`
-                              ? "opacity-60 cursor-not-allowed"
-                              : "hover:bg-[var(--vh-surface)] hover:text-[var(--vh-text-primary)]"
-                          )}
-                        >
-                          {shareBusyId === `${activeBook}-${chapter}` ? (
-                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-                              <Share2 className="h-4 w-4" />
-                            </motion.div>
-                          ) : (
-                            <Share2 className="h-4 w-4" />
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`WhatsApp ${activeBookLabel ?? "ayat"} pasal ${chapter}`}
-                          disabled={shareBusyId === `${activeBook}-${chapter}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            if (!activeBook) return;
-                            void handleShareWhatsAppVerse(`${activeBook}-${chapter}`);
-                          }}
-                          className={cn(
-                            "inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#25D366] transition",
-                            shareBusyId === `${activeBook}-${chapter}`
-                              ? "opacity-60 cursor-not-allowed"
-                              : "hover:bg-[#25D366]/10"
-                          )}
-                        >
-                          <WhatsAppIcon className="h-4 w-4" />
-                        </button>
-                      </div>
+                        {chapter}
+                      </button>
                     ))}
                     {chapters.length === 0 && (
                       <p className="text-sm text-[var(--vh-text-secondary)]">Pilih kitab terlebih dahulu untuk melihat daftar pasal.</p>
@@ -459,29 +359,18 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
           verseLabel={mentorPreviewLabel}
           activeMood={mentorMood}
           userReflection={selectedVerseReflection}
+          initialMentorContext={initialMentorContext}
           isAuthenticated
+          onShareWhatsApp={() => void handleShareWhatsAppVerse(mentorPreviewVerse.key)}
+          isShareBusy={shareBusyId === mentorPreviewVerse.key}
           onClose={() => setOverlay(null)}
         />
       )}
 
-      <AmbienceController
-        className={cn(
-          "z-[70] transition-opacity duration-500",
-          shouldShowChrome ? "opacity-100" : "pointer-events-none opacity-0"
-        )}
-        isDucking={!!overlay}
-        activeMoodKey={activeMood}
-        dayIndex={new Date().getDay()}
-        menuOpen={audioMenuOpen}
-        hideTrigger={false}
-        onMenuOpen={handleAmbienceMenuOpen}
-        onPlaybackStateChange={handlePlaybackStateChange}
-      />
-
       {error && isLandingMode && (
         <div className="pointer-events-none absolute left-1/2 top-24 z-40 -translate-x-1/2 px-4">
           <div className="rounded-full bg-[var(--vh-surface)]/85 px-4 py-2 text-[11px] font-bold text-[var(--vh-text-secondary)] shadow-sm ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
-            Koneksi kitab sedang tidak stabil, tetapi sanctuary VerseHub tetap siap dipakai.
+            Koneksi kitab sedang tidak stabil. Sanctuary VerseHub tetap siap digunakan.
           </div>
         </div>
       )}

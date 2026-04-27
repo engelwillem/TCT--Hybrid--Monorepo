@@ -8,6 +8,7 @@ import { MoodQuickStart } from "@/features/versehub/components/MoodQuickStart";
 import type { SanctuaryScene } from "@/features/versehub/types";
 import { AIToneNotice } from "@/components/core/AIToneNotice";
 import type { VersehubUiHints } from "@/ai/versehub/resolve-versehub-ui";
+import { JourneyMap, type JourneyMapDay } from "@/features/versehub/components/JourneyMap";
 
 interface VersehubLandingViewProps {
     activeScene: SanctuaryScene;
@@ -32,6 +33,9 @@ interface VersehubLandingViewProps {
     };
     bridgeUiHints?: VersehubUiHints;
     onBridgeReturnToRenungan?: () => void;
+    journeyMapDays?: JourneyMapDay[];
+    journeyStreakCount?: number;
+    onOpenJourney?: () => void;
 }
 
 export function VersehubLandingView({
@@ -51,28 +55,31 @@ export function VersehubLandingView({
     bridgeContext,
     bridgeUiHints,
     onBridgeReturnToRenungan,
+    journeyMapDays = [],
+    journeyStreakCount = 0,
+    onOpenJourney,
 }: VersehubLandingViewProps) {
     return (
         <div className="relative flex flex-1 flex-col bg-transparent">
-            <header className="sticky top-0 z-50 w-full border-b border-[#EEE4D5] bg-transparent pt-[env(safe-area-inset-top,16px)]">
+            <header className="sticky top-0 z-50 w-full bg-transparent pt-[env(safe-area-inset-top,16px)]">
                 <div className="mx-auto flex w-full max-w-[620px] items-start gap-4 px-6 py-4 md:items-center">
                     <button
                         type="button"
                         onClick={onBackToday}
-                        className="flex h-10 w-10 min-w-10 items-center justify-center rounded-full bg-white/78 text-[#5F5446] ring-1 ring-[#E8DDCC] transition-all hover:bg-white active:scale-95"
+                        className="flex h-11 w-11 min-w-11 items-center justify-center rounded-full bg-white/70 text-[#5F5446] shadow-soft backdrop-blur-xl ring-1 ring-white/60 transition-all hover:bg-white active:scale-95"
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </button>
 
-                    <div className="flex flex-1 flex-col items-center pr-10 text-center md:pr-0">
-                        <div className="flex items-center gap-2 opacity-[0.65] md:hidden">
+                    <div className="flex flex-1 flex-col items-center pr-11 text-center md:pr-0">
+                        <div className="flex items-center gap-2 opacity-[0.45] md:hidden">
                             <TCTLogo className="h-4 w-4 drop-shadow-sm" />
                             <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#3A3227]">
                                 The Chosen Talks
                             </p>
                         </div>
-                        <p className="mt-8 text-[11px] font-bold uppercase leading-none tracking-[0.2em] text-[#8F836F] md:mt-0">
-                            VerseHub
+                        <p className="mt-8 text-[11px] font-black uppercase leading-none tracking-[0.3em] text-[#8F836F]/60 md:mt-0">
+                            Sanctuary
                         </p>
                     </div>
                 </div>
@@ -100,19 +107,18 @@ export function VersehubLandingView({
                             />
 
                             {bridgeUiHints?.showClarifyCard ? (
-                                <div className="mt-7 w-full max-w-[380px] rounded-3xl border border-indigo-100 bg-indigo-50/70 px-5 py-4 text-left shadow-[0_20px_45px_-35px_rgba(67,56,202,0.4)]">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-indigo-700/80">
-                                        Jalur Kejelasan
+                                <div className="mt-10 w-full max-w-[420px] glass-card rounded-[32px] px-6 py-6 text-left shadow-premium ring-1 ring-white/60">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-500">
+                                        Renungan Kamu
                                     </p>
-                                    <p className="mt-2 text-[13px] leading-relaxed text-indigo-900/85">
-                                        {bridgeUiHints?.introLabel || "Kamu datang untuk memahami firman dengan lebih jernih."}
-                                        {bridgeContext?.verseRef ? ` Fokus ayat: ${bridgeContext.verseRef}.` : ""}
+                                    <p className="mt-3 text-[15px] leading-relaxed text-slate-700/85 font-medium">
+                                        {bridgeUiHints?.introLabel || "Melanjutkan apa yang baru saja kamu doakan."}
                                     </p>
-                                    <AIToneNotice
-                                        tone="grounded"
-                                        className="mt-2 text-indigo-800/70"
-                                        text="Di VerseHub, AI fokus pada teks, konteks, dan aplikasi sederhana."
-                                    />
+                                    <motion.div layoutId="verse-card" className="mt-4 rounded-2xl border border-indigo-100/50 bg-indigo-50/50 p-4">
+                                        <p className="text-[13px] italic text-indigo-800/80 leading-relaxed">
+                                            "{bridgeContext?.verseRef ? `Kita akan mendalami ${bridgeContext.verseRef} bersama Mentor.` : "Mari buka lembaran baru firman hari ini."}"
+                                        </p>
+                                    </motion.div>
                                     {onBridgeReturnToRenungan ? (
                                         <button
                                             type="button"
@@ -129,11 +135,11 @@ export function VersehubLandingView({
                                 <button
                                     type="button"
                                     onClick={onStartFirstChapter}
-                                    className="group flex w-full items-center justify-center gap-3 rounded-full bg-white px-6 py-[16px] text-[15px] font-bold text-[#2F261A] shadow-[0_18px_42px_-24px_rgba(47,38,26,0.35)] ring-1 ring-[#E9DFD0] transition-all hover:bg-[#FFFDFA] active:scale-95"
+                                    className="group flex w-full items-center justify-center gap-3 rounded-full bg-slate-950 px-6 py-[18px] text-[15px] font-bold text-white shadow-premium transition-all hover:bg-slate-900 active:scale-95"
                                 >
-                                    <span>Mulai dari {firstBookLabel} 1</span>
-                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                </button>
+                                     <span>Mulai dari {firstBookLabel} 1</span>
+                                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                 </button>
 
                                 <button
                                     type="button"
@@ -158,6 +164,14 @@ export function VersehubLandingView({
                                         <ArrowRight className="h-4 w-4 text-[#8A7B68]" />
                                     </button>
                                 </div>
+                            ) : null}
+
+                            {journeyMapDays.length > 0 ? (
+                                <JourneyMap
+                                    days={journeyMapDays}
+                                    streakCount={journeyStreakCount}
+                                    onOpenJourney={onOpenJourney}
+                                />
                             ) : null}
 
                         </div>

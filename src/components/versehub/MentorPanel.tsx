@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { fetchWithAppAuth } from '@/lib/app-auth-fetch';
+import type { AsyncContractState } from '@/lib/async-state';
 
 interface MentorInsights {
     reflection_questions?: string[];
@@ -80,6 +81,10 @@ interface MentorPanelProps {
     activeMood: string;
     /** Optional user reflection from chapter reading flow */
     userReflection?: string | null;
+    /** Initial context inherited from Renungan -> VerseHub bridge */
+    initialMentorContext?: string | null;
+    onShareWhatsApp?: () => void;
+    isShareBusy?: boolean;
     onClose: () => void;
 }
 
@@ -99,6 +104,17 @@ const ASK_MODE_OPTIONS: Array<{ value: AskMode; label: string }> = [
     { value: 'tradition_context_note', label: 'Catatan tradisi/konteks' },
 ];
 
+function WhatsAppIcon({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+            <path
+                fill="currentColor"
+                d="M19.05 4.94A9.87 9.87 0 0 0 12.03 2 9.94 9.94 0 0 0 2.1 11.95c0 1.74.46 3.44 1.34 4.94L2 22l5.28-1.38a9.9 9.9 0 0 0 4.74 1.2h.01a9.95 9.95 0 0 0 9.94-9.94 9.83 9.83 0 0 0-2.92-6.94ZM12.03 20.1h-.01a8.19 8.19 0 0 1-4.18-1.14l-.3-.18-3.14.83.84-3.06-.2-.31a8.2 8.2 0 0 1-1.25-4.33 8.24 8.24 0 0 1 8.24-8.24 8.15 8.15 0 0 1 5.83 2.42 8.21 8.21 0 0 1 2.41 5.83 8.24 8.24 0 0 1-8.24 8.18Zm4.52-6.18c-.25-.13-1.46-.72-1.69-.81-.23-.08-.4-.12-.58.12-.16.25-.64.81-.78.98-.14.16-.29.18-.54.06-.25-.13-1.03-.38-1.96-1.2-.72-.64-1.2-1.43-1.35-1.67-.14-.25-.01-.38.1-.51.11-.11.25-.29.36-.43.12-.14.16-.24.25-.41.08-.16.04-.31-.02-.43-.07-.13-.57-1.37-.78-1.88-.21-.5-.42-.43-.58-.44h-.5c-.16 0-.43.07-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.55c.13.16 1.72 2.62 4.16 3.67.58.25 1.04.41 1.4.52.58.18 1.1.16 1.51.1.46-.06 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.17-.05-.09-.22-.16-.47-.29Z"
+            />
+        </svg>
+    );
+}
+
 export default function MentorPanel({
     verseRef,
     lang,
@@ -107,6 +123,9 @@ export default function MentorPanel({
     isAuthenticated,
     activeMood,
     userReflection = null,
+    initialMentorContext = null,
+    onShareWhatsApp,
+    isShareBusy = false,
     onClose,
 }: MentorPanelProps) {
     const [tab, setTab] = useState<Tab>('reflect');
@@ -115,32 +134,46 @@ export default function MentorPanel({
     const [themes, setThemes] = useState<VerseTheme[]>([]);
     const [activeStudyPaths, setActiveStudyPaths] = useState<StudyPath[]>([]);
     const [denominationalContext, setDenominationalContext] = useState<DenominationalContext | null>(null);
-    const [insightsLoading, setInsightsLoading] = useState(false);
+    const [insightsState, setInsightsState] = useState<AsyncContractState>('idle');
     const [insightsFetched, setInsightsFetched] = useState(false);
 
     const [question, setQuestion] = useState('');
     const [askMode, setAskMode] = useState<AskMode>('explain_simply');
     const [askResult, setAskResult] = useState<AskResult | null>(null);
-    const [askLoading, setAskLoading] = useState(false);
+    const [askState, setAskState] = useState<AsyncContractState>('idle');
     const [askError, setAskError] = useState<string | null>(null);
+    const insightsLoading = insightsState === 'loading';
+    const askLoading = askState === 'submitting';
 
     const questionInputRef = useRef<HTMLTextAreaElement>(null);
+    const effectiveReflectionContext = useMemo(() => {
+        const direct = String(userReflection || "").replace(/\s+/g, " ").trim();
+        if (direct) return direct;
+        const initial = String(initialMentorContext || "").replace(/\s+/g, " ").trim();
+        return initial || null;
+    }, [initialMentorContext, userReflection]);
     const mentorRequestContext = useMemo(
         () => ({
             mood: activeMood,
             intent: 'deep_study',
             screen_context: 'versehub_reader',
-            user_reflection: userReflection,
+            user_reflection: effectiveReflectionContext,
         }),
-        [activeMood, userReflection]
+        [activeMood, effectiveReflectionContext]
     );
 
     // Fetch insights lazily on first open or tab switch.
     function ensureInsights() {
         if (insightsFetched || insightsLoading) return;
-        setInsightsLoading(true);
+        setInsightsState('loading');
 
-        fetchWithAppAuth(`/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor`, {
+        const params = new URLSearchParams();
+        if (effectiveReflectionContext) {
+            params.set("user_reflection", effectiveReflectionContext);
+        }
+        const mentorInsightsHref = `/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(verseRef)}/mentor${params.toString() ? `?${params.toString()}` : ""}`;
+
+        fetchWithAppAuth(mentorInsightsHref, {
             cache: 'no-store',
         })
             .then((r) => (r.ok ? r.json() : null))
@@ -151,11 +184,16 @@ export default function MentorPanel({
                 if (json?.active_study_paths) setActiveStudyPaths(json.active_study_paths);
                 if (json?.denominational_context) setDenominationalContext(json.denominational_context);
                 setInsightsFetched(true);
-                setInsightsLoading(false);
+                const hasAnyInsightData =
+                    Boolean(json?.insights) ||
+                    Boolean(json?.relationships?.length) ||
+                    Boolean(json?.themes?.length) ||
+                    Boolean(json?.denominational_context);
+                setInsightsState(hasAnyInsightData ? 'ready' : 'fallback');
             })
             .catch(() => {
                 setInsightsFetched(true);
-                setInsightsLoading(false);
+                setInsightsState('fallback');
             });
     }
 
@@ -171,10 +209,11 @@ export default function MentorPanel({
         if (!q || askLoading) return;
         if (!isAuthenticated) {
             setAskError('Sesi login tidak ditemukan. Silakan login ulang.');
+            setAskState('fatal_error');
             return;
         }
 
-        setAskLoading(true);
+        setAskState('submitting');
         setAskResult(null);
         setAskError(null);
 
@@ -192,15 +231,16 @@ export default function MentorPanel({
             .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
             .then((json) => {
                 setAskResult(json);
-                setAskLoading(false);
+                setAskState('ready');
             })
             .catch((status) => {
                 if (status === 429) {
                     setAskError('Batas pertanyaan tercapai. Coba lagi dalam 1 jam.');
+                    setAskState('retryable_error');
                 } else {
                     setAskError('Terjadi kesalahan. Silakan coba lagi.');
+                    setAskState('retryable_error');
                 }
-                setAskLoading(false);
             });
     }
 
@@ -232,13 +272,28 @@ export default function MentorPanel({
                             <p className="text-sm font-bold leading-tight text-slate-900">Scripture Guide</p>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-full px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                    >
-                        Tutup
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onShareWhatsApp}
+                            disabled={!onShareWhatsApp || isShareBusy}
+                            aria-label="Bagikan ke WhatsApp"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#25D366] transition hover:bg-[#25D366]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isShareBusy ? (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#25D366]/25 border-t-[#25D366]" />
+                            ) : (
+                                <WhatsAppIcon className="h-4 w-4" />
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-full px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                        >
+                            Tutup
+                        </button>
+                    </div>
                 </div>
 
                 {/* Verse reference label */}
@@ -280,6 +335,14 @@ export default function MentorPanel({
                         <>
                             {insightsLoading ? <LoadingSpinner /> : (
                                 <div className="space-y-5">
+                                    {effectiveReflectionContext ? (
+                                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/65 px-3.5 py-3">
+                                            <SectionLabel color="slate">Konteks Awal Renungan</SectionLabel>
+                                            <p className="mt-1.5 text-sm leading-relaxed text-indigo-900/75">
+                                                {effectiveReflectionContext}
+                                            </p>
+                                        </div>
+                                    ) : null}
                                     {insights?.reflection_questions?.length ? (
                                         <div>
                                             <SectionLabel color="amber">Pertanyaan Refleksi</SectionLabel>

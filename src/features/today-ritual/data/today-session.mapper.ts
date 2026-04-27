@@ -5,6 +5,7 @@ import {
   TODAY_SESSION_TEXT_LIMITS,
 } from './today-session.contract';
 import type { ContentDiagnostics, ContentFieldIssue } from './today-session.diagnostics';
+import type { TodaySessionSourceStatus } from './today-session.diagnostics';
 import type { RawTodaySessionPayload } from './today-session.source';
 
 const REQUIRED_FIELD_SET = new Set<string>(TODAY_SESSION_BACKEND_REQUIRED_FIELDS);
@@ -78,7 +79,10 @@ function getRawValueByPath(raw: RawTodaySessionPayload | null, path: string): un
   return cursor;
 }
 
-function createDiagnostics(raw: RawTodaySessionPayload | null): {
+function createDiagnostics(
+  raw: RawTodaySessionPayload | null,
+  sourceStatus: TodaySessionSourceStatus
+): {
   diagnostics: ContentDiagnostics;
   pushIssue: (issue: ContentFieldIssue) => void;
 } {
@@ -89,7 +93,7 @@ function createDiagnostics(raw: RawTodaySessionPayload | null): {
     : [];
 
   const diagnostics: ContentDiagnostics = {
-    sourceStatus: raw ? 'external' : 'fallback_only',
+    sourceStatus,
     contractVersionExpected: TODAY_SESSION_CONTRACT_VERSION,
     contractVersionReceived: getTrimmedString(raw?.contractVersion) ?? null,
     missingRequiredFields: [...missingRequiredFields],
@@ -151,7 +155,7 @@ function resolveString(
 
   if (usingFallback) {
     diagnostics.metrics.fallbackCount += 1;
-    if (diagnostics.sourceStatus === 'external' && REQUIRED_FIELD_SET.has(field)) {
+    if (diagnostics.sourceStatus !== 'fallback_only' && REQUIRED_FIELD_SET.has(field)) {
       diagnostics.metrics.fallbackNotableCount += 1;
     }
   }
@@ -181,9 +185,11 @@ function resolveString(
 
 export function mapRawToTodaySessionContentWithDiagnostics(
   raw: RawTodaySessionPayload | null,
-  baseContent: TodaySessionContent
+  baseContent: TodaySessionContent,
+  options: { sourceStatus?: TodaySessionSourceStatus } = {}
 ): { content: TodaySessionContent; diagnostics: ContentDiagnostics } {
-  const { diagnostics, pushIssue } = createDiagnostics(raw);
+  const sourceStatus = options.sourceStatus ?? (raw ? 'external_live' : 'fallback_only');
+  const { diagnostics, pushIssue } = createDiagnostics(raw, sourceStatus);
 
   const userName = resolveString(
     'user.name',
@@ -388,7 +394,8 @@ export function mapRawToTodaySessionContentWithDiagnostics(
 
 export function mapRawToTodaySessionContent(
   raw: RawTodaySessionPayload | null,
-  baseContent: TodaySessionContent
+  baseContent: TodaySessionContent,
+  options: { sourceStatus?: TodaySessionSourceStatus } = {}
 ): TodaySessionContent {
-  return mapRawToTodaySessionContentWithDiagnostics(raw, baseContent).content;
+  return mapRawToTodaySessionContentWithDiagnostics(raw, baseContent, options).content;
 }

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VersehubCompletionRitual } from "@/features/versehub/components/VersehubCompletionRitual";
 import type { Verse } from "@/features/versehub/types";
@@ -37,6 +37,9 @@ interface VersehubReaderViewProps {
     onSaveChapterReflection: () => void;
     onShareInsight: () => void;
     onReachedChapterEnd: () => void;
+    insightSnippet: string | null;
+    isInsightPinned: boolean;
+    onToggleInsightPin: () => void;
 }
 
 export function VersehubReaderView({
@@ -69,6 +72,9 @@ export function VersehubReaderView({
     onSaveChapterReflection,
     onShareInsight,
     onReachedChapterEnd,
+    insightSnippet,
+    isInsightPinned,
+    onToggleInsightPin,
 }: VersehubReaderViewProps) {
     const completionSentinelRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -146,26 +152,54 @@ export function VersehubReaderView({
                             </div>
                         </div>
 
-                        <div className="mx-auto mt-8 max-w-2xl" style={{ paddingBottom: readerContentPadding }}>
-                            <p className="tct-serif text-[20px] leading-[2.1] text-slate-600 md:text-[22px] md:leading-[2.2] text-justify selection:bg-sky-100">
-                                {verses.map((verse) => {
-                                    const userReflection = resolveReflectionContext(verse.verse);
+                        <div className="mx-auto mt-8 max-w-3xl" style={{ paddingBottom: readerContentPadding }}>
+                            <div className={cn("gap-6", insightSnippet ? "grid md:grid-cols-[minmax(0,1fr)_260px]" : "block")}>
+                                <div>
+                                    <p className="tct-serif text-[20px] leading-[2.1] text-slate-600 md:text-[22px] md:leading-[2.2] text-justify selection:bg-sky-100">
+                                        {verses.map((verse) => {
+                                            const userReflection = resolveReflectionContext(verse.verse);
 
-                                    return (
-                                        <span
-                                            key={verse.key}
-                                            onClick={() => onOpenVerseMentor(verse, userReflection)}
-                                            className="group cursor-pointer inline transition-colors hover:text-slate-900"
-                                            title="Ketuk untuk membuka Mentor"
-                                        >
-                                            <sup className="mr-1.5 inline-block font-sans font-bold text-slate-400 text-[11px] md:text-[12px] select-none group-hover:text-sky-600 transition-colors">
-                                                {verse.verse}
-                                            </sup>
-                                            <span className="mr-2">{verse.text}</span>
-                                        </span>
-                                    );
-                                })}
-                            </p>
+                                            return (
+                                                <span
+                                                    key={verse.key}
+                                                    onClick={() => onOpenVerseMentor(verse, userReflection)}
+                                                    className="group cursor-pointer inline transition-colors hover:text-slate-900"
+                                                    title="Ketuk untuk membuka Mentor"
+                                                >
+                                                    <sup className="mr-1.5 inline-block font-sans font-bold text-slate-400 text-[11px] md:text-[12px] select-none group-hover:text-sky-600 transition-colors">
+                                                        {verse.verse}
+                                                    </sup>
+                                                    <span className="mr-2">{verse.text}</span>
+                                                </span>
+                                            );
+                                        })}
+                                    </p>
+                                </div>
+
+                                {insightSnippet ? (
+                                    <aside className="md:sticky md:top-28 md:self-start">
+                                        <div className="rounded-3xl border border-indigo-100 bg-indigo-50/60 p-4 shadow-[0_20px_40px_-32px_rgba(79,70,229,0.35)]">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">Insight Snippet</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={onToggleInsightPin}
+                                                    className={cn(
+                                                        "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-bold transition-colors",
+                                                        isInsightPinned
+                                                            ? "border-indigo-300 bg-white text-indigo-700"
+                                                            : "border-slate-200 bg-white/70 text-slate-600"
+                                                    )}
+                                                >
+                                                    <Pin className={cn("h-3.5 w-3.5", isInsightPinned && "fill-current")} />
+                                                    {isInsightPinned ? "Terjepit" : "Jepit"}
+                                                </button>
+                                            </div>
+                                            <p className="mt-2 text-[13px] leading-6 text-indigo-900/85">{insightSnippet}</p>
+                                        </div>
+                                    </aside>
+                                ) : null}
+                            </div>
 
                             <div ref={completionSentinelRef} className="h-6 w-full" aria-hidden="true" />
 

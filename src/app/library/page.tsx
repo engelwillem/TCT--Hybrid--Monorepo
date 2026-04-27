@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function LibraryPage() {
-  redirect('/versehub/id');
+  redirect('/renungan?source=library&intent=organic-entry');
 }

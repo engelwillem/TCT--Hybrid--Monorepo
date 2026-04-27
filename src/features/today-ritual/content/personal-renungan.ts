@@ -14,6 +14,14 @@ export type RenunganMatch = {
   requestId?: string | null;
   driver?: "openai" | "template" | "claude" | string | null;
   usedFallback?: boolean;
+  sourceType?: "live" | "fallback";
+  fallbackReason?:
+    | "network_error"
+    | "http_error"
+    | "invalid_output"
+    | "coherence_guardrail"
+    | "short_input"
+    | null;
   responseMode?: "calm_heart" | "practical_step" | "short_prayer" | "deep_reflection" | string | null;
   safety?: {
     risk_level?: "low" | "medium" | "high";
@@ -217,7 +225,14 @@ function isMeditationCoherentWithReflection(meditation: string, reflection: stri
 
 export function buildPersonalRenunganFallback(
   reflectionText: string,
-  sessionContent: TodaySessionContent
+  sessionContent: TodaySessionContent,
+  fallbackReason:
+    | "network_error"
+    | "http_error"
+    | "invalid_output"
+    | "coherence_guardrail"
+    | "short_input"
+    | null = null
 ): RenunganMatch {
   const normalized = sanitizeReflectionText(reflectionText);
   const matched = MATCHES.find((entry) =>
@@ -225,7 +240,12 @@ export function buildPersonalRenunganFallback(
   );
 
   if (matched) {
-    return matched.result;
+    return {
+      ...matched.result,
+      usedFallback: true,
+      sourceType: "fallback",
+      fallbackReason,
+    };
   }
 
   const firstSentence =
@@ -236,6 +256,9 @@ export function buildPersonalRenunganFallback(
     verseText: sessionContent.verseText,
     verseReference: sessionContent.verseReference,
     meditation: `Tuhan menerima ${firstSentence.trim()} tanpa menghakimi. Di tengah kata-kata yang kamu tulis, ada ruang tenang tempat kasih-Nya bekerja diam-diam, menata ulang hatimu dengan lembut hari ini.`,
+    usedFallback: true,
+    sourceType: "fallback",
+    fallbackReason,
   };
 }
 
@@ -243,7 +266,7 @@ export function buildPersonalRenungan(
   reflectionText: string,
   sessionContent: TodaySessionContent
 ): RenunganMatch {
-  return buildPersonalRenunganFallback(reflectionText, sessionContent);
+  return buildPersonalRenunganFallback(reflectionText, sessionContent, null);
 }
 
 export async function generatePersonalRenungan(
@@ -260,7 +283,7 @@ export async function generatePersonalRenungan(
   const clean = reflectionText.trim();
   if (clean.length < 3) {
     options?.onTelemetry?.({ type: "fallback_triggered", reason: "short_input" });
-    return buildPersonalRenunganFallback(reflectionText, sessionContent);
+    return buildPersonalRenunganFallback(reflectionText, sessionContent, "short_input");
   }
 
   try {
@@ -292,7 +315,7 @@ export async function generatePersonalRenungan(
         requestId,
         statusCode: response.status,
       });
-      return buildPersonalRenunganFallback(reflectionText, sessionContent);
+      return buildPersonalRenunganFallback(reflectionText, sessionContent, "http_error");
     }
 
     const resolvedRequestId =
@@ -366,7 +389,7 @@ export async function generatePersonalRenungan(
         requestId: resolvedRequestId,
         pipelineVersion,
       });
-      return buildPersonalRenunganFallback(reflectionText, sessionContent);
+      return buildPersonalRenunganFallback(reflectionText, sessionContent, "invalid_output");
     }
 
     if (!isMeditationCoherentWithReflection(meditation, clean)) {
@@ -376,7 +399,7 @@ export async function generatePersonalRenungan(
         requestId: resolvedRequestId,
         pipelineVersion,
       });
-      return buildPersonalRenunganFallback(reflectionText, sessionContent);
+      return buildPersonalRenunganFallback(reflectionText, sessionContent, "coherence_guardrail");
     }
 
     return {
@@ -390,6 +413,8 @@ export async function generatePersonalRenungan(
       requestId: outputRequestId || null,
       driver,
       usedFallback,
+      sourceType: usedFallback ? "fallback" : "live",
+      fallbackReason: null,
       responseMode,
       safety: payload?.data?.safety,
       privacy: payload?.data?.privacy,
@@ -411,6 +436,6 @@ export async function generatePersonalRenungan(
       throw error;
     }
     options?.onTelemetry?.({ type: "fallback_triggered", reason: "network_error" });
-    return buildPersonalRenunganFallback(reflectionText, sessionContent);
+    return buildPersonalRenunganFallback(reflectionText, sessionContent, "network_error");
   }
 }

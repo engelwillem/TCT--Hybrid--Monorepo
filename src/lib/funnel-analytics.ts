@@ -19,7 +19,27 @@ type FunnelEventName =
   | "renungan_final_render_complete"
   | "renungan_result_helpful"
   | "renungan_result_not_helpful"
-  | "renungan_followup_opened";
+  | "renungan_followup_opened"
+  | "renungan_deepening_opened"
+  | "renungan_deepening_visible"
+  | "renungan_deepening_completed"
+  | "renungan_deepening_dismissed"
+  | "renungan_read_full_chapter"
+  | "renungan_related_verse_opened"
+  | "versehub_id_redirected_to_renungan"
+  | "versehub_reader_entry_allowed"
+  | "renungan_viewed"
+  | "renungan_started"
+  | "renungan_reflection_submitted"
+  | "renungan_result_live"
+  | "renungan_result_fallback"
+  | "renungan_result_failure"
+  | "renungan_share_whatsapp"
+  | "renungan_copy_link"
+  | "renungan_bookmark_prompted"
+  | "renungan_bookmark_login_redirect"
+  | "renungan_bookmark_saved"
+  | "renungan_deepen_versehub_clicked";
 
 type FunnelEventPayload = {
   path?: string;

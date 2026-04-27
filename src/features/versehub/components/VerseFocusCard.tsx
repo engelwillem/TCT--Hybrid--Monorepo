@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bookmark, Heart, Loader2, MessageSquare, MessageSquareText, Reply, Send } from "lucide-react";
+import { Bookmark, Heart, Loader2, MessageSquare, MessageSquareText, Pin, Reply, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerseData } from "@/features/versehub/types";
 import { fetchWithAppAuth } from "@/lib/app-auth-fetch";
@@ -34,6 +34,9 @@ interface VerseFocusCardProps {
   onShare: () => void;
   onShareWhatsApp: () => void;
   verseData: VerseData;
+  insightSnippet?: string | null;
+  isInsightPinned?: boolean;
+  onToggleInsightPin?: () => void;
 }
 
 type VerseComment = {
@@ -65,6 +68,9 @@ export function VerseFocusCard({
   onShare,
   onShareWhatsApp,
   verseData,
+  insightSnippet = null,
+  isInsightPinned = false,
+  onToggleInsightPin,
 }: VerseFocusCardProps) {
   const refreshTick = useMutationRefreshTick([`/api/versehub/${lang}/`]);
   const commentsSectionRef = useRef<HTMLDivElement | null>(null);
@@ -233,6 +239,12 @@ export function VerseFocusCard({
 
       <section className="glass-panel overflow-hidden rounded-[40px]">
         <div className="p-5 md:p-7">
+          <motion.div
+            layoutId="verse-card"
+            className="mb-5 inline-flex rounded-full border border-indigo-200/70 bg-indigo-50/65 px-3.5 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-indigo-700"
+          >
+            {verseData.reference}
+          </motion.div>
           <blockquote className="relative">
             <div className="absolute left-1 top-1 text-slate-400/10" aria-hidden>
               <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -321,6 +333,28 @@ export function VerseFocusCard({
           </div>
         </div>
       </section>
+
+      {insightSnippet ? (
+        <section className="glass-panel overflow-hidden rounded-[30px] border border-indigo-100/80 bg-indigo-50/45 p-4 md:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-indigo-600">Insight Snippet</p>
+            <button
+              type="button"
+              onClick={onToggleInsightPin}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold transition-colors",
+                isInsightPinned
+                  ? "border-indigo-300 bg-white text-indigo-700"
+                  : "border-slate-200 bg-white/80 text-slate-600"
+              )}
+            >
+              <Pin className={cn("h-3.5 w-3.5", isInsightPinned && "fill-current")} />
+              {isInsightPinned ? "Terjepit" : "Jepit"}
+            </button>
+          </div>
+          <p className="mt-2 text-[14px] leading-7 text-indigo-950/80">{insightSnippet}</p>
+        </section>
+      ) : null}
 
       <section ref={commentsSectionRef} className="glass-panel overflow-hidden rounded-[34px] p-5 md:p-7">
         <div className="flex items-center justify-between gap-3">

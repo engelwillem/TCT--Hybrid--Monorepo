@@ -8,6 +8,7 @@ type SurfaceBridgeActionProps = {
   label: string;
   href: string;
   className?: string;
+  dataTestId?: string;
 };
 
 const targetToneClass: Record<SurfaceTarget, string> = {
@@ -16,10 +17,11 @@ const targetToneClass: Record<SurfaceTarget, string> = {
   community: "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
 };
 
-export function SurfaceBridgeAction({ target, label, href, className }: SurfaceBridgeActionProps) {
+export function SurfaceBridgeAction({ target, label, href, className, dataTestId }: SurfaceBridgeActionProps) {
   return (
     <Link
       href={href}
+      data-testid={dataTestId}
       className={cn(
         "inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors",
         targetToneClass[target],

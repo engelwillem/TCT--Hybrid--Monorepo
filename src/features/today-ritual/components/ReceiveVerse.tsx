@@ -4,13 +4,11 @@ import { motion } from 'framer-motion';
 import { useMotionConfig } from '../hooks/useMotionConfig';
 
 interface ReceiveVerseProps {
-  verseLabel: string;
-  openingLine: string;
   verseText: string;
   verseReference: string;
 }
 
-export default function ReceiveVerse({ verseLabel, openingLine, verseText, verseReference }: ReceiveVerseProps) {
+export default function ReceiveVerse({ verseText, verseReference }: ReceiveVerseProps) {
   const m = useMotionConfig();
 
   return (
@@ -23,6 +21,12 @@ export default function ReceiveVerse({ verseLabel, openingLine, verseText, verse
       transition={m.tx.slow}
       className="flex flex-col px-6 mt-6 md:mt-8"
     >
+      <div className="mb-4 flex flex-col gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700/75">Ayat Hari Ini</p>
+        <p className="text-[14px] leading-7 text-foreground/58">
+          Terimalah firman yang menuntun langkahmu hari ini.
+        </p>
+      </div>
       <div className="flex flex-col items-start text-left mb-8">
         {/* blockquote is the correct semantic element for a scripture citation */}
         <blockquote

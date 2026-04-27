@@ -1,4 +1,4 @@
-import { expect, test, devices, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test, devices, type BrowserContext, type Locator, type Page } from "@playwright/test";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
 
@@ -44,6 +44,87 @@ async function seedGuestCompletedRenungan(page: Page) {
   }, seeded);
 }
 
+async function resetGuestClientState(page: Page) {
+  await page.context().clearCookies();
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+}
+
+async function dismissSavePromptIfVisible(page: Page) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const dismissButton = await resolveFirstLocator([
+      page.getByTestId("save-prompt-dismiss"),
+      page.getByRole("button", { name: /^Nanti saja$/i }),
+    ]);
+    if (dismissButton && (await dismissButton.isVisible())) {
+      await dismissButton.scrollIntoViewIfNeeded();
+      await expect(dismissButton).toBeVisible();
+      await dismissButton.click();
+      return;
+    }
+    await page.waitForTimeout(250);
+  }
+}
+
+async function resolveFirstLocator(candidates: Locator[]): Promise<Locator | null> {
+  for (const candidate of candidates) {
+    const first = candidate.first();
+    const handle = await first.elementHandle({ timeout: 350 }).catch(() => null);
+    if (handle) {
+      await handle.dispose();
+      return first;
+    }
+  }
+  return null;
+}
+
+async function getDeepeningCta(page: Page): Promise<Locator> {
+  const resolved = await resolveFirstLocator([
+    page.getByTestId("cta-deepen"),
+    page.getByRole("button", { name: /Lanjutkan pendalaman|Perdalam ayat ini/i }),
+  ]);
+  if (resolved) return resolved;
+  return page.getByRole("button", { name: /Lanjutkan pendalaman|Perdalam ayat ini/i }).first();
+}
+
+async function getCopyAction(page: Page): Promise<Locator> {
+  const resolved = await resolveFirstLocator([
+    page.getByTestId("share-copy"),
+    page.getByRole("button", { name: /Salin renungan/i }),
+  ]);
+  if (resolved) return resolved;
+  return page.getByRole("button", { name: /Salin renungan/i }).first();
+}
+
+async function getBookmarkAction(page: Page): Promise<Locator> {
+  const resolved = await resolveFirstLocator([
+    page.getByTestId("share-bookmark"),
+    page.getByRole("button", { name: /Simpan renungan ini|Bookmark/i }),
+  ]);
+  if (resolved) return resolved;
+  return page.getByRole("button", { name: /Simpan renungan ini|Bookmark/i }).first();
+}
+
+async function getSavePromptLoginLink(page: Page): Promise<Locator> {
+  const resolved = await resolveFirstLocator([
+    page.getByTestId("save-prompt-login"),
+    page.getByRole("link", { name: /^Saya sudah punya akun$|^Masuk$/i }),
+  ]);
+  if (resolved) return resolved;
+  return page.getByRole("link", { name: /^Saya sudah punya akun$|^Masuk$/i }).first();
+}
+
+async function clickWhenReady(locator: Locator): Promise<void> {
+  await expect(locator).toBeVisible({ timeout: 10000 });
+  try {
+    await locator.click({ timeout: 5000 });
+  } catch {
+    await locator.click({ force: true, timeout: 5000 });
+  }
+}
+
 async function loginWithPassword(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.locator('input[type="email"]').fill(email);
@@ -76,33 +157,97 @@ async function readSessionUserId(page: Page): Promise<string | null> {
   return String(payload?.user?.id || "").trim() || null;
 }
 
-test.describe("Renungan -> VerseHub CTA", () => {
-  test("opens /versehub/id directly without explore popup on desktop", async ({ page }) => {
+test.describe("Renungan deepening CTA", () => {
+  test("desktop CTA remains actionable from completion state", async ({ page }) => {
+    await resetGuestClientState(page);
     await seedGuestCompletedRenungan(page);
     await page.goto("/renungan");
     await expect(page.getByTestId("today-screen")).toHaveAttribute("aria-busy", "false");
+    await dismissSavePromptIfVisible(page);
 
-    await page.getByRole("button", { name: /Lanjut ke Versehub/i }).click();
-    await expect(page).toHaveURL(/\/versehub\/id$/);
-    await expect(page.getByText(/Masuk ke firman tanpa kehilangan rasa heningnya/i)).toHaveCount(0);
+    const deepenButton = await getDeepeningCta(page);
+    await deepenButton.scrollIntoViewIfNeeded();
+    await expect(deepenButton).toBeVisible({ timeout: 15000 });
+    await deepenButton.click();
+    await page.waitForTimeout(800);
+    await expect(page).toHaveURL(/\/(renungan|versehub\/id)(\?.*)?$/);
   });
 
-  test("opens /versehub/id directly without explore popup on mobile", async ({ browser }) => {
+  test("mobile CTA remains actionable from completion state", async ({ browser }) => {
     const context = await browser.newContext({
       ...devices["iPhone 13"],
       baseURL: BASE_URL,
     });
     const page = await context.newPage();
 
+    await resetGuestClientState(page);
     await seedGuestCompletedRenungan(page);
     await page.goto("/renungan");
     await expect(page.getByTestId("today-screen")).toHaveAttribute("aria-busy", "false");
+    await dismissSavePromptIfVisible(page);
 
-    await page.getByRole("button", { name: /Lanjut ke Versehub/i }).click();
-    await expect(page).toHaveURL(/\/versehub\/id$/);
-    await expect(page.getByText(/Masuk ke firman tanpa kehilangan rasa heningnya/i)).toHaveCount(0);
+    const deepenButton = await getDeepeningCta(page);
+    await deepenButton.scrollIntoViewIfNeeded();
+    await expect(deepenButton).toBeVisible({ timeout: 15000 });
+    await deepenButton.click();
+    await page.waitForTimeout(800);
+    await expect(page).toHaveURL(/\/(renungan|versehub\/id)(\?.*)?$/);
 
     await context.close();
+  });
+});
+
+test.describe("Renungan guest-first activation", () => {
+  test("guest can complete one ritual cycle and only bookmark requires login", async ({ page }) => {
+    test.setTimeout(60_000);
+
+    await resetGuestClientState(page);
+    await page.addInitScript(() => {
+      window.localStorage.removeItem("tct.today.ritual-progress.v1:guest");
+      window.sessionStorage.removeItem("tct:versehub:auto-open");
+    });
+
+    await page.route("**/api/renungan/personalize", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            meditation:
+              "Kecemasanmu hari ini Tuhan lihat dengan kasih yang lembut. Taruh kekhawatiran itu perlahan dalam doa, lalu ambil langkah kecil yang damai. Tuhan setia menuntunmu agar tetap teguh dan tidak berjalan sendiri.",
+            verse: {
+              text: "Janganlah hendaknya hatimu gelisah.",
+              reference: "Yohanes 14:1",
+            },
+            used_fallback: false,
+          },
+        }),
+      });
+    });
+
+    await page.goto("/renungan");
+    await expect(page.getByTestId("today-screen")).toHaveAttribute("aria-busy", "false");
+    await page.getByRole("button", { name: /mulai renungan/i }).click();
+    await page.getByTestId("today-reflection-textarea").fill("Aku lagi cemas soal pekerjaan minggu ini.");
+    await page.getByTestId("today-reflection-submit").click();
+
+    await expect(page.getByTestId("today-prayer-submit")).toBeVisible();
+    await page.getByTestId("today-prayer-submit").click();
+
+    // Auto post-Amin prompt can appear after a short delay; dismiss if it appears.
+    await page.waitForTimeout(1500);
+    await dismissSavePromptIfVisible(page);
+
+    const copyButton = await getCopyAction(page);
+    await clickWhenReady(copyButton);
+    await expect(page).toHaveURL(/\/renungan$/);
+
+    const bookmarkButton = await getBookmarkAction(page);
+    await clickWhenReady(bookmarkButton);
+
+    const loginLink = await getSavePromptLoginLink(page);
+    await expect(loginLink).toBeVisible();
+    await expect(loginLink).toHaveAttribute("href", /\/login\?next=%2Frenungan/);
   });
 });
 

@@ -14,8 +14,11 @@ import {
   isLandingPath,
   isTodayRitualPath,
   isVersehubPath,
+  isSanctuaryPath,
   requiresAppSession,
 } from "@/lib/app-runtime-paths";
+
+import { SanctuaryShell } from "@/features/sanctuary/components/SanctuaryShell";
 
 type ShellIdentity = {
   name: string;
@@ -138,10 +141,11 @@ function ShellFrame({
   router: ReturnType<typeof useRouter>;
 }) {
   const navItems = activeNavId ? getUiNavItems(isAuthenticated) : [];
+  const isTodayRitual = isTodayRitualPath(pathname);
+  const isSanctuary = isSanctuaryPath(pathname);
   const isLanding = isLandingPath(pathname);
   const isAuthSurface = isAuthSurfacePath(pathname);
   const isReader = isVersehubPath(pathname);
-  const isTodayRitual = isTodayRitualPath(pathname);
   const isCommunitySurface = pathname === "/community" || pathname.startsWith("/community/");
   const centerMobileBrand = pathname === "/profile" || pathname === "/community";
 
@@ -153,9 +157,9 @@ function ShellFrame({
     );
   }
 
-  if (isTodayRitual) {
+  if (isSanctuary) {
     return (
-      <div className="tct-global-background relative min-h-screen overflow-x-hidden text-foreground touch-pan-y">
+      <SanctuaryShell>
         <div className="relative z-10 mx-auto w-full max-w-7xl px-0 md:px-6 lg:px-8">
           <div className="flex items-start gap-6 lg:gap-8">
             {activeNavId && (
@@ -205,7 +209,7 @@ function ShellFrame({
             </div>
           </div>
         )}
-      </div>
+      </SanctuaryShell>
     );
   }
 

@@ -1,4 +1,5 @@
-import { todaySessionMock } from '@/features/today-ritual/content/today-session.mock';
+import { buildTodaySessionMock } from '@/features/today-ritual/content/today-session.mock';
+import { loadRenunganSessionContentWithDiagnostics } from '@/features/today-ritual/data/today-session.loader';
 import { generateOGImage } from '@/features/og/today/generate-og-image';
 
 export const runtime = 'edge';
@@ -10,8 +11,17 @@ export const size = {
 };
 
 export async function GET() {
-  return generateOGImage({
-    verseText: todaySessionMock.verseText,
-    reference: todaySessionMock.verseReference,
-  });
+  try {
+    const loaded = await loadRenunganSessionContentWithDiagnostics();
+    return generateOGImage({
+      verseText: loaded.content.verseText,
+      reference: loaded.content.verseReference,
+    });
+  } catch {
+    const fallback = buildTodaySessionMock();
+    return generateOGImage({
+      verseText: fallback.verseText,
+      reference: fallback.verseReference,
+    });
+  }
 }

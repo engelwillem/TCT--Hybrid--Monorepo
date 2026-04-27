@@ -14,6 +14,10 @@ export function isVersehubPath(pathname: string): boolean {
   return pathname === "/versehub" || pathname.startsWith("/versehub/");
 }
 
+export function isSanctuaryPath(pathname: string): boolean {
+  return isTodayRitualPath(pathname) || isVersehubPath(pathname);
+}
+
 export function requiresAppSession(pathname: string): boolean {
   if (isLandingPath(pathname)) return false;
   if (isAuthSurfacePath(pathname)) return false;

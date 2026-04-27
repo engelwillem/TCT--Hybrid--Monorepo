@@ -11,13 +11,71 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useMotionConfig } from '../hooks/useMotionConfig';
+import { useCurrentUserAvatarStyle } from '@/lib/avatar-presentation';
+import { resolveApiOrigin } from '@/lib/origin';
 
 interface TodayHeaderProps {
   greeting: string;
   dateLabel: string;
   memberName?: string | null;
+  memberId?: string | null;
+  avatarUrl?: string | null;
   isAuthenticated?: boolean;
   isAuthRestoring?: boolean;
+}
+
+function extractKnownAvatarPath(pathname: string): string | null {
+  if (!pathname) return null;
+  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  if (normalizedPath.startsWith('/storage/') || normalizedPath.startsWith('/api/v1/avatar/')) {
+    return normalizedPath;
+  }
+
+  const storageMarker = normalizedPath.indexOf('/storage/');
+  if (storageMarker >= 0) {
+    return normalizedPath.slice(storageMarker);
+  }
+
+  const avatarMarker = normalizedPath.indexOf('/api/v1/avatar/');
+  if (avatarMarker >= 0) {
+    return normalizedPath.slice(avatarMarker);
+  }
+
+  return null;
+}
+
+function normalizeHeaderAvatarUrl(value?: string | null): string | null {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  if (raw.startsWith('blob:') || raw.startsWith('data:image/')) return raw;
+
+  const apiOrigin = resolveApiOrigin();
+
+  try {
+    const parsed = new URL(raw);
+    const knownPath = extractKnownAvatarPath(parsed.pathname);
+    if (knownPath) {
+      return `${apiOrigin}${knownPath}${parsed.search}${parsed.hash}`;
+    }
+    return parsed.toString();
+  } catch {
+    const normalized = raw.startsWith('/') ? raw : `/${raw.replace(/^\/+/, '')}`;
+    const knownPath = extractKnownAvatarPath(normalized);
+    if (knownPath) {
+      return `${apiOrigin}${knownPath}`;
+    }
+    return normalized;
+  }
+}
+
+function getProfileInitials(name?: string | null): string {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return 'U';
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return `${parts[0].slice(0, 1)}${parts[1].slice(0, 1)}`.toUpperCase();
 }
 
 function buildTodayDateLabel(fallback: string): string {
@@ -35,24 +93,64 @@ function buildTodayDateLabel(fallback: string): string {
   }
 }
 
+function buildTimeGreeting(fallback: string): string {
+  try {
+    const now = new Date();
+    const hourText = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "Asia/Jakarta",
+    }).format(now);
+    const hour = Number(hourText);
+    if (Number.isNaN(hour)) return fallback;
+    if (hour < 11) return "Selamat pagi,";
+    if (hour < 15) return "Selamat siang,";
+    if (hour < 19) return "Selamat sore,";
+    return "Selamat malam,";
+  } catch {
+    return fallback;
+  }
+}
+
 export default function TodayHeader({
   greeting,
   dateLabel,
   memberName = null,
+  memberId = null,
+  avatarUrl = null,
   isAuthenticated = false,
   isAuthRestoring = false,
 }: TodayHeaderProps) {
   const router = useRouter();
   const m = useMotionConfig();
-  const primaryGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
+  const fallbackGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
+  const [timeGreeting, setTimeGreeting] = useState(() => buildTimeGreeting(fallbackGreeting));
   const [liveDateLabel, setLiveDateLabel] = useState(() => buildTodayDateLabel(dateLabel));
-  const [guestAccessGate, setGuestAccessGate] = useState<null | 'notification' | 'inbox'>(null);
+  const [guestAccessGate, setGuestAccessGate] = useState<null | 'notification' | 'inbox' | 'profile'>(null);
   const [inboxUnreadDot, setInboxUnreadDot] = useState(false);
   const normalizedMemberName = String(memberName || '').trim();
+  const normalizedAvatarUrl = normalizeHeaderAvatarUrl(avatarUrl);
+  const avatarPresentation = useCurrentUserAvatarStyle(
+    normalizedAvatarUrl,
+    { id: memberId, name: normalizedMemberName },
+    44,
+  );
+  const profileInitials = getProfileInitials(normalizedMemberName || 'Member');
 
   useEffect(() => {
     setLiveDateLabel(buildTodayDateLabel(dateLabel));
-  }, [dateLabel]);
+    setTimeGreeting(buildTimeGreeting(fallbackGreeting));
+  }, [dateLabel, fallbackGreeting]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setTimeGreeting(buildTimeGreeting(fallbackGreeting));
+    }, 60000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [fallbackGreeting]);
 
   useEffect(() => {
     if (isAuthRestoring) {
@@ -115,7 +213,7 @@ export default function TodayHeader({
               {liveDateLabel}
             </span>
             <h1 className="text-[22px] leading-[1.22] font-semibold tracking-[-0.01em] text-foreground/95 md:text-[25px]">
-              {primaryGreeting}
+              {timeGreeting}
             </h1>
             {!isAuthRestoring && (
               <>
@@ -125,13 +223,13 @@ export default function TodayHeader({
                   </p>
                 ) : null}
                 <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
-                  Chosen People
+                  Ruang heningmu hari ini
                 </p>
               </>
             )}
           </div>
 
-          <div className="ml-auto flex items-center gap-2 self-start">
+          <div className="ml-auto flex items-center gap-2.5 self-start">
             {isAuthenticated ? (
               <ChatPopover
                 triggerMode="notification"
@@ -169,6 +267,32 @@ export default function TodayHeader({
               <Inbox className={iconClassName} />
               {isAuthenticated && inboxUnreadDot ? <span className={guestBadgeClassName} aria-hidden="true" /> : null}
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (isAuthenticated) {
+                  router.push('/profile');
+                  return;
+                }
+                setGuestAccessGate('profile');
+              }}
+              className={cn(
+                'group relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/88 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-200/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.48)] backdrop-blur-[10px] transition-all duration-300 hover:bg-white hover:ring-sky-300/80 hover:shadow-[0_14px_34px_-24px_rgba(15,23,42,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70',
+              )}
+              aria-label={isAuthenticated ? 'Buka profil' : 'Masuk untuk membuka profil'}
+            >
+              {isAuthenticated && normalizedAvatarUrl ? (
+                <img
+                  src={normalizedAvatarUrl}
+                  alt={normalizedMemberName || 'Profile'}
+                  className={cn('h-full w-full object-cover', avatarPresentation.className)}
+                  style={avatarPresentation.style}
+                />
+              ) : (
+                <span className="tracking-[0.04em]">{profileInitials}</span>
+              )}
+            </button>
           </div>
         </motion.div>
       </div>
@@ -181,17 +305,17 @@ export default function TodayHeader({
 
             <div className="relative">
               <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-[20px] border border-sky-100/90 bg-white/85 text-sky-600 shadow-[0_18px_38px_-24px_rgba(14,165,233,0.55)]">
-                {guestAccessGate === 'notification' ? <Bell className="h-5 w-5" /> : <Inbox className="h-5 w-5" />}
+                {guestAccessGate === 'notification' ? <Bell className="h-5 w-5" /> : guestAccessGate === 'inbox' ? <Inbox className="h-5 w-5" /> : <span className="text-sm font-semibold">Me</span>}
               </div>
 
               <DialogHeader className="space-y-2 text-left">
                 <DialogTitle className="tct-serif text-[29px] leading-tight tracking-tight text-slate-900">
                   Login atau Daftar
                   <br />
-                  untuk buka notifikasi dan inbox
+                  untuk buka {guestAccessGate === 'profile' ? 'profil' : 'notifikasi dan inbox'}
                 </DialogTitle>
                 <DialogDescription className="max-w-sm text-[14px] leading-relaxed text-slate-600">
-                  Masuk untuk melihat welcome greeting dari admin, membuka inbox, dan menerima update interaksi pada kontenmu.
+                  Masuk untuk melihat welcome greeting dari admin, membuka inbox, mengatur profil, dan menerima update interaksi pada kontenmu.
                 </DialogDescription>
               </DialogHeader>
 

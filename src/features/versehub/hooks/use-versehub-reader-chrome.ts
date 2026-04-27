@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useSanctuary } from "@/features/sanctuary/components/SanctuaryContext";
 import { trackVersehubEvent } from "@/features/versehub/analytics";
 import type { OverlayType } from "@/features/versehub/types";
 
@@ -21,7 +22,6 @@ export function useVersehubReaderChrome({
   overlay,
   setOverlay,
 }: UseVersehubReaderChromeArgs) {
-  const [audioMenuOpen, setAudioMenuOpen] = useState(false);
   const [controlCenterOpen, setControlCenterOpen] = useState(false);
   const [isChromeVisible, setIsChromeVisible] = useState(true);
   const scrollViewportRef = useRef<HTMLElement | null>(null);
@@ -29,10 +29,21 @@ export function useVersehubReaderChrome({
   const scrollIdleTimerRef = useRef<number | null>(null);
   const audioPlaybackStartedAtRef = useRef<number | null>(null);
   const latestMoodRef = useRef(activeMood);
+  const {
+    ambientMenuOpen: audioMenuOpen,
+    setAmbientMenuOpen,
+    setAmbientIsDucking,
+    setAmbientMoodKey,
+    setAmbientShouldShowChrome,
+  } = useSanctuary();
 
   useEffect(() => {
     latestMoodRef.current = activeMood;
   }, [activeMood]);
+
+  useEffect(() => {
+    setAmbientMoodKey(activeMood || "daily");
+  }, [activeMood, setAmbientMoodKey]);
 
   useEffect(() => {
     if (isLandingMode) return;
@@ -74,7 +85,11 @@ export function useVersehubReaderChrome({
   }, [overlay, audioMenuOpen]);
 
   useEffect(() => {
-    const isAnyOverlayActive = overlay !== null || ogOpen;
+    setAmbientIsDucking(overlay !== null || audioMenuOpen);
+  }, [audioMenuOpen, overlay, setAmbientIsDucking]);
+
+  useEffect(() => {
+    const isAnyOverlayActive = overlay !== null || ogOpen || audioMenuOpen;
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("tct:overlay-activity", {
         detail: { source: "versehub", active: isAnyOverlayActive },
@@ -88,7 +103,7 @@ export function useVersehubReaderChrome({
         }));
       }
     };
-  }, [overlay, ogOpen]);
+  }, [audioMenuOpen, overlay, ogOpen]);
 
   useEffect(() => {
     return () => {
@@ -106,14 +121,34 @@ export function useVersehubReaderChrome({
     };
   }, [lang]);
 
+  useEffect(() => {
+    const shouldShowChrome = isLandingMode || isChromeVisible || overlay !== null || controlCenterOpen || audioMenuOpen;
+    setAmbientShouldShowChrome(shouldShowChrome);
+  }, [
+    audioMenuOpen,
+    controlCenterOpen,
+    isChromeVisible,
+    isLandingMode,
+    overlay,
+    setAmbientShouldShowChrome,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      setAmbientIsDucking(false);
+      setAmbientMenuOpen(false);
+      setAmbientShouldShowChrome(true);
+    };
+  }, [setAmbientIsDucking, setAmbientMenuOpen, setAmbientShouldShowChrome]);
+
   const handleAmbienceMenuOpen = (isOpen: boolean) => {
     if (isOpen) {
-      setAudioMenuOpen(true);
+      setAmbientMenuOpen(true);
       setOverlay("audio");
       return;
     }
 
-    setAudioMenuOpen(false);
+    setAmbientMenuOpen(false);
     if (overlay === "audio") {
       setOverlay(null);
     }

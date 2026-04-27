@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -11,9 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { SurfaceBridgeAction } from "@/components/core/SurfaceBridgeAction";
 import { CommunityService } from "@/services/community.service";
 import { useAuthSession } from "@/auth/use-auth-session";
 import { subscribeDataMutation } from "@/lib/mutation-sync";
@@ -22,14 +19,14 @@ import { ensureShareAssetReady, prepareCommunityShareAsset } from "@/lib/share-a
 import { fetchWithAppAuth } from "@/lib/app-auth-fetch";
 import { type CommunityComposerType } from "../categories";
 import { CommentsSheet } from "../components/CommentsSheet";
-import { MemberPostCard } from "../components/MemberPostCard";
 import type { ComposerSubmitResult, PostComposerMetadata } from "../components/post-composer/types";
 import { AuthExecutionGate } from "../components/AuthExecutionGate";
 import { VerseHubFeaturedCard, type FeaturedVerse } from "../components/VerseHubFeaturedCard";
 import { CommunityArchiveTab } from "../components/CommunityArchiveTab";
-import { CommunitySmartPostComposer } from "../components/CommunitySmartPostComposer";
+import { CommunityDiscussionsTab } from "../components/CommunityDiscussionsTab";
 import { CommunityBookmarksTab } from "../components/CommunityBookmarksTab";
 import type { BookmarkCategory, CommunityPost, CommunityUser } from "../types";
+import { useCommunityAuthGate } from "../hooks/useCommunityAuthGate";
 import {
   buildCommunityFeedCacheKey,
   readCommunityFeedCache,
@@ -85,11 +82,7 @@ export function CommunityPage() {
   const [shareBusyPostId, setShareBusyPostId] = useState<string | null>(null);
   const [, setTimelineNowMs] = useState(() => Date.now());
   const [lastPostedId, setLastPostedId] = useState<string | null>(null);
-  const [authGateOpen, setAuthGateOpen] = useState(false);
-  const [authGateContent, setAuthGateContent] = useState<{ title: string; description: string }>({
-    title: "Tulisanmu sudah siap.",
-    description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
-  });
+  const { authGateOpen, setAuthGateOpen, authGateContent, openAuthGate } = useCommunityAuthGate();
   const discussionPostRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrolledToLastPostedRef = useRef<string | null>(null);
   const narrowColumnClassName = "mx-auto w-full max-w-3xl";
@@ -158,22 +151,6 @@ export function CommunityPage() {
     },
     [COMMUNITY_FEED_CACHE_KEY]
   );
-
-  const openAuthGate = useCallback((mode: "share" | "interact") => {
-    if (mode === "share") {
-      setAuthGateContent({
-        title: "Tulisanmu sudah siap.",
-        description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
-      });
-    } else {
-      setAuthGateContent({
-        title: "Lanjutkan langkahmu.",
-        description: "Masuk atau daftar untuk ikut berinteraksi dengan komunitas.",
-      });
-    }
-
-    setAuthGateOpen(true);
-  }, []);
 
   const handleCommentsUpdated = useCallback((postId: string, count: number) => {
     const patchComments = (list: CommunityPost[]) =>
@@ -428,11 +405,27 @@ export function CommunityPage() {
         });
       }
 
-      if (status === 401 || status === 403) {
+      if (status === 401) {
         return {
           ok: false,
           kind: "auth",
           message: "Sesi akun berakhir. Silakan masuk lagi.",
+          status,
+          diagnostics: imageDiagnostics,
+        };
+      }
+
+      if (status === 403) {
+        const isVideoRestricted =
+          detail.toLowerCase().includes("upload video") &&
+          detail.toLowerCase().includes("admin");
+
+        return {
+          ok: false,
+          kind: isVideoRestricted ? "validation" : "auth",
+          message: isVideoRestricted
+            ? detail
+            : "Akses ditolak untuk aksi ini.",
           status,
           diagnostics: imageDiagnostics,
         };
@@ -836,6 +829,10 @@ export function CommunityPage() {
         openAuthGate("interact");
         return;
       }
+      if (String(post.author?.id || "").trim() !== String(currentUserId || "").trim()) {
+        showToast("Privasi terlindungi: hanya pemilik konten yang bisa repost ke Talks.", "error");
+        return;
+      }
       if (repostBusyPostId) return;
 
       setRepostBusyPostId(post.id);
@@ -903,8 +900,10 @@ export function CommunityPage() {
           console.error("Failed to verify repost fallback state", fallbackError);
         }
         const rawMessage = error instanceof Error ? error.message : "";
-        if (rawMessage.includes("401") || rawMessage.includes("403")) {
+        if (rawMessage.includes("401")) {
           showToast("Sesi akun berakhir. Silakan masuk lagi.", "error");
+        } else if (rawMessage.includes("403")) {
+          showToast("Hanya pemilik konten yang boleh repost ke Talks.", "error");
         } else {
           showToast("Repost belum berpindah ke Talks. Coba muat ulang.", "error");
         }
@@ -914,6 +913,7 @@ export function CommunityPage() {
     },
     [
       archivePosts,
+      currentUserId,
       isAuthenticated,
       isRestoring,
       openAuthGate,
@@ -1088,121 +1088,39 @@ export function CommunityPage() {
           </div>
 
           <TabsContent value="discussions" className="mt-0 space-y-6 outline-none">
-            <div className={cn(narrowColumnClassName, "space-y-8")}>
-              <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-[32px] bg-surface-muted" />}>
-                <CommunitySmartPostComposer onPost={handlePost} currentUser={composerCurrentUser} />
-              </Suspense>
-
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-3">
-                <p className="text-[12px] leading-relaxed text-slate-600">
-                  Kalau mulai terasa penuh, kamu bisa lanjut dulu di ruang privat.
-                </p>
-                <div className="mt-2">
-                  <SurfaceBridgeAction target="renungan" label="Lanjut privat di Renungan" href="/renungan?source=community&intent=regulate" />
-                </div>
-              </div>
-
-              {isLoading ? (
-                <div className="space-y-6">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="space-y-6 rounded-[40px] bg-surface-muted/30 p-8">
-                      <div className="flex items-center gap-4">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-32 rounded-full" />
-                          <Skeleton className="h-3 w-20 rounded-full" />
-                        </div>
-                      </div>
-                      <Skeleton className="h-4 w-full rounded-full" />
-                      <Skeleton className="h-4 w-5/6 rounded-full" />
-                      <Skeleton className="mt-4 h-48 w-full rounded-[32px]" />
-                    </div>
-                  ))}
-                </div>
-              ) : discussionPosts.length ? (
-                <div className="space-y-6">
-                  {hasLastPostedInDiscussions ? (
-                    <p
-                      role="status"
-                      aria-live="polite"
-                      className="rounded-2xl border border-sky-100/80 bg-sky-50/40 px-4 py-3 text-[13px] font-medium leading-relaxed text-slate-700"
-                    >
-                      Apa yang kamu bagikan bisa menguatkan seseorang.
-                    </p>
-                  ) : null}
-                  {discussionPosts.map((post) => (
-                    <div
-                      key={post.id}
-                      ref={(node) => {
-                        discussionPostRefs.current[post.id] = node;
-                      }}
-                    >
-                      {lastPostedId === post.id ? (
-                        <div className="mb-3 flex items-center gap-3 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                          <div className="h-px flex-1 bg-slate-200/80" />
-                          <span>Baru saja dibagikan</span>
-                          <div className="h-px flex-1 bg-slate-200/80" />
-                        </div>
-                      ) : null}
-                      <MemberPostCard
-                        authorId={post.author.id}
-                        authorName={post.author.name}
-                        authorAvatar={resolveAuthorAvatar(post)}
-                        isAuthenticated={isAuthenticated}
-                        isOfficial={post.author.isOfficial}
-                        isFollowingAuthor={Boolean(post.author.isFollowing)}
-                        isMutualFollow={Boolean(post.author.isMutualFollow)}
-                        canFollowAuthor={Boolean(currentUserId) && currentUserId !== post.author.id}
-                        type={post.type}
-                        text={post.text}
-                        metadata={post.metadata}
-                        imgSrc={post.imageUrl || undefined}
-                        mediaSrcList={post.mediaPaths || undefined}
-                        aspectRatio={post.metadata?.media_aspect_ratio}
-                        createdAt={post.createdAt}
-                        prayLabel={String(post.counts.likes || 0)}
-                        prayed={post.isLiked}
-                        commentsCount={post.counts.comments || 0}
-                        bookmarked={post.isBookmarked}
-                        bookmarkLabel={String(post.counts.bookmarks || 0)}
-                        onPray={() => toggleLike(post.id)}
-                        onBookmark={() => toggleBookmark(post.id)}
-                        onOpenComments={() => handleOpenComments(post.id)}
-                        onShare={() => handleShare(post.id, post.text)}
-                        onToggleFollowAuthor={() => handleToggleFollowAuthor(post.author.id)}
-                        onMessageAuthor={() => router.push(`/inbox/${post.author.id}`)}
-                        followBusy={followBusyAuthorId === post.author.id}
-                        canDelete={canDeletePost(post)}
-                        canEdit={canEditPost(post)}
-                        canEditPreview={canEditPost(post) && Boolean(post.mediaPaths?.length)}
-                        canEditBookmarkCategory={post.isBookmarked}
-                        onEditText={() => handleEditPostText(post.id, post.text)}
-                        onEditPreview={() => handleEditPostPreview(post)}
-                        onEditBookmarkCategory={() => void handleEditBookmarkCategory(post)}
-                        onDelete={() => handleDeletePost(post.id)}
-                        isNewlyPosted={lastPostedId === post.id}
-                        shareBusy={shareBusyPostId === post.id}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="max-w-[420px] px-4 pb-24 pt-12">
-                  <p className="text-[15px] leading-relaxed text-foreground/70">Belum ada percakapan hari ini.</p>
-                  <button
-                    onClick={() => fetchData()}
-                    className="mt-6 text-[13px] font-medium text-foreground/40 transition-colors hover:text-foreground/70"
-                  >
-                    Muat ulang
-                  </button>
-                </div>
-              )}
-            </div>
+            <CommunityDiscussionsTab
+              className={narrowColumnClassName}
+              isLoading={isLoading}
+              discussionPosts={discussionPosts}
+              isAuthenticated={isAuthenticated}
+              currentUserId={currentUserId}
+              followBusyAuthorId={followBusyAuthorId}
+              shareBusyPostId={shareBusyPostId}
+              lastPostedId={lastPostedId}
+              hasLastPostedInDiscussions={hasLastPostedInDiscussions}
+              discussionPostRefs={discussionPostRefs}
+              composerCurrentUser={composerCurrentUser}
+              onPost={handlePost}
+              onRefresh={fetchData}
+              resolveAuthorAvatar={resolveAuthorAvatar}
+              canDeletePost={canDeletePost}
+              canEditPost={canEditPost}
+              onPray={toggleLike}
+              onBookmark={toggleBookmark}
+              onOpenComments={handleOpenComments}
+              onShare={handleShare}
+              onToggleFollowAuthor={handleToggleFollowAuthor}
+              onEditText={handleEditPostText}
+              onEditPreview={handleEditPostPreview}
+              onEditBookmarkCategory={handleEditBookmarkCategory}
+              onDeletePost={handleDeletePost}
+            />
           </TabsContent>
 
           <TabsContent value="archive" className="mt-0 overflow-visible outline-none">
             <CommunityArchiveTab
               className={galleryColumnClassName}
+              currentUserId={currentUserId}
               isLoading={isLoading}
               fetchError={fetchError}
               publicArchivePosts={publicArchivePosts}

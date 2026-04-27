@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { VersehubLandingView } from "@/features/versehub/components/VersehubLandingView";
+import type { JourneyMapDay } from "@/features/versehub/components/JourneyMap";
 import { VerseFocusCard } from "@/features/versehub/components/VerseFocusCard";
 import { VerseFocusHeader } from "@/features/versehub/components/VerseFocusHeader";
 import { VersehubLoadingScreen } from "@/features/versehub/components/VersehubLoadingScreen";
@@ -18,6 +19,10 @@ import { landingContentPadding, readerContentPadding } from "@/features/versehub
 import type { OverlayType, Verse } from "@/features/versehub/types";
 import { parseVersehubBridgeContext } from "@/ai/versehub/resolve-versehub-request";
 import { resolveVersehubUiHints } from "@/ai/versehub/resolve-versehub-ui";
+import { useSanctuary } from "@/features/sanctuary/components/SanctuaryContext";
+import { isRitualCompletedToday } from "@/features/sanctuary/ritual-streak";
+import { trackFunnelEvent } from "@/lib/funnel-analytics";
+import { isAllowedVersehubReaderIntent } from "@/features/versehub/utils/entry-guard";
 
 interface VersehubReaderPageProps {
   lang: string;
@@ -27,6 +32,69 @@ interface VersehubReaderPageProps {
 }
 
 type GuidedMoodKey = "anxious" | "grateful" | "weary";
+type VersehubSummaryRow = { updated_at?: string | null; ref?: string };
+
+const JAKARTA_TIMEZONE = "Asia/Jakarta";
+
+function toJakartaDateKey(raw: string | Date): string {
+  const nextDate = typeof raw === "string" ? new Date(raw) : raw;
+  if (Number.isNaN(nextDate.getTime())) return "";
+  return nextDate.toLocaleDateString("en-CA", {
+    timeZone: JAKARTA_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+function toJourneyDays(
+  rows: VersehubSummaryRow[],
+  todayHasRitualStreak: boolean,
+): { days: JourneyMapDay[]; streak: number } {
+  const countsByDate = new Map<string, number>();
+
+  rows.forEach((row) => {
+    const key = toJakartaDateKey(String(row.updated_at || ""));
+    if (!key) return;
+    countsByDate.set(key, (countsByDate.get(key) ?? 0) + 1);
+  });
+
+  const todayKey = toJakartaDateKey(new Date());
+  if (todayHasRitualStreak && todayKey && !countsByDate.has(todayKey)) {
+    countsByDate.set(todayKey, 1);
+  }
+
+  const generatedDays: JourneyMapDay[] = [];
+  for (let index = 6; index >= 0; index -= 1) {
+    const cursor = new Date();
+    cursor.setDate(cursor.getDate() - index);
+    const key = toJakartaDateKey(cursor);
+    generatedDays.push({
+      key,
+      shortLabel: cursor.toLocaleDateString("id-ID", { timeZone: JAKARTA_TIMEZONE, weekday: "short" }),
+      fullLabel: cursor.toLocaleDateString("id-ID", {
+        timeZone: JAKARTA_TIMEZONE,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }),
+      activityCount: countsByDate.get(key) ?? 0,
+      isToday: key === todayKey,
+    });
+  }
+
+  let streak = 0;
+  const dayKeys = generatedDays.map((item) => item.key).reverse();
+  for (const key of dayKeys) {
+    if ((countsByDate.get(key) ?? 0) <= 0) break;
+    streak += 1;
+  }
+
+  return {
+    days: generatedDays,
+    streak,
+  };
+}
 
 export function VersehubReaderPage({
   lang: initialLang,
@@ -37,6 +105,15 @@ export function VersehubReaderPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { identity, status: authStatus, isAuthenticated } = useAuthSession();
+  const {
+    reflectionText: ritualReflection,
+    initialMentorContext: sanctuaryMentorContext,
+    setInitialMentorContext,
+    setAmbientPlaybackStateHandler,
+  } = useSanctuary();
+  const bridgeAutoResolvedRef = useRef(false);
+  const snippetSeededRef = useRef(false);
+  const routeEntryTelemetrySignatureRef = useRef<string | null>(null);
   const lang = initialLang || "id";
   const [overlay, setOverlay] = useState<OverlayType>(null);
   const [ogOpen, setOgOpen] = useState(false);
@@ -47,11 +124,203 @@ export function VersehubReaderPage({
   const [isSavingChapterReflection, setIsSavingChapterReflection] = useState(false);
   const [isSharingInsight, setIsSharingInsight] = useState(false);
   const [guidedMood, setGuidedMood] = useState<GuidedMoodKey | null>(null);
+  const [journeyMapDays, setJourneyMapDays] = useState<JourneyMapDay[]>([]);
+  const [journeyStreakCount, setJourneyStreakCount] = useState(0);
+  const [insightSnippet, setInsightSnippet] = useState<string | null>(null);
+  const [isInsightPinned, setIsInsightPinned] = useState(false);
+  const [effectiveInitialMentorContext, setEffectiveInitialMentorContext] = useState<string | null>(null);
   const bridgeContext = useMemo(
     () => parseVersehubBridgeContext(new URLSearchParams(searchParams?.toString() ?? "")),
     [searchParams]
   );
   const bridgeUiHints = useMemo(() => resolveVersehubUiHints(bridgeContext), [bridgeContext]);
+  const bridgeFromRenungan = bridgeContext.source === "renungan" && bridgeContext.intent === "clarify";
+  const readerEntrySource = useMemo(
+    () => String(searchParams?.get("source") || "").trim().toLowerCase() || null,
+    [searchParams],
+  );
+  const readerEntryIntent = useMemo(
+    () => String(searchParams?.get("intent") || "").trim().toLowerCase() || null,
+    [searchParams],
+  );
+  const isAllowedReaderEntry =
+    mode === "landing" &&
+    readerEntrySource === "renungan" &&
+    isAllowedVersehubReaderIntent(readerEntryIntent);
+
+  useEffect(() => {
+    if (!isAllowedReaderEntry) return;
+    const signature = `${readerEntrySource}:${readerEntryIntent}:${mode}`;
+    if (routeEntryTelemetrySignatureRef.current === signature) return;
+    routeEntryTelemetrySignatureRef.current = signature;
+    void trackFunnelEvent("versehub_reader_entry_allowed", {
+      surface: "versehub",
+      meta: {
+        source: readerEntrySource,
+        intent: readerEntryIntent,
+        entry_mode: "allowed-reader-entry",
+      },
+    });
+  }, [isAllowedReaderEntry, mode, readerEntryIntent, readerEntrySource]);
+
+  useEffect(() => {
+    const fromBridge = String(bridgeContext.initialMentorContext || "").replace(/\s+/g, " ").trim();
+    const fromSanctuary = String(sanctuaryMentorContext || "").replace(/\s+/g, " ").trim();
+    const fromReflection = String(ritualReflection || "").replace(/\s+/g, " ").trim();
+    const next = (fromBridge || fromSanctuary || fromReflection).slice(0, 1200);
+    if (!next) return;
+    setEffectiveInitialMentorContext(next);
+    setInitialMentorContext(next);
+  }, [
+    bridgeContext.initialMentorContext,
+    ritualReflection,
+    sanctuaryMentorContext,
+    setInitialMentorContext,
+  ]);
+
+  useEffect(() => {
+    if (snippetSeededRef.current) return;
+    if (!bridgeFromRenungan) return;
+    const normalized = (effectiveInitialMentorContext || ritualReflection).replace(/\s+/g, " ").trim().slice(0, 260);
+    if (!normalized) return;
+    setInsightSnippet(normalized);
+    setIsInsightPinned(true);
+    snippetSeededRef.current = true;
+  }, [bridgeFromRenungan, effectiveInitialMentorContext, ritualReflection]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadJourneyMap = async () => {
+      const fallback = toJourneyDays([], isRitualCompletedToday());
+      if (!isAuthenticated) {
+        if (!cancelled) {
+          setJourneyMapDays(fallback.days);
+          setJourneyStreakCount(fallback.streak);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/versehub/${lang}/actions/summary?limit=200&sort=recent`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+
+        if (!response.ok) {
+          if (!cancelled) {
+            setJourneyMapDays(fallback.days);
+            setJourneyStreakCount(fallback.streak);
+          }
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          favorites?: VersehubSummaryRow[];
+          bookmarks?: VersehubSummaryRow[];
+          notes?: VersehubSummaryRow[];
+        };
+
+        const merged = [
+          ...(Array.isArray(payload?.favorites) ? payload.favorites : []),
+          ...(Array.isArray(payload?.bookmarks) ? payload.bookmarks : []),
+          ...(Array.isArray(payload?.notes) ? payload.notes : []),
+        ];
+        const summary = toJourneyDays(merged, isRitualCompletedToday());
+        if (!cancelled) {
+          setJourneyMapDays(summary.days);
+          setJourneyStreakCount(summary.streak);
+        }
+      } catch {
+        if (!cancelled) {
+          setJourneyMapDays(fallback.days);
+          setJourneyStreakCount(fallback.streak);
+        }
+      }
+    };
+
+    void loadJourneyMap();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, lang]);
+
+  useEffect(() => {
+    if (mode !== "landing") return;
+    if (bridgeAutoResolvedRef.current) return;
+    if (!bridgeFromRenungan) return;
+
+    const rawRef = String(bridgeContext.verseRef || "").trim();
+    if (!rawRef) return;
+
+    let cancelled = false;
+    bridgeAutoResolvedRef.current = true;
+
+    const isLikelySlug = /^[a-z]{2,8}-\d{1,3}(?:-\d{1,3})?$/i.test(rawRef);
+    if (isLikelySlug) {
+      router.replace(`/versehub/${lang}/${rawRef}`);
+      return;
+    }
+
+    const findSlugFromPayload = (payload: unknown): string | null => {
+      const data = payload as {
+        suggestions?: Array<Record<string, unknown>>;
+        results?: Array<Record<string, unknown>>;
+        items?: Array<Record<string, unknown>>;
+        data?: Array<Record<string, unknown>> | Record<string, unknown>;
+      };
+      const groups: unknown[] = [data?.suggestions, data?.results, data?.items, data?.data];
+
+      for (const group of groups) {
+        const rows = Array.isArray(group) ? group : group && typeof group === "object" ? [group] : [];
+        for (const row of rows) {
+          if (!row || typeof row !== "object") continue;
+          const candidate = row as Record<string, unknown>;
+          const direct = [candidate.verse_ref, candidate.slug, candidate.ref]
+            .map((v) => String(v || "").trim())
+            .find((v) => /^[a-z]{2,8}-\d{1,3}(?:-\d{1,3})?$/i.test(v));
+          if (direct) return direct;
+
+          const href = String(candidate.href || candidate.path || candidate.url || "").trim();
+          const match = href.match(/\/versehub\/[a-z]{2}\/([a-z0-9-]+)/i);
+          if (match?.[1]) return match[1];
+        }
+      }
+
+      return null;
+    };
+
+    const resolveBridgeVerse = async () => {
+      const attempts = [
+        `/api/versehub/${lang}/suggest?query=${encodeURIComponent(rawRef)}&limit=1`,
+        `/api/versehub/${lang}/suggest?q=${encodeURIComponent(rawRef)}&limit=1`,
+      ];
+
+      for (const input of attempts) {
+        try {
+          const response = await fetch(input, { cache: "no-store", headers: { Accept: "application/json" } });
+          if (!response.ok) continue;
+          const json = (await response.json()) as unknown;
+          const slug = findSlugFromPayload(json);
+          if (slug) return slug;
+        } catch {
+          // Try the next query variant.
+        }
+      }
+
+      return null;
+    };
+
+    void resolveBridgeVerse().then((slug) => {
+      if (cancelled || !slug) return;
+      router.replace(`/versehub/${lang}/${slug}`);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bridgeContext.verseRef, bridgeFromRenungan, lang, mode, router]);
 
   const {
     activeBook,
@@ -116,9 +385,27 @@ export function VersehubReaderPage({
     setOverlay,
   });
 
+  useEffect(() => {
+    if (!bridgeFromRenungan) return;
+    if (!effectiveInitialMentorContext) return;
+    if (!mentorPreviewVerse?.key) return;
+
+    const params = new URLSearchParams({
+      user_reflection: effectiveInitialMentorContext.slice(0, 1200),
+      source: "renungan",
+      intent: "clarify",
+    });
+
+    void fetch(
+      `/api/versehub/${encodeURIComponent(lang)}/${encodeURIComponent(mentorPreviewVerse.key)}/mentor?${params.toString()}`,
+      {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      }
+    ).catch(() => undefined);
+  }, [bridgeFromRenungan, effectiveInitialMentorContext, lang, mentorPreviewVerse?.key]);
+
   const {
-    audioMenuOpen,
-    handleAmbienceMenuOpen,
     handlePlaybackStateChange,
     scrollViewportRef,
     shouldShowChrome,
@@ -130,6 +417,13 @@ export function VersehubReaderPage({
     overlay,
     setOverlay,
   });
+
+  useEffect(() => {
+    setAmbientPlaybackStateHandler(() => handlePlaybackStateChange);
+    return () => {
+      setAmbientPlaybackStateHandler(null);
+    };
+  }, [handlePlaybackStateChange, setAmbientPlaybackStateHandler]);
 
   const {
     handleBookmark,
@@ -181,7 +475,8 @@ export function VersehubReaderPage({
   const openMentorForVerse = (verse: Verse | null, userReflection?: string | null) => {
     if (!verse) return;
     setSelectedVerse(verse);
-    setSelectedVerseReflection(userReflection ?? null);
+    const seededFromRenungan = bridgeFromRenungan ? ritualReflection.trim() || null : null;
+    setSelectedVerseReflection(userReflection ?? seededFromRenungan ?? null);
     setOverlay("mentor");
   };
 
@@ -265,7 +560,7 @@ export function VersehubReaderPage({
                   router.push(lastVisitedChapterHref);
                 }
               }}
-              onBackToday={() => router.push("/today")}
+              onBackToday={() => router.push("/renungan")}
               onOpenPicker={() => setOverlay("picker")}
               onOpenExplore={() => setOverlay("explore")}
               onQuickStartMood={(moodKey) => {
@@ -288,6 +583,9 @@ export function VersehubReaderPage({
               }}
               bridgeUiHints={bridgeUiHints}
               onBridgeReturnToRenungan={() => router.push("/renungan?source=versehub&intent=regulate")}
+              journeyMapDays={journeyMapDays}
+              journeyStreakCount={journeyStreakCount}
+              onOpenJourney={() => router.push(`/versehub/${lang}/my-spiritual-journey`)}
             />
           )}
         </>
@@ -324,6 +622,9 @@ export function VersehubReaderPage({
           onSaveChapterReflection={() => handleSaveChapterReflection((href) => router.push(href))}
           onShareInsight={() => handleShareInsight((href) => router.push(href))}
           onReachedChapterEnd={() => setHasReachedChapterEnd(true)}
+          insightSnippet={insightSnippet}
+          isInsightPinned={isInsightPinned}
+          onToggleInsightPin={() => setIsInsightPinned((current) => !current)}
         />
       )}
 
@@ -355,6 +656,9 @@ export function VersehubReaderPage({
                 onShareWhatsApp={() => void handleShareWhatsApp()}
                 isSharing={isSharing}
                 verseData={verseData}
+                insightSnippet={isInsightPinned ? insightSnippet : null}
+                isInsightPinned={isInsightPinned}
+                onToggleInsightPin={() => setIsInsightPinned((current) => !current)}
               />
             </div>
           </main>
@@ -366,14 +670,11 @@ export function VersehubReaderPage({
         activeBookLabel={activeBookLabel}
         activeMood={activeMood}
         activeScene={activeScene}
-        audioMenuOpen={audioMenuOpen}
         books={books}
         chapters={chapters}
         error={error}
         firstBookLabel={firstBookLabel}
         firstChapterHref={firstChapterHref}
-        handleAmbienceMenuOpen={handleAmbienceMenuOpen}
-        handlePlaybackStateChange={handlePlaybackStateChange}
         isLandingMode={isLandingMode}
         lang={lang}
         loadBookChapters={loadBookChapters}
@@ -384,11 +685,11 @@ export function VersehubReaderPage({
         onNavigate={(href) => router.push(href)}
         overlay={overlay}
         selectedVerseReflection={selectedVerseReflection}
+        initialMentorContext={effectiveInitialMentorContext}
         setActiveMood={setActiveMood}
         setOgOpen={setOgOpen}
         setOverlay={setOverlay}
         setTab={setTab}
-        shouldShowChrome={shouldShowChrome}
         tab={tab}
         verseData={verseData}
       />

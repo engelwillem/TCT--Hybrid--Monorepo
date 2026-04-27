@@ -5,6 +5,7 @@ import type {
   PostType,
 } from "../components/post-composer/types";
 import { MAX_COMPOSER_TOTAL_UPLOAD_BYTES } from "../components/post-composer/types";
+import type { AsyncContractState } from "@/lib/async-state";
 
 type SubmitSnapshot = {
   text: string;
@@ -76,11 +77,13 @@ function validateImages(images: File[]): ComposerSubmitFailure | null {
 
 export function useComposerSubmit({ onPost }: UseComposerSubmitParams) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitState, setSubmitState] = useState<AsyncContractState>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const submitLockRef = useRef(false);
 
   const clearSubmitError = () => {
     setSubmitError(null);
+    setSubmitState((prev) => (prev === "retryable_error" || prev === "fatal_error" ? "idle" : prev));
   };
 
   const submit = async (snapshot: SubmitSnapshot) => {
@@ -89,33 +92,40 @@ export function useComposerSubmit({ onPost }: UseComposerSubmitParams) {
 
     if (snapshot.hasPendingCrop) {
       setSubmitError("Selesaikan editor gambar terlebih dahulu sebelum posting.");
+      setSubmitState("retryable_error");
       return;
     }
 
     const fileValidation = validateImages(snapshot.images);
     if (fileValidation) {
       setSubmitError(fileValidation.message);
+      setSubmitState("retryable_error");
       return false;
     }
 
     submitLockRef.current = true;
     setIsSubmitting(true);
+    setSubmitState("submitting");
     setSubmitError(null);
 
     try {
       const result = await onPost(snapshot.text, snapshot.type, snapshot.images, snapshot.metadata);
       if (result.ok) {
+        setSubmitState("ready");
         return true;
       }
 
       if (!result.ok) {
         setSubmitError(result.message);
+        const hasFatalStatus = typeof result.status === "number" && result.status >= 500;
+        setSubmitState(hasFatalStatus ? "fatal_error" : "retryable_error");
       }
     } catch (error) {
       const fallbackMessage = error instanceof Error && error.message
         ? error.message
         : "Terjadi gangguan saat mengirim post. Coba lagi.";
       setSubmitError(fallbackMessage);
+      setSubmitState("retryable_error");
     } finally {
       submitLockRef.current = false;
       setIsSubmitting(false);
@@ -125,6 +135,7 @@ export function useComposerSubmit({ onPost }: UseComposerSubmitParams) {
 
   return {
     isSubmitting,
+    submitState,
     submitError,
     setSubmitError,
     clearSubmitError,

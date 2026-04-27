@@ -5,6 +5,7 @@ export type VersehubBridgeContext = {
   intent?: BridgeIntent;
   verseRef?: string;
   entryState?: EmotionalEntryState | null;
+  initialMentorContext?: string;
 };
 
 function toEntryState(value: string | null): EmotionalEntryState | null {
@@ -24,5 +25,6 @@ export function parseVersehubBridgeContext(params: URLSearchParams): VersehubBri
     intent: intentRaw === "regulate" || intentRaw === "clarify" || intentRaw === "connect" ? intentRaw : undefined,
     verseRef: params.get("verseRef") || undefined,
     entryState: toEntryState(params.get("entryState")),
+    initialMentorContext: params.get("initialMentorContext") || undefined,
   };
 }

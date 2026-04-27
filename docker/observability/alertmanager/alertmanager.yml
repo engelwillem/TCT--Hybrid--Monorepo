@@ -1,0 +1,36 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ["alertname", "service", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  receiver: ops-default
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: ops-critical
+      continue: true
+    - matchers:
+        - severity="warning"
+      receiver: ops-warning
+
+receivers:
+  - name: ops-default
+
+  - name: ops-warning
+    webhook_configs:
+      - url: http://host.docker.internal:18080/alerts/warning
+        send_resolved: true
+
+  - name: ops-critical
+    webhook_configs:
+      - url: http://host.docker.internal:18080/alerts/critical
+        send_resolved: true
+    email_configs:
+      - to: ops@example.com
+        from: tct-alerts@example.com
+        smarthost: mailpit:1025
+        require_tls: false
+        send_resolved: true

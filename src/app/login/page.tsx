@@ -134,7 +134,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[linear-gradient(160deg,#eaf2fb_0%,#e3ecf8_45%,#e1ebf7_100%)] text-foreground">
+    <div className="min-h-[100dvh] text-foreground">
       <main className="mx-auto grid min-h-[100dvh] w-full max-w-6xl items-center gap-10 px-6 py-10 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="hidden rounded-[2.25rem] border border-white/70 bg-white/70 p-8 shadow-soft backdrop-blur-xl lg:block">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">TheChosenTalks</p>

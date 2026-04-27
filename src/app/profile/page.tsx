@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
 import { useAuthSession } from '@/auth/use-auth-session';
+import type { AsyncContractState } from '@/lib/async-state';
 import {
     ShieldCheck,
     LogOut,
@@ -31,6 +32,7 @@ import { fetchWithAppAuth } from '@/lib/app-auth-fetch';
 import { clearAppAccessToken, setAppAccessToken, setAppAuthUser } from '@/services/app-auth-token';
 import { DEFAULT_SAVED_AVATAR_TRANSFORM, loadSavedAvatarTransform, saveAvatarTransform } from '@/lib/avatar-presentation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isRitualCompletedToday } from '@/features/sanctuary/ritual-streak';
 import {
     AVATAR_EDITOR_LIMIT,
     AVATAR_EDITOR_VIEWPORT,
@@ -112,7 +114,9 @@ export default function ProfilePage() {
     
     // UI States
     const [loading, setLoading] = useState(true);
+    const [profileLoadState, setProfileLoadState] = useState<AsyncContractState>('restoring');
     const [submittingAvatar, setSubmittingAvatar] = useState(false);
+    const [avatarUploadState, setAvatarUploadState] = useState<AsyncContractState>('idle');
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const avatarPreviewBlobRef = useRef<string | null>(null);
@@ -140,12 +144,14 @@ export default function ProfilePage() {
     const [opsGateway, setOpsGateway] = useState<OpsGatewayData | null>(null);
     const [spiritualHighlights, setSpiritualHighlights] = useState<SpiritualHighlightsData | null>(null);
     const [journeyBadge, setJourneyBadge] = useState(0);
+    const [hasDailyStreakGlow, setHasDailyStreakGlow] = useState(false);
     const [profileData, setProfileData] = useState({
         name: user.name,
         email: user.email,
     });
     const [profileErrors, setProfileErrors] = useState<Record<string, string[]>>({});
     const [profileBusy, setProfileBusy] = useState(false);
+    const [profileSaveState, setProfileSaveState] = useState<AsyncContractState>('idle');
 
     // Password States
     const [passwordData, setPasswordData] = useState({
@@ -155,6 +161,7 @@ export default function ProfilePage() {
     });
     const [passwordErrors, setPasswordErrors] = useState<Record<string, string[]>>({});
     const [passwordBusy, setPasswordBusy] = useState(false);
+    const [passwordUpdateState, setPasswordUpdateState] = useState<AsyncContractState>('idle');
 
     // 2FA States
     const [twoFactor, setTwoFactor] = useState({
@@ -172,6 +179,7 @@ export default function ProfilePage() {
     const [newRecoveryCodes, setNewRecoveryCodes] = useState<string[] | null>(null);
     const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
     const [twoFactorBusy, setTwoFactorBusy] = useState(false);
+    const [twoFactorFlowState, setTwoFactorFlowState] = useState<AsyncContractState>('idle');
 
     const [deleteBusy, setDeleteBusy] = useState(false);
 
@@ -308,14 +316,19 @@ export default function ProfilePage() {
         if (authStatus === 'restoring') return;
         if (!isAuthenticated) {
             router.replace('/login?next=/profile');
+            setProfileLoadState('fatal_error');
         }
     }, [authStatus, isAuthenticated, router]);
 
     useEffect(() => {
-        if (authStatus === 'restoring') return;
+        if (authStatus === 'restoring') {
+            setProfileLoadState('restoring');
+            return;
+        }
 
         if (!isAuthenticated) {
             setLoading(false);
+            setProfileLoadState('fatal_error');
             return;
         }
 
@@ -333,16 +346,23 @@ export default function ProfilePage() {
 
         let isActive = true;
         const loadProfile = async () => {
+            setProfileLoadState('loading');
             try {
                 const response = await fetchWithApiAuth('/api/profile', {
                     method: 'GET',
                     cache: 'no-store',
                 });
-                if (!response?.ok) return;
+                if (!response?.ok) {
+                    setProfileLoadState(response?.status === 401 ? 'fatal_error' : 'retryable_error');
+                    return;
+                }
 
                 const payload = (await response.json()) as ApiProfilePayload;
                 const apiUser = payload?.data?.user;
-                if (!isActive || !apiUser) return;
+                if (!isActive || !apiUser) {
+                    setProfileLoadState('fallback');
+                    return;
+                }
                 const avatarCandidates = dedupeCandidates([
                     ...buildAvatarCandidates(sessionAvatarUrl || null),
                     ...buildAvatarCandidates(authUser?.photoURL || null),
@@ -381,8 +401,9 @@ export default function ProfilePage() {
                     enabled: Boolean(payload?.data?.twoFactor?.enabled),
                     recoveryCodesRemaining: payload?.data?.twoFactor?.recoveryCodesRemaining || 0
                 });
+                setProfileLoadState('ready');
             } catch {
-                // ignore
+                setProfileLoadState('retryable_error');
             } finally {
                 if (isActive) setLoading(false);
             }
@@ -433,6 +454,14 @@ export default function ProfilePage() {
         return () => { isActive = false; };
     }, []);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const syncStreakGlow = () => setHasDailyStreakGlow(isRitualCompletedToday());
+        syncStreakGlow();
+        window.addEventListener('focus', syncStreakGlow);
+        return () => window.removeEventListener('focus', syncStreakGlow);
+    }, []);
+
     const logout = async () => {
         try {
             await fetchWithAppAuth('/api/auth/logout', {
@@ -459,6 +488,7 @@ export default function ProfilePage() {
         };
 
         setSubmittingAvatar(true);
+        setAvatarUploadState('submitting');
         if (avatarPreviewBlobRef.current) {
             URL.revokeObjectURL(avatarPreviewBlobRef.current);
             avatarPreviewBlobRef.current = null;
@@ -486,6 +516,7 @@ export default function ProfilePage() {
             if (!response) {
                 rollbackAvatar();
                 showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                setAvatarUploadState('fatal_error');
                 return;
             }
 
@@ -496,6 +527,7 @@ export default function ProfilePage() {
                 if (!persistedAvatarRaw) {
                     rollbackAvatar();
                     showToast('Upload diterima, tetapi URL avatar belum tersedia. Coba lagi.', 'error');
+                    setAvatarUploadState('retryable_error');
                 } else {
                     const persistedCandidates = buildAvatarCandidates(persistedAvatarRaw);
                     const mergedCandidates = dedupeCandidates([
@@ -508,6 +540,7 @@ export default function ProfilePage() {
                     if (!renderableAvatar) {
                         rollbackAvatar();
                         showToast('Foto tersimpan, tetapi belum bisa ditampilkan. Periksa storage/public URL avatar.', 'error');
+                        setAvatarUploadState('fallback');
                     } else {
                         setUser(prev => ({
                             ...prev,
@@ -524,6 +557,7 @@ export default function ProfilePage() {
                             avatarPreviewBlobRef.current = null;
                         }
                         showToast('Foto profil diperbarui');
+                        setAvatarUploadState('ready');
                     }
                 }
             } else {
@@ -533,10 +567,12 @@ export default function ProfilePage() {
                 } else {
                     showToast(payload?.message || 'Gagal mengupload foto profil', 'error');
                 }
+                setAvatarUploadState(response.status === 401 ? 'fatal_error' : 'retryable_error');
             }
         } catch {
             rollbackAvatar();
             showToast('Terjadi gangguan sistem saat mengupload', 'error');
+            setAvatarUploadState('retryable_error');
         } finally {
             setSubmittingAvatar(false);
             if (avatarInputRef.current) {
@@ -606,6 +642,7 @@ export default function ProfilePage() {
     const handleProfileSave = async (event: React.FormEvent) => {
         event.preventDefault();
         setProfileBusy(true);
+        setProfileSaveState('submitting');
         setProfileErrors({});
         try {
             const response = await fetchWithApiAuth('/api/profile', {
@@ -618,6 +655,7 @@ export default function ProfilePage() {
             });
             if (!response) {
                 showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                setProfileSaveState('fatal_error');
                 return;
             }
 
@@ -628,6 +666,7 @@ export default function ProfilePage() {
                 } else {
                     showToast(payload.message || 'Gagal menyimpan profil', 'error');
                 }
+                setProfileSaveState(response.status === 401 ? 'fatal_error' : 'retryable_error');
                 return;
             }
 
@@ -650,8 +689,10 @@ export default function ProfilePage() {
                 email: nextEmail,
                 avatarUrl: nextAvatarUrl,
             });
+            setProfileSaveState('ready');
         } catch {
             showToast('Terjadi gangguan sistem', 'error');
+            setProfileSaveState('retryable_error');
         } finally {
             setProfileBusy(false);
         }
@@ -660,6 +701,7 @@ export default function ProfilePage() {
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         setPasswordBusy(true);
+        setPasswordUpdateState('submitting');
         setPasswordErrors({});
         try {
             const response = await fetchWithApiAuth('/api/profile/password', {
@@ -676,12 +718,14 @@ export default function ProfilePage() {
             });
             if (!response) {
                 showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                setPasswordUpdateState('fatal_error');
                 return;
             }
 
             if (response.ok) {
                 setPasswordData({ current: '', new: '', confirm: '' });
                 showToast('Kata sandi berhasil diubah');
+                setPasswordUpdateState('ready');
             } else {
                 const payload = await response.json().catch(() => ({}));
                 if (payload.errors) {
@@ -689,9 +733,11 @@ export default function ProfilePage() {
                 } else {
                     showToast(payload.message || 'Gagal mengubah kata sandi', 'error');
                 }
+                setPasswordUpdateState(response.status === 401 ? 'fatal_error' : 'retryable_error');
             }
         } catch {
             showToast('Terjadi gangguan sistem', 'error');
+            setPasswordUpdateState('retryable_error');
         } finally {
             setPasswordBusy(false);
         }
@@ -701,6 +747,7 @@ export default function ProfilePage() {
         if (!twoFactorPassword) return;
 
         setTwoFactorBusy(true);
+        setTwoFactorFlowState('submitting');
         setTwoFactorError(null);
         try {
             const response = await fetchWithApiAuth('/api/profile/two-factor/setup', {
@@ -713,6 +760,7 @@ export default function ProfilePage() {
             });
             if (!response) {
                 setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorFlowState('fatal_error');
                 return;
             }
 
@@ -720,6 +768,7 @@ export default function ProfilePage() {
                 const payload = await response.json();
                 setTwoFactorSetupData(payload);
                 setTwoFactorStep('setup');
+                setTwoFactorFlowState('ready');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
@@ -727,9 +776,11 @@ export default function ProfilePage() {
                         ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
                         : error?.errors?.current_password?.[0] || error.message || 'Password tidak valid'
                 );
+                setTwoFactorFlowState(response.status === 401 ? 'fatal_error' : 'retryable_error');
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
+            setTwoFactorFlowState('retryable_error');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -739,6 +790,7 @@ export default function ProfilePage() {
         if (!twoFactorCode) return;
 
         setTwoFactorBusy(true);
+        setTwoFactorFlowState('submitting');
         setTwoFactorError(null);
         try {
             const response = await fetchWithApiAuth('/api/profile/two-factor/confirm', {
@@ -754,6 +806,7 @@ export default function ProfilePage() {
             });
             if (!response) {
                 setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorFlowState('fatal_error');
                 return;
             }
 
@@ -764,6 +817,7 @@ export default function ProfilePage() {
                 setTwoFactorPassword('');
                 setTwoFactorCode('');
                 showToast('2FA Berhasil diaktifkan');
+                setTwoFactorFlowState('ready');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
@@ -771,9 +825,11 @@ export default function ProfilePage() {
                         ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
                         : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode OTP tidak valid'
                 );
+                setTwoFactorFlowState(response.status === 401 ? 'fatal_error' : 'retryable_error');
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
+            setTwoFactorFlowState('retryable_error');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -783,6 +839,7 @@ export default function ProfilePage() {
         if (!twoFactorCode) return;
 
         setTwoFactorBusy(true);
+        setTwoFactorFlowState('submitting');
         try {
             const response = await fetchWithApiAuth('/api/profile/two-factor', {
                 method: 'DELETE',
@@ -797,6 +854,7 @@ export default function ProfilePage() {
             });
             if (!response) {
                 setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorFlowState('fatal_error');
                 return;
             }
 
@@ -806,6 +864,7 @@ export default function ProfilePage() {
                 setTwoFactorPassword('');
                 setTwoFactorCode('');
                 showToast('2FA Dinonaktifkan');
+                setTwoFactorFlowState('ready');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
@@ -813,9 +872,11 @@ export default function ProfilePage() {
                         ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
                         : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode tidak valid'
                 );
+                setTwoFactorFlowState(response.status === 401 ? 'fatal_error' : 'retryable_error');
             }
         } catch {
             setTwoFactorError('Gagal menonaktifkan 2FA');
+            setTwoFactorFlowState('retryable_error');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -825,6 +886,7 @@ export default function ProfilePage() {
         if (!twoFactorPassword || !twoFactorCode) return;
 
         setTwoFactorBusy(true);
+        setTwoFactorFlowState('submitting');
         setTwoFactorError(null);
         try {
             const response = await fetchWithApiAuth('/api/profile/two-factor/recovery-codes', {
@@ -840,6 +902,7 @@ export default function ProfilePage() {
             });
             if (!response) {
                 setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorFlowState('fatal_error');
                 return;
             }
 
@@ -850,6 +913,7 @@ export default function ProfilePage() {
                 setTwoFactorPassword('');
                 setTwoFactorCode('');
                 showToast('Recovery codes baru dibuat');
+                setTwoFactorFlowState('ready');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
@@ -857,9 +921,11 @@ export default function ProfilePage() {
                         ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
                         : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes'
                 );
+                setTwoFactorFlowState(response.status === 401 ? 'fatal_error' : 'retryable_error');
             }
         } catch {
             setTwoFactorError('Terjadi gangguan sistem');
+            setTwoFactorFlowState('retryable_error');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -897,6 +963,12 @@ export default function ProfilePage() {
     };
 
     const firstName = user.name.split(' ')[0];
+    const hasBlockingProfileRecovery = profileLoadState === 'restoring' || profileLoadState === 'loading';
+    const isProfileMutationBusy =
+        avatarUploadState === 'submitting' ||
+        profileSaveState === 'submitting' ||
+        passwordUpdateState === 'submitting' ||
+        twoFactorFlowState === 'submitting';
     const openSection = (sectionId: string) => {
         if (typeof document === 'undefined') return;
         const target = document.getElementById(sectionId);
@@ -904,7 +976,7 @@ export default function ProfilePage() {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    if (loading) {
+    if (loading || hasBlockingProfileRecovery) {
         return (
             <MobileAppLayout title="Profile" activeNavId="profile" backHref="/renungan">
                 <div className="mx-auto max-w-[640px] px-4 py-10">
@@ -954,7 +1026,7 @@ export default function ProfilePage() {
                 </Popover>
             }
         >
-            <div className="mx-auto max-w-[640px] px-4 py-4 space-y-6">
+            <div className="mx-auto max-w-[640px] px-4 py-4 space-y-6" aria-busy={isProfileMutationBusy}>
                 <div className="relative overflow-hidden rounded-[2.5rem] bg-surface border border-border/50 p-8 shadow-soft group/profile-card">
                     <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-brand/5 blur-3xl" />
                     
@@ -1174,11 +1246,32 @@ export default function ProfilePage() {
                         <div className="pt-2 space-y-4">
                             <button 
                                 onClick={() => router.push('/versehub/id/my-spiritual-journey')} 
-                                className="flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft"
+                                className={cn(
+                                    "relative flex items-center justify-between w-full p-6 rounded-[28px] bg-surface border border-border/50 hover:bg-surface-elevated transition-all group shadow-soft",
+                                    hasDailyStreakGlow && "overflow-hidden border-amber-200/80 shadow-[0_24px_48px_-34px_rgba(245,158,11,0.55)]"
+                                )}
                             >
+                                {hasDailyStreakGlow ? (
+                                    <motion.span
+                                        aria-hidden="true"
+                                        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-amber-200/10 via-amber-300/20 to-amber-200/10"
+                                        animate={{ opacity: [0.22, 0.44, 0.22] }}
+                                        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                                    />
+                                ) : null}
                                 <div className="text-left space-y-1">
                                     <p className="text-lg font-black text-foreground tracking-tight">Growth Monitoring</p>
                                     <p className="text-[11px] text-brand/80 font-bold uppercase tracking-widest leading-relaxed">Lihat seluruh jejak, hafalan, & catatan batin Anda</p>
+                                    {hasDailyStreakGlow ? (
+                                        <motion.p
+                                            className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-100/70 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-amber-700"
+                                            animate={{ scale: [1, 1.04, 1] }}
+                                            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                                        >
+                                            <Sparkles className="h-3 w-3" />
+                                            Streak Hari Ini Aktif
+                                        </motion.p>
+                                    ) : null}
                                 </div>
                                 <div className="flex items-center gap-4">
                                     {journeyBadge > 0 && (

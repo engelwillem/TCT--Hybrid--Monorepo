@@ -24,5 +24,8 @@ return [
     'default_file' => env('TODAY_CONTENT_DEFAULT_FILE', 'default.php'),
     'date_override' => env('TODAY_CONTENT_DATE'),
     'allow_preview_query' => env('TODAY_ALLOW_PREVIEW_QUERY', false),
+    'session_artifact_token' => env('TODAY_SESSION_ARTIFACT_TOKEN'),
+    'session_artifact_ttl_seconds' => env('TODAY_SESSION_CACHE_TTL_SECONDS', 900),
+    'session_artifact_max_age_days' => env('TODAY_SESSION_CACHE_MAX_AGE_DAYS', 3),
+    'session_artifact_cache_prefix' => env('TODAY_SESSION_ARTIFACT_CACHE_PREFIX', 'today:session:artifact:'),
 ];
-

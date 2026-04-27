@@ -9,8 +9,11 @@ const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 const MISSING_BASE_PLACEHOLDER = "http://missing-laravel-api-base-url.local";
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://api.thechoosentalks.org";
 const DEFAULT_LOCAL_BASES = ["http://127.0.0.1:8000", "http://localhost:8000"];
+const DOCKER_SERVICE_HOSTS = new Set(["backend", "mariadb", "redis"]);
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
-const DEFAULT_LARAVEL_TIMEOUT_MS = 8000;
+// Backend responses can occasionally exceed 8s under Docker/local load.
+// Keep a safer default to prevent false "unreachable" errors on auth and session endpoints.
+const DEFAULT_LARAVEL_TIMEOUT_MS = 25000;
 
 function getLaravelTimeoutMs(): number {
   const raw = Number(process.env.LARAVEL_API_TIMEOUT_MS);
@@ -31,6 +34,11 @@ function extractHostname(value: string): string | null {
 function isLoopbackBaseUrl(value: string): boolean {
   const hostname = extractHostname(value);
   return hostname ? LOCAL_HOSTS.has(hostname) : false;
+}
+
+function isDockerServiceBaseUrl(value: string): boolean {
+  const hostname = extractHostname(value);
+  return hostname ? DOCKER_SERVICE_HOSTS.has(hostname) : false;
 }
 
 function isDeveloperMachineContext(): boolean {
@@ -89,8 +97,9 @@ function buildCandidateBaseUrls(): string[] {
     const needsLocalLoopbackFallback = explicitCandidates.some((candidate) =>
       DEFAULT_LOCAL_BASES.some((localBase) => candidate.includes(new URL(localBase).hostname))
     );
+    const hasDockerServiceBase = explicitCandidates.some((candidate) => isDockerServiceBaseUrl(candidate));
 
-    if (process.env.NODE_ENV !== "production" || needsLocalLoopbackFallback) {
+    if (!hasDockerServiceBase && (process.env.NODE_ENV !== "production" || needsLocalLoopbackFallback)) {
       for (const localBase of DEFAULT_LOCAL_BASES) {
         if (!merged.includes(localBase)) {
           merged.push(localBase);
@@ -165,7 +174,17 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
     try {
       return await fetch(target, fetchOptions as any);
     } catch (error) {
-      lastError = error;
+      const isAbortError = error instanceof Error && error.name === "AbortError";
+      if (isAbortError && !isLoopbackBaseUrl(baseUrl)) {
+        try {
+          return await fetch(target, fetchOptions as any);
+        } catch (retryError) {
+          lastError = retryError;
+        }
+      } else {
+        lastError = error;
+      }
+
       const isLast = baseUrl === baseCandidates[baseCandidates.length - 1];
       const logMethod = isExpectedLocalLoopbackBackend(baseUrl) ? console.info : console.warn;
       logMethod("[laravel-api] request_failed", {
@@ -175,7 +194,7 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
         expectedLocalFallback: isExpectedLocalLoopbackBackend(baseUrl),
       });
       if (isLast) {
-        throw error;
+        throw (lastError ?? error);
       }
     } finally {
       clearTimeout(timeoutId);

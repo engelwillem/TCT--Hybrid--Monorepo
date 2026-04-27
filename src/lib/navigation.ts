@@ -1,7 +1,7 @@
-import { BookOpenText, House, Settings, Users } from 'lucide-react';
+import { BookOpenText, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type UiNavId = 'today' | 'versehub' | 'community' | 'profile';
+export type UiNavId = 'today' | 'community';
 
 export type UiNavItem = {
     id: UiNavId;
@@ -10,14 +10,12 @@ export type UiNavItem = {
     href: string;
 };
 
-export const uiNavItems: UiNavItem[] = [
-    { id: 'today', label: 'Renungan', icon: House, href: '/renungan' },
-    { id: 'versehub', label: 'VerseHub', icon: BookOpenText, href: '/versehub/id' },
+const UI_NAV_ITEMS: readonly UiNavItem[] = [
+    { id: 'today', label: 'Renungan', icon: BookOpenText, href: '/renungan' },
     { id: 'community', label: 'Community', icon: Users, href: '/community' },
-    { id: 'profile', label: 'Profile', icon: Settings, href: '/profile' },
 ];
 
-export function getUiNavItems(isAuthenticated: boolean): UiNavItem[] {
-    // Unhidden: returning all items for frontend demonstration
-    return uiNavItems;
+export function getUiNavItems(_isAuthenticated: boolean): UiNavItem[] {
+    // Return a cloned array so callers cannot mutate global nav state.
+    return UI_NAV_ITEMS.map((item) => ({ ...item }));
 }

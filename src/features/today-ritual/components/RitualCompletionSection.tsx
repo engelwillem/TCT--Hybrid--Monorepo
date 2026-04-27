@@ -8,6 +8,7 @@ import { SurfaceBridgeAction } from "@/components/core/SurfaceBridgeAction";
 import TodayShareActionBar from "./TodayShareActionBar";
 import type { EmotionalEntryState } from "@/features/ux-architecture/types";
 import type { RenunganMatch } from "../content/personal-renungan";
+import { RenunganVerseContinuation } from "./RenunganVerseContinuation";
 
 type RitualCompletionSectionProps = {
   isVisible: boolean;
@@ -23,9 +24,15 @@ type RitualCompletionSectionProps = {
   bookmarkError: string | null;
   bookmarkSuccessNote: string | null;
   entryState: EmotionalEntryState | null;
-  onContinueToVersehub: () => void;
+  isDeepeningOpen: boolean;
+  deepeningRef: RefObject<HTMLDivElement | null>;
+  onOpenDeepening: () => void;
+  onDismissDeepening: () => void;
+  onReadFullChapter: () => void;
+  onOpenRelatedVerse: (verseReference: string) => void;
   onResolveSharePath: () => Promise<string | null>;
   onBookmark: () => Promise<boolean>;
+  onRequireBookmarkAuth: () => void;
 };
 
 export function RitualCompletionSection({
@@ -42,14 +49,21 @@ export function RitualCompletionSection({
   bookmarkError,
   bookmarkSuccessNote,
   entryState,
-  onContinueToVersehub,
+  isDeepeningOpen,
+  deepeningRef,
+  onOpenDeepening,
+  onDismissDeepening,
+  onReadFullChapter,
+  onOpenRelatedVerse,
   onResolveSharePath,
   onBookmark,
+  onRequireBookmarkAuth,
 }: RitualCompletionSectionProps) {
   if (!isVisible) return null;
 
   return (
     <motion.section
+      data-testid="completion-section"
       ref={sectionRef}
       tabIndex={-1}
       initial={{ opacity: 0, y: 22, scale: 0.985 }}
@@ -63,7 +77,12 @@ export function RitualCompletionSection({
           “{personalRenungan.verseText}”
         </blockquote>
         <div className="mt-6 h-px w-10 bg-foreground/15" aria-hidden="true" />
-        <p className="mt-4 text-[12px] font-semibold tracking-[0.18em] text-foreground/42">{personalRenungan.verseReference}</p>
+        <motion.div
+          layoutId="verse-card"
+          className="mt-4 inline-flex rounded-full border border-indigo-200/70 bg-indigo-50/60 px-3 py-1"
+        >
+          <p className="text-[12px] font-semibold tracking-[0.18em] text-indigo-700">{personalRenungan.verseReference}</p>
+        </motion.div>
 
         <TodayShareActionBar
           shareText={personalShareText}
@@ -72,12 +91,13 @@ export function RitualCompletionSection({
           isRestoring={isAuthRestoring}
           resolveSharePath={onResolveSharePath}
           onBookmark={onBookmark}
+          onRequireAuthForBookmark={onRequireBookmarkAuth}
         />
 
         <div className="mt-4 flex items-start gap-2 text-[13px] leading-6 text-foreground/45">
           <Bookmark className="mt-0.5 h-4 w-4 shrink-0 text-foreground/35" />
           <p>
-            Bookmark akan menyimpan renungan ini ke tab <span className="font-semibold text-foreground/68">Bookmarks pribadimu</span> di{" "}
+            Simpan renungan ini agar bisa kamu temui lagi di tab <span className="font-semibold text-foreground/68">Bookmarks</span> di{" "}
             <Link
               href="/community"
               className="font-semibold text-[#0284c7] underline-offset-2 transition-colors hover:text-[#0ea5e9] hover:underline"
@@ -97,19 +117,35 @@ export function RitualCompletionSection({
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <button
+            data-testid="cta-deepen"
             type="button"
-            onClick={onContinueToVersehub}
+            onClick={isDeepeningOpen ? onDismissDeepening : onOpenDeepening}
             className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
           >
-            Lanjut ke VerseHub
+            {isDeepeningOpen ? "Tutup untuk sekarang" : "Lanjutkan pendalaman"}
           </button>
           <SurfaceBridgeAction
             target="community"
             label="Bagikan nanti"
             href={`/community?intent=reflection&source=renungan&verseRef=${encodeURIComponent(personalRenungan.verseReference)}&text=${encodeURIComponent(personalRenungan.meditation)}`}
           />
-          <SurfaceBridgeAction target="renungan" label="Cukup sampai sini" href="/renungan" />
+          <SurfaceBridgeAction
+            target="renungan"
+            label="Selesai untuk hari ini"
+            href="/renungan"
+            dataTestId="cta-finish"
+          />
         </div>
+
+        {isDeepeningOpen ? (
+          <RenunganVerseContinuation
+            containerRef={deepeningRef}
+            personalRenungan={personalRenungan}
+            entryState={entryState}
+            onReadFullChapter={onReadFullChapter}
+            onOpenRelatedVerse={onOpenRelatedVerse}
+          />
+        ) : null}
       </div>
     </motion.section>
   );

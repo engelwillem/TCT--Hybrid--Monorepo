@@ -47,6 +47,7 @@ type CommunityArchiveDetailDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   post: CommunityPost | null;
+  canRepost?: boolean;
   onOpenComments: () => void;
   onBookmark: () => void;
   onPray: () => void;
@@ -59,6 +60,7 @@ export function CommunityArchiveDetailDialog({
   open,
   onOpenChange,
   post,
+  canRepost = true,
   onOpenComments,
   onBookmark,
   onPray,
@@ -145,17 +147,23 @@ export function CommunityArchiveDetailDialog({
               onClick={() => {
                 void onRepost();
               }}
-              disabled={reposting}
-              aria-label={reposting ? "Memproses Repost ke Talks" : "Repost ke Talks"}
+              disabled={reposting || !canRepost}
+              aria-label={
+                !canRepost
+                  ? "Repost hanya untuk konten milik Anda"
+                  : reposting
+                    ? "Memproses Repost ke Talks"
+                    : "Repost ke Talks"
+              }
               className={cn(
                 "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-[12px] font-semibold transition-colors",
-                reposting
+                reposting || !canRepost
                   ? "cursor-not-allowed bg-slate-100/90 text-slate-400"
                   : "bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900"
               )}
             >
               <Repeat2 className="h-4 w-4" />
-              <span>{reposting ? "Memproses..." : "Repost ke Talks"}</span>
+              <span>{!canRepost ? "Hanya kontenmu" : reposting ? "Memproses..." : "Repost ke Talks"}</span>
             </button>
           </div>
         </article>

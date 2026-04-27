@@ -65,6 +65,7 @@ function buildDisplayContent(post: CommunityPost, title: string | null): string 
 
 type CommunityArchiveGalleryCardProps = {
   post: CommunityPost;
+  canRepost?: boolean;
   onOpen: () => void;
   onOpenComments: () => void;
   onBookmark: () => void;
@@ -77,6 +78,7 @@ type CommunityArchiveGalleryCardProps = {
 
 export function CommunityArchiveGalleryCard({
   post,
+  canRepost = true,
   onOpen,
   onOpenComments,
   onBookmark,
@@ -226,17 +228,25 @@ export function CommunityArchiveGalleryCard({
               event.stopPropagation();
               void onRepost();
             }}
-            disabled={reposting}
-            aria-label={reposting ? "Memproses Repost ke Talks" : "Repost ke Talks"}
+            disabled={reposting || !canRepost}
+            aria-label={
+              !canRepost
+                ? "Repost hanya untuk konten milik Anda"
+                : reposting
+                  ? "Memproses Repost ke Talks"
+                  : "Repost ke Talks"
+            }
             className={cn(
               "mt-2 inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-[11px] font-semibold transition-colors",
-              reposting
+              reposting || !canRepost
                 ? "cursor-not-allowed bg-slate-100/90 text-slate-400"
                 : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900"
             )}
           >
             <Repeat2 className="h-3.5 w-3.5" />
-            <span>{reposting ? "Memproses..." : "Repost ke Talks"}</span>
+            <span>
+              {!canRepost ? "Hanya kontenmu" : reposting ? "Memproses..." : "Repost ke Talks"}
+            </span>
           </button>
         </div>
       </CardContent>

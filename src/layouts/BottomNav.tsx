@@ -10,6 +10,8 @@ type NavItem = {
     label: string;
 };
 
+const ALLOWED_NAV_IDS = new Set(["today", "community"]);
+
 type FloatingBottomNavProps = {
     items: NavItem[];
     activeId: string;
@@ -35,10 +37,11 @@ export default function FloatingBottomNav({
     onPrefetch,
     className,
 }: FloatingBottomNavProps) {
-    if (items.length === 0) return null;
+    const visibleItems = items.filter((item) => ALLOWED_NAV_IDS.has(item.id));
+    if (visibleItems.length === 0) return null;
 
     const gridTemplateColumns =
-        items.length > 0 ? `repeat(${items.length}, minmax(0, 1fr))` : undefined;
+        visibleItems.length > 0 ? `repeat(${visibleItems.length}, minmax(0, 1fr))` : undefined;
 
     return (
         <nav
@@ -64,7 +67,7 @@ export default function FloatingBottomNav({
                 className="relative z-[1] grid gap-0.5"
                 style={gridTemplateColumns ? { gridTemplateColumns } : undefined}
             >
-                {items.map((item) => {
+                {visibleItems.map((item) => {
                     const isActive = item.id === activeId;
 
                     return (

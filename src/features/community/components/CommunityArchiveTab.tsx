@@ -45,6 +45,7 @@ function getArchiveSortLabel(sort: ArchiveSort): string {
 
 type CommunityArchiveTabProps = {
   className?: string;
+  currentUserId?: string;
   isLoading: boolean;
   fetchError: string | null;
   publicArchivePosts: CommunityPost[];
@@ -60,6 +61,7 @@ type CommunityArchiveTabProps = {
 
 export function CommunityArchiveTab({
   className,
+  currentUserId,
   isLoading,
   fetchError,
   publicArchivePosts,
@@ -314,6 +316,11 @@ export function CommunityArchiveTab({
 
   const archiveHasBlockingError = !isLoading && publicArchivePosts.length === 0 && fetchError !== null;
   const archiveEmptyState = !isLoading && filteredArchivePosts.length === 0;
+  const canRepostPost = (post: CommunityPost): boolean => {
+    const viewerId = String(currentUserId || "").trim();
+    const ownerId = String(post.author?.id || "").trim();
+    return viewerId.length > 0 && ownerId.length > 0 && viewerId === ownerId;
+  };
 
   return (
     <div className={cn("space-y-8", className)}>
@@ -590,6 +597,7 @@ export function CommunityArchiveTab({
                   <div key={post.id} className="min-w-0">
                     <CommunityArchiveGalleryCard
                       post={post}
+                      canRepost={canRepostPost(post)}
                       onOpen={() => setActiveArchiveDetailPostId(post.id)}
                       onOpenComments={() => onOpenComments(post.id)}
                       onPray={() => onPray(post.id)}
@@ -613,6 +621,7 @@ export function CommunityArchiveTab({
           if (!open) setActiveArchiveDetailPostId(null);
         }}
         post={activeArchiveDetailPost}
+        canRepost={activeArchiveDetailPost ? canRepostPost(activeArchiveDetailPost) : false}
         onOpenComments={() => {
           if (!activeArchiveDetailPost?.id) return;
           onOpenComments(activeArchiveDetailPost.id);

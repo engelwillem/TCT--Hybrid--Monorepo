@@ -26,6 +26,8 @@ type RitualMeditationCardProps = {
   onCompletePrayer: () => void;
 };
 
+import { AmbientBorderCard } from "@/features/sanctuary/components/AmbientBorderCard";
+
 export function RitualMeditationCard({
   personalRenungan,
   renunganFollowUps,
@@ -51,7 +53,8 @@ export function RitualMeditationCard({
   const showVersehubAction = renunganFollowUps.includes("open_versehub");
 
   return (
-    <div className="rounded-[34px] border border-white/70 bg-white/92 px-6 py-7 shadow-[0_24px_80px_-42px_rgba(15,23,42,0.26)] backdrop-blur-xl">
+    <AmbientBorderCard className="rounded-[34px] shadow-premium">
+      <div className="glass-card h-full w-full rounded-[34px] px-6 py-7 ring-1 ring-white/60">
       <div className="flex items-center gap-3 text-[#0f172a]/55">
         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7f4ff] text-[#0ea5e9]">
           <BookOpenText className="h-5 w-5" />
@@ -77,7 +80,7 @@ export function RitualMeditationCard({
 
       {personalRenungan.prayerPrompt ? (
         <div className="mt-6 rounded-2xl border border-sky-100/70 bg-sky-50/65 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700/80">Doa singkat untuk dibawa</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700/80">Doa untuk dibawa</p>
           <p className="mt-2 text-[14px] leading-7 text-foreground/72">{personalRenungan.prayerPrompt}</p>
         </div>
       ) : null}
@@ -160,7 +163,9 @@ export function RitualMeditationCard({
           <motion.button
             data-testid="today-prayer-submit"
             onClick={onCompletePrayer}
-            className="group inline-flex items-center rounded-full bg-[#0f172a] px-7 py-3 text-[15px] font-semibold text-white shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)] transition-all duration-400 ease-out hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] hover:shadow-[0_24px_48px_-24px_rgba(14,165,233,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-[0.98]"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            className="group inline-flex items-center rounded-full bg-[#0f172a] px-8 py-3.5 text-[15px] font-bold text-white shadow-premium transition-all duration-400 ease-out hover:bg-slate-900 focus-visible:outline-none"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={reduceMotion ? transitionBase : { ...transitionBase, delay: 0.22 }}
@@ -169,6 +174,7 @@ export function RitualMeditationCard({
           </motion.button>
         ) : null}
       </div>
-    </div>
+      </div>
+    </AmbientBorderCard>
   );
 }
