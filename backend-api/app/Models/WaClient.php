@@ -16,6 +16,8 @@ class WaClient extends Model
         'fonnte_token',
         'status',
         'timezone',
+        'default_timezone',
+        'secret_key',
     ];
 
     public function logs(): HasMany

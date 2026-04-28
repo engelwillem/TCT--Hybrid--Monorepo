@@ -17,6 +17,8 @@ class WaLog extends Model
         'phone',
         'toko',
         'message',
+        'timezone',
+        'scheduled_at',
         'status',
         'fonnte_message_id',
         'response',
@@ -25,6 +27,7 @@ class WaLog extends Model
 
     protected $casts = [
         'row_number' => 'integer',
+        'scheduled_at' => 'datetime',
         'sent_at' => 'datetime',
     ];
 
@@ -33,4 +36,3 @@ class WaLog extends Model
         return $this->belongsTo(WaClient::class, 'wa_client_id');
     }
 }
-

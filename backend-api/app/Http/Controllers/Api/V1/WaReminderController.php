@@ -14,6 +14,7 @@ class WaReminderController extends Controller
 {
     private const DEFAULT_MESSAGE_TEMPLATE = "Halo {nama}, hari ini jadwal kunjungan kami ya.\n\n> _{toko}_";
     private const DEFAULT_CLIENT_TIMEZONE = 'Asia/Makassar';
+    private const DEFAULT_CLIENT_KEY = 'CLIENT_DEMO_001';
     private const SUPPORTED_CLIENT_TIMEZONES = [
         'Asia/Jakarta',
         'Asia/Makassar',
@@ -23,19 +24,24 @@ class WaReminderController extends Controller
     public function sendReminder(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'client_key' => ['required', 'string'],
+            'client_key' => ['nullable', 'string'],
             'rows' => ['required', 'array'],
         ]);
 
+        $clientKey = trim((string) ($validated['client_key'] ?? ''));
+        if ($clientKey === '') {
+            $clientKey = self::DEFAULT_CLIENT_KEY;
+        }
+
         $client = WaClient::query()
-            ->where('client_key', $validated['client_key'])
+            ->where('client_key', $clientKey)
             ->first();
 
         if (! $client) {
             WaLog::query()->create([
                 'status' => 'client_not_found',
                 'response' => $this->encodeResponse([
-                    'client_key' => $validated['client_key'],
+                    'client_key' => $clientKey,
                     'message' => 'Client not found',
                 ]),
             ]);
@@ -44,6 +50,24 @@ class WaReminderController extends Controller
                 'status' => false,
                 'message' => 'Client not found',
             ], 404);
+        }
+
+        if ($this->isSecretKeyRequired($client)) {
+            $secretFromHeader = trim((string) $request->header('X-SECRET-KEY', ''));
+            if (! hash_equals((string) $client->secret_key, $secretFromHeader)) {
+                WaLog::query()->create([
+                    'wa_client_id' => $client->id,
+                    'status' => 'unauthorized',
+                    'response' => $this->encodeResponse([
+                        'message' => 'Unauthorized',
+                    ]),
+                ]);
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized',
+                ], 401);
+            }
         }
 
         if (strtolower((string) $client->status) !== 'active') {
@@ -62,9 +86,7 @@ class WaReminderController extends Controller
         }
 
         $results = [];
-        $clientTimezone = $this->resolveClientTimezone($client->timezone);
-        $now = Carbon::now($clientTimezone);
-
+        $clientTimezone = $this->resolveClientTimezone($client->timezone, $client->default_timezone);
         foreach ($validated['rows'] as $index => $row) {
             $rowNumber = $index + 1;
             if ($rowNumber === 1) {
@@ -72,7 +94,7 @@ class WaReminderController extends Controller
             }
 
             if (! is_array($row)) {
-                $results[] = $this->skipRow($client, $rowNumber, '', '', '', '', 'format baris tidak valid');
+                $results[] = $this->skipRow($client, $rowNumber, '', '', '', '', $clientTimezone, null, 'format baris tidak valid');
                 continue;
             }
 
@@ -80,47 +102,48 @@ class WaReminderController extends Controller
             $phoneRaw = $this->cell($row, 1);
             $date = $this->cell($row, 2);
             $time = $this->cell($row, 3);
-            $messageTemplate = $this->cell($row, 4);
-            $toko = $this->cell($row, 5);
-            $status = strtolower($this->cell($row, 6));
-            $sendId = $this->cell($row, 8);
-            $rowTimezone = $this->cell($row, 9);
+            $rowTimezone = $this->cell($row, 4);
+            $messageTemplate = $this->cell($row, 5);
+            $toko = $this->cell($row, 6);
+            $status = strtolower($this->cell($row, 7));
+            $sendId = $this->cell($row, 9);
             $effectiveTimezone = $this->resolveRowTimezone($rowTimezone, $clientTimezone);
+            $now = Carbon::now($effectiveTimezone);
 
             if ($date === '') {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'tanggal kosong');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, null, 'tanggal kosong');
                 continue;
             }
 
             if ($time === '') {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'jam kosong');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, null, 'jam kosong');
                 continue;
             }
 
             if ($status === 'terkirim') {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'status sudah terkirim');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, null, 'status sudah terkirim');
                 continue;
             }
 
             if ($sendId !== '') {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'id kirim sudah ada');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, null, 'id kirim sudah ada');
                 continue;
             }
 
             $scheduleAt = $this->parseSheetDateTime($date, $time, $effectiveTimezone);
             if (! $scheduleAt) {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'format tanggal/jam tidak valid');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, null, 'format tanggal/jam tidak valid');
                 continue;
             }
 
             if ($scheduleAt->gt($now)) {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'belum waktunya kirim');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, $scheduleAt, 'belum waktunya kirim');
                 continue;
             }
 
             $phone = $this->normalizePhone($phoneRaw);
             if (! $phone) {
-                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'nomor whatsapp tidak valid');
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, $scheduleAt, 'nomor whatsapp tidak valid');
                 continue;
             }
 
@@ -129,8 +152,14 @@ class WaReminderController extends Controller
                 $name,
                 $toko,
                 $date,
-                $time
+                $time,
+                $rowTimezone
             );
+
+            if (trim($messageFinal) === '') {
+                $results[] = $this->skipRow($client, $rowNumber, $name, $phone, $toko, $messageTemplate, $effectiveTimezone, $scheduleAt, 'pesan kosong');
+                continue;
+            }
 
             try {
                 $httpResponse = Http::asForm()
@@ -154,6 +183,8 @@ class WaReminderController extends Controller
                     'phone' => $phone,
                     'toko' => $toko !== '' ? $toko : null,
                     'message' => $messageFinal !== '' ? $messageFinal : null,
+                    'timezone' => $effectiveTimezone,
+                    'scheduled_at' => $scheduleAt,
                     'status' => 'gagal',
                     'response' => $this->encodeResponse($errorPayload),
                 ]);
@@ -182,6 +213,8 @@ class WaReminderController extends Controller
                 'phone' => $phone,
                 'toko' => $toko !== '' ? $toko : null,
                 'message' => $messageFinal !== '' ? $messageFinal : null,
+                'timezone' => $effectiveTimezone,
+                'scheduled_at' => $scheduleAt,
                 'status' => $rowStatus,
                 'fonnte_message_id' => $messageId,
                 'response' => $this->encodeResponse([
@@ -214,6 +247,8 @@ class WaReminderController extends Controller
         string $phoneRaw,
         string $toko,
         string $messageTemplate,
+        string $timezone,
+        ?Carbon $scheduledAt,
         string $reason
     ): array {
         WaLog::query()->create([
@@ -223,6 +258,8 @@ class WaReminderController extends Controller
             'phone' => $phoneRaw !== '' ? $phoneRaw : null,
             'toko' => $toko !== '' ? $toko : null,
             'message' => $messageTemplate !== '' ? $messageTemplate : null,
+            'timezone' => $timezone,
+            'scheduled_at' => $scheduledAt,
             'status' => 'skip',
             'response' => $this->encodeResponse([
                 'reason' => $reason,
@@ -274,9 +311,12 @@ class WaReminderController extends Controller
         }
     }
 
-    private function resolveClientTimezone(?string $clientTimezone): string
+    private function resolveClientTimezone(?string $clientTimezone, ?string $clientDefaultTimezone): string
     {
-        $value = trim((string) $clientTimezone);
+        $value = trim((string) ($clientTimezone ?? ''));
+        if ($value === '') {
+            $value = trim((string) ($clientDefaultTimezone ?? ''));
+        }
         $resolved = $this->mapTimezoneLabel($value);
 
         if ($resolved !== null) {
@@ -417,7 +457,8 @@ class WaReminderController extends Controller
         string $name,
         string $toko,
         string $date,
-        string $time
+        string $time,
+        string $zonaWaktu
     ): string {
         $effectiveTemplate = trim($template) !== ''
             ? $template
@@ -428,7 +469,13 @@ class WaReminderController extends Controller
             '{toko}' => $toko,
             '{tanggal}' => $date,
             '{jam}' => $time,
+            '{zona_waktu}' => $zonaWaktu,
         ]);
+    }
+
+    private function isSecretKeyRequired(WaClient $client): bool
+    {
+        return trim((string) $client->secret_key) !== '';
     }
 
     private function decodeResponseBody(string $body): mixed
