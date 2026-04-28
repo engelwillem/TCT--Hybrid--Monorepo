@@ -84,6 +84,8 @@ class WaReminderController extends Controller
             $toko = $this->cell($row, 5);
             $status = strtolower($this->cell($row, 6));
             $sendId = $this->cell($row, 8);
+            $rowTimezone = $this->cell($row, 9);
+            $effectiveTimezone = $this->resolveRowTimezone($rowTimezone, $clientTimezone);
 
             if ($date === '') {
                 $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'tanggal kosong');
@@ -105,7 +107,7 @@ class WaReminderController extends Controller
                 continue;
             }
 
-            $scheduleAt = $this->parseSheetDateTime($date, $time, $clientTimezone);
+            $scheduleAt = $this->parseSheetDateTime($date, $time, $effectiveTimezone);
             if (! $scheduleAt) {
                 $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'format tanggal/jam tidak valid');
                 continue;
@@ -170,7 +172,7 @@ class WaReminderController extends Controller
             $decodedResponse = $this->decodeResponseBody($httpResponse->body());
             $isSuccess = $this->isSuccessfulFonnteResponse($httpResponse->status(), $decodedResponse);
             $messageId = $this->extractMessageId($decodedResponse);
-            $sentAt = $isSuccess ? Carbon::now() : null;
+            $sentAt = $isSuccess ? Carbon::now($effectiveTimezone) : null;
             $rowStatus = $isSuccess ? 'terkirim' : 'gagal';
 
             WaLog::query()->create([
@@ -275,21 +277,45 @@ class WaReminderController extends Controller
     private function resolveClientTimezone(?string $clientTimezone): string
     {
         $value = trim((string) $clientTimezone);
+        $resolved = $this->mapTimezoneLabel($value);
+
+        if ($resolved !== null) {
+            return $resolved;
+        }
+
+        return self::DEFAULT_CLIENT_TIMEZONE;
+    }
+
+    private function resolveRowTimezone(?string $rowTimezone, string $fallbackTimezone): string
+    {
+        $value = trim((string) $rowTimezone);
+        if ($value === '') {
+            return $fallbackTimezone;
+        }
+
+        $resolved = $this->mapTimezoneLabel($value);
+
+        return $resolved ?? $fallbackTimezone;
+    }
+
+    private function mapTimezoneLabel(string $value): ?string
+    {
         $aliases = [
             'WIB' => 'Asia/Jakarta',
             'WITA' => 'Asia/Makassar',
             'WIT' => 'Asia/Jayapura',
         ];
 
-        if (isset($aliases[strtoupper($value)])) {
-            return $aliases[strtoupper($value)];
+        $upper = strtoupper($value);
+        if (isset($aliases[$upper])) {
+            return $aliases[$upper];
         }
 
         if (in_array($value, self::SUPPORTED_CLIENT_TIMEZONES, true)) {
             return $value;
         }
 
-        return self::DEFAULT_CLIENT_TIMEZONE;
+        return null;
     }
 
     private function normalizeSheetDate(string $dateValue, string $timezone): ?string
@@ -463,6 +489,19 @@ class WaReminderController extends Controller
         }
 
         foreach ($candidates as $candidate) {
+            if (is_array($candidate)) {
+                $first = $candidate[0] ?? null;
+                if (is_string($first) && trim($first) !== '') {
+                    return trim($first);
+                }
+
+                if (is_numeric($first)) {
+                    return (string) $first;
+                }
+
+                continue;
+            }
+
             if (is_string($candidate) && trim($candidate) !== '') {
                 return trim($candidate);
             }
