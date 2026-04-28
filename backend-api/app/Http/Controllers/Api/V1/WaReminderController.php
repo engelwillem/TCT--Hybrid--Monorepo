@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Http;
 class WaReminderController extends Controller
 {
     private const STATUS_TERKIRIM = 'Terkirim';
-    private const STATUS_PENDING = 'Pending';
     private const STATUS_SKIP = 'Skip';
     private const STATUS_GAGAL = 'Gagal';
     private const DEFAULT_MESSAGE_TEMPLATE = "Halo {nama}, hari ini jadwal kunjungan kami ya.\n\n> _{toko}_";
@@ -209,7 +208,7 @@ class WaReminderController extends Controller
             $isSuccess = $this->isSuccessfulFonnteResponse($httpResponse->status(), $decodedResponse);
             $messageId = $this->extractMessageId($decodedResponse);
             $rowStatus = $this->resolveDeliveryStatus($httpResponse->status(), $decodedResponse);
-            $sentAt = in_array($rowStatus, [self::STATUS_TERKIRIM, self::STATUS_PENDING], true)
+            $sentAt = $rowStatus === self::STATUS_TERKIRIM
                 ? Carbon::now($effectiveTimezone)
                 : null;
 
@@ -530,13 +529,6 @@ class WaReminderController extends Controller
             return self::STATUS_GAGAL;
         }
 
-        if (is_array($decoded)) {
-            $process = strtolower(trim((string) ($decoded['process'] ?? '')));
-            if ($process === 'pending') {
-                return self::STATUS_PENDING;
-            }
-        }
-
         return self::STATUS_TERKIRIM;
     }
 
@@ -546,7 +538,6 @@ class WaReminderController extends Controller
 
         return match ($normalized) {
             'terkirim' => self::STATUS_TERKIRIM,
-            'pending' => self::STATUS_PENDING,
             'gagal' => self::STATUS_GAGAL,
             'skip' => self::STATUS_SKIP,
             default => $status,
