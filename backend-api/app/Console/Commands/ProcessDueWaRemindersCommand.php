@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ProcessDueWaRemindersCommand extends Command
 {
@@ -18,12 +19,13 @@ class ProcessDueWaRemindersCommand extends Command
     public function handle(): int
     {
         $limit = max(1, (int) $this->option('limit'));
+        $now = now()->utc();
 
         $candidateIds = WaReminder::query()
             ->whereIn('status', ['Pending', 'Gagal'])
             ->whereNull('fonnte_message_id')
             ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<=', Carbon::now('UTC'))
+            ->where('scheduled_at', '<=', $now)
             ->orderBy('scheduled_at')
             ->limit($limit)
             ->pluck('id');
@@ -53,7 +55,14 @@ class ProcessDueWaRemindersCommand extends Command
                     return;
                 }
 
-                if (! $reminder->scheduled_at || $reminder->scheduled_at->gt(Carbon::now('UTC'))) {
+                Log::info('WA Scheduler Debug', [
+                    'now' => $now->toDateTimeString(),
+                    'scheduled_at' => $reminder->scheduled_at?->toDateTimeString(),
+                    'reminder_id' => $reminder->id,
+                    'wa_client_id' => $reminder->wa_client_id,
+                ]);
+
+                if (! $reminder->scheduled_at || $reminder->scheduled_at->gt($now)) {
                     return;
                 }
 
@@ -228,4 +237,3 @@ class ProcessDueWaRemindersCommand extends Command
         return is_string($encoded) ? $encoded : '{}';
     }
 }
-
