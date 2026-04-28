@@ -315,24 +315,6 @@ class WaReminderController extends Controller
                 continue;
             }
 
-            if ($sheetStatus === self::STATUS_TERKIRIM) {
-                $results[] = [
-                    'row_number' => $rowNumber,
-                    'status' => self::STATUS_SKIP,
-                    'reason' => 'status sudah terkirim',
-                ];
-                continue;
-            }
-
-            if ($sheetIdKirim !== '') {
-                $results[] = [
-                    'row_number' => $rowNumber,
-                    'status' => self::STATUS_SKIP,
-                    'reason' => 'id kirim sudah ada',
-                ];
-                continue;
-            }
-
             $effectiveTimezone = $this->resolveRowTimezone($zonaWaktu, $clientTimezone);
             $scheduledLocal = $this->parseSheetDateTime($tanggal, $jam, $effectiveTimezone);
             if (! $scheduledLocal) {
@@ -364,15 +346,26 @@ class WaReminderController extends Controller
                 continue;
             }
 
-            $sourceHash = sha1(json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+            $sourceHash = $this->buildSourceHash(
+                (int) $client->id,
+                $rowNumber,
+                $phone,
+                $tanggal,
+                $jam,
+                $zonaWaktu,
+                $messageTemplate,
+                $toko
+            );
             $scheduledUtc = $scheduledLocal->copy()->utc();
 
-            $reminder = WaReminder::query()
+            $sentSameHash = WaReminder::query()
                 ->where('wa_client_id', $client->id)
-                ->where('sheet_row_number', $rowNumber)
+                ->where('source_hash', $sourceHash)
+                ->where('status', self::STATUS_TERKIRIM)
+                ->latest('id')
                 ->first();
 
-            if ($reminder && $reminder->status === self::STATUS_TERKIRIM) {
+            if ($sentSameHash) {
                 $results[] = [
                     'row_number' => $rowNumber,
                     'status' => self::STATUS_SKIP,
@@ -380,6 +373,12 @@ class WaReminderController extends Controller
                 ];
                 continue;
             }
+
+            $reminder = WaReminder::query()
+                ->where('wa_client_id', $client->id)
+                ->where('source_hash', $sourceHash)
+                ->latest('id')
+                ->first();
 
             $payload = [
                 'wa_client_id' => $client->id,
@@ -400,16 +399,31 @@ class WaReminderController extends Controller
 
             if ($reminder) {
                 $reminder->fill($payload);
-                if ($reminder->status !== self::STATUS_TERKIRIM) {
-                    $reminder->status = self::STATUS_PENDING;
-                    $reminder->fonnte_message_id = null;
-                    $reminder->sent_at = null;
-                    $reminder->last_error = null;
-                    $reminder->response = null;
-                }
+                $reminder->status = self::STATUS_PENDING;
+                $reminder->fonnte_message_id = null;
+                $reminder->sent_at = null;
+                $reminder->last_error = null;
+                $reminder->response = null;
                 $reminder->save();
             } else {
-                WaReminder::query()->create($payload);
+                $staleUnsent = WaReminder::query()
+                    ->where('wa_client_id', $client->id)
+                    ->where('sheet_row_number', $rowNumber)
+                    ->where('status', '!=', self::STATUS_TERKIRIM)
+                    ->latest('id')
+                    ->first();
+
+                if ($staleUnsent) {
+                    $staleUnsent->fill($payload);
+                    $staleUnsent->status = self::STATUS_PENDING;
+                    $staleUnsent->fonnte_message_id = null;
+                    $staleUnsent->sent_at = null;
+                    $staleUnsent->last_error = null;
+                    $staleUnsent->response = null;
+                    $staleUnsent->save();
+                } else {
+                    WaReminder::query()->create($payload);
+                }
             }
 
             $results[] = [
@@ -448,10 +462,44 @@ class WaReminderController extends Controller
             $rowTimezone = is_array($row) ? $this->cell($row, 4) : '';
             $effectiveTimezone = $this->resolveRowTimezone($rowTimezone, $clientTimezone);
 
-            $reminder = WaReminder::query()
-                ->where('wa_client_id', $client->id)
-                ->where('sheet_row_number', $rowNumber)
-                ->first();
+            $reminder = null;
+            if (is_array($row)) {
+                $name = $this->cell($row, 0);
+                $phoneRaw = $this->cell($row, 1);
+                $tanggal = $this->cell($row, 2);
+                $jam = $this->cell($row, 3);
+                $zonaWaktu = $this->cell($row, 4);
+                $messageTemplate = $this->cell($row, 5);
+                $toko = $this->cell($row, 6);
+                $phone = $this->normalizePhone($phoneRaw);
+
+                if ($phone && $tanggal !== '' && $jam !== '') {
+                    $latestHash = $this->buildSourceHash(
+                        (int) $client->id,
+                        $rowNumber,
+                        $phone,
+                        $tanggal,
+                        $jam,
+                        $zonaWaktu,
+                        $messageTemplate,
+                        $toko
+                    );
+
+                    $reminder = WaReminder::query()
+                        ->where('wa_client_id', $client->id)
+                        ->where('source_hash', $latestHash)
+                        ->latest('id')
+                        ->first();
+                }
+            }
+
+            if (! $reminder) {
+                $reminder = WaReminder::query()
+                    ->where('wa_client_id', $client->id)
+                    ->where('sheet_row_number', $rowNumber)
+                    ->latest('id')
+                    ->first();
+            }
 
             if (! $reminder) {
                 continue;
@@ -824,6 +872,30 @@ class WaReminderController extends Controller
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         return is_string($encoded) ? $encoded : '{}';
+    }
+
+    private function buildSourceHash(
+        int $waClientId,
+        int $sheetRowNumber,
+        string $phone,
+        string $tanggal,
+        string $jam,
+        string $zonaWaktu,
+        string $messageTemplate,
+        string $toko
+    ): string {
+        $payload = [
+            'wa_client_id' => $waClientId,
+            'sheet_row_number' => $sheetRowNumber,
+            'phone' => trim($phone),
+            'tanggal' => trim($tanggal),
+            'jam' => trim($jam),
+            'zona_waktu' => trim($zonaWaktu),
+            'message_template' => trim($messageTemplate),
+            'toko' => trim($toko),
+        ];
+
+        return sha1(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
     }
 
     private function resolveClientFromHeaders(Request $request): WaClient|JsonResponse
