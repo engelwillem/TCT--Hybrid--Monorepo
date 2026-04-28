@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Http;
 
 class WaReminderController extends Controller
 {
+    private const STATUS_TERKIRIM = 'Terkirim';
+    private const STATUS_PENDING = 'Pending';
+    private const STATUS_SKIP = 'Skip';
+    private const STATUS_GAGAL = 'Gagal';
     private const DEFAULT_MESSAGE_TEMPLATE = "Halo {nama}, hari ini jadwal kunjungan kami ya.\n\n> _{toko}_";
     private const DEFAULT_CLIENT_TIMEZONE = 'Asia/Makassar';
     private const DEFAULT_CLIENT_KEY = 'CLIENT_DEMO_001';
@@ -105,7 +109,7 @@ class WaReminderController extends Controller
             $rowTimezone = $this->cell($row, 4);
             $messageTemplate = $this->cell($row, 5);
             $toko = $this->cell($row, 6);
-            $status = strtolower($this->cell($row, 7));
+            $status = $this->normalizeInputStatus($this->cell($row, 7));
             $sendId = $this->cell($row, 9);
             $effectiveTimezone = $this->resolveRowTimezone($rowTimezone, $clientTimezone);
             $now = Carbon::now($effectiveTimezone);
@@ -120,7 +124,7 @@ class WaReminderController extends Controller
                 continue;
             }
 
-            if ($status === 'terkirim') {
+            if ($status === self::STATUS_TERKIRIM) {
                 $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, $effectiveTimezone, null, 'status sudah terkirim');
                 continue;
             }
@@ -185,15 +189,16 @@ class WaReminderController extends Controller
                     'message' => $messageFinal !== '' ? $messageFinal : null,
                     'timezone' => $effectiveTimezone,
                     'scheduled_at' => $scheduleAt,
-                    'status' => 'gagal',
+                    'status' => self::STATUS_GAGAL,
                     'response' => $this->encodeResponse($errorPayload),
                 ]);
 
                 $results[] = [
                     'row_number' => $rowNumber,
-                    'status' => 'gagal',
+                    'status' => self::STATUS_GAGAL,
                     'sent_at' => null,
                     'message_id' => null,
+                    'reason' => 'fonnte error',
                     'response' => $errorPayload,
                 ];
 
@@ -203,8 +208,10 @@ class WaReminderController extends Controller
             $decodedResponse = $this->decodeResponseBody($httpResponse->body());
             $isSuccess = $this->isSuccessfulFonnteResponse($httpResponse->status(), $decodedResponse);
             $messageId = $this->extractMessageId($decodedResponse);
-            $sentAt = $isSuccess ? Carbon::now($effectiveTimezone) : null;
-            $rowStatus = $isSuccess ? 'terkirim' : 'gagal';
+            $rowStatus = $this->resolveDeliveryStatus($httpResponse->status(), $decodedResponse);
+            $sentAt = in_array($rowStatus, [self::STATUS_TERKIRIM, self::STATUS_PENDING], true)
+                ? Carbon::now($effectiveTimezone)
+                : null;
 
             WaLog::query()->create([
                 'wa_client_id' => $client->id,
@@ -229,6 +236,7 @@ class WaReminderController extends Controller
                 'status' => $rowStatus,
                 'sent_at' => $sentAt?->format('Y-m-d H:i:s'),
                 'message_id' => $messageId,
+                'reason' => $rowStatus === self::STATUS_GAGAL ? 'fonnte error' : null,
                 'response' => $decodedResponse,
             ];
         }
@@ -260,7 +268,7 @@ class WaReminderController extends Controller
             'message' => $messageTemplate !== '' ? $messageTemplate : null,
             'timezone' => $timezone,
             'scheduled_at' => $scheduledAt,
-            'status' => 'skip',
+            'status' => self::STATUS_SKIP,
             'response' => $this->encodeResponse([
                 'reason' => $reason,
             ]),
@@ -268,7 +276,7 @@ class WaReminderController extends Controller
 
         return [
             'row_number' => $rowNumber,
-            'status' => 'skip',
+            'status' => self::STATUS_SKIP,
             'reason' => $reason,
         ];
     }
@@ -514,6 +522,35 @@ class WaReminderController extends Controller
         $normalized = strtolower(trim((string) $status));
 
         return in_array($normalized, ['true', '1', 'ok', 'success', 'sukses'], true);
+    }
+
+    private function resolveDeliveryStatus(int $statusCode, mixed $decoded): string
+    {
+        if (! $this->isSuccessfulFonnteResponse($statusCode, $decoded)) {
+            return self::STATUS_GAGAL;
+        }
+
+        if (is_array($decoded)) {
+            $process = strtolower(trim((string) ($decoded['process'] ?? '')));
+            if ($process === 'pending') {
+                return self::STATUS_PENDING;
+            }
+        }
+
+        return self::STATUS_TERKIRIM;
+    }
+
+    private function normalizeInputStatus(string $status): string
+    {
+        $normalized = strtolower(trim($status));
+
+        return match ($normalized) {
+            'terkirim' => self::STATUS_TERKIRIM,
+            'pending' => self::STATUS_PENDING,
+            'gagal' => self::STATUS_GAGAL,
+            'skip' => self::STATUS_SKIP,
+            default => $status,
+        };
     }
 
     private function extractMessageId(mixed $decoded): ?string
