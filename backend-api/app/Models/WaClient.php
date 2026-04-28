@@ -15,6 +15,7 @@ class WaClient extends Model
         'client_key',
         'fonnte_token',
         'status',
+        'timezone',
     ];
 
     public function logs(): HasMany
@@ -22,4 +23,3 @@ class WaClient extends Model
         return $this->hasMany(WaLog::class);
     }
 }
-

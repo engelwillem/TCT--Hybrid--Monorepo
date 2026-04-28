@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Http;
 class WaReminderController extends Controller
 {
     private const DEFAULT_MESSAGE_TEMPLATE = "Halo {nama}, hari ini jadwal kunjungan kami ya.\n\n> _{toko}_";
+    private const DEFAULT_CLIENT_TIMEZONE = 'Asia/Makassar';
+    private const SUPPORTED_CLIENT_TIMEZONES = [
+        'Asia/Jakarta',
+        'Asia/Makassar',
+        'Asia/Jayapura',
+    ];
 
     public function sendReminder(Request $request): JsonResponse
     {
@@ -56,7 +62,8 @@ class WaReminderController extends Controller
         }
 
         $results = [];
-        $now = Carbon::now();
+        $clientTimezone = $this->resolveClientTimezone($client->timezone);
+        $now = Carbon::now($clientTimezone);
 
         foreach ($validated['rows'] as $index => $row) {
             $rowNumber = $index + 1;
@@ -98,7 +105,7 @@ class WaReminderController extends Controller
                 continue;
             }
 
-            $scheduleAt = $this->parseSheetDateTime($date, $time);
+            $scheduleAt = $this->parseSheetDateTime($date, $time, $clientTimezone);
             if (! $scheduleAt) {
                 $results[] = $this->skipRow($client, $rowNumber, $name, $phoneRaw, $toko, $messageTemplate, 'format tanggal/jam tidak valid');
                 continue;
@@ -238,9 +245,8 @@ class WaReminderController extends Controller
         return trim((string) $value);
     }
 
-    private function parseSheetDateTime(string $date, string $time): ?Carbon
+    private function parseSheetDateTime(string $date, string $time, string $timezone): ?Carbon
     {
-        $timezone = (string) config('app.timezone');
         $dateValue = trim($date);
         $timeValue = trim($time);
 
@@ -264,6 +270,26 @@ class WaReminderController extends Controller
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function resolveClientTimezone(?string $clientTimezone): string
+    {
+        $value = trim((string) $clientTimezone);
+        $aliases = [
+            'WIB' => 'Asia/Jakarta',
+            'WITA' => 'Asia/Makassar',
+            'WIT' => 'Asia/Jayapura',
+        ];
+
+        if (isset($aliases[strtoupper($value)])) {
+            return $aliases[strtoupper($value)];
+        }
+
+        if (in_array($value, self::SUPPORTED_CLIENT_TIMEZONES, true)) {
+            return $value;
+        }
+
+        return self::DEFAULT_CLIENT_TIMEZONE;
     }
 
     private function normalizeSheetDate(string $dateValue, string $timezone): ?string
