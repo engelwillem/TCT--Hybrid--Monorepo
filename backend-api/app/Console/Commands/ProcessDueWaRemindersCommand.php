@@ -37,7 +37,7 @@ class ProcessDueWaRemindersCommand extends Command
 
         $processed = 0;
         foreach ($candidateIds as $id) {
-            DB::transaction(function () use ($id, &$processed): void {
+            DB::transaction(function () use ($id, &$processed, $now): void {
                 $reminder = WaReminder::query()
                     ->with('client')
                     ->lockForUpdate()
