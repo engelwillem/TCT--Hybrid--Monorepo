@@ -35,3 +35,7 @@ Schedule::command('app:warm-versehub-share-assets --lang=id --include-config-lis
 Schedule::command('app:repair-missing-share-og --limit=500')
     ->dailyAt('00:35')
     ->withoutOverlapping();
+
+Schedule::command('wa:process-due-reminders')
+    ->everyMinute()
+    ->withoutOverlapping();

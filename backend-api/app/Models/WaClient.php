@@ -24,4 +24,9 @@ class WaClient extends Model
     {
         return $this->hasMany(WaLog::class);
     }
+
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(WaReminder::class);
+    }
 }

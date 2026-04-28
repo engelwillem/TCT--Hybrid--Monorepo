@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\WaClient;
 use App\Models\WaLog;
+use App\Models\WaReminder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 class WaReminderController extends Controller
 {
     private const STATUS_TERKIRIM = 'Terkirim';
+    private const STATUS_PENDING = 'Pending';
     private const STATUS_SKIP = 'Skip';
     private const STATUS_GAGAL = 'Gagal';
     private const DEFAULT_MESSAGE_TEMPLATE = "Halo {nama}, hari ini jadwal kunjungan kami ya.\n\n> _{toko}_";
@@ -243,6 +245,234 @@ class WaReminderController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Processed',
+            'rows' => $results,
+        ]);
+    }
+
+    public function syncReminders(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'rows' => ['required', 'array'],
+        ]);
+
+        $client = $this->resolveClientFromHeaders($request);
+        if ($client instanceof JsonResponse) {
+            return $client;
+        }
+
+        $clientTimezone = $this->resolveClientTimezone($client->timezone, $client->default_timezone);
+        $results = [];
+
+        foreach ($validated['rows'] as $index => $row) {
+            $rowNumber = $index + 1;
+            if ($rowNumber === 1) {
+                continue;
+            }
+
+            if (! is_array($row)) {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'format baris tidak valid',
+                ];
+                continue;
+            }
+
+            $name = $this->cell($row, 0);
+            $phoneRaw = $this->cell($row, 1);
+            $tanggal = $this->cell($row, 2);
+            $jam = $this->cell($row, 3);
+            $zonaWaktu = $this->cell($row, 4);
+            $messageTemplate = $this->cell($row, 5);
+            $toko = $this->cell($row, 6);
+            $sheetStatus = $this->normalizeInputStatus($this->cell($row, 7));
+            $sheetIdKirim = $this->cell($row, 9);
+
+            if ($name === '' && $phoneRaw === '') {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'baris kosong',
+                ];
+                continue;
+            }
+
+            if ($tanggal === '') {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'tanggal kosong',
+                ];
+                continue;
+            }
+
+            if ($jam === '') {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'jam kosong',
+                ];
+                continue;
+            }
+
+            if ($sheetStatus === self::STATUS_TERKIRIM) {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'status sudah terkirim',
+                ];
+                continue;
+            }
+
+            if ($sheetIdKirim !== '') {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'id kirim sudah ada',
+                ];
+                continue;
+            }
+
+            $effectiveTimezone = $this->resolveRowTimezone($zonaWaktu, $clientTimezone);
+            $scheduledLocal = $this->parseSheetDateTime($tanggal, $jam, $effectiveTimezone);
+            if (! $scheduledLocal) {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'format tanggal/jam tidak valid',
+                ];
+                continue;
+            }
+
+            $phone = $this->normalizePhone($phoneRaw);
+            if (! $phone) {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'nomor whatsapp tidak valid',
+                ];
+                continue;
+            }
+
+            $messageFinal = $this->buildMessage($messageTemplate, $name, $toko, $tanggal, $jam, $zonaWaktu);
+            if (trim($messageFinal) === '') {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'pesan kosong',
+                ];
+                continue;
+            }
+
+            $sourceHash = sha1(json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+            $scheduledUtc = $scheduledLocal->copy()->utc();
+
+            $reminder = WaReminder::query()
+                ->where('wa_client_id', $client->id)
+                ->where('sheet_row_number', $rowNumber)
+                ->first();
+
+            if ($reminder && $reminder->status === self::STATUS_TERKIRIM) {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => 'sudah terkirim',
+                ];
+                continue;
+            }
+
+            $payload = [
+                'wa_client_id' => $client->id,
+                'sheet_row_number' => $rowNumber,
+                'customer_name' => $name !== '' ? $name : null,
+                'phone' => $phone,
+                'tanggal' => $tanggal !== '' ? $tanggal : null,
+                'jam' => $jam !== '' ? $jam : null,
+                'zona_waktu' => $zonaWaktu !== '' ? $zonaWaktu : null,
+                'timezone' => $effectiveTimezone,
+                'scheduled_at' => $scheduledUtc,
+                'message_template' => $messageTemplate !== '' ? $messageTemplate : null,
+                'message_final' => $messageFinal,
+                'toko' => $toko !== '' ? $toko : null,
+                'status' => self::STATUS_PENDING,
+                'source_hash' => $sourceHash,
+            ];
+
+            if ($reminder) {
+                $reminder->fill($payload);
+                if ($reminder->status !== self::STATUS_TERKIRIM) {
+                    $reminder->status = self::STATUS_PENDING;
+                    $reminder->fonnte_message_id = null;
+                    $reminder->sent_at = null;
+                    $reminder->last_error = null;
+                    $reminder->response = null;
+                }
+                $reminder->save();
+            } else {
+                WaReminder::query()->create($payload);
+            }
+
+            $results[] = [
+                'row_number' => $rowNumber,
+                'status' => self::STATUS_PENDING,
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Processed',
+            'rows' => $results,
+        ]);
+    }
+
+    public function reminderStatus(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'rows' => ['required', 'array'],
+        ]);
+
+        $client = $this->resolveClientFromHeaders($request);
+        if ($client instanceof JsonResponse) {
+            return $client;
+        }
+
+        $clientTimezone = $this->resolveClientTimezone($client->timezone, $client->default_timezone);
+        $results = [];
+
+        foreach ($validated['rows'] as $index => $row) {
+            $rowNumber = $index + 1;
+            if ($rowNumber === 1) {
+                continue;
+            }
+
+            $rowTimezone = is_array($row) ? $this->cell($row, 4) : '';
+            $effectiveTimezone = $this->resolveRowTimezone($rowTimezone, $clientTimezone);
+
+            $reminder = WaReminder::query()
+                ->where('wa_client_id', $client->id)
+                ->where('sheet_row_number', $rowNumber)
+                ->first();
+
+            if (! $reminder) {
+                continue;
+            }
+
+            $sentAt = $reminder->sent_at;
+            $sentAtFormatted = null;
+            if ($sentAt !== null) {
+                $sentAtFormatted = $sentAt->copy()->timezone($effectiveTimezone)->format('Y-m-d H:i:s');
+            }
+
+            $results[] = [
+                'row_number' => $rowNumber,
+                'status' => $reminder->status,
+                'sent_at' => $sentAtFormatted,
+                'message_id' => $reminder->fonnte_message_id,
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
             'rows' => $results,
         ]);
     }
@@ -594,5 +824,43 @@ class WaReminderController extends Controller
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         return is_string($encoded) ? $encoded : '{}';
+    }
+
+    private function resolveClientFromHeaders(Request $request): WaClient|JsonResponse
+    {
+        $clientKey = trim((string) $request->header('X-CLIENT-KEY', ''));
+        if ($clientKey === '') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Client key missing',
+            ], 422);
+        }
+
+        $client = WaClient::query()->where('client_key', $clientKey)->first();
+        if (! $client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Client not found',
+            ], 404);
+        }
+
+        if (strtolower((string) $client->status) !== 'active') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Client inactive',
+            ], 403);
+        }
+
+        if ($this->isSecretKeyRequired($client)) {
+            $secretFromHeader = trim((string) $request->header('X-SECRET-KEY', ''));
+            if (! hash_equals((string) $client->secret_key, $secretFromHeader)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized',
+                ], 401);
+            }
+        }
+
+        return $client;
     }
 }

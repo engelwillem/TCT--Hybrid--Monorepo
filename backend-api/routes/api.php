@@ -43,6 +43,8 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/forgot-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'resetPassword']);
     Route::post('/wa/send-reminder', [WaReminderController::class, 'sendReminder']);
+    Route::post('/wa/sync-reminders', [WaReminderController::class, 'syncReminders']);
+    Route::post('/wa/reminder-status', [WaReminderController::class, 'reminderStatus']);
     Route::post('/renungan/personalize', [RenunganPersonalizationController::class, 'personalize']);
     Route::get('/renungan/share/{token}', [RenunganShareController::class, 'show']);
 
