@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\WaLog;
+use App\Models\WaPhoneOwner;
 use App\Models\WaReminder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -97,6 +98,15 @@ class ProcessDueWaRemindersCommand extends Command
                     return;
                 }
 
+                $ownerConflictReason = $this->resolvePhoneOwnerConflict($reminder);
+                if ($ownerConflictReason !== null) {
+                    $reminder->status = 'Skip';
+                    $reminder->last_error = $ownerConflictReason;
+                    $reminder->save();
+                    $this->writeLegacyLog($reminder, 'Skip', null, ['reason' => $ownerConflictReason], null);
+                    return;
+                }
+
                 try {
                     $response = Http::asForm()
                         ->timeout(30)
@@ -126,6 +136,7 @@ class ProcessDueWaRemindersCommand extends Command
                         $reminder->last_error = null;
                         $reminder->save();
 
+                        $this->upsertPhoneOwnerFromSuccess($reminder, $sentAtLocal->copy()->utc());
                         $this->writeLegacyLog($reminder, 'Terkirim', $messageId, $decoded, $sentAtLocal);
                     } else {
                         $reminder->status = 'Gagal';
@@ -273,5 +284,118 @@ class ProcessDueWaRemindersCommand extends Command
     {
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         return is_string($encoded) ? $encoded : '{}';
+    }
+
+    private function normalizeOwnerName(?string $name): string
+    {
+        $normalized = trim(mb_strtolower((string) $name));
+        $normalized = preg_replace('/\s+/', ' ', $normalized);
+
+        return is_string($normalized) ? $normalized : '';
+    }
+
+    private function resolvePhoneOwnerConflict(WaReminder $reminder): ?string
+    {
+        $phone = trim((string) $reminder->phone);
+        if ($phone === '') {
+            return null;
+        }
+
+        $incomingNameNormalized = $this->normalizeOwnerName($reminder->customer_name);
+        if ($incomingNameNormalized === '') {
+            return 'nama pelanggan kosong';
+        }
+
+        $owner = WaPhoneOwner::query()
+            ->where('wa_client_id', $reminder->wa_client_id)
+            ->where('phone', $phone)
+            ->first();
+
+        if (! $owner) {
+            $owner = $this->bootstrapPhoneOwnerFromHistory((int) $reminder->wa_client_id, $phone);
+        }
+
+        if (! $owner) {
+            return null;
+        }
+
+        $ownerNameNormalized = trim((string) $owner->canonical_name_normalized);
+        if ($ownerNameNormalized === '' || $ownerNameNormalized === $incomingNameNormalized) {
+            return null;
+        }
+
+        return sprintf(
+            'conflict_phone_owner: nomor %s milik %s',
+            $phone,
+            (string) $owner->canonical_name
+        );
+    }
+
+    private function upsertPhoneOwnerFromSuccess(WaReminder $reminder, Carbon $sentAtUtc): void
+    {
+        $phone = trim((string) $reminder->phone);
+        $name = trim((string) $reminder->customer_name);
+        $nameNormalized = $this->normalizeOwnerName($name);
+
+        if ($phone === '' || $nameNormalized === '') {
+            return;
+        }
+
+        $owner = WaPhoneOwner::query()
+            ->firstOrNew([
+                'wa_client_id' => $reminder->wa_client_id,
+                'phone' => $phone,
+            ]);
+
+        if (! $owner->exists) {
+            $owner->first_seen_at = $sentAtUtc;
+            $owner->confidence = 1;
+        } elseif ((string) $owner->canonical_name_normalized === $nameNormalized) {
+            $owner->confidence = ((int) $owner->confidence) + 1;
+        }
+
+        if (trim((string) $owner->canonical_name_normalized) === '' || (string) $owner->canonical_name_normalized === $nameNormalized) {
+            $owner->canonical_name = $name;
+            $owner->canonical_name_normalized = $nameNormalized;
+        }
+
+        $owner->last_seen_at = $sentAtUtc;
+        $owner->save();
+    }
+
+    private function bootstrapPhoneOwnerFromHistory(int $waClientId, string $phone): ?WaPhoneOwner
+    {
+        $firstSent = WaReminder::query()
+            ->where('wa_client_id', $waClientId)
+            ->where('phone', $phone)
+            ->where('status', 'Terkirim')
+            ->whereNotNull('sent_at')
+            ->orderBy('sent_at')
+            ->orderBy('id')
+            ->first();
+
+        if (! $firstSent) {
+            return null;
+        }
+
+        $name = trim((string) $firstSent->customer_name);
+        $nameNormalized = $this->normalizeOwnerName($name);
+        if ($nameNormalized === '') {
+            return null;
+        }
+
+        return WaPhoneOwner::query()->firstOrCreate(
+            [
+                'wa_client_id' => $waClientId,
+                'phone' => $phone,
+            ],
+            [
+                'canonical_name' => $name,
+                'canonical_name_normalized' => $nameNormalized,
+                'first_seen_at' => $firstSent->sent_at?->copy()->utc(),
+                'last_seen_at' => $firstSent->sent_at?->copy()->utc(),
+                'confidence' => 1,
+            ]
+        );
     }
 }

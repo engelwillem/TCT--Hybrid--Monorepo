@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\WaClient;
 use App\Models\WaLog;
+use App\Models\WaPhoneOwner;
 use App\Models\WaReminder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -332,6 +333,16 @@ class WaReminderController extends Controller
                     'row_number' => $rowNumber,
                     'status' => self::STATUS_SKIP,
                     'reason' => 'nomor whatsapp tidak valid',
+                ];
+                continue;
+            }
+
+            $ownerConflict = $this->resolvePhoneOwnerConflict((int) $client->id, $phone, $name);
+            if ($ownerConflict !== null) {
+                $results[] = [
+                    'row_number' => $rowNumber,
+                    'status' => self::STATUS_SKIP,
+                    'reason' => $ownerConflict,
                 ];
                 continue;
             }
@@ -765,6 +776,81 @@ class WaReminderController extends Controller
         }
 
         return $digitsOnly;
+    }
+
+    private function normalizeOwnerName(string $name): string
+    {
+        $normalized = trim(mb_strtolower($name));
+        $normalized = preg_replace('/\s+/', ' ', $normalized);
+
+        return is_string($normalized) ? $normalized : '';
+    }
+
+    private function resolvePhoneOwnerConflict(int $waClientId, string $phone, string $name): ?string
+    {
+        $nameNormalized = $this->normalizeOwnerName($name);
+        if ($nameNormalized === '') {
+            return 'nama pelanggan kosong';
+        }
+
+        $owner = WaPhoneOwner::query()
+            ->where('wa_client_id', $waClientId)
+            ->where('phone', $phone)
+            ->first();
+
+        if (! $owner) {
+            $owner = $this->bootstrapPhoneOwnerFromHistory($waClientId, $phone);
+        }
+
+        if (! $owner || trim((string) $owner->canonical_name_normalized) === '') {
+            return null;
+        }
+
+        if ((string) $owner->canonical_name_normalized === $nameNormalized) {
+            return null;
+        }
+
+        return sprintf(
+            'conflict_phone_owner: nomor %s milik %s',
+            $phone,
+            (string) $owner->canonical_name
+        );
+    }
+
+    private function bootstrapPhoneOwnerFromHistory(int $waClientId, string $phone): ?WaPhoneOwner
+    {
+        $firstSent = WaReminder::query()
+            ->where('wa_client_id', $waClientId)
+            ->where('phone', $phone)
+            ->where('status', self::STATUS_TERKIRIM)
+            ->whereNotNull('sent_at')
+            ->orderBy('sent_at')
+            ->orderBy('id')
+            ->first();
+
+        if (! $firstSent) {
+            return null;
+        }
+
+        $name = trim((string) $firstSent->customer_name);
+        $nameNormalized = $this->normalizeOwnerName($name);
+        if ($nameNormalized === '') {
+            return null;
+        }
+
+        return WaPhoneOwner::query()->firstOrCreate(
+            [
+                'wa_client_id' => $waClientId,
+                'phone' => $phone,
+            ],
+            [
+                'canonical_name' => $name,
+                'canonical_name_normalized' => $nameNormalized,
+                'first_seen_at' => $firstSent->sent_at?->copy()->utc(),
+                'last_seen_at' => $firstSent->sent_at?->copy()->utc(),
+                'confidence' => 1,
+            ]
+        );
     }
 
     private function buildMessage(
