@@ -398,6 +398,8 @@ class WaReminderController extends Controller
             ];
 
             if ($reminder) {
+                $beforeScheduleAt = $reminder->scheduled_at?->copy();
+                $beforeStatus = (string) $reminder->status;
                 $reminder->fill($payload);
                 $reminder->status = self::STATUS_PENDING;
                 $reminder->fonnte_message_id = null;
@@ -405,6 +407,19 @@ class WaReminderController extends Controller
                 $reminder->last_error = null;
                 $reminder->response = null;
                 $reminder->save();
+
+                $this->writeRescheduleAuditIfChanged(
+                    $client->id,
+                    $rowNumber,
+                    $name,
+                    $phone,
+                    $toko,
+                    $messageFinal,
+                    $effectiveTimezone,
+                    $beforeScheduleAt,
+                    $scheduledUtc,
+                    $beforeStatus
+                );
             } else {
                 $staleUnsent = WaReminder::query()
                     ->where('wa_client_id', $client->id)
@@ -414,6 +429,8 @@ class WaReminderController extends Controller
                     ->first();
 
                 if ($staleUnsent) {
+                    $beforeScheduleAt = $staleUnsent->scheduled_at?->copy();
+                    $beforeStatus = (string) $staleUnsent->status;
                     $staleUnsent->fill($payload);
                     $staleUnsent->status = self::STATUS_PENDING;
                     $staleUnsent->fonnte_message_id = null;
@@ -421,6 +438,19 @@ class WaReminderController extends Controller
                     $staleUnsent->last_error = null;
                     $staleUnsent->response = null;
                     $staleUnsent->save();
+
+                    $this->writeRescheduleAuditIfChanged(
+                        $client->id,
+                        $rowNumber,
+                        $name,
+                        $phone,
+                        $toko,
+                        $messageFinal,
+                        $effectiveTimezone,
+                        $beforeScheduleAt,
+                        $scheduledUtc,
+                        $beforeStatus
+                    );
                 } else {
                     WaReminder::query()->create($payload);
                 }
@@ -872,6 +902,45 @@ class WaReminderController extends Controller
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         return is_string($encoded) ? $encoded : '{}';
+    }
+
+    private function writeRescheduleAuditIfChanged(
+        int $waClientId,
+        int $rowNumber,
+        string $name,
+        string $phone,
+        string $toko,
+        string $messageFinal,
+        string $timezone,
+        ?Carbon $beforeScheduleAt,
+        Carbon $afterScheduleAtUtc,
+        string $beforeStatus
+    ): void {
+        if (! $beforeScheduleAt) {
+            return;
+        }
+
+        if ($beforeScheduleAt->equalTo($afterScheduleAtUtc) && $beforeStatus === self::STATUS_PENDING) {
+            return;
+        }
+
+        WaLog::query()->create([
+            'wa_client_id' => $waClientId,
+            'row_number' => $rowNumber,
+            'customer_name' => $name !== '' ? $name : null,
+            'phone' => $phone !== '' ? $phone : null,
+            'toko' => $toko !== '' ? $toko : null,
+            'message' => $messageFinal !== '' ? $messageFinal : null,
+            'timezone' => $timezone,
+            'scheduled_at' => $afterScheduleAtUtc,
+            'status' => self::STATUS_PENDING,
+            'response' => $this->encodeResponse([
+                'reason' => 'reschedule_detected',
+                'from_status' => $beforeStatus,
+                'from_scheduled_at_utc' => $beforeScheduleAt->copy()->utc()->format('Y-m-d H:i:s'),
+                'to_scheduled_at_utc' => $afterScheduleAtUtc->copy()->utc()->format('Y-m-d H:i:s'),
+            ]),
+        ]);
     }
 
     private function buildSourceHash(

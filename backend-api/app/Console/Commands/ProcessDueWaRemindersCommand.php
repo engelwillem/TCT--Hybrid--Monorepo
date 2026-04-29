@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessDueWaRemindersCommand extends Command
 {
+    private const WATCHDOG_OVERDUE_MINUTES = 2;
+
     protected $signature = 'wa:process-due-reminders {--limit=50 : Max reminders per run}';
 
     protected $description = 'Process due WhatsApp reminders and send via Fonnte';
@@ -55,6 +57,14 @@ class ProcessDueWaRemindersCommand extends Command
                     return;
                 }
 
+                if (! $this->isLatestUnsentRevision($reminder)) {
+                    $reminder->status = 'Skip';
+                    $reminder->last_error = 'superseded by newer revision';
+                    $reminder->save();
+                    $this->writeLegacyLog($reminder, 'Skip', null, ['reason' => 'superseded by newer revision'], null);
+                    return;
+                }
+
                 Log::info('WA Scheduler Debug', [
                     'now' => $now->toDateTimeString(),
                     'scheduled_at' => $reminder->scheduled_at?->toDateTimeString(),
@@ -64,6 +74,18 @@ class ProcessDueWaRemindersCommand extends Command
 
                 if (! $reminder->scheduled_at || $reminder->scheduled_at->gt($now)) {
                     return;
+                }
+
+                $overdueMinutes = abs($now->diffInMinutes($reminder->scheduled_at, false));
+                if ($overdueMinutes > self::WATCHDOG_OVERDUE_MINUTES) {
+                    Log::warning('WA Reminder watchdog: overdue reminder being processed', [
+                        'reminder_id' => $reminder->id,
+                        'wa_client_id' => $reminder->wa_client_id,
+                        'sheet_row_number' => $reminder->sheet_row_number,
+                        'overdue_minutes' => $overdueMinutes,
+                        'scheduled_at' => $reminder->scheduled_at?->toDateTimeString(),
+                        'now' => $now->toDateTimeString(),
+                    ]);
                 }
 
                 $client = $reminder->client;
@@ -139,6 +161,22 @@ class ProcessDueWaRemindersCommand extends Command
 
         $this->info("Processed {$processed} reminder(s).");
         return self::SUCCESS;
+    }
+
+    private function isLatestUnsentRevision(WaReminder $reminder): bool
+    {
+        $latestUnsentId = WaReminder::query()
+            ->where('wa_client_id', $reminder->wa_client_id)
+            ->where('sheet_row_number', $reminder->sheet_row_number)
+            ->whereNull('fonnte_message_id')
+            ->whereIn('status', ['Pending', 'Gagal'])
+            ->max('id');
+
+        if ($latestUnsentId === null) {
+            return true;
+        }
+
+        return (int) $latestUnsentId === (int) $reminder->id;
     }
 
     private function writeLegacyLog(
