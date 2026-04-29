@@ -1,0 +1,45 @@
+name: Frontend Production Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Public frontend URL to verify
+        required: false
+        default: https://www.thechoosentalks.org
+  schedule:
+    - cron: "17 1 * * *"
+
+concurrency:
+  group: frontend-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve base URL
+        id: vars
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.base_url }}" ]; then
+            echo "base_url=${{ inputs.base_url }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_url=https://www.thechoosentalks.org" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run production smoke checks
+        shell: pwsh
+        run: |
+          ./scripts/smoke-production.ps1 -BaseUrl "${{ steps.vars.outputs.base_url }}" -OutFile "production-smoke-report.md" -TimeoutSec 20
+
+      - name: Upload smoke report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-production-smoke-report
+          path: production-smoke-report.md

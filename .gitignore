@@ -80,7 +80,9 @@ TCT--Hybrid--Monorepo.zip
 
 # Local documentation / audit workspace (do not add new docs by default)
 docs/**
-.github/
+.github/*
+!.github/workflows/
+!.github/workflows/*.yml
 backend-api/tests/
 backend-api/public/css/filament/
 backend-api/public/js/filament/
