@@ -44,6 +44,13 @@ Eksekusi naming workflow final dan urutan rollout CI/CD untuk mode hybrid:
 - Saat folder app WA belum ada, workflow WA tidak otomatis trigger dari push path lain.
 - Faith frontend masih menggunakan path frontend root saat ini (`src/**`, `public/**`, dll).
 
+## Follow-up Patch (same day)
+- Setelah run awal, `WA Frontend Checks` dan `WA Frontend Deploy` sempat gagal karena folder `apps/wa-dashboard` belum dibuat.
+- Workflow WA kemudian diperbarui agar:
+  - cek dulu keberadaan `apps/wa-dashboard`
+  - jika belum ada -> workflow selesai sukses dengan status skip-log (non-blocking)
+  - jika sudah ada -> checks/deploy scaffold jalan normal
+
 ## Next Operational Step
 - Saat `apps/wa-dashboard` mulai dibuat, workflow WA checks/deploy langsung siap dipakai.
 - Integrasi command deploy host untuk workflow frontend deploy akan ditambahkan di task implementasi berikutnya.

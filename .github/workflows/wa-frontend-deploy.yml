@@ -20,7 +20,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check WA app directory
+        id: wa_app
+        shell: bash
+        run: |
+          if [ -d "apps/wa-dashboard" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/wa-dashboard not found; skipping WA deploy scaffold."
+          fi
+
       - name: Validate deploy scaffold
+        if: steps.wa_app.outputs.exists == 'true'
         run: |
           test -f apps/wa-dashboard/package.json
           echo "WA frontend deploy workflow is ready. Integrate Tencent/hosting deploy command in next task."
