@@ -1,0 +1,26 @@
+name: WA Frontend Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/wa-dashboard/**'
+      - '.github/workflows/wa-frontend-deploy.yml'
+
+concurrency:
+  group: wa-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-wa-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deploy scaffold
+        run: |
+          test -f apps/wa-dashboard/package.json
+          echo "WA frontend deploy workflow is ready. Integrate Tencent/hosting deploy command in next task."

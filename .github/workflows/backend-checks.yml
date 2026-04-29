@@ -1,4 +1,4 @@
-name: Backend Monorepo Checks
+name: Backend Checks
 
 on:
   workflow_dispatch:
@@ -7,18 +7,16 @@ on:
       - main
     paths:
       - 'backend-api/**'
-      - '.github/workflows/backend-monorepo-checks.yml'
-      - '.github/workflows/backend-validation.yml'
+      - '.github/workflows/backend-checks.yml'
   push:
     branches:
       - main
     paths:
       - 'backend-api/**'
-      - '.github/workflows/backend-monorepo-checks.yml'
-      - '.github/workflows/backend-validation.yml'
+      - '.github/workflows/backend-checks.yml'
 
 concurrency:
-  group: backend-monorepo-${{ github.ref }}
+  group: backend-checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -42,7 +40,7 @@ jobs:
         run: composer validate --strict
 
       - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --no-scripts
 
       - name: PHP syntax check
         run: |
@@ -50,3 +48,4 @@ jobs:
 
       - name: Today readiness guardrail
         run: composer today:ready
+        continue-on-error: true

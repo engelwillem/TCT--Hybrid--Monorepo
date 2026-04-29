@@ -1,13 +1,11 @@
-name: Frontend Monorepo Checks
+name: Faith Frontend Checks
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
       - main
-  pull_request:
     paths:
-      - '.idx/**'
       - 'src/**'
       - 'public/**'
       - 'apphosting.yaml'
@@ -17,14 +15,28 @@ on:
       - 'package-lock.json'
       - 'postcss.config.mjs'
       - 'tsconfig.json'
-      - '.github/workflows/frontend-monorepo-checks.yml'
+      - '.github/workflows/faith-frontend-checks.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'apphosting.yaml'
+      - 'components.json'
+      - 'next.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'postcss.config.mjs'
+      - 'tsconfig.json'
+      - '.github/workflows/faith-frontend-checks.yml'
 
 concurrency:
-  group: frontend-monorepo-${{ github.ref }}
+  group: faith-frontend-checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  frontend-checks:
+  faith-frontend-checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

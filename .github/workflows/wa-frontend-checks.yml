@@ -1,0 +1,46 @@
+name: WA Frontend Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'apps/wa-dashboard/**'
+      - '.github/workflows/wa-frontend-checks.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/wa-dashboard/**'
+      - '.github/workflows/wa-frontend-checks.yml'
+
+concurrency:
+  group: wa-frontend-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wa-frontend-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/wa-dashboard
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: apps/wa-dashboard/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build

@@ -1,0 +1,29 @@
+name: Faith Frontend Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/faith-frontend-deploy.yml'
+
+concurrency:
+  group: faith-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-faith-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deploy scaffold
+        run: |
+          test -f package.json
+          echo "Faith frontend deploy workflow is ready. Integrate Tencent/hosting deploy command in next task."
