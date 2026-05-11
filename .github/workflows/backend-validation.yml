@@ -39,6 +39,10 @@ jobs:
       - name: Validate composer.json
         run: composer validate --strict
 
+      - name: Prepare Laravel storage paths
+        run: |
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/testing storage/framework/views bootstrap/cache
+
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
 
