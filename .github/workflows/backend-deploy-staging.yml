@@ -67,9 +67,9 @@ jobs:
       - name: Run staging migration pipeline
         shell: pwsh
         run: |
-          $schemaStrategy = '${{ github.event_name == ''workflow_dispatch'' && github.event.inputs.schema_strategy || ''expand'' }}'
-          $runBackfill = '${{ github.event_name == ''workflow_dispatch'' && github.event.inputs.run_backfill || ''false'' }}'
-          $backfillCommand = '${{ github.event_name == ''workflow_dispatch'' && github.event.inputs.backfill_command || '''' }}'
+          $schemaStrategy = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.schema_strategy || 'expand' }}"
+          $runBackfill = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_backfill || 'false' }}"
+          $backfillCommand = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.backfill_command || '' }}"
 
           if ($runBackfill -eq 'true') {
             ./scripts/migrate-staging.ps1 -SchemaStrategy $schemaStrategy -RunBackfill -BackfillCommand $backfillCommand
@@ -98,7 +98,7 @@ jobs:
       - name: Deploy staging + smoke
         shell: pwsh
         run: |
-          $autoRollback = '${{ github.event_name == ''workflow_dispatch'' && github.event.inputs.auto_rollback || ''true'' }}'
+          $autoRollback = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.auto_rollback || 'true' }}"
           if ($autoRollback -eq 'true') {
             ./scripts/deploy-staging.ps1 -AutoRollbackOnFailure
           }
