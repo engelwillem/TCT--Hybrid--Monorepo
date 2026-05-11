@@ -340,8 +340,8 @@ Route existence notes:
 Publish status:
 - Branch: `main`
 - Commit message: `feat: prepare AI automation portfolio MVP for deployment`
-- Commit hash: recorded in the task completion report after Git creates the commit
-- GitHub push status: pending before commit; confirm in the task completion report after push
+- MVP publish commit hash: `f406ee9`
+- GitHub push status: pushed to `origin/main`; GitHub reported the repository has moved to `https://github.com/engelwillem/AI-Automation-WebApp-Portfolio.git`
 
 Frontend deployment target:
 - Tencent Edge Pages / EdgeOne Pages
