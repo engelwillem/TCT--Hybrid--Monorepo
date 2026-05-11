@@ -45,9 +45,9 @@ describe("renungan copy regression guard", () => {
     const ritualScreen = readProjectFile("src/features/today-ritual/components/TodayDailyRitualScreen.tsx");
 
     expect(parityBanner).not.toContain("Renungan hari ini tetap siap menemanimu.");
-    expect(ritualScreen).toContain("Renunganmu belum siap saat ini. Tarik napas pelan, lalu coba lagi sebentar.");
+    expect(ritualScreen).toContain("Your reflection is not ready yet. Take a breath and try again shortly.");
     expect(ritualScreen).toContain(
-      "Renunganmu tetap tersedia. Untuk saat ini, kami menemanimu dengan versi yang lebih sederhana."
+      "Your reflection is still available. For now, we are serving a simpler fallback version."
     );
     expect(ritualScreen).not.toContain("UNKNOWN_SOURCE_ERROR");
     expect(ritualScreen).not.toContain("LOCAL_FALLBACK_ACTIVE");
