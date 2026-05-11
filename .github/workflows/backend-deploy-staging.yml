@@ -33,12 +33,6 @@ on:
         options:
           - "true"
           - "false"
-  workflow_run:
-    workflows:
-      - DevSecOps E2E Gate
-    types:
-      - completed
-
 concurrency:
   group: staging-deploy
   cancel-in-progress: false
@@ -49,7 +43,6 @@ permissions:
 jobs:
   migrate-staging:
     name: Migrate Staging Schema
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: [self-hosted, staging]
     timeout-minutes: 30
     env:
@@ -61,15 +54,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Run staging migration pipeline
         shell: pwsh
         run: |
-          $schemaStrategy = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.schema_strategy || 'expand' }}"
-          $runBackfill = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_backfill || 'false' }}"
-          $backfillCommand = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.backfill_command || '' }}"
+          $schemaStrategy = "${{ github.event.inputs.schema_strategy }}"
+          $runBackfill = "${{ github.event.inputs.run_backfill }}"
+          $backfillCommand = "${{ github.event.inputs.backfill_command }}"
 
           if ($runBackfill -eq 'true') {
             ./scripts/migrate-staging.ps1 -SchemaStrategy $schemaStrategy -RunBackfill -BackfillCommand $backfillCommand
@@ -81,7 +72,6 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     needs: migrate-staging
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: [self-hosted, staging]
     timeout-minutes: 45
     env:
@@ -92,13 +82,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Deploy staging + smoke
         shell: pwsh
         run: |
-          $autoRollback = "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.auto_rollback || 'true' }}"
+          $autoRollback = "${{ github.event.inputs.auto_rollback }}"
           if ($autoRollback -eq 'true') {
             ./scripts/deploy-staging.ps1 -AutoRollbackOnFailure
           }
