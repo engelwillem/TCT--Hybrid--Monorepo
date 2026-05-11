@@ -1,150 +1,90 @@
-# Dependencies
+# =========================
+# Public Portfolio Safety
+# =========================
+
+# Local/private tooling and workspace metadata
+.codex/
+.idx/
+.agent/
+.agents/
+.gemini/
+.vscode/
+.idea/
+
+# Dependencies and package caches
 node_modules/
 backend-api/vendor/
 backend-api/.composer-cache/
-
-# Build outputs and local caches
-.next/
-.next-stale-*/
-.vite/
-.tmp/
 .npm-cache/
 .playwright-mcp/
+
+# Build outputs, coverage, temp
+.next/
+.next-stale-*/
 dist/
 out/
 build/
+.vite/
+coverage/
+test-results/
+tmp/
+.tmp/
+.tmp-*/
+tmp-*/
+*.tmp
+*.log
 *.tsbuildinfo
 .phpunit.result.cache
 backend-api/.phpunit.result.cache
 
-# Environment and secrets
+# Environment and credentials
 .env
-.env.docker
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 backend-api/.env
-backend-api/.env.docker
-backend-api/.env.testing
-backend-api/.env.*.local
-backend-api/database/database.sqlite
+backend-api/.env.*
 auth.json
 *.pem
 *.key
+*.p12
 
-# Logs and temporary debug artifacts
-*.log
-*.tmp
-tmp/
-test-results/
-.tmp-*
-tmp-*
-run_temp*.txt
-run_temp*.json
-temp_line.txt
-deploy_log*.txt
-failed_log*.txt
-full_git_diff*.txt
-response.html
-migrate_output*.txt
-push_error.txt
-tsc_*.log
-next-dev.err.log
-next-dev.out.log
-.tmp_*
-backend-api/storage/logs/*.log
-backend-api/serve.err.log
-backend-api/serve.out.log
-backend-api/bootstrap/cache/*.php
-backend-api/auth_test_output.txt
-backend-api/full_test_output.txt
-backend-api/step_failures.txt
-backend-api/test_output.txt
-
-# Local Audit, Reports, and Prompts (Keep Local Only)
-docs/CORE/architecture/
-docs/CORE/PROMPT WEB TCT TERBARU/
-docs/core/PROMPT WEB TCT TERBARU/
-docs/CORE/Development/Gambar Referensi/
-docs/CORE/QA Full Audit/
-docs/QA Full Audit/
-docs/audit/
-docs/quarantine/
-docs/archive/
-docs/legacy/
-docs/*.zip
-docs/*.rar
-docs/*.xlsx
-docs/*.pdf
-*.zip
-*.rar
-*.7z
-*.tar.gz
-*.vsix
-deliverables/
-deliverable-*.zip
-TCT--Hybrid--Monorepo.zip
-
-# Specific Backend Root Logs
-backend-api/*.txt
-backend-api/step_failures*.txt
-backend-api/test_output*.txt
-
-# Developer Utility Scripts
-create_git_zip.py
-verify_patch_v5.py
-audit_*.py
-test_*.py
-dev_output*.txt
-tsc_output*.txt
-routes_list*.txt
-
-# Tooling and editor state
-.vscode/
-.idea/
-.modified
-.firebase/
-.gemini/
-.agent/
-.agents/
-.idx/
-!.idx/
-!.idx/**
-
-# OS files
+# OS/editor noise
 .DS_Store
 Thumbs.db
 
-# Laravel Specific
-backend-api/storage/*.key
-backend-api/database/*.sqlite
+# Python/cache artifacts
+__pycache__/
+*.py[cod]
+
+# Laravel runtime outputs
+backend-api/storage/logs/*.log
+backend-api/bootstrap/cache/*.php
 backend-api/public/storage
 backend-api/public/hot
 backend-api/public/build
+backend-api/database/*.sqlite
+backend-api/storage/*.key
 
-# Application Specific Cleanup
-public/og/*.png
-!public/og/README.md
-current_versehub.png
-tmp_*.html
-tmp_*.json
-tmp_*.txt
-installed_software.txt
-.codex-devstudio.err
-.codex-devturbo.err
-.codex-globals.css.bak
-root_error.png
-.codex-layout.tsx.bak
-.codex-page.tsx.bak
-docs/CORE/implementation/DOCKER COMMAND.md
-
-# Local DB parity and design scratch artifacts
+# Internal ops and private infrastructure not needed for public recruiter repo
+.github/
+docker/
+scripts/
+backend-api/
 backups/
+deliverables/
+docs/archive/
+docs/audit/
+docs/legacy/
+docs/quarantine/
+docs/monitoring/
+docs/observability/
+docs/ci/
+
+# Keep docs lean for public portfolio (only high-level docs should remain tracked)
+docs/CORE/architecture/
+docs/CORE/Development/
+docs/CORE/implementation/
+docs/CORE/PROMPT WEB TCT TERBARU/
+docs/CORE/QA Full Audit/
+docs/CORE/ROLES/
+docs/release/
 public/renungan/
-docs/CORE/Development/MARKETING STRATEGY.md
-docs/CORE/implementation/SCRIPT SET OPEN AI API KEY.md
-docs/CORE/implementation/SCRIPT TERMINAL CPANEL.md
-docs/monitoring/share-assets-alert-rules.md
-docs/monitoring/share-assets-dashboard.md
-docs/release/share-assets-release-checklist.md
