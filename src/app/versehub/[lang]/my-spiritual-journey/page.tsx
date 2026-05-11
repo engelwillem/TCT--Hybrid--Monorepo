@@ -164,7 +164,7 @@ export default function SpiritualJourneyPage() {
     const router = useRouter();
     const { isAuthenticated, isRestoring } = useAuthSession();
     const refreshTick = useMutationRefreshTick(['/api/versehub/']);
-    const lang = params?.lang as string || 'id';
+    const lang = params?.lang as string || 'en';
     const isId = lang === 'id';
 
     const [localItems, setLocalItems] = useState<ActivityItem[]>([]);

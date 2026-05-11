@@ -47,7 +47,7 @@ interface TodayDailyRitualScreenProps {
   entryIntent?: RenunganEntryIntent;
 }
 
-const RENUNGAN_LOADING_LABEL = "Menyiapkan renungan...";
+const RENUNGAN_LOADING_LABEL = "Preparing your reflection...";
 
 export default function TodayDailyRitualScreen({
   sessionContent,
@@ -633,7 +633,7 @@ export default function TodayDailyRitualScreen({
         className={`relative z-10 w-full max-w-[480px] md:max-w-[620px] mx-auto md:mx-0 min-h-screen bg-transparent ${isHydrating ? 'pointer-events-none' : ''}`}
       >
         <TodayHeader
-          greeting="Selamat datang kembali,"
+          greeting="Welcome back,"
           dateLabel={sessionContent.dateLabel}
           memberName={memberName}
           memberId={profileId}
@@ -710,7 +710,7 @@ export default function TodayDailyRitualScreen({
                     <BookOpenText className="h-4 w-4" />
                   </span>
                   <span className="transition-transform duration-400 ease-out group-hover:translate-x-[1.5px]">
-                    Mulai renungan
+                    Start reflection
                   </span>
                 </motion.button>
               ) : null}
@@ -732,23 +732,23 @@ export default function TodayDailyRitualScreen({
                 aria-live="polite"
                 className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3 text-[13px] leading-6 text-amber-900/85"
               >
-                Renunganmu belum siap saat ini. Tarik napas pelan, lalu coba lagi sebentar.
+                Your reflection is not ready yet. Take a breath and try again shortly.
               </div>
             ) : null}
           </section>
           {renunganRequestState === "fallback" ? (
             <section className="mt-4 px-6">
               <div className="rounded-2xl border border-sky-100 bg-sky-50/65 px-4 py-3 text-[12px] leading-6 text-sky-900/78">
-                Renunganmu tetap tersedia. Untuk saat ini, kami menemanimu dengan versi yang lebih sederhana.
+                Your reflection is still available. For now, we are serving a simpler fallback version.
               </div>
             </section>
           ) : null}
           {shouldShowDeepeningNotice({ entryIntent, isPrayerCompleted }) ? (
             <section className="mt-6 px-6">
               <div className="rounded-2xl border border-sky-100 bg-sky-50/55 px-4 py-4 text-sky-900/80">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">Pendalaman Firman</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">Scripture Deepening</p>
                 <p className="mt-2 text-[13px] leading-6">
-                  Pendalaman dibuka setelah renungan hari ini selesai. Lanjutkan dulu dengan tenang.
+                  Deepening unlocks after today&apos;s reflection is completed. Continue calmly first.
                 </p>
               </div>
             </section>

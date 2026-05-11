@@ -87,7 +87,7 @@ export default function VerseHubFeaturedCard({
                 // ignore and fallback below
             }
         }
-        return verse?.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
+        return verse?.ref ? `/versehub/en?ref=${encodeURIComponent(verse.ref)}` : '/versehub/en';
     }, [verse?.href, verse?.ref]);
     const reactionKey = useMemo(
         () => (verse?.ref ? `tct:versehub:featured:reactions:${verse.ref}` : 'tct:versehub:featured:reactions:default'),
@@ -159,7 +159,7 @@ export default function VerseHubFeaturedCard({
         <div className="space-y-4">
             <div className="space-y-3">
                 <a
-                    href="/versehub/id"
+                    href="/versehub/en"
                     className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1 text-xs text-muted-foreground shadow-soft ring-1 ring-black/5 transition hover:text-foreground dark:ring-white/10"
                     aria-label="Buka VerseHub"
                 >

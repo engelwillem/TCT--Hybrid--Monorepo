@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 const APP_NAME = 'The Chosen Talks';
 const TAGLINE = 'The Chosen People';
 const DEFAULT_TITLE = `${APP_NAME} - ${TAGLINE}`;
-const DEFAULT_DESCRIPTION = 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman The Chosen Talks.';
+const DEFAULT_DESCRIPTION = 'Start your day with living scripture, daily reflection, and meaningful faith community conversations.';
 const SITE_URL = getPrimarySiteUrl();
 const DEFAULT_OG_IMAGE = `${SITE_URL}/api/og/home`;
 
@@ -55,7 +55,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: 'website',
       siteName: APP_NAME,
-      locale: 'id_ID',
+      locale: 'en_US',
       url: SITE_URL,
       title: DEFAULT_TITLE,
       description: DEFAULT_DESCRIPTION,
@@ -95,7 +95,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased tct-body" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" enableSystem={false} disableTransitionOnChange>
           <ClientAppProviders>{children}</ClientAppProviders>

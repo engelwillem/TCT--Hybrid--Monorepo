@@ -22,7 +22,7 @@ interface StudyPath {
 export default function StudyPathsIndexPage() {
     const params = useParams();
     const router = useRouter();
-    const lang = params?.lang as string || 'id';
+    const lang = params?.lang as string || 'en';
     const isId = lang === 'id';
     const refreshTick = useMutationRefreshTick(['/api/study-paths/', '/api/versehub/']);
 

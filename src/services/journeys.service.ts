@@ -1,7 +1,7 @@
 import { buildAppAuthHeaders } from "@/lib/app-auth-fetch";
 
 function getLang() {
-  return typeof window !== 'undefined' ? (localStorage.getItem('tct_lang') || 'id') : 'id';
+  return typeof window !== 'undefined' ? (localStorage.getItem('tct_lang') || 'en') : 'en';
 }
 
 function getHeaders() {

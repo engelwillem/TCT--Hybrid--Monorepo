@@ -19,7 +19,7 @@ const FALLBACK_VERSE: DailyVersePayload = {
   reference: "Mazmur 23:1",
   quote: "TUHAN adalah gembalaku, takkan kekurangan aku.",
   cta_label: "Baca Alkitab",
-  cta_href: "/versehub/id?ref=mzm-23-1",
+  cta_href: "/versehub/en?ref=psa-23-1",
 };
 
 export function DailyVerseHeroCard() {
@@ -146,7 +146,7 @@ export function DailyVerseHeroCard() {
   const heroRefHref = useMemo(() => {
     const raw = String(verse.cta_href || '').trim();
     if (!raw) {
-      return verse.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
+      return verse.ref ? `/versehub/en?ref=${encodeURIComponent(verse.ref)}` : '/versehub/en';
     }
     const chapterFixed = raw.replace('/chapter/', '/');
     const withOrigin = chapterFixed.startsWith('http')

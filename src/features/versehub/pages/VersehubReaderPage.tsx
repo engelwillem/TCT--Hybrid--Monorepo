@@ -71,8 +71,8 @@ function toJourneyDays(
     const key = toJakartaDateKey(cursor);
     generatedDays.push({
       key,
-      shortLabel: cursor.toLocaleDateString("id-ID", { timeZone: JAKARTA_TIMEZONE, weekday: "short" }),
-      fullLabel: cursor.toLocaleDateString("id-ID", {
+      shortLabel: cursor.toLocaleDateString("en-US", { timeZone: JAKARTA_TIMEZONE, weekday: "short" }),
+      fullLabel: cursor.toLocaleDateString("en-US", {
         timeZone: JAKARTA_TIMEZONE,
         weekday: "long",
         day: "numeric",
@@ -114,7 +114,7 @@ export function VersehubReaderPage({
   const bridgeAutoResolvedRef = useRef(false);
   const snippetSeededRef = useRef(false);
   const routeEntryTelemetrySignatureRef = useRef<string | null>(null);
-  const lang = initialLang || "id";
+  const lang = initialLang || "en";
   const [overlay, setOverlay] = useState<OverlayType>(null);
   const [ogOpen, setOgOpen] = useState(false);
   const [reflectionDrafts, setReflectionDrafts] = useState<Record<string, string>>({});
@@ -481,23 +481,23 @@ export function VersehubReaderPage({
   };
 
   if (loading) {
-    return <VersehubLoadingScreen label="Menyiapkan ruang doa VerseHub..." />;
+    return <VersehubLoadingScreen label="Preparing your VerseHub reflection space..." />;
   }
 
   if (error && isChapterMode) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-[#FAFCFF] px-6 py-16 text-center text-slate-800">
         <div className="mx-auto max-w-md rounded-[32px] bg-white px-6 py-8 shadow-sm ring-1 ring-slate-100">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Pasal tidak ditemukan</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Chapter not found</p>
           <p className="mt-3 text-sm leading-relaxed text-slate-500">
-            Data pasal belum berhasil dimuat. Kembali ke landing VerseHub untuk memilih kitab lain.
+            The chapter data could not be loaded. Return to the VerseHub landing page to choose another book.
           </p>
           <button
             type="button"
             onClick={() => router.push(`/versehub/${lang}`)}
             className="mt-6 inline-flex rounded-full bg-slate-900 px-6 py-3 text-[14px] font-semibold text-white shadow-soft transition-all duration-300 hover:bg-slate-800 active:scale-[0.98]"
           >
-            Kembali ke VerseHub
+            Back to VerseHub
           </button>
         </div>
       </div>
@@ -508,16 +508,16 @@ export function VersehubReaderPage({
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-[#FAFCFF] px-6 py-16 text-center text-slate-800">
         <div className="mx-auto max-w-md rounded-[32px] bg-white px-6 py-8 shadow-sm ring-1 ring-slate-100">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Ayat tidak ditemukan</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Verse not found</p>
           <p className="mt-3 text-sm leading-relaxed text-slate-500">
-            Ayat yang Anda cari belum berhasil dimuat. Anda masih bisa kembali ke chapter reader tanpa kehilangan suasana VerseHub.
+            The verse you requested could not be loaded. You can still return to the chapter reader.
           </p>
           <button
             type="button"
             onClick={() => router.push(chapterRouteFromVerse)}
             className="mt-6 inline-flex rounded-full bg-slate-900 px-6 py-3 text-[14px] font-semibold text-white shadow-soft transition-all duration-300 hover:bg-slate-800 active:scale-[0.98]"
           >
-            Kembali ke Reader
+            Back to Reader
           </button>
         </div>
       </div>

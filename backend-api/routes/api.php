@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\CommunityAIController;
 use App\Http\Controllers\Api\V1\CommunityComposerAnalyticsController;
 use App\Http\Controllers\Api\V1\CommunityShareAssetController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
+use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\TodayApiController;
 use App\Http\Controllers\Api\V1\RenunganPersonalizationController;
 use App\Http\Controllers\Api\V1\RenunganShareController;
@@ -50,6 +51,14 @@ Route::prefix('v1')->group(function (): void {
 
     Route::get('/today', [TodayApiController::class, 'show']);
     Route::post('/analytics/funnel', [FunnelAnalyticsController::class, 'store']);
+    Route::post('/onboarding/leads', [OnboardingController::class, 'storeLead']);
+    Route::get('/onboarding/leads', [OnboardingController::class, 'listLeads']);
+    Route::get('/onboarding/leads/{id}', [OnboardingController::class, 'showLead'])->whereNumber('id');
+    Route::post('/onboarding/leads/{id}/retry', [OnboardingController::class, 'retryLead'])->whereNumber('id');
+    Route::get('/onboarding/dashboard/summary', [OnboardingController::class, 'summary']);
+    Route::get('/onboarding/dashboard/kpi-detail', [OnboardingController::class, 'kpiDetail']);
+    Route::post('/onboarding/integrations/test', [OnboardingController::class, 'integrationTest']);
+    Route::get('/onboarding/logs', [OnboardingController::class, 'logs']);
 
     Route::post('/auth/firebase/sync', [FirebaseAuthSyncController::class, 'sync']);
     Route::get('/avatar/{user}', [ProfileController::class, 'avatar']);

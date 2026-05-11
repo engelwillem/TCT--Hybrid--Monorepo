@@ -81,10 +81,10 @@ export function CommunityDiscussionsTab({
 
       <div className="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-3">
         <p className="text-[12px] leading-relaxed text-slate-600">
-          Kalau mulai terasa penuh, kamu bisa lanjut dulu di ruang privat.
+          If things feel overwhelming, continue privately in your reflection space.
         </p>
         <div className="mt-2">
-          <SurfaceBridgeAction target="renungan" label="Lanjut privat di Renungan" href="/renungan?source=community&intent=regulate" />
+          <SurfaceBridgeAction target="renungan" label="Continue privately in Reflection" href="/renungan?source=community&intent=regulate" />
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export function CommunityDiscussionsTab({
               {lastPostedId === post.id ? (
                 <div className="mb-3 flex items-center gap-3 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                   <div className="h-px flex-1 bg-slate-200/80" />
-                  <span>Baru saja dibagikan</span>
+                  <span>Just shared</span>
                   <div className="h-px flex-1 bg-slate-200/80" />
                 </div>
               ) : null}
@@ -174,12 +174,12 @@ export function CommunityDiscussionsTab({
         </div>
       ) : (
         <div className="max-w-[420px] px-4 pb-24 pt-12">
-          <p className="text-[15px] leading-relaxed text-foreground/70">Belum ada percakapan hari ini.</p>
+          <p className="text-[15px] leading-relaxed text-foreground/70">No conversations yet today.</p>
           <button
             onClick={() => onRefresh()}
             className="mt-6 text-[13px] font-medium text-foreground/40 transition-colors hover:text-foreground/70"
           >
-            Muat ulang
+            Reload
           </button>
         </div>
       )}

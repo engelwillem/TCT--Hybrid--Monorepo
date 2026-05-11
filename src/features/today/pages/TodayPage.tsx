@@ -51,7 +51,7 @@ export function TodayPage() {
 
   const quickActions = [
     { label: "Community", icon: PlusCircle, href: "/community", color: "bg-blue-500/10 text-blue-600", desc: "Bagikan inspirasi" },
-    { label: "VerseHub", icon: BookOpen, href: "/versehub/id", color: "bg-teal-500/10 text-teal-600", desc: "Baca firman" },
+    { label: "VerseHub", icon: BookOpen, href: "/versehub/en", color: "bg-teal-500/10 text-teal-600", desc: "Read scripture" },
     { label: "Journey", icon: Route, href: "/journey", color: "bg-purple-500/10 text-purple-600", desc: "Riwayat dan progres rohani" },
     { label: "Inbox", icon: Inbox, href: "/inbox", color: "bg-orange-500/10 text-orange-600", desc: "Pesan masuk" },
   ];
@@ -112,7 +112,7 @@ export function TodayPage() {
                     <div className="space-y-5">
                     <p className="text-brand font-black text-sm tracking-[0.15em] uppercase">— {dailyVerse.reference}</p>
                     <Button asChild size="lg" className="rounded-full shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all bg-foreground text-background hover:bg-foreground/90 font-bold px-8">
-                        <Link href={`/versehub/id?ref=${dailyVerse.reference.replace(/\s+/g, '-').toLowerCase()}`}>Renungkan</Link>
+                        <Link href={`/versehub/en?ref=${dailyVerse.reference.replace(/\s+/g, '-').toLowerCase()}`}>Reflect</Link>
                     </Button>
                     </div>
                 </CardContent>
@@ -125,7 +125,7 @@ export function TodayPage() {
                         </div>
                         <p className="text-muted-foreground font-medium text-sm">Ayat hari ini belum diterbitkan.</p>
                         <Button asChild variant="outline" size="sm" className="rounded-full mt-2 font-bold uppercase tracking-widest text-[10px]">
-                            <Link href="/versehub/id">Buka Library</Link>
+                            <Link href="/versehub/en">Open Library</Link>
                         </Button>
                     </CardContent>
                 </Card>

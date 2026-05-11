@@ -14,7 +14,7 @@ export default function ReceiveVerse({ verseText, verseReference }: ReceiveVerse
   return (
     // section provides a landmark for screen readers to navigate to this reading
     <motion.section
-      aria-label="Ayat Hari Ini"
+      aria-label="Today's Verse"
       variants={m.v.verse}
       initial="hidden"
       animate="visible"
@@ -22,9 +22,9 @@ export default function ReceiveVerse({ verseText, verseReference }: ReceiveVerse
       className="flex flex-col px-6 mt-6 md:mt-8"
     >
       <div className="mb-4 flex flex-col gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700/75">Ayat Hari Ini</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700/75">Today's Verse</p>
         <p className="text-[14px] leading-7 text-foreground/58">
-          Terimalah firman yang menuntun langkahmu hari ini.
+          Receive scripture that guides your steps today.
         </p>
       </div>
       <div className="flex flex-col items-start text-left mb-8">

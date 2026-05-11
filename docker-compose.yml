@@ -60,10 +60,10 @@ services:
       mailpit:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/v1/community/posts"]
+      test: ["CMD", "curl", "-fsS", "--max-time", "30", "http://127.0.0.1:8000/up"]
       start_period: 10m
       interval: 20s
-      timeout: 30s
+      timeout: 35s
       retries: 10
     command: ["bash", "/workspace/docker/backend/start.sh"]
 
@@ -80,7 +80,7 @@ services:
       CHOKIDAR_USEPOLLING: ${FRONTEND_USE_POLLING:-false}
       WATCHPACK_POLLING: ${FRONTEND_USE_POLLING:-false}
       NEXT_TELEMETRY_DISABLED: "1"
-      FRONTEND_RUNTIME: ${FRONTEND_RUNTIME:-production}
+      FRONTEND_RUNTIME: ${FRONTEND_RUNTIME:-development}
       FRONTEND_RESET_CACHE: ${FRONTEND_RESET_CACHE:-0}
     volumes:
       - .:/workspace
@@ -93,10 +93,10 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "--max-time", "60", "http://127.0.0.1:9002/api/today/readiness"]
+      test: ["CMD", "curl", "-fsS", "--max-time", "10", "http://127.0.0.1:9002/favicon.svg"]
       start_period: 10m
       interval: 20s
-      timeout: 60s
+      timeout: 12s
       retries: 10
     command: ["bash", "/workspace/docker/frontend/start.sh"]
 

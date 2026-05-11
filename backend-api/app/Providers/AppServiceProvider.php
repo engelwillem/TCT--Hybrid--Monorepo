@@ -9,6 +9,12 @@ use App\Listeners\Community\RecordPostRepostedAnalytics;
 use App\Services\AI\AIProviderInterface;
 use App\Services\AI\NullAIProvider;
 use App\Services\AI\OpenAIResponsesClient;
+use App\Services\Onboarding\Adapters\MockCalendarAdapter;
+use App\Services\Onboarding\Adapters\MockCrmSyncAdapter;
+use App\Services\Onboarding\Adapters\WebhookCalendarAdapter;
+use App\Services\Onboarding\Adapters\WebhookCrmSyncAdapter;
+use App\Services\Onboarding\Contracts\CalendarAdapterInterface;
+use App\Services\Onboarding\Contracts\CrmSyncAdapterInterface;
 use App\Services\Mentor\ClaudeMentorDriver;
 use App\Services\Mentor\MentorDriverInterface;
 use App\Services\Mentor\OpenAIMentorDriver;
@@ -64,6 +70,22 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return $this->app->make(NullAIProvider::class);
+        });
+
+        $this->app->bind(CrmSyncAdapterInterface::class, function () {
+            $mode = strtolower((string) config('onboarding.integrations.mode', 'mock'));
+
+            return $mode === 'real'
+                ? $this->app->make(WebhookCrmSyncAdapter::class)
+                : $this->app->make(MockCrmSyncAdapter::class);
+        });
+
+        $this->app->bind(CalendarAdapterInterface::class, function () {
+            $mode = strtolower((string) config('onboarding.integrations.mode', 'mock'));
+
+            return $mode === 'real'
+                ? $this->app->make(WebhookCalendarAdapter::class)
+                : $this->app->make(MockCalendarAdapter::class);
         });
 
         // Override Filament login response so we can send security notifications.

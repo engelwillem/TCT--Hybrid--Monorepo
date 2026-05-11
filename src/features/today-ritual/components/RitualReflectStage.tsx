@@ -37,10 +37,10 @@ export function RitualReflectStage({
           transition={transitionCalm}
         >
           <ReflectPrompt
-            prompt="Apa satu hal yang sedang kamu rasakan hari ini?"
-            placeholder="tulis disini..."
-            ctaLabel="Doakan"
-            sealedLabel="Telah didoakan"
+            prompt="What is one thing you are feeling today?"
+            placeholder="write here..."
+            ctaLabel="Pray"
+            sealedLabel="Prayed"
             value={activeActionText}
             onChange={onTextChange}
             onContinue={onContinue}

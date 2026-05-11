@@ -11,7 +11,7 @@ export type UiNavItem = {
 };
 
 const UI_NAV_ITEMS: readonly UiNavItem[] = [
-    { id: 'today', label: 'Renungan', icon: BookOpenText, href: '/renungan' },
+    { id: 'today', label: 'Reflection', icon: BookOpenText, href: '/renungan' },
     { id: 'community', label: 'Community', icon: Users, href: '/community' },
 ];
 

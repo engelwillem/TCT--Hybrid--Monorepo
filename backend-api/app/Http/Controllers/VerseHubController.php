@@ -521,8 +521,14 @@ class VerseHubController extends Controller
 
     private function fetchVerseEnglish(string $query): array
     {
-        // Use bible-api.com (WEB / English).
-        $url = 'https://bible-api.com/'.rawurlencode($query);
+        // Configurable English Bible API endpoint for parity across local/cPanel.
+        $base = rtrim((string) env('ENGLISH_BIBLE_API_BASE_URL', 'https://bible-api.com'), '/');
+        $translation = trim((string) env('ENGLISH_BIBLE_API_TRANSLATION', 'web'));
+        $queryString = rawurlencode($query);
+        $url = $base.'/'.$queryString;
+        if ($translation !== '') {
+            $url .= '?translation='.rawurlencode($translation);
+        }
 
         return Cache::remember(
             'versehub:bible-api:'.md5($url),

@@ -21,7 +21,7 @@ export default function DailyVerseHeroCard({
     const heroRefHref = useMemo(() => {
         const raw = String(verse?.cta_href || '').trim();
         if (!raw) {
-            return verse?.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
+            return verse?.ref ? `/versehub/en?ref=${encodeURIComponent(verse.ref)}` : '/versehub/en';
         }
         const chapterFixed = raw.replace('/chapter/', '/');
         const withOrigin = chapterFixed.startsWith('http')

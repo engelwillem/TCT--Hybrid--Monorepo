@@ -80,7 +80,7 @@ function getProfileInitials(name?: string | null): string {
 
 function buildTodayDateLabel(fallback: string): string {
   try {
-    const formatted = new Intl.DateTimeFormat('id-ID', {
+    const formatted = new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -103,10 +103,10 @@ function buildTimeGreeting(fallback: string): string {
     }).format(now);
     const hour = Number(hourText);
     if (Number.isNaN(hour)) return fallback;
-    if (hour < 11) return "Selamat pagi,";
-    if (hour < 15) return "Selamat siang,";
-    if (hour < 19) return "Selamat sore,";
-    return "Selamat malam,";
+    if (hour < 11) return "Good morning,";
+    if (hour < 15) return "Good afternoon,";
+    if (hour < 19) return "Good evening,";
+    return "Good evening,";
   } catch {
     return fallback;
   }
@@ -123,7 +123,7 @@ export default function TodayHeader({
 }: TodayHeaderProps) {
   const router = useRouter();
   const m = useMotionConfig();
-  const fallbackGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
+  const fallbackGreeting = String(greeting || 'Welcome back,').trim() || 'Welcome back,';
   const [timeGreeting, setTimeGreeting] = useState(() => buildTimeGreeting(fallbackGreeting));
   const [liveDateLabel, setLiveDateLabel] = useState(() => buildTodayDateLabel(dateLabel));
   const [guestAccessGate, setGuestAccessGate] = useState<null | 'notification' | 'inbox' | 'profile'>(null);
@@ -223,7 +223,7 @@ export default function TodayHeader({
                   </p>
                 ) : null}
                 <p className="mt-1 text-[13px] leading-[1.45] font-medium tracking-[0.01em] text-foreground/60 md:text-[14px]">
-                  Ruang heningmu hari ini
+                  Your quiet space today
                 </p>
               </>
             )}
@@ -246,7 +246,7 @@ export default function TodayHeader({
                 type="button"
                 onClick={() => setGuestAccessGate('notification')}
                 className={iconButtonClassName}
-                aria-label="Masuk untuk membuka notifikasi"
+                aria-label="Sign in to open notifications"
               >
                 <Bell className={iconClassName} />
               </button>
@@ -262,7 +262,7 @@ export default function TodayHeader({
                 setGuestAccessGate('inbox');
               }}
               className={cn(iconButtonClassName, 'shrink-0 ring-transparent')}
-              aria-label={isAuthenticated ? 'Buka inbox' : 'Masuk untuk membuka inbox'}
+              aria-label={isAuthenticated ? 'Open inbox' : 'Sign in to open inbox'}
             >
               <Inbox className={iconClassName} />
               {isAuthenticated && inboxUnreadDot ? <span className={guestBadgeClassName} aria-hidden="true" /> : null}
@@ -280,7 +280,7 @@ export default function TodayHeader({
               className={cn(
                 'group relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/88 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-200/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.48)] backdrop-blur-[10px] transition-all duration-300 hover:bg-white hover:ring-sky-300/80 hover:shadow-[0_14px_34px_-24px_rgba(15,23,42,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70',
               )}
-              aria-label={isAuthenticated ? 'Buka profil' : 'Masuk untuk membuka profil'}
+              aria-label={isAuthenticated ? 'Open profile' : 'Sign in to open profile'}
             >
               {isAuthenticated && normalizedAvatarUrl ? (
                 <img
@@ -310,24 +310,24 @@ export default function TodayHeader({
 
               <DialogHeader className="space-y-2 text-left">
                 <DialogTitle className="tct-serif text-[29px] leading-tight tracking-tight text-slate-900">
-                  Login atau Daftar
+                  Log in or Sign up
                   <br />
-                  untuk buka {guestAccessGate === 'profile' ? 'profil' : 'notifikasi dan inbox'}
+                  to access {guestAccessGate === 'profile' ? 'your profile' : 'notifications and inbox'}
                 </DialogTitle>
                 <DialogDescription className="max-w-sm text-[14px] leading-relaxed text-slate-600">
-                  Masuk untuk melihat welcome greeting dari admin, membuka inbox, mengatur profil, dan menerima update interaksi pada kontenmu.
+                  Sign in to view admin greetings, open your inbox, manage your profile, and receive interaction updates.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="mt-6 flex flex-col gap-3">
                 <Button asChild className="h-12 rounded-full bg-slate-950 text-white font-semibold shadow-[0_16px_36px_-20px_rgba(15,23,42,0.55)]">
                   <Link href={guestAccessGate === 'inbox' ? '/login?next=/inbox' : '/login?next=/renungan'}>
-                    Login
+                    Log in
                   </Link>
                 </Button>
                 <Button asChild variant="secondary" className="h-12 rounded-full border border-slate-200 bg-white/88 font-semibold text-slate-800 shadow-none">
                   <Link href={guestAccessGate === 'inbox' ? '/login?intent=signup&next=/inbox' : '/login?intent=signup&next=/renungan'}>
-                    Daftar
+                    Sign up
                   </Link>
                 </Button>
                 <button
@@ -335,7 +335,7 @@ export default function TodayHeader({
                   onClick={() => setGuestAccessGate(null)}
                   className="mt-1 text-center text-[12px] font-medium text-slate-500 transition-colors hover:text-slate-800"
                 >
-                  Nanti saja
+                  Maybe later
                 </button>
               </div>
             </div>

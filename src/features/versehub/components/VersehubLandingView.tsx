@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronLeft } from "lucide-react";
 import { TCTLogo } from "@/components/brand/TCTLogo";
@@ -125,11 +126,21 @@ export function VersehubLandingView({
                                             onClick={onBridgeReturnToRenungan}
                                             className="mt-3 rounded-full border border-indigo-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
                                         >
-                                            Kembali ke Renungan privat
+                                            Back to private Reflection
                                         </button>
                                     ) : null}
                                 </div>
                             ) : null}
+
+                            <div className="mt-7 flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2">
+                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Bible</span>
+                                <Link href="/versehub/en" className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white">
+                                    EN
+                                </Link>
+                                <Link href="/versehub/id" className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
+                                    ID
+                                </Link>
+                            </div>
 
                             <div className="mt-10 flex w-full max-w-[340px] flex-col items-center gap-5">
                                 <button
@@ -137,7 +148,7 @@ export function VersehubLandingView({
                                     onClick={onStartFirstChapter}
                                     className="group flex w-full items-center justify-center gap-3 rounded-full bg-slate-950 px-6 py-[18px] text-[15px] font-bold text-white shadow-premium transition-all hover:bg-slate-900 active:scale-95"
                                 >
-                                     <span>Mulai dari {firstBookLabel} 1</span>
+                                     <span>Start from {firstBookLabel} 1</span>
                                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                  </button>
 
@@ -146,7 +157,7 @@ export function VersehubLandingView({
                                     onClick={onOpenPicker}
                                     className="flex w-full items-center justify-center px-6 py-[2px] text-[14px] font-medium text-[#817462] transition-all hover:text-[#2F261A] active:scale-95"
                                 >
-                                    Eksplor Kitab Lain
+                                    Explore Other Books
                                 </button>
                             </div>
 
@@ -158,7 +169,7 @@ export function VersehubLandingView({
                                         className="inline-flex w-full items-center justify-between rounded-full bg-[#F7F1E5] px-6 py-[16px] transition-all hover:bg-[#FBF6ED] ring-1 ring-[#E5D9C8] shadow-[0_14px_34px_-26px_rgba(47,38,26,0.24)]"
                                     >
                                         <div className="flex flex-col text-left">
-                                            <span className="text-[10px] font-medium uppercase tracking-widest text-[#8A7B68]">Lanjutkan Terakhir</span>
+                                            <span className="text-[10px] font-medium uppercase tracking-widest text-[#8A7B68]">Continue Reading</span>
                                             <span className="text-[14px] font-medium text-[#2F261A]">{continueReadingLabel}</span>
                                         </div>
                                         <ArrowRight className="h-4 w-4 text-[#8A7B68]" />
