@@ -180,7 +180,7 @@ class VerseHubController extends Controller
             $seconds = RateLimiter::availableIn($rateKey);
 
             return response()->json([
-                'message' => 'Terlalu banyak pertanyaan. Coba lagi dalam beberapa menit.',
+                'message' => 'Too many questions. Please try again in a few minutes.',
                 'retry_after_seconds' => $seconds,
             ], 429)->header('Retry-After', (string) $seconds);
         }
@@ -521,9 +521,12 @@ class VerseHubController extends Controller
 
     private function fetchVerseEnglish(string $query): array
     {
-        // Configurable English Bible API endpoint for parity across local/cPanel.
-        $base = rtrim((string) env('ENGLISH_BIBLE_API_BASE_URL', 'https://bible-api.com'), '/');
-        $translation = trim((string) env('ENGLISH_BIBLE_API_TRANSLATION', 'web'));
+        $base = rtrim((string) config('services.english_bible.base_url', 'https://bible-api.com'), '/');
+        $translation = trim((string) config('services.english_bible.translation', 'web'));
+        $apiKey = trim((string) config('services.english_bible.api_key', ''));
+        $authMode = Str::lower(trim((string) config('services.english_bible.auth_mode', 'none')));
+        $apiKeyHeader = trim((string) config('services.english_bible.api_key_header', ''));
+
         $queryString = rawurlencode($query);
         $url = $base.'/'.$queryString;
         if ($translation !== '') {
@@ -533,11 +536,25 @@ class VerseHubController extends Controller
         return Cache::remember(
             'versehub:bible-api:'.md5($url),
             now()->addHours(6),
-            function () use ($url) {
+            function () use ($url, $apiKey, $authMode, $apiKeyHeader) {
                 $http = Http::timeout(12);
                 if (app()->environment('local')) {
                     $http = $http->withoutVerifying();
                 }
+
+                if ($apiKey !== '' && $authMode !== 'none') {
+                    if ($authMode === 'bearer') {
+                        $http = $http->withToken($apiKey);
+                    } else {
+                        $resolvedHeader = $apiKeyHeader !== '' ? $apiKeyHeader : match ($authMode) {
+                            'x-api-key' => 'X-API-Key',
+                            'api-key' => 'Api-Key',
+                            default => $authMode,
+                        };
+                        $http = $http->withHeaders([$resolvedHeader => $apiKey]);
+                    }
+                }
+
                 $resp = $http->get($url);
                 abort_unless($resp->ok(), 502);
                 /** @var array $data */

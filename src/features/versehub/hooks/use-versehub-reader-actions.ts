@@ -143,7 +143,7 @@ export function useVersehubReaderActions({
     }
 
     if (!initialChapterRef) {
-      setChapterReflectionError("Sesi login tidak ditemukan. Silakan masuk kembali.");
+      setChapterReflectionError("Login session not found. Please sign in again.");
       return;
     }
 
@@ -154,13 +154,13 @@ export function useVersehubReaderActions({
     const finalReflection = chapterCompletionReflection.trim();
     const answerText = [
       ...composedBreakReflection,
-      finalReflection ? `Ringkasan akhir:\n${finalReflection}` : null,
+      finalReflection ? `Final summary:\n${finalReflection}` : null,
     ]
       .filter(Boolean)
       .join("\n\n");
 
     if (answerText.trim().length < 3) {
-      setChapterReflectionError("Tuliskan sedikit refleksi dulu sebelum menyimpannya ke arsip.");
+      setChapterReflectionError("Please write a short reflection before saving to your archive.");
       return;
     }
 
@@ -187,7 +187,7 @@ export function useVersehubReaderActions({
 
       setChapterReflectionSaved(true);
     } catch {
-      setChapterReflectionError("Belum bisa menyimpan perenungan pasal ini ke arsip.");
+      setChapterReflectionError("Unable to save this chapter reflection to your archive right now.");
     } finally {
       setIsSavingChapterReflection(false);
     }
@@ -199,7 +199,7 @@ export function useVersehubReaderActions({
       .filter(([, isDone]) => isDone)
       .map(([key]) => reflectionDrafts[key]?.trim())
       .find(Boolean);
-    const insight = baseReflection || fallbackInsight || `Saya baru selesai membaca ${chapterLabel} di VerseHub.`;
+    const insight = baseReflection || fallbackInsight || `I just finished reading ${chapterLabel} in VerseHub.`;
 
     setIsSharingInsight(true);
     setShareInsightError(null);
@@ -208,7 +208,7 @@ export function useVersehubReaderActions({
       const text = `${insight}\n\n${chapterLabel}`;
       navigate(`/community?intent=reflection&text=${encodeURIComponent(text)}`);
     } catch {
-      setShareInsightError("Belum bisa membuka Community sekarang.");
+      setShareInsightError("Unable to open Community right now.");
     } finally {
       setIsSharingInsight(false);
     }
@@ -304,7 +304,7 @@ export function useVersehubReaderActions({
 
     const shareData = {
       title: verseData.reference,
-      text: `${verseData.reference}\n\n"${verseData.text}"\n\nBuka di VerseHub:`,
+      text: `${verseData.reference}\n\n"${verseData.text}"\n\nOpen in VerseHub:`,
       url: shareUrl,
     };
 
@@ -313,7 +313,7 @@ export function useVersehubReaderActions({
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-        alert("Teks ayat disalin!");
+        alert("Verse text copied!");
       }
     } catch {
       // Ignore cancelled shares.
@@ -342,7 +342,7 @@ export function useVersehubReaderActions({
       setIsSharing(false);
     }
 
-    const shareText = `${verseData.reference}\n\n"${verseData.text}"\n\nBuka di VerseHub: ${shareUrl}`;
+    const shareText = `${verseData.reference}\n\n"${verseData.text}"\n\nOpen in VerseHub: ${shareUrl}`;
     const waUrl = buildWhatsAppShareUrl(shareText);
     window.open(waUrl, "_blank", "noopener,noreferrer");
   };

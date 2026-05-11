@@ -97,11 +97,11 @@ type AskMode =
     | 'tradition_context_note';
 
 const ASK_MODE_OPTIONS: Array<{ value: AskMode; label: string }> = [
-    { value: 'explain_simply', label: 'Jelaskan sederhana' },
-    { value: 'practical_meaning', label: 'Makna praktis' },
-    { value: 'prayer_from_verse', label: 'Doa dari ayat' },
-    { value: 'related_verses', label: 'Ayat terkait' },
-    { value: 'tradition_context_note', label: 'Catatan tradisi/konteks' },
+    { value: 'explain_simply', label: 'Simple explanation' },
+    { value: 'practical_meaning', label: 'Practical meaning' },
+    { value: 'prayer_from_verse', label: 'Prayer from this verse' },
+    { value: 'related_verses', label: 'Related verses' },
+    { value: 'tradition_context_note', label: 'Tradition/context note' },
 ];
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -208,7 +208,7 @@ export default function MentorPanel({
         const q = question.trim();
         if (!q || askLoading) return;
         if (!isAuthenticated) {
-            setAskError('Sesi login tidak ditemukan. Silakan login ulang.');
+            setAskError('Login session not found. Please sign in again.');
             setAskState('fatal_error');
             return;
         }
@@ -235,10 +235,10 @@ export default function MentorPanel({
             })
             .catch((status) => {
                 if (status === 429) {
-                    setAskError('Batas pertanyaan tercapai. Coba lagi dalam 1 jam.');
+                    setAskError('Question limit reached. Please try again in 1 hour.');
                     setAskState('retryable_error');
                 } else {
-                    setAskError('Terjadi kesalahan. Silakan coba lagi.');
+                    setAskError('Something went wrong. Please try again.');
                     setAskState('retryable_error');
                 }
             });
@@ -246,10 +246,10 @@ export default function MentorPanel({
 
     // Suggested starter questions
     const starterQuestions = [
-        'Apa makna kontekstual ayat ini?',
-        'Bagaimana ayat ini dipahami antar denominasi?',
-        'Siapa yang Yesus tuju dalam bagian ini?',
-        'Apakah ada penggenapan nubuat di sini?',
+        'What is the contextual meaning of this verse?',
+        'How is this verse understood across denominations?',
+        'Who was Jesus addressing in this passage?',
+        'Is there prophecy fulfillment here?',
     ];
 
     return (
@@ -259,7 +259,7 @@ export default function MentorPanel({
                 type="button"
                 className="absolute inset-0 bg-black/30"
                 onClick={onClose}
-                aria-label="Tutup Scripture Guide"
+                aria-label="Close Scripture Guide"
             />
 
             {/* Panel */}
@@ -277,7 +277,7 @@ export default function MentorPanel({
                             type="button"
                             onClick={onShareWhatsApp}
                             disabled={!onShareWhatsApp || isShareBusy}
-                            aria-label="Bagikan ke WhatsApp"
+                            aria-label="Share to WhatsApp"
                             className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#25D366] transition hover:bg-[#25D366]/10 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isShareBusy ? (
@@ -291,7 +291,7 @@ export default function MentorPanel({
                             onClick={onClose}
                             className="rounded-full px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                         >
-                            Tutup
+                            Close
                         </button>
                     </div>
                 </div>
@@ -305,7 +305,7 @@ export default function MentorPanel({
                         <div className="mt-2 flex items-center gap-2 rounded-lg bg-emerald-50 px-2 py-1.5 ring-1 ring-emerald-100">
                             <span className="text-xs">🌱</span>
                             <p className="text-[10px] font-bold text-emerald-800">
-                                Ayat ini bagian dari: <span className="underline">{activeStudyPaths[0].title}</span>
+                                This verse is part of: <span className="underline">{activeStudyPaths[0].title}</span>
                             </p>
                         </div>
                     )}
@@ -323,7 +323,7 @@ export default function MentorPanel({
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
-                            {t === 'reflect' ? 'Refleksi' : t === 'connect' ? 'Kaitan' : t === 'context' ? 'Konteks' : 'Tanya'}
+                            {t === 'reflect' ? 'Reflect' : t === 'connect' ? 'Connect' : t === 'context' ? 'Context' : 'Ask'}
                         </button>
                     ))}
                 </div>
@@ -337,7 +337,7 @@ export default function MentorPanel({
                                 <div className="space-y-5">
                                     {effectiveReflectionContext ? (
                                         <div className="rounded-xl border border-indigo-100 bg-indigo-50/65 px-3.5 py-3">
-                                            <SectionLabel color="slate">Konteks Awal Renungan</SectionLabel>
+                                            <SectionLabel color="slate">Initial Reflection Context</SectionLabel>
                                             <p className="mt-1.5 text-sm leading-relaxed text-indigo-900/75">
                                                 {effectiveReflectionContext}
                                             </p>
@@ -345,7 +345,7 @@ export default function MentorPanel({
                                     ) : null}
                                     {insights?.reflection_questions?.length ? (
                                         <div>
-                                            <SectionLabel color="amber">Pertanyaan Refleksi</SectionLabel>
+                                            <SectionLabel color="amber">Reflection Questions</SectionLabel>
                                             <ul className="mt-2 space-y-2">
                                                 {insights.reflection_questions.map((q, i) => (
                                                     <li
@@ -361,7 +361,7 @@ export default function MentorPanel({
 
                                     {insights?.theme_connections?.length ? (
                                         <div>
-                                            <SectionLabel color="sky">Hubungan Tema</SectionLabel>
+                                            <SectionLabel color="sky">Theme Connections</SectionLabel>
                                             <ul className="mt-2 space-y-2">
                                                 {insights.theme_connections.map((t, i) => (
                                                     <li
@@ -377,7 +377,7 @@ export default function MentorPanel({
 
                                     {!insights && (
                                         <p className="py-4 text-center text-sm text-slate-400">
-                                            Tidak ada wawasan tersedia untuk ayat ini.
+                                            No insights available for this verse.
                                         </p>
                                     )}
                                 </div>
@@ -392,8 +392,8 @@ export default function MentorPanel({
                                 <div className="space-y-6">
                                     {relationships.length > 0 ? (
                                         <div>
-                                            <SectionLabel color="amber">Alkitab Menilai Alkitab</SectionLabel>
-                                            <p className="mb-2 text-[10px] text-slate-400">Hubungan langsung dengan ayat lain:</p>
+                                            <SectionLabel color="amber">Scripture Interprets Scripture</SectionLabel>
+                                            <p className="mb-2 text-[10px] text-slate-400">Direct links to other verses:</p>
                                             <div className="space-y-2">
                                                 {relationships.map((rel, i) => (
                                                     <a
@@ -405,20 +405,20 @@ export default function MentorPanel({
                                                             <span className="text-sm font-bold text-slate-700">{rel.ref.replace(/-/g, ' ').toUpperCase()}</span>
                                                             <span className="text-[10px] capitalize text-slate-400">{rel.type.replace(/_/g, ' ')}</span>
                                                         </div>
-                                                        <span className="text-xs text-amber-500">Baca →</span>
+                                                        <span className="text-xs text-amber-500">Read →</span>
                                                     </a>
                                                 ))}
                                             </div>
                                         </div>
                                     ) : (
                                         <p className="py-4 text-center text-sm text-slate-400">
-                                            Belum ada hubungan ayat yang tercatat untuk {verseLabel}.
+                                            No recorded verse relationships yet for {verseLabel}.
                                         </p>
                                     )}
 
                                     {themes.length > 0 && (
                                         <div>
-                                            <SectionLabel color="sky">Tema Terkait</SectionLabel>
+                                            <SectionLabel color="sky">Related Themes</SectionLabel>
                                             <div className="mt-2 flex flex-wrap gap-2">
                                                 {themes.map((t) => (
                                                     <span
@@ -443,7 +443,7 @@ export default function MentorPanel({
                                 <div className="space-y-6">
                                     {insights?.historical_context ? (
                                         <div>
-                                            <SectionLabel color="slate">Konteks Historis</SectionLabel>
+                                            <SectionLabel color="slate">Historical Context</SectionLabel>
                                             <p className="mt-2 rounded-none bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-600 ring-1 ring-slate-200">
                                                 {insights.historical_context}
                                             </p>
@@ -452,7 +452,7 @@ export default function MentorPanel({
 
                                     {denominationalContext && (
                                         <div>
-                                            <SectionLabel color="amber">Perspektif Tradisi</SectionLabel>
+                                            <SectionLabel color="amber">Tradition Perspectives</SectionLabel>
                                             <p className="mt-2 text-xs text-slate-500 italic mb-3">"{denominationalContext.summary}"</p>
                                             <div className="space-y-3">
                                                 {denominationalContext.traditions.map((trad, i) => (
@@ -467,7 +467,7 @@ export default function MentorPanel({
 
                                     {!insights?.historical_context && !denominationalContext && (
                                         <p className="py-4 text-center text-sm text-slate-400">
-                                            Konteks teologis tidak tersedia untuk ayat ini.
+                                            Theological context is not available for this verse.
                                         </p>
                                     )}
                                 </div>
@@ -481,13 +481,13 @@ export default function MentorPanel({
                             {!isAuthenticated ? (
                                 <div className="rounded-2xl bg-slate-50 p-4 text-center ring-1 ring-slate-200">
                                     <p className="text-sm text-slate-600">
-                                        Masuk untuk mengajukan pertanyaan tentang ayat ini kepada Scripture Guide.
+                                        Sign in to ask Scripture Guide about this verse.
                                     </p>
                                     <a
                                         href="/login"
                                         className="mt-3 inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white"
                                     >
-                                        Masuk
+                                        Sign In
                                     </a>
                                 </div>
                             ) : (
@@ -496,7 +496,7 @@ export default function MentorPanel({
                                     {!askResult && (
                                         <div>
                                             <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                                                Pertanyaan yang sering ditanyakan:
+                                                Frequently asked questions:
                                             </p>
                                             <div className="flex flex-wrap gap-2">
                                                 {starterQuestions.map((sq) => (
@@ -519,14 +519,14 @@ export default function MentorPanel({
                                             ref={questionInputRef}
                                             value={question}
                                             onChange={(e) => setQuestion(e.target.value)}
-                                            placeholder="Tanyakan sesuatu tentang ayat ini..."
+                                            placeholder="Ask something about this verse..."
                                             rows={3}
                                             maxLength={400}
                                             className="w-full resize-none rounded-2xl bg-slate-50 px-3.5 py-3 text-sm text-slate-800 outline-none ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-amber-300"
                                         />
                                         <div>
                                             <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                                                Mode bantuan
+                                                Assistance mode
                                             </p>
                                             <select
                                                 value={askMode}
@@ -549,7 +549,7 @@ export default function MentorPanel({
                                                 disabled={question.trim().length < 3 || askLoading}
                                                 className="rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40 hover:bg-amber-600"
                                             >
-                                                {askLoading ? 'Memuat...' : 'Tanya ✦'}
+                                                {askLoading ? 'Loading...' : 'Ask ✦'}
                                             </button>
                                         </div>
                                     </form>
@@ -564,13 +564,13 @@ export default function MentorPanel({
                                     {/* Result */}
                                     {askResult && (
                                         <div className="space-y-4">
-                                            <SectionLabel color="amber">Jawaban Scripture Guide</SectionLabel>
+                                            <SectionLabel color="amber">Scripture Guide Answer</SectionLabel>
 
                                             {/* Explicit Biblical Text Layer */}
                                             {askResult.scripture_basis?.anchor_text_excerpt && (
                                                 <div className="space-y-1.5 px-1">
                                                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                        Teks Alkitab (dasar)
+                                                        Scripture Text (source)
                                                     </p>
                                                     <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-700 ring-1 ring-slate-200">
                                                         {askResult.scripture_basis.anchor_text_excerpt}
@@ -592,7 +592,7 @@ export default function MentorPanel({
                                             {/* Interpretation Layer */}
                                             {askResult.interpretation && (
                                                 <div className="space-y-1.5 px-1">
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Interpretasi</p>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Interpretation</p>
                                                     <p className="text-sm italic leading-relaxed text-slate-600">
                                                         {askResult.interpretation}
                                                     </p>
@@ -602,7 +602,7 @@ export default function MentorPanel({
                                             {/* Study Guidance Layer */}
                                             {askResult.study_guidance && (
                                                 <div className="rounded-2xl border border-dashed border-amber-200 bg-white p-4">
-                                                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-600">Panduan Studi</p>
+                                                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-600">Study Guidance</p>
                                                     <p className="text-sm leading-relaxed text-slate-700">
                                                         {askResult.study_guidance}
                                                     </p>
@@ -612,7 +612,7 @@ export default function MentorPanel({
                                             {askResult.related_refs?.length ? (
                                                 <div className="px-1 pt-1">
                                                     <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                        Bacaan terkait:
+                                                        Related readings:
                                                     </p>
                                                     <div className="flex flex-wrap gap-2">
                                                         {askResult.related_refs.map((r) => (
@@ -629,7 +629,7 @@ export default function MentorPanel({
                                             ) : null}
                                             {askResult.session?.turn_count ? (
                                                 <p className="px-1 text-[10px] uppercase tracking-widest text-slate-400">
-                                                    Sesi mentor aktif • {askResult.session.turn_count} interaksi
+                                                    Active mentor session • {askResult.session.turn_count} interactions
                                                 </p>
                                             ) : null}
                                             <button
@@ -637,7 +637,7 @@ export default function MentorPanel({
                                                 className="text-xs text-slate-400 hover:text-slate-600"
                                                 onClick={() => { setAskResult(null); setQuestion(''); }}
                                             >
-                                                Ajukan pertanyaan lain →
+                                                Ask another question →
                                             </button>
                                         </div>
                                     )}
@@ -659,7 +659,7 @@ function LoadingSpinner() {
     return (
         <div className="flex flex-col items-center justify-center gap-3 py-10">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-500" />
-            <p className="text-xs text-slate-400">Memuat wawasan...</p>
+            <p className="text-xs text-slate-400">Loading insights...</p>
         </div>
     );
 }
@@ -674,4 +674,3 @@ function SectionLabel({ children, color }: { children: React.ReactNode; color: '
         <p className={`text-[10px] font-bold uppercase tracking-widest ${cls}`}>{children}</p>
     );
 }
-
