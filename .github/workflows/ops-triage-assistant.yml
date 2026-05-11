@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Build triage report
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const owner = context.repo.owner;
@@ -92,7 +92,7 @@ jobs:
           path: ops-triage-summary.md
 
       - name: Create triage issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
