@@ -5,14 +5,12 @@ use App\Http\Controllers\Api\V1\CommunityAIController;
 use App\Http\Controllers\Api\V1\CommunityComposerAnalyticsController;
 use App\Http\Controllers\Api\V1\CommunityShareAssetController;
 use App\Http\Controllers\Api\V1\FirebaseAuthSyncController;
-use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\TodayApiController;
 use App\Http\Controllers\Api\V1\RenunganPersonalizationController;
 use App\Http\Controllers\Api\V1\RenunganShareController;
 use App\Http\Controllers\Api\V1\RenunganShareAssetController;
 use App\Http\Controllers\Api\V1\ShareAssetReadController;
 use App\Http\Controllers\Api\V1\TodaySessionController;
-use App\Http\Controllers\Api\V1\WaReminderController;
 use App\Http\Controllers\Api\V1\VersehubShareAssetController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChannelController;
@@ -43,22 +41,11 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/register', [\App\Http\Controllers\Api\V1\AuthController::class, 'register']);
     Route::post('/forgot-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [\App\Http\Controllers\Api\V1\AuthController::class, 'resetPassword']);
-    Route::post('/wa/send-reminder', [WaReminderController::class, 'sendReminder']);
-    Route::post('/wa/sync-reminders', [WaReminderController::class, 'syncReminders']);
-    Route::post('/wa/reminder-status', [WaReminderController::class, 'reminderStatus']);
     Route::post('/renungan/personalize', [RenunganPersonalizationController::class, 'personalize']);
     Route::get('/renungan/share/{token}', [RenunganShareController::class, 'show']);
 
     Route::get('/today', [TodayApiController::class, 'show']);
     Route::post('/analytics/funnel', [FunnelAnalyticsController::class, 'store']);
-    Route::post('/onboarding/leads', [OnboardingController::class, 'storeLead']);
-    Route::get('/onboarding/leads', [OnboardingController::class, 'listLeads']);
-    Route::get('/onboarding/leads/{id}', [OnboardingController::class, 'showLead'])->whereNumber('id');
-    Route::post('/onboarding/leads/{id}/retry', [OnboardingController::class, 'retryLead'])->whereNumber('id');
-    Route::get('/onboarding/dashboard/summary', [OnboardingController::class, 'summary']);
-    Route::get('/onboarding/dashboard/kpi-detail', [OnboardingController::class, 'kpiDetail']);
-    Route::post('/onboarding/integrations/test', [OnboardingController::class, 'integrationTest']);
-    Route::get('/onboarding/logs', [OnboardingController::class, 'logs']);
 
     Route::post('/auth/firebase/sync', [FirebaseAuthSyncController::class, 'sync']);
     Route::get('/avatar/{user}', [ProfileController::class, 'avatar']);
@@ -68,18 +55,12 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/community/posts/{memberPost}/comments', [CommunityApiController::class, 'commentsIndex']);
     // Single-post share payload — does NOT load full feed
     Route::get('/community/posts/{memberPost}/share', [CommunityShareAssetController::class, 'show']);
-    // Share asset prepare — called on user intent, NEVER by crawlers.
-    // Auth is enforced first, then Laravel named limiter becomes final enforcement.
-    Route::middleware(['auth:sanctum', 'throttle:share-prepare'])->group(function (): void {
-        Route::post('/community/posts/{memberPost}/share-assets/prepare', [CommunityShareAssetController::class, 'prepare'])
-            ->name('community.share.prepare');
-        Route::post('/versehub/{lang}/{slug}/share-assets/prepare', [VersehubShareAssetController::class, 'prepare'])
-            ->whereIn('lang', ['id', 'en'])
-            ->where('slug', '[a-z0-9]+(?:[-_.][a-z0-9]+)*')
-            ->name('versehub.share.prepare');
-        Route::post('/renungan/share/{token}/prepare', [RenunganShareAssetController::class, 'prepare'])
-            ->name('renungan.share.prepare');
-    });
+    // Share asset prepare — called on user intent, NEVER by crawlers
+    Route::post('/community/posts/{memberPost}/share-assets/prepare', [CommunityShareAssetController::class, 'prepare']);
+    Route::post('/versehub/{lang}/{slug}/share-assets/prepare', [VersehubShareAssetController::class, 'prepare'])
+        ->whereIn('lang', ['id', 'en'])
+        ->where('slug', '[a-z0-9]+(?:[-_.][a-z0-9]+)*');
+    Route::post('/renungan/share/{token}/prepare', [RenunganShareAssetController::class, 'prepare']);
     // Read-only snapshot for OG routes — crawler-safe, no AI calls
     Route::get('/share-assets/{surface}/{subject}/snapshot', [ShareAssetReadController::class, 'snapshot'])
         ->where('subject', '.*');

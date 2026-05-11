@@ -87,7 +87,7 @@ export function VerseHubFeaturedCard({
         // ignore and fallback below
       }
     }
-    return ref ? `/versehub/en?ref=${encodeURIComponent(ref)}` : "/versehub/en";
+    return ref ? `/versehub/id?ref=${encodeURIComponent(ref)}` : "/versehub/id";
   };
 
   const verseHref = toStaticVersehubHref(verse?.href, verse?.ref);
@@ -168,7 +168,7 @@ export function VerseHubFeaturedCard({
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="space-y-1 mb-2">
         <a
-          href="/versehub/en"
+          href="/versehub/id"
           className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40 transition hover:text-foreground/70"
           aria-label="Buka VerseHub"
         >

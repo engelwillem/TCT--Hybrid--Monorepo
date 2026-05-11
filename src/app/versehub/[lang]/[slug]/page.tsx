@@ -12,7 +12,7 @@ export default async function UnifiedVerseHubPage({
 }: {
     params: Promise<{ lang: string; slug: string }>;
 }) {
-    const { lang = "en", slug = "" } = await params;
+    const { lang = "id", slug = "" } = await params;
     const mode = isChapterSlug(slug) ? "chapter" : "verse";
 
     return (

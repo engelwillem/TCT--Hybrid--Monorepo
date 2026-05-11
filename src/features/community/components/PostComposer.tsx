@@ -167,7 +167,7 @@ export function PostComposer({
         </div>
       ) : null}
       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hidden sm:inline">
-        {isSaving ? "Saving" : lastSavedAt ? `Saved ${lastSavedLabel}` : null}
+        {isSaving ? "Menyimpan" : lastSavedAt ? `Saved ${lastSavedLabel}` : null}
       </span>
     </div>
   );
@@ -228,7 +228,7 @@ export function PostComposer({
 
       const response = await CommunityService.aiAssist(modeMap[action], seedText, contextMap[action]);
       if (!response.output_text) {
-        setAiAssistError("AI has no suggestion yet. Please try again shortly.");
+        setAiAssistError("AI belum memberi saran. Coba lagi sebentar.");
         return;
       }
       textDomain.updateText(response.output_text);
@@ -237,7 +237,7 @@ export function PostComposer({
       }
       setAiAssistSuggestions(response.suggestions.slice(0, 2));
     } catch {
-      setAiAssistError("AI assist is unavailable right now. You can still continue posting.");
+      setAiAssistError("Bantuan AI belum tersedia sekarang. Kamu tetap bisa lanjut posting.");
     } finally {
       setIsAiAssisting(false);
     }
@@ -478,9 +478,9 @@ export function PostComposer({
         <ComposerShell isExpanded={lifecycleDomain.isExpanded} className="w-full flex-1">
           <div className="flex flex-col">
             <div className="flex items-start justify-between gap-3 px-6 pb-2 pt-6">
-                <h2 className="tct-serif text-[18px] leading-tight tracking-tight text-foreground/80">
-                Share Space
-                </h2>
+              <h2 className="tct-serif text-[18px] leading-tight tracking-tight text-foreground/80">
+                Ruang Berbagi
+              </h2>
               {lifecycleDomain.isExpanded ? renderActionTools() : null}
             </div>
 
@@ -588,8 +588,8 @@ export function PostComposer({
                         <History className="h-3 w-3" />
                       </div>
                       <div>
-                        <p className="text-[11px] font-bold text-sky-900">Restored previous draft</p>
-                        <p className="text-[10px] font-medium text-sky-700/70">Draft from {draftAgeLabel}</p>
+                        <p className="text-[11px] font-bold text-sky-900">Melanjutkan draf sebelumnya</p>
+                        <p className="text-[10px] font-medium text-sky-700/70">Draf dari {draftAgeLabel}</p>
                       </div>
                     </div>
                     <button
@@ -597,7 +597,7 @@ export function PostComposer({
                       onClick={() => resetComposer({ clearDraft: true })}
                       className="rounded-lg bg-sky-100/50 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-sky-700 transition-colors hover:bg-sky-200/50 hover:text-sky-900"
                     >
-                      Remove
+                      Hapus
                     </button>
                   </div>
                 ) : null}
@@ -618,7 +618,7 @@ export function PostComposer({
                           disabled={isAiAssisting || textDomain.text.trim().length < 3}
                           className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
                         >
-                          Refine text
+                          Perhalus tulisan
                         </button>
                       ) : null}
                       {visibleAiActions.includes("shorten") ? (
@@ -628,7 +628,7 @@ export function PostComposer({
                           disabled={isAiAssisting || textDomain.text.trim().length < 3}
                           className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
                         >
-                          Shorten
+                          Ringkas
                         </button>
                       ) : null}
                       {visibleAiActions.includes("make_prayer_request") ? (
@@ -638,7 +638,7 @@ export function PostComposer({
                           disabled={isAiAssisting || textDomain.text.trim().length < 3}
                           className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
                         >
-                          Make prayer request
+                          Jadi prayer request
                         </button>
                       ) : null}
                       {visibleAiActions.includes("gentler_tone") ? (
@@ -648,21 +648,21 @@ export function PostComposer({
                           disabled={isAiAssisting || textDomain.text.trim().length < 3}
                           className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
                         >
-                          Softer tone
+                          Nada lebih lembut
                         </button>
                       ) : null}
                     </div>
                     <AIToneNotice
                       tone="assistive"
                       className="mt-2"
-                      text={isAiAssisting ? "AI is refining your draft..." : "AI only suggests edits. You keep your original voice."}
+                      text={isAiAssisting ? "AI sedang merapikan draft..." : "AI hanya memberi saran. Kamu tetap pegang suara utamamu."}
                     />
                     {aiAssistError ? (
                       <p className="mt-2 text-[11px] font-medium text-rose-600">{aiAssistError}</p>
                     ) : null}
                     {aiAssistSuggestions.length > 0 ? (
                       <p className="mt-2 text-[11px] text-slate-500">
-                        Suggestions: {aiAssistSuggestions.join(" • ")}
+                        Saran: {aiAssistSuggestions.join(" • ")}
                       </p>
                     ) : null}
                   </div>
@@ -679,7 +679,7 @@ export function PostComposer({
                       disabled={!textDomain.text.trim().length || isSaving}
                       className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-50"
                     >
-                      Save draft
+                      Simpan draf
                     </button>
                   }
                   onCancel={() => {
@@ -708,7 +708,7 @@ export function PostComposer({
         >
           <DialogHeader className="px-5 py-4 text-left sm:px-6 sm:py-5 border-b border-border/20">
             <DialogTitle className="text-[17px] font-black tracking-tight text-foreground sm:text-[19px]">
-              Image Editor
+              Editor Gambar
             </DialogTitle>
           </DialogHeader>
           <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-6">
@@ -752,7 +752,7 @@ export function PostComposer({
                   <div className="flex items-center justify-between px-2">
                     <button
                       type="button"
-                      aria-label="Set image as cover"
+                      aria-label="Jadikan gambar sebagai cover"
                       onClick={() => {
                         const existingId = cropDomain.activeCropItem?.existingId;
                         if (!existingId) return;
@@ -770,13 +770,13 @@ export function PostComposer({
                       )}
                     >
                       <Star className="h-3 w-3" />
-                      <span className="text-[10px] font-bold">Set as Cover</span>
+                      <span className="text-[10px] font-bold">Jadikan Cover</span>
                     </button>
 
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        aria-label="Move image left"
+                        aria-label="Geser gambar ke kiri"
                         onClick={() => {
                           const existingId = cropDomain.activeCropItem?.existingId;
                           if (!existingId) return;
@@ -793,7 +793,7 @@ export function PostComposer({
                       </button>
                       <button
                         type="button"
-                        aria-label="Move image right"
+                        aria-label="Geser gambar ke kanan"
                         onClick={() => {
                           const existingId = cropDomain.activeCropItem?.existingId;
                           if (!existingId) return;
@@ -864,14 +864,14 @@ export function PostComposer({
           </div>
           <DialogFooter className="border-t border-border/20 px-5 pb-5 pt-4 sm:px-6">
             <Button variant="ghost" onClick={closeCropDialogWithoutSave} disabled={cropDomain.cropBusy} className="h-10 rounded-full text-[12px] font-bold">
-              Cancel
+              Batal
             </Button>
             <Button
               onClick={() => void handleCropSave()}
               disabled={cropDomain.cropBusy || !cropDomain.activeCropItem}
               className="h-10 rounded-full px-8 text-[12px] font-black tracking-wider shadow-sm"
             >
-              {cropDomain.cropBusy ? "Processing..." : "Done"}
+              {cropDomain.cropBusy ? "Memproses..." : "Selesai"}
             </Button>
           </DialogFooter>
         </DialogContent>

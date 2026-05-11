@@ -16,8 +16,6 @@ type NavItem = {
     href?: string;
 };
 
-const ALLOWED_NAV_IDS = new Set(["today", "community"]);
-
 type DesktopSidebarNavProps = {
     activeId?: string;
     navItems: NavItem[];
@@ -34,7 +32,9 @@ type DesktopSidebarNavProps = {
 
 const ROUTE_MAP: Record<string, string> = {
     today: '/renungan',
+    versehub: '/versehub/id',
     community: '/community',
+    profile: '/profile',
 };
 
 function extractKnownAvatarPath(pathname: string): string | null {
@@ -81,25 +81,6 @@ function normalizeSidebarAvatarUrl(value?: string | null): string | null {
     }
 }
 
-function buildSidebarAvatarCandidates(value?: string | null): string[] {
-    const normalized = normalizeSidebarAvatarUrl(value);
-    if (!normalized) return [];
-
-    // Keep original absolute URL first so production-hosted media still renders
-    // when local storage is not mirrored yet.
-    const raw = String(value || '').trim();
-    if (!raw) return [normalized];
-    if (raw.startsWith('blob:') || raw.startsWith('data:image/')) return [raw];
-
-    try {
-        const parsed = new URL(raw);
-        const set = new Set<string>([parsed.toString(), normalized]);
-        return Array.from(set);
-    } catch {
-        return [normalized];
-    }
-}
-
 export default function DesktopSidebarNav({
     activeId,
     navItems,
@@ -111,26 +92,22 @@ export default function DesktopSidebarNav({
     isGuest = false,
     className,
 }: DesktopSidebarNavProps) {
-    const visibleNavItems = navItems.filter((item) => ALLOWED_NAV_IDS.has(item.id));
     const resolvedName = userName?.trim() || 'Guest';
     const resolvedInitials = (initials?.trim() || (isGuest ? 'G' : resolvedName.slice(0, 1) || 'U')).toUpperCase();
-    const resolvedAvatarCandidates = useMemo(
-        () => (isGuest ? [] : buildSidebarAvatarCandidates(avatarUrl)),
+    const resolvedAvatarUrl = useMemo(
+        () => (isGuest ? null : normalizeSidebarAvatarUrl(avatarUrl)),
         [avatarUrl, isGuest]
     );
-    const [avatarCandidateIndex, setAvatarCandidateIndex] = useState(0);
     const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
-    const activeAvatarUrl = resolvedAvatarCandidates[avatarCandidateIndex] ?? null;
     const avatarPresentation = useCurrentUserAvatarStyle(
-        activeAvatarUrl,
+        resolvedAvatarUrl,
         { name: resolvedName },
         32,
     );
 
     useEffect(() => {
         setAvatarLoadFailed(false);
-        setAvatarCandidateIndex(0);
-    }, [avatarUrl, isGuest]);
+    }, [resolvedAvatarUrl]);
 
     return (
         <aside
@@ -151,7 +128,7 @@ export default function DesktopSidebarNav({
             </div>
 
             <nav className="space-y-0.5">
-                {visibleNavItems.map((item) => {
+                {navItems.map((item) => {
                     const isActive = item.id === activeId;
                     const href = item.href || ROUTE_MAP[item.id] || '/';
 
@@ -184,19 +161,13 @@ export default function DesktopSidebarNav({
             <div className="mt-4 border-t border-black/[0.04] pt-4">
                 <div className="flex items-center gap-3 px-2">
                     <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#f8fbff] text-[12px] font-semibold text-foreground/70 ring-1 ring-sky-100">
-                        {activeAvatarUrl && !avatarLoadFailed ? (
+                        {resolvedAvatarUrl && !avatarLoadFailed ? (
                             <img
-                                src={activeAvatarUrl}
+                                src={resolvedAvatarUrl}
                                 alt={resolvedName}
                                 className={cn('h-full w-full object-cover', avatarPresentation.className)}
                                 style={avatarPresentation.style}
-                                onError={() => {
-                                    if (avatarCandidateIndex < resolvedAvatarCandidates.length - 1) {
-                                        setAvatarCandidateIndex((prev) => prev + 1);
-                                        return;
-                                    }
-                                    setAvatarLoadFailed(true);
-                                }}
+                                onError={() => setAvatarLoadFailed(true)}
                             />
                         ) : (
                             resolvedInitials

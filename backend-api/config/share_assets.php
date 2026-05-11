@@ -51,27 +51,4 @@ return [
     'ai_text_timeout_seconds'  => (int) env('SHARE_ASSETS_AI_TEXT_TIMEOUT', 12),
     'ai_image_timeout_seconds' => (int) env('SHARE_ASSETS_AI_IMAGE_TIMEOUT', 30),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Rate Limiting (Prepare Endpoints)
-    |--------------------------------------------------------------------------
-    | Final enforcement lives in Laravel (deterministic on shared cache store).
-    | Edge throttling can still exist as a soft shield, but is not the source
-    | of truth for abuse protection.
-    */
-    'rate_limit' => [
-        'community' => [
-            'per_minute' => (int) env('SHARE_ASSETS_RATE_LIMIT_COMMUNITY_PER_MINUTE', 8),
-            'burst_per_10_seconds' => (int) env('SHARE_ASSETS_RATE_LIMIT_COMMUNITY_BURST_PER_10S', 3),
-        ],
-        'renungan' => [
-            'per_minute' => (int) env('SHARE_ASSETS_RATE_LIMIT_RENUNGAN_PER_MINUTE', 6),
-            'burst_per_10_seconds' => (int) env('SHARE_ASSETS_RATE_LIMIT_RENUNGAN_BURST_PER_10S', 2),
-        ],
-        'versehub' => [
-            'per_minute' => (int) env('SHARE_ASSETS_RATE_LIMIT_VERSEHUB_PER_MINUTE', 12),
-            'burst_per_10_seconds' => (int) env('SHARE_ASSETS_RATE_LIMIT_VERSEHUB_BURST_PER_10S', 4),
-        ],
-    ],
-
 ];

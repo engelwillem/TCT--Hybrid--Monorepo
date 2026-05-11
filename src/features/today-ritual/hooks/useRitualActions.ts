@@ -48,7 +48,7 @@ export function useRitualActions({
 }: UseRitualActionsParams) {
   const router = useRouter();
 
-  const requireMemberAction = useCallback(() => {
+  const ensureAuthenticatedRitual = useCallback(() => {
     if (isAuthRestoring) return false;
     if (!isAuthenticated) {
       router.push("/login?next=/renungan");
@@ -58,12 +58,8 @@ export function useRitualActions({
   }, [isAuthRestoring, isAuthenticated, router]);
 
   const handleStartRenungan = useCallback(() => {
-    void trackFunnelEvent("renungan_started", {
-      surface: "renungan",
-      meta: {
-        source: "start_cta",
-      },
-    });
+    if (!ensureAuthenticatedRitual()) return;
+
     void trackFunnelEvent("renungan_start", {
       surface: "renungan",
       meta: {
@@ -71,9 +67,11 @@ export function useRitualActions({
       },
     });
     setHasStarted(true);
-  }, [setHasStarted]);
+  }, [ensureAuthenticatedRitual, setHasStarted]);
 
   const handleCompletePrayer = useCallback(() => {
+    if (!ensureAuthenticatedRitual()) return;
+
     void trackFunnelEvent("renungan_complete", {
       surface: "renungan",
       meta: {
@@ -82,78 +80,24 @@ export function useRitualActions({
       },
     });
     completePrayer();
-  }, [completePrayer, reflectionText]);
+  }, [completePrayer, ensureAuthenticatedRitual, reflectionText]);
 
   const handleContinueToVersehub = useCallback(() => {
-    void trackFunnelEvent("renungan_deepening_opened", {
-      surface: "renungan",
-      meta: {
-        source: "ritual_completion_cta",
-        verse_ref: personalRenungan.verseReference,
-      },
-    });
-  }, [personalRenungan.verseReference]);
-
-  const handleReadFullChapter = useCallback(() => {
-    const targetHref = buildVersehubClarifyUrl({
-      verseRef: personalRenungan.verseReference,
-      source: "renungan",
-      entryState,
-      initialMentorContext: reflectionText,
-    });
-    void trackFunnelEvent("renungan_deepening_completed", {
-      surface: "renungan",
-      meta: {
-        completion_type: "read_full_chapter",
-        verse_ref: personalRenungan.verseReference,
-      },
-    });
-    void trackFunnelEvent("renungan_read_full_chapter", {
+    void trackFunnelEvent("continue_to_versehub", {
       surface: "renungan",
       meta: {
         target: "/versehub/id?source=renungan&intent=clarify",
-        mode: "reader_handoff",
-        verse_ref: personalRenungan.verseReference,
+        mode: "landing",
       },
     });
-    router.prefetch(targetHref);
-    window.requestAnimationFrame(() => {
-      router.push(targetHref, { scroll: false });
-    });
-  }, [entryState, personalRenungan.verseReference, reflectionText, router]);
-
-  const handleOpenRelatedVerse = useCallback(
-    (verseRef: string) => {
-      const normalizedRef = verseRef.trim();
-      if (!normalizedRef) return;
-      const targetHref = buildVersehubClarifyUrl({
-        verseRef: normalizedRef,
+    router.push(
+      buildVersehubClarifyUrl({
+        verseRef: personalRenungan.verseReference,
         source: "renungan",
         entryState,
-        initialMentorContext: reflectionText,
-      });
-      void trackFunnelEvent("renungan_related_verse_opened", {
-        surface: "renungan",
-        meta: {
-          verse_ref: normalizedRef,
-          source_verse_ref: personalRenungan.verseReference,
-        },
-      });
-      void trackFunnelEvent("renungan_deepening_completed", {
-        surface: "renungan",
-        meta: {
-          completion_type: "open_related_verse",
-          verse_ref: normalizedRef,
-          source_verse_ref: personalRenungan.verseReference,
-        },
-      });
-      router.prefetch(targetHref);
-      window.requestAnimationFrame(() => {
-        router.push(targetHref, { scroll: false });
-      });
-    },
-    [entryState, personalRenungan.verseReference, reflectionText, router],
-  );
+      }),
+    );
+  }, [entryState, personalRenungan.verseReference, router]);
 
   const buildMentorOutcomeMeta = useCallback(
     () => ({
@@ -189,12 +133,10 @@ export function useRitualActions({
   }, [buildMentorOutcomeMeta, isFollowUpOpen, personalRenungan.followUpQuestion, setIsFollowUpOpen]);
 
   return {
-    requireMemberAction,
+    ensureAuthenticatedRitual,
     handleStartRenungan,
     handleCompletePrayer,
     handleContinueToVersehub,
-    handleReadFullChapter,
-    handleOpenRelatedVerse,
     handleMentorHelpful,
     handleMentorNotHelpful,
     handleOpenFollowUp,

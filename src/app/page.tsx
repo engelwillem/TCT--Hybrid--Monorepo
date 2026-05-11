@@ -1,89 +1,111 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { LandingAuthLinks } from '@/app/LandingAuthLinks';
+import { TrackedLink } from '@/components/analytics/TrackedLink';
+import { TCTLogo } from '@/components/brand/TCTLogo';
+import LandingAnimationShell from '@/app/LandingAnimationShell';
 
 export const metadata: Metadata = {
-  title: 'AI Automation Portfolio | Financial Advisory Systems',
-  description:
-    'Portfolio website for AI automation, workflow integration, dashboards, and financial advisory operations systems.',
+  title: 'Renungan Harian Kristen untuk Menerima Firman dan Berdoa',
+  description: 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman The Chosen Talks.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'The Chosen Talks — Renungan Harian Kristen',
+    description: 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman setiap hari.',
+    images: [
+      {
+        url: '/api/og/home',
+        width: 1200,
+        height: 630,
+        alt: 'The Chosen Talks — Renungan Harian',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'The Chosen Talks — Renungan Harian Kristen',
+    description: 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman setiap hari.',
+    images: ['/api/og/home'],
+  },
 };
-
-const cases = [
-  {
-    label: 'Case 01',
-    title: 'Client Onboarding Automation',
-    body: 'Lead intake, fact-find collection, AI client summaries, advisor prep notes, CRM updates, and follow-up tasks.',
-    href: '/portfolio/ai-client-onboarding',
-  },
-  {
-    label: 'Case 02',
-    title: 'Operations & KPI Dashboard',
-    body: 'Executive visibility for automation runs, queue status, failed jobs, integration health, SLA risk, and retries.',
-    href: '/portfolio/operations-dashboard',
-  },
-  {
-    label: 'Case 03',
-    title: 'AI Workflow Operating System',
-    body: 'Structured AI layer for prompt workflows, process mapping, SOPs, compliance checks, and reusable automation playbooks.',
-    href: '/portfolio/ai-knowledge-os',
-  },
-] as const;
-
-const signals = [
-  'Zapier / Make / n8n style workflow design',
-  'OpenAI workflow orchestration',
-  'APIs, webhooks, CRM and calendar integrations',
-  'Dashboards for leadership visibility',
-  'Secure, documented, production-style systems',
-  'Financial advisory automation use cases',
-] as const;
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100 md:px-10 md:py-16">
-      <section className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-cyan-400/20 bg-slate-900/80 p-7 shadow-2xl shadow-cyan-950/30 md:p-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">AI Automation Specialist Portfolio</p>
-          <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-tight md:text-6xl">
-            Automation systems for financial advisory, operations, and executive visibility.
+    <div className="relative min-h-screen bg-[#FAFCFF] flex flex-col items-center justify-center px-6 font-sans selection:bg-black/10">
+      {/* Subtle dot grid */}
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.04] mix-blend-multiply"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 1px 1px, rgba(15,23,42,0.12) 1px, transparent 0)',
+          backgroundSize: '18px 18px',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Large background watermark T. */}
+      <div
+        className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden"
+        aria-hidden="true"
+      >
+        <span
+          className="select-none text-[40vw] font-black text-foreground/[0.018] leading-none tracking-tighter"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
+          T.
+        </span>
+      </div>
+
+      <LandingAnimationShell>
+        <main className="relative z-10 flex w-full max-w-[340px] flex-col items-center py-12 text-center">
+          {/* Logo block — animates first */}
+          <div
+            data-animate="logo"
+            className="mb-16 flex flex-col items-center pt-4"
+          >
+            <TCTLogo className="mb-5 h-12 w-12 drop-shadow-sm opacity-95" />
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/35">
+              The Chosen Talks
+            </p>
+          </div>
+
+          {/* Headline — animates second */}
+          <h1
+            data-animate="headline"
+            className="tct-serif mb-5 text-[40px] leading-[1.1] tracking-tight text-foreground/90"
+          >
+            Renungan harian
+            <br />
+            sebelum memulai hari.
           </h1>
-          <p className="mt-6 max-w-3xl text-base leading-8 text-slate-300 md:text-lg">
-            This portfolio is built to match senior AI automation roles: workflow mapping, AI-assisted operations,
-            API integrations, dashboards, queue visibility, and reliable documentation for real business processes.
+
+          {/* Tagline — animates third */}
+          <p
+            data-animate="tagline"
+            className="mb-14 text-[16px] font-medium italic leading-[1.6] text-foreground/55"
+          >
+            Terima Firman, Renungkan ayat harian,
+            <br />
+            Berdoa &amp; Diskusi Iman Dengan Komunitas.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200" href="/aios">
-              Open Live Demo Dashboard
-            </Link>
-            <Link className="rounded-xl border border-slate-600 px-5 py-3 text-sm font-bold text-slate-100 hover:bg-slate-800" href="/readme">
-              View Technical README
-            </Link>
-          </div>
-        </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {cases.map((item) => (
-            <article key={item.title} className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{item.label}</p>
-              <h2 className="mt-3 text-2xl font-semibold">{item.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300">{item.body}</p>
-              <Link className="mt-5 inline-flex rounded-lg border border-cyan-400/40 px-4 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-400/10" href={item.href}>
-                View case study
-              </Link>
-            </article>
-          ))}
-        </div>
+          {/* CTA — animates fourth */}
+          <div data-animate="cta" className="w-full flex flex-col items-center gap-4">
+            <TrackedLink
+              href="/renungan"
+              eventName="landing_cta_click"
+              surface="landing"
+              meta={{ target: '/renungan' }}
+              className="w-full max-w-[300px] rounded-full bg-black py-[17px] text-[16px] font-bold tracking-tight text-white shadow-2xl shadow-black/20 transition-all hover:bg-black/90 active:scale-[0.98]"
+            >
+              Mulai Renungan Hari Ini
+            </TrackedLink>
 
-        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h2 className="text-2xl font-semibold">Role fit checklist</h2>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {signals.map((signal) => (
-              <div key={signal} className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-300">
-                {signal}
-              </div>
-            ))}
+            <LandingAuthLinks />
           </div>
-        </section>
-      </section>
-    </main>
+        </main>
+      </LandingAnimationShell>
+    </div>
   );
 }

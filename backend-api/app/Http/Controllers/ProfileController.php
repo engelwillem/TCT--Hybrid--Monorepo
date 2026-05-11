@@ -133,14 +133,12 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if ($request->expectsJson()) {
-            $request->user()?->currentAccessToken()?->delete();
-        } else {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
+        Auth::logout();
+
         $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
             'ok' => true,

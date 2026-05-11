@@ -18,7 +18,7 @@ until php /workspace/docker/backend/wait-for-db.php >/dev/null 2>&1; do
   sleep 3
 done
 
-if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
   php artisan migrate --force
 fi
 

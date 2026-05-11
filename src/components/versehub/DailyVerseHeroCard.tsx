@@ -21,7 +21,7 @@ export default function DailyVerseHeroCard({
     const heroRefHref = useMemo(() => {
         const raw = String(verse?.cta_href || '').trim();
         if (!raw) {
-            return verse?.ref ? `/versehub/en?ref=${encodeURIComponent(verse.ref)}` : '/versehub/en';
+            return verse?.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
         }
         const chapterFixed = raw.replace('/chapter/', '/');
         const withOrigin = chapterFixed.startsWith('http')
@@ -41,9 +41,9 @@ export default function DailyVerseHeroCard({
             return chapterFixed;
         }
     }, [verse?.cta_href, verse?.ref]);
-    const heroRefLabel = verse?.reference ?? 'Today’s Verse';
-    const heroQuote = verse?.quote?.trim() || 'Today’s scripture is being prepared.';
-    const heroCtaLabel = verse?.cta_label?.trim() || 'Read the Bible';
+    const heroRefLabel = verse?.reference ?? 'Ayat Hari Ini';
+    const heroQuote = verse?.quote?.trim() || 'Firman hari ini sedang disiapkan.';
+    const heroCtaLabel = verse?.cta_label?.trim() || 'Baca Alkitab';
     
     // Safety check for window.location in SSR
     const [origin, setOrigin] = useState('');
@@ -53,8 +53,8 @@ export default function DailyVerseHeroCard({
     
     const canonicalUrl = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${origin}${heroRefHref}`;
     const quoteHeadline = heroQuote;
-    const quoteSubline = 'Stay strong, keep hope alive, and keep walking with God.';
-    const refLine = `${heroRefLabel} • Today’s verse`;
+    const quoteSubline = 'Tetap kuat, tetap berharap, dan terus berjalan bersama Tuhan.';
+    const refLine = `${heroRefLabel} • Ayat hari ini`;
 
     const reactionKey = useMemo(
         () => `tct:today:welcome-verse:${verse?.ref ?? 'none'}`,
@@ -287,7 +287,7 @@ export default function DailyVerseHeroCard({
                         `}
                         style={revealStyle(0)}
                     >
-                        <CardTitle className="inline-flex items-center text-xs font-semibold text-foreground"><Book className="h-4 w-4 mr-1.5 text-brand" /> My Strength Verse</CardTitle>
+                        <CardTitle className="inline-flex items-center text-xs font-semibold text-foreground"><Book className="h-4 w-4 mr-1.5 text-brand" /> Ayat Kekuatanku</CardTitle>
                     </div>
                 </div>
             </CardHeader>
@@ -334,7 +334,7 @@ export default function DailyVerseHeroCard({
                 </div>
 
                 <div className={`mt-4 flex items-center justify-between md:mt-5 ${revealClass(6)}`} style={revealStyle(6)}>
-                    <p className="tct-kicker">Share or save</p>
+                    <p className="tct-kicker">Bagikan atau simpan</p>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"

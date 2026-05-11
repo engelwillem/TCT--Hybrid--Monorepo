@@ -1,5 +1,4 @@
 export type ContentDiagnosticOwner = 'backend' | 'content' | 'frontend';
-export type TodaySessionSourceStatus = 'external_live' | 'cache_fresh' | 'cache_stale' | 'fallback_only';
 
 export type ContentDiagnosticCategory =
   | 'source_reliability'
@@ -19,7 +18,7 @@ export interface ContentFieldIssue {
 }
 
 export interface ContentDiagnostics {
-  sourceStatus: TodaySessionSourceStatus;
+  sourceStatus: 'external' | 'fallback_only';
   contractVersionExpected: string;
   contractVersionReceived: string | null;
   missingRequiredFields: string[];

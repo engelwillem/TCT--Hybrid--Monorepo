@@ -87,7 +87,7 @@ export default function VerseHubFeaturedCard({
                 // ignore and fallback below
             }
         }
-        return verse?.ref ? `/versehub/en?ref=${encodeURIComponent(verse.ref)}` : '/versehub/en';
+        return verse?.ref ? `/versehub/id?ref=${encodeURIComponent(verse.ref)}` : '/versehub/id';
     }, [verse?.href, verse?.ref]);
     const reactionKey = useMemo(
         () => (verse?.ref ? `tct:versehub:featured:reactions:${verse.ref}` : 'tct:versehub:featured:reactions:default'),
@@ -159,22 +159,22 @@ export default function VerseHubFeaturedCard({
         <div className="space-y-4">
             <div className="space-y-3">
                 <a
-                    href="/versehub/en"
+                    href="/versehub/id"
                     className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1 text-xs text-muted-foreground shadow-soft ring-1 ring-black/5 transition hover:text-foreground dark:ring-white/10"
-                    aria-label="Open VerseHub"
+                    aria-label="Buka VerseHub"
                 >
                     <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />
                     VerseHub
                 </a>
 
-                <a href={verseHref} className="mt-1 block max-w-full" aria-label={`Open verse ${verse.reference}`}>
+                <a href={verseHref} className="mt-1 block max-w-full" aria-label={`Buka ayat ${verse.reference}`}>
                     <h2 className="text-xl md:text-2xl font-black hover:underline">{verse.reference}</h2>
                 </a>
             </div>
 
             {/* Decorative Verse Image Thumbnail Fallback */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500/10 via-brand/5 to-rose-500/10 p-5 shadow-soft ring-1 ring-black/5 dark:ring-white/10 backdrop-blur">
-                <a href={verseHref} className="block overflow-hidden rounded-2xl ring-1 ring-white/10 relative" aria-label={`Open verse OG ${verse.reference}`}>
+                <a href={verseHref} className="block overflow-hidden rounded-2xl ring-1 ring-white/10 relative" aria-label={`Buka OG ayat ${verse.reference}`}>
                     <div className="aspect-[1200/630] w-full bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center p-8 text-center relative z-0">
                         <span className="text-3xl font-bold opacity-30 tracking-widest uppercase">{verse.reference}</span>
                         <img
@@ -193,7 +193,7 @@ export default function VerseHubFeaturedCard({
 
             <Card className="rounded-3xl bg-surface shadow-card ring-1 ring-black/5 dark:ring-white/10 backdrop-blur">
                 <CardContent className="p-7 md:p-9">
-                    <a href={verseHref} className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50" aria-label={`Open verse ${verse.reference}`}>
+                    <a href={verseHref} className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50" aria-label={`Buka ayat ${verse.reference}`}>
                         <VerseQuoteRail text={verse.text} />
                     </a>
 
@@ -205,7 +205,7 @@ export default function VerseHubFeaturedCard({
                                 onClick={() => window.location.assign(verseHref)}
                                 className="tct-pressable inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 font-semibold text-brand"
                             >
-                                Read today’s Bible verse
+                                Baca Alkitab hari ini
                             </button>
 
                             <ActionBar

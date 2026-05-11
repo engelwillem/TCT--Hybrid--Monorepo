@@ -40,14 +40,4 @@ return [
         'web_api_key' => env('FIREBASE_WEB_API_KEY'),
     ],
 
-    'english_bible' => [
-        'base_url' => env('ENGLISH_BIBLE_API_BASE_URL', 'https://bible-api.com'),
-        'translation' => env('ENGLISH_BIBLE_API_TRANSLATION', 'web'),
-        'api_key' => env('ENGLISH_BIBLE_API_KEY'),
-        // Common options: bearer, x-api-key, api-key, none
-        'auth_mode' => env('ENGLISH_BIBLE_API_AUTH_MODE', 'none'),
-        // Optional custom header if provider needs a specific key name.
-        'api_key_header' => env('ENGLISH_BIBLE_API_KEY_HEADER', ''),
-    ],
-
 ];

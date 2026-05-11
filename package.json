@@ -22,7 +22,6 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
-    "test:contracts:docker": "vitest --config ./vitest.docker.config.mjs run src/features/versehub/utils/entry-guard.test.ts src/features/versehub/utils/versehub-id-route.test.ts src/features/today-ritual/utils/entry-intent.test.ts src/features/today-ritual/utils/route-behavior.test.ts",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:acceptance": "playwright test tests/renungan-versehub-acceptance.spec.ts",
@@ -92,6 +91,6 @@
     "jsdom": "^29.0.1",
     "postcss": "^8.5.1",
     "typescript": "5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   }
 }

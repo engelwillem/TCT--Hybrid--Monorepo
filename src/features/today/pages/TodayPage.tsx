@@ -50,13 +50,13 @@ export function TodayPage() {
   const displayHighlights = highlights.slice(0, 4);
 
   const quickActions = [
-    { label: "Community", icon: PlusCircle, href: "/community", color: "bg-blue-500/10 text-blue-600", desc: "Share inspiration" },
-    { label: "VerseHub", icon: BookOpen, href: "/versehub/en", color: "bg-teal-500/10 text-teal-600", desc: "Read scripture" },
-    { label: "Journey", icon: Route, href: "/journey", color: "bg-purple-500/10 text-purple-600", desc: "Spiritual history and progress" },
-    { label: "Inbox", icon: Inbox, href: "/inbox", color: "bg-orange-500/10 text-orange-600", desc: "Incoming messages" },
+    { label: "Community", icon: PlusCircle, href: "/community", color: "bg-blue-500/10 text-blue-600", desc: "Bagikan inspirasi" },
+    { label: "VerseHub", icon: BookOpen, href: "/versehub/id", color: "bg-teal-500/10 text-teal-600", desc: "Baca firman" },
+    { label: "Journey", icon: Route, href: "/journey", color: "bg-purple-500/10 text-purple-600", desc: "Riwayat dan progres rohani" },
+    { label: "Inbox", icon: Inbox, href: "/inbox", color: "bg-orange-500/10 text-orange-600", desc: "Pesan masuk" },
   ];
 
-  const currentDate = new Intl.DateTimeFormat('en-US', {
+  const currentDate = new Intl.DateTimeFormat('id-ID', { 
     day: 'numeric', 
     month: 'long', 
     year: 'numeric' 
@@ -68,8 +68,8 @@ export function TodayPage() {
       <header className="px-6 md:px-0 space-y-2">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight"><span className="text-brand">Good Morning</span>, Chosen</h2>
-            <p className="text-muted-foreground/80 font-medium text-sm md:text-base">Your daily inspiration is ready for today.</p>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight"><span className="text-brand">Selamat Pagi</span>, Chosen</h2>
+            <p className="text-muted-foreground/80 font-medium text-sm md:text-base">Inspirasi harian Anda sudah siap untuk hari ini.</p>
           </div>
           <Badge variant="secondary" className="w-fit bg-surface-elevated text-foreground border border-border/50 h-8 px-4 rounded-full font-black text-xs uppercase tracking-widest shadow-sm">
             {currentDate}
@@ -87,7 +87,7 @@ export function TodayPage() {
           <section className="space-y-4">
             <div className="flex items-center gap-2 text-brand pl-2">
               <Sparkles size={16} className="animate-pulse opacity-70" />
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Today’s Verse</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Ayat Hari Ini</h3>
             </div>
             
             {isLoading ? (
@@ -112,7 +112,7 @@ export function TodayPage() {
                     <div className="space-y-5">
                     <p className="text-brand font-black text-sm tracking-[0.15em] uppercase">— {dailyVerse.reference}</p>
                     <Button asChild size="lg" className="rounded-full shadow-lg shadow-brand/20 hover:scale-105 active:scale-95 transition-all bg-foreground text-background hover:bg-foreground/90 font-bold px-8">
-                        <Link href={`/versehub/en?ref=${dailyVerse.reference.replace(/\s+/g, '-').toLowerCase()}`}>Reflect</Link>
+                        <Link href={`/versehub/id?ref=${dailyVerse.reference.replace(/\s+/g, '-').toLowerCase()}`}>Renungkan</Link>
                     </Button>
                     </div>
                 </CardContent>
@@ -123,9 +123,9 @@ export function TodayPage() {
                         <div className="h-16 w-16 rounded-full bg-surface-elevated flex items-center justify-center text-muted-foreground shadow-inner">
                             <Wind size={24} />
                         </div>
-                        <p className="text-muted-foreground font-medium text-sm">Today’s verse has not been published yet.</p>
+                        <p className="text-muted-foreground font-medium text-sm">Ayat hari ini belum diterbitkan.</p>
                         <Button asChild variant="outline" size="sm" className="rounded-full mt-2 font-bold uppercase tracking-widest text-[10px]">
-                            <Link href="/versehub/en">Open Library</Link>
+                            <Link href="/versehub/id">Buka Library</Link>
                         </Button>
                     </CardContent>
                 </Card>
@@ -135,9 +135,9 @@ export function TodayPage() {
           {/* Community Highlights */}
           <section className="space-y-4">
             <div className="flex items-center justify-between pl-2 pr-1">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Community Highlights</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Sorotan Komunitas</h3>
               <Link href="/community" className="text-[10px] font-black text-brand uppercase flex items-center gap-1 hover:text-brand/80 transition-colors">
-                View All <ChevronRight size={12} />
+                Lihat Semua <ChevronRight size={12} />
               </Link>
             </div>
             
@@ -175,10 +175,10 @@ export function TodayPage() {
                                 <div className="flex-1 min-w-0 space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <p className="text-[13px] font-black truncate text-foreground/90">{post.author?.name || 'Member'}</p>
-                                    <span className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">{post.createdAt || post.created_at || 'New'}</span>
+                                    <span className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">{post.createdAt || post.created_at || 'Baru'}</span>
                                 </div>
                                 <p className="text-[13px] text-muted-foreground line-clamp-2 leading-relaxed font-medium">
-                                    {post.text || (post.imageUrl ? "Shared a meaningful photo..." : "")}
+                                    {post.text || (post.imageUrl ? "Membagikan foto bermakna..." : "")}
                                 </p>
                                 <div className="flex items-center gap-3 pt-2">
                                     <span className="flex items-center gap-1 text-[11px] text-muted-foreground/80 font-black tracking-widest">
@@ -204,8 +204,8 @@ export function TodayPage() {
                             <MessageCircle size={20} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-sm font-bold text-foreground/80">No highlights yet</p>
-                            <p className="text-[11px] text-muted-foreground font-medium">Be the first to share today.</p>
+                            <p className="text-sm font-bold text-foreground/80">Belum ada sorotan</p>
+                            <p className="text-[11px] text-muted-foreground font-medium">Jadilah yang pertama untuk berbagi hari ini.</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -216,7 +216,7 @@ export function TodayPage() {
         {/* Kolom Kanan: Quick Actions (Sticky on Desktop) */}
         <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-24">
           <section className="space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground pl-2">Explore</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground pl-2">Jelajah</h3>
             <div className="grid grid-cols-1 gap-2.5">
               {quickActions.map((action) => (
                 <Link key={action.label} href={action.href}>
@@ -248,10 +248,10 @@ export function TodayPage() {
                 <h4 className="font-black text-[11px] uppercase tracking-[0.2em] text-white/90">Premium Active</h4>
               </div>
               <p className="text-xs text-white/70 leading-relaxed font-medium">
-                Enjoy full access to all reflection modules, community features, and spiritual analytics.
+                Nikmati akses lengkap ke seluruh modul perenungan, komunitas, dan fitur analitik rohani Anda.
               </p>
               <Button asChild variant="secondary" className="w-full rounded-full font-black text-[10px] uppercase tracking-widest h-10 bg-white/10 hover:bg-white/20 text-white border-none shadow-none transition-colors">
-                <Link href="/profile">Open Profile</Link>
+                <Link href="/profile">Buka Profil</Link>
               </Button>
             </div>
           </Card>

@@ -21,23 +21,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Http\UploadedFile;
 
 class CommunityApiController extends Controller
 {
-    private const COMMUNITY_IMAGE_MIMETYPES = [
-        'image/jpeg',
-        'image/png',
-        'image/webp',
-        'image/jpg',
-    ];
-
-    private const COMMUNITY_VIDEO_MIMETYPES = [
-        'video/mp4',
-        'video/quicktime', // mov
-        'video/webm',
-    ];
-
     public function __construct(
         private readonly SpiritualInteractionService $interactionService,
         private readonly CommunityRepostService $communityRepostService,
@@ -132,7 +118,7 @@ class CommunityApiController extends Controller
             'text' => ['required_without:images', 'nullable', 'string', 'max:5000'],
             'type' => ['nullable', 'string', 'in:user_post,prayer_request,reflection,testimony,quote'],
             'images' => ['nullable', 'array', 'max:5'],
-            'images.*' => ['file', 'mimetypes:'.implode(',', array_merge(self::COMMUNITY_IMAGE_MIMETYPES, self::COMMUNITY_VIDEO_MIMETYPES)), 'max:51200'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'imageUrl' => ['nullable', 'url', 'max:2048'],
             'metadata' => ['nullable', 'array'],
             'metadata.media_aspect_ratio' => ['nullable', 'string', 'in:9:16,4:5,1:1,16:9,og,auto']
@@ -144,21 +130,6 @@ class CommunityApiController extends Controller
         $totalFileBytes = (int) collect($imageFiles)->sum(function ($file) {
             return is_object($file) && method_exists($file, 'getSize') ? (int) $file->getSize() : 0;
         });
-        $hasVideoUpload = collect($imageFiles)->contains(fn ($file) => $file instanceof UploadedFile && $this->isVideoFile($file));
-
-        if ($hasVideoUpload && ! $this->canUploadCommunityVideo($user)) {
-            Log::warning('community_post_video_upload_forbidden', [
-                'request_id' => $requestId,
-                'user_id' => $user->id,
-                'user_email' => Str::lower((string) ($user->email ?? '')),
-                'content_type' => $contentType,
-                'file_count' => $fileCount,
-            ]);
-
-            return response()->json([
-                'message' => 'Upload video hanya tersedia untuk akun admin tertentu.',
-            ], 403);
-        }
 
         if ($fileCount > 0) {
             Log::info('community_post_upload_received', [
@@ -253,25 +224,6 @@ class CommunityApiController extends Controller
                 'post' => $this->serializePost($fresh, $user),
             ],
         ], 201);
-    }
-
-    private function canUploadCommunityVideo(User $user): bool
-    {
-        $allowedEmail = Str::lower((string) config('community.video_upload_admin_email', 'engel.willem@gmail.com'));
-        $email = Str::lower((string) ($user->email ?? ''));
-
-        return $allowedEmail !== '' && $email !== '' && $email === $allowedEmail;
-    }
-
-    private function isVideoFile(UploadedFile $file): bool
-    {
-        $mime = Str::lower((string) ($file->getMimeType() ?? ''));
-        if (Str::startsWith($mime, 'video/')) {
-            return true;
-        }
-
-        $extension = Str::lower((string) $file->getClientOriginalExtension());
-        return in_array($extension, ['mp4', 'mov', 'webm'], true);
     }
 
     public function togglePray(MemberPost $memberPost): JsonResponse
@@ -412,11 +364,6 @@ class CommunityApiController extends Controller
         abort_unless($user, 401);
         abort_if($memberPost->hidden_at !== null, 404);
         $this->abortIfPrivateRenunganNotVisibleToViewer($memberPost, $user);
-        if ((int) $memberPost->user_id !== (int) $user->id) {
-            return response()->json([
-                'message' => 'Anda hanya bisa repost konten milik Anda sendiri.',
-            ], 403);
-        }
 
         $repost = $this->communityRepostService->repostToTalks(
             memberPost: $memberPost,

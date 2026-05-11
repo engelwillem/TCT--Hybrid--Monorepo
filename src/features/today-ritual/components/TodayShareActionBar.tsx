@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bookmark, Check, Copy, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,6 @@ import {
   getCanonicalUrl,
 } from "@/lib/share";
 import { ensureShareAssetReady, type ShareSurface } from "@/lib/share-assets";
-import { trackFunnelEvent } from "@/lib/funnel-analytics";
 
 type TodayShareActionBarProps = {
   sharePath?: string;
@@ -20,7 +20,6 @@ type TodayShareActionBarProps = {
   isRestoring?: boolean;
   resolveSharePath?: () => Promise<string | null>;
   onBookmark?: () => Promise<boolean> | boolean;
-  onRequireAuthForBookmark?: () => void;
   surface?: ShareSurface;
 };
 
@@ -42,9 +41,9 @@ export default function TodayShareActionBar({
   isRestoring = false,
   resolveSharePath,
   onBookmark,
-  onRequireAuthForBookmark,
   surface = "renungan",
 }: TodayShareActionBarProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,10 +51,10 @@ export default function TodayShareActionBar({
   const [resolvedSharePath, setResolvedSharePath] = useState<string | null>(null);
   const shareUrl = useMemo(() => getCanonicalUrl(resolvedSharePath || sharePath), [resolvedSharePath, sharePath]);
 
-  const runBookmarkAction = (action: () => void | Promise<void>) => {
+  const guardMemberAction = (action: () => void | Promise<void>) => {
     if (isRestoring) return;
     if (!isAuthenticated) {
-      onRequireAuthForBookmark?.();
+      router.push('/login?next=/renungan');
       return;
     }
 
@@ -88,12 +87,6 @@ export default function TodayShareActionBar({
             if (prepared?.shareUrl) {
               const waUrl = buildWhatsAppShareUrl(`${shareText} ${prepared.shareUrl}`);
               window.open(waUrl, "_blank", "noopener,noreferrer");
-              void trackFunnelEvent("renungan_share_whatsapp", {
-                surface: "renungan",
-                meta: {
-                  share_surface: surface,
-                },
-              });
               return;
             }
           } catch (err) {
@@ -104,12 +97,6 @@ export default function TodayShareActionBar({
         // Fallback to basic URL
         const waUrl = buildWhatsAppShareUrl(`${shareText} ${nextShareUrl}`);
         window.open(waUrl, "_blank", "noopener,noreferrer");
-        void trackFunnelEvent("renungan_share_whatsapp", {
-          surface: "renungan",
-          meta: {
-            share_surface: surface,
-          },
-        });
       } finally {
         setIsGenerating(false);
       }
@@ -121,12 +108,6 @@ export default function TodayShareActionBar({
     const ok = await copyToClipboard(`${shareText} ${nextShareUrl}`);
     if (!ok) return;
     setCopied(true);
-    void trackFunnelEvent("renungan_copy_link", {
-      surface: "renungan",
-      meta: {
-        share_surface: surface,
-      },
-    });
     window.setTimeout(() => setCopied(false), 1800);
   };
 
@@ -147,12 +128,51 @@ export default function TodayShareActionBar({
     <div className="mt-8 rounded-full border border-slate-200/80 bg-white/88 p-2 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.35)]">
       <div className="flex items-center justify-start gap-2">
         <motion.button
-          data-testid="share-whatsapp"
           whileTap={{ scale: 0.95 }}
           type="button"
-          onClick={onShareWhatsApp}
+          onClick={() => guardMemberAction(onSaveBookmark)}
+          disabled={isRestoring || !onBookmark || bookmarked || isSaving}
+          aria-label={bookmarked ? "Bookmarked" : isSaving ? "Menyimpan bookmark" : "Bookmark"}
+          aria-pressed={bookmarked}
+          className={cn(
+            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
+            bookmarked
+              ? "bg-brand/10 text-brand ring-1 ring-inset ring-brand/20"
+              : "bg-surface-muted/70 text-muted-foreground hover:bg-surface-muted hover:text-foreground",
+            (isRestoring || !onBookmark || bookmarked || isSaving) ? "opacity-60" : ""
+          )}
+        >
+          {bookmarked ? (
+            <AppIcon icon={Check} variant="action" className="text-brand" />
+          ) : (
+            <AppIcon icon={Bookmark} variant="action" active={bookmarked} className={bookmarked ? "text-brand" : "opacity-70"} />
+          )}
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          type="button"
+          onClick={() => guardMemberAction(onCopyLink)}
+          disabled={isRestoring}
+          aria-label={copied ? "Teks renungan tersalin" : "Salin renungan"}
+          className={cn(
+            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted/70 text-muted-foreground transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
+            isRestoring ? "opacity-60" : ""
+          )}
+        >
+          {copied ? (
+            <AppIcon icon={Check} variant="action" className="text-brand" />
+          ) : (
+            <AppIcon icon={Copy} variant="action" className="opacity-70" />
+          )}
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          type="button"
+          onClick={() => guardMemberAction(onShareWhatsApp)}
           disabled={isRestoring || isGenerating}
-          aria-label={isGenerating ? "Menyiapkan tautan bagikan..." : "Bagikan renungan ke WhatsApp"}
+          aria-label={isGenerating ? "Menyiapkan kartu bagikan..." : "Bagikan renungan ke WhatsApp"}
           className={cn(
             "tct-pressable relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#eafaf0] text-[#25D366] transition-colors duration-200 hover:bg-[#dcf8e6] hover:text-[#1fa855]",
             (isRestoring || isGenerating) ? "opacity-60" : ""
@@ -181,48 +201,6 @@ export default function TodayShareActionBar({
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.button>
-
-        <motion.button
-          data-testid="share-copy"
-          whileTap={{ scale: 0.95 }}
-          type="button"
-          onClick={onCopyLink}
-          disabled={isRestoring}
-          aria-label={copied ? "Teks renungan tersalin" : "Salin renungan"}
-          className={cn(
-            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted/70 text-muted-foreground transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
-            isRestoring ? "opacity-60" : ""
-          )}
-        >
-          {copied ? (
-            <AppIcon icon={Check} variant="action" className="text-brand" />
-          ) : (
-            <AppIcon icon={Copy} variant="action" className="opacity-70" />
-          )}
-        </motion.button>
-
-        <motion.button
-          data-testid="share-bookmark"
-          whileTap={{ scale: 0.95 }}
-          type="button"
-          onClick={() => runBookmarkAction(onSaveBookmark)}
-          disabled={isRestoring || !onBookmark || bookmarked || isSaving}
-          aria-label={bookmarked ? "Renungan tersimpan" : isSaving ? "Menyimpan renungan" : "Simpan renungan ini"}
-          aria-pressed={bookmarked}
-          className={cn(
-            "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
-            bookmarked
-              ? "bg-brand/10 text-brand ring-1 ring-inset ring-brand/20"
-              : "bg-surface-muted/70 text-muted-foreground hover:bg-surface-muted hover:text-foreground",
-            (isRestoring || !onBookmark || bookmarked || isSaving) ? "opacity-60" : ""
-          )}
-        >
-          {bookmarked ? (
-            <AppIcon icon={Check} variant="action" className="text-brand" />
-          ) : (
-            <AppIcon icon={Bookmark} variant="action" active={bookmarked} className={bookmarked ? "text-brand" : "opacity-70"} />
-          )}
         </motion.button>
       </div>
     </div>

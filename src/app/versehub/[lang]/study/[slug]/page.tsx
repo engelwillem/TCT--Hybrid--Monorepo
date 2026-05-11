@@ -36,7 +36,7 @@ export default function StudyPathShowPage() {
     const router = useRouter();
     const { isAuthenticated } = useAuthSession();
     const refreshTick = useMutationRefreshTick(['/api/study-paths/', '/api/versehub/']);
-    const lang = params?.lang as string || 'en';
+    const lang = params?.lang as string || 'id';
     const slug = params?.slug as string;
     const isId = lang === 'id';
 

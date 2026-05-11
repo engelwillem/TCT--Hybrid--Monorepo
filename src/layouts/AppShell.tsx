@@ -13,13 +13,9 @@ import {
   isAuthSurfacePath,
   isLandingPath,
   isTodayRitualPath,
-  isTctAppNavigationPath,
   isVersehubPath,
-  isSanctuaryPath,
   requiresAppSession,
 } from "@/lib/app-runtime-paths";
-
-import { SanctuaryShell } from "@/features/sanctuary/components/SanctuaryShell";
 
 type ShellIdentity = {
   name: string;
@@ -141,14 +137,11 @@ function ShellFrame({
   pathname: string;
   router: ReturnType<typeof useRouter>;
 }) {
-  const showTctNavigation = isTctAppNavigationPath(pathname);
-  const scopedActiveNavId = showTctNavigation ? activeNavId : null;
-  const navItems = scopedActiveNavId ? getUiNavItems(isAuthenticated) : [];
-  const isTodayRitual = isTodayRitualPath(pathname);
-  const isSanctuary = isSanctuaryPath(pathname);
+  const navItems = activeNavId ? getUiNavItems(isAuthenticated) : [];
   const isLanding = isLandingPath(pathname);
   const isAuthSurface = isAuthSurfacePath(pathname);
   const isReader = isVersehubPath(pathname);
+  const isTodayRitual = isTodayRitualPath(pathname);
   const isCommunitySurface = pathname === "/community" || pathname.startsWith("/community/");
   const centerMobileBrand = pathname === "/profile" || pathname === "/community";
 
@@ -160,15 +153,15 @@ function ShellFrame({
     );
   }
 
-  if (isSanctuary) {
+  if (isTodayRitual) {
     return (
-      <SanctuaryShell>
+      <div className="tct-global-background relative min-h-screen overflow-x-hidden text-foreground touch-pan-y">
         <div className="relative z-10 mx-auto w-full max-w-7xl px-0 md:px-6 lg:px-8">
           <div className="flex items-start gap-6 lg:gap-8">
-            {scopedActiveNavId && (
+            {activeNavId && (
               <div className="sticky top-6 hidden h-fit align-start md:flex md:w-[248px] md:flex-col md:gap-4 md:pt-6">
                 <DesktopSidebarNav
-                  activeId={scopedActiveNavId}
+                  activeId={activeNavId}
                   navItems={navItems}
                   isAuthenticated={isAuthenticated}
                   userName={identity.name}
@@ -188,7 +181,7 @@ function ShellFrame({
           </div>
         </div>
 
-        {scopedActiveNavId && (
+        {activeNavId && (
           <div
             className="pointer-events-none inset-x-0 z-[100] flex justify-center md:hidden"
             style={{
@@ -201,7 +194,7 @@ function ShellFrame({
             <div className="pointer-events-auto">
               <FloatingBottomNav
                 items={navItems}
-                activeId={scopedActiveNavId}
+                activeId={activeNavId}
                 onChange={(id) => {
                   const targetItem = navItems.find((item) => item.id === id);
                   if (targetItem) {
@@ -212,7 +205,7 @@ function ShellFrame({
             </div>
           </div>
         )}
-      </SanctuaryShell>
+      </div>
     );
   }
 
@@ -226,10 +219,10 @@ function ShellFrame({
         )}
       >
         <div className="flex items-start gap-8">
-          {!isLanding && !isAuthSurface && !isTodayRitual && scopedActiveNavId && (
+          {!isLanding && !isAuthSurface && !isTodayRitual && activeNavId && (
             <div className="sticky top-8 hidden h-fit align-start md:flex md:w-72 md:flex-col md:gap-4">
               <DesktopSidebarNav
-                activeId={scopedActiveNavId}
+                activeId={activeNavId}
                 navItems={navItems}
                 isAuthenticated={isAuthenticated}
                 userName={identity.name}
@@ -288,7 +281,7 @@ function ShellFrame({
         </div>
       </div>
 
-      {!isLanding && !isAuthSurface && !isTodayRitual && scopedActiveNavId && (
+      {!isLanding && !isAuthSurface && !isTodayRitual && activeNavId && (
         <div
           className={cn(
             "inset-x-0 z-50 flex justify-center transition-all duration-200 md:hidden",
@@ -305,7 +298,7 @@ function ShellFrame({
         >
           <FloatingBottomNav
             items={navItems}
-            activeId={scopedActiveNavId}
+            activeId={activeNavId}
             onChange={(id) => {
               const targetItem = navItems.find((item) => item.id === id);
               if (targetItem) {

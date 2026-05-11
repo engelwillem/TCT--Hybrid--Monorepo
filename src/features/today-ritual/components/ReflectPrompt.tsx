@@ -69,7 +69,7 @@ export default function ReflectPrompt({
         {prompt}
       </label>
 
-      {beforeInputSlot ? <div className="mb-6">{beforeInputSlot}</div> : null}
+      {beforeInputSlot ? <div className="mb-5">{beforeInputSlot}</div> : null}
 
       <AnimatePresence mode="wait">
         {!isDone ? (
@@ -87,22 +87,22 @@ export default function ReflectPrompt({
               placeholder={placeholder}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              className="min-h-[130px] w-full resize-none rounded-2xl border border-slate-200/80 bg-white/60 px-5 py-4 text-[16px] leading-[1.6] text-foreground/90 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.04)] placeholder:text-slate-400 focus:outline-none focus:border-slate-300 focus:bg-white focus:ring-4 focus:ring-slate-100 transition-all duration-300"
+              className="min-h-[120px] w-full resize-none rounded-2xl bg-black/[0.03] px-5 py-4 text-[15px] leading-[1.6] text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-black/[0.1] transition-colors"
             />
-            <div className="mt-6 flex flex-col items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
                 data-testid="today-reflection-submit"
                 disabled={!isFilled || isSubmitting}
                 onClick={onContinue}
                 // Explicit aria-label provides full context for screen reader users
                 aria-label={isFilled ? `${ctaLabel} refleksiku` : ctaLabel}
-                className={`group w-full max-w-[300px] rounded-full px-6 py-[14px] text-[15px] font-semibold transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                className={`group rounded-full px-6 py-[10px] text-[14px] font-medium transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   isFilled && !isSubmitting
-                    ? 'bg-slate-900 text-white shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-[1px] hover:bg-slate-800 hover:shadow-[0_12px_24px_-12px_rgba(0,0,0,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 active:scale-95'
-                    : 'bg-slate-100 text-slate-400'
+                    ? 'bg-black text-white shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] hover:shadow-[0_22px_44px_-24px_rgba(14,165,233,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-95'
+                    : 'bg-transparent text-foreground/20'
                 }`}
               >
-                <span className={isFilled ? 'inline-block transition-transform duration-400 ease-out group-hover:translate-x-[2px]' : undefined}>
+                <span className={isFilled ? 'inline-block transition-transform duration-400 ease-out group-hover:translate-x-[1px]' : undefined}>
                   {isSubmitting ? submittingLabel : ctaLabel}
                 </span>
               </button>
@@ -111,7 +111,7 @@ export default function ReflectPrompt({
                   type="button"
                   disabled={Boolean(secondaryAction.disabled) || isSubmitting}
                   onClick={secondaryAction.onClick}
-                  className="text-[14px] font-medium text-slate-500 transition-colors hover:text-slate-800 focus-visible:outline-none focus-visible:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full border border-slate-200 bg-white px-4 py-[10px] text-[12px] font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {secondaryAction.label}
                 </button>

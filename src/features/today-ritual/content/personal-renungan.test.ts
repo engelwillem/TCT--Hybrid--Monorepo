@@ -73,9 +73,6 @@ describe("generatePersonalRenungan telemetry fallback", () => {
         requestId: "req-123",
       })
     );
-    expect(result.sourceType).toBe("fallback");
-    expect(result.usedFallback).toBe(true);
-    expect(result.fallbackReason).toBe("coherence_guardrail");
     expect(result.meditation.length).toBeGreaterThan(40);
   });
 
@@ -120,8 +117,6 @@ describe("generatePersonalRenungan telemetry fallback", () => {
     expect(result.requestId).toBe("req-mentor-1");
     expect(result.driver).toBe("openai");
     expect(result.usedFallback).toBe(false);
-    expect(result.sourceType).toBe("live");
-    expect(result.fallbackReason).toBeNull();
   });
 
   it("keeps rendering-safe output with minimal payload", async () => {
@@ -154,7 +149,6 @@ describe("generatePersonalRenungan telemetry fallback", () => {
     expect(result.mentorOpening).toBeUndefined();
     expect(result.prayerPrompt).toBeUndefined();
     expect(result.followUpQuestion).toBeUndefined();
-    expect(result.sourceType).toBe("live");
   });
 
   it("maps fallback metadata when backend marks used_fallback true", async () => {
@@ -187,15 +181,5 @@ describe("generatePersonalRenungan telemetry fallback", () => {
     expect(result.driver).toBe("template");
     expect(result.usedFallback).toBe(true);
     expect(result.requestId).toBe("req-fallback-1");
-    expect(result.sourceType).toBe("fallback");
-    expect(result.fallbackReason).toBeNull();
-  });
-
-  it("returns explicit fallback flags for short input", async () => {
-    const result = await generatePersonalRenungan("ok", sessionContent);
-
-    expect(result.sourceType).toBe("fallback");
-    expect(result.usedFallback).toBe(true);
-    expect(result.fallbackReason).toBe("short_input");
   });
 });

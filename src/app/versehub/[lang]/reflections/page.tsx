@@ -40,7 +40,7 @@ export default function ReflectionsJournalPage() {
     const router = useRouter();
     const { isAuthenticated, isRestoring } = useAuthSession();
     const refreshTick = useMutationRefreshTick(['/api/versehub/']);
-    const lang = params?.lang as string || 'en';
+    const lang = params?.lang as string || 'id';
     const isId = lang === 'id';
 
     const [reflections, setReflections] = useState<Reflection[]>([]);

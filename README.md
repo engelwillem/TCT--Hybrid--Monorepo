@@ -1,88 +1,76 @@
 # TheChoosenTalks
 
-A premium spiritual content platform built on a decoupled architecture:
+Platform konten rohani premium berbasis arsitektur decoupled:
+- Next.js sebagai frontend edge-ready.
+- Laravel sebagai backend API + MariaDB.
+- Firebase sebagai authentication dan real-time service.
 
-* **Next.js** as the edge-ready frontend.
-* **Laravel** as the backend API + MariaDB.
-* **Firebase** for authentication and real-time services.
+## Tech Stack Utama
 
-## Main Tech Stack
+- **Framework**: Next.js 15 (App Router)
+- **Backend API**: Laravel 12 (`backend-api`)
+- **Frontend**: React 19 + TypeScript
+- **Styling**: Tailwind CSS v4
+- **Animations**: Framer Motion
+- **UI Components**: Shadcn UI + Lucide Icons
+- **Auth & Realtime**: Firebase Auth + Firestore
 
-* **Framework:** Next.js 15 (App Router)
-* **Backend API:** Laravel 12 (`backend-api`)
-* **Frontend:** React 19 + TypeScript
-* **Styling:** Tailwind CSS v4
-* **Animations:** Framer Motion
-* **UI Components:** Shadcn UI + Lucide Icons
-* **Auth & Realtime:** Firebase Auth + Firestore
+## Struktur Aplikasi
 
-## Application Structure
+- `/` -> Landing Page utama
+- `/renungan` -> Ritual renungan harian utama
+- `/today` -> Legacy route yang me-redirect ke `/renungan`
+- `/community` -> Feed komunitas dan interaksi
+- `/versehub` -> Bible reader modern
+- `/channels` -> Ruang belajar dan program pembinaan
+- `/paths` -> Study paths / journey terstruktur
 
-* `/` → Main landing page
-* `/renungan` → Main daily devotional ritual
-* `/today` → Legacy route that redirects to `/renungan`
-* `/community` → Community feed and interactions
-* `/versehub` → Modern Bible reader
-* `/channels` → Learning spaces and mentorship programs
-* `/paths` → Structured study paths / journeys
+## Desain & Estetika
 
-## Design & Aesthetics
+- **Theme aktif**: Light editorial spiritual
+- **Visual**: Soft gradients, elevated cards, subtle texture
+- **Typography**:
+  - Headings: serif brand styles (`tct-serif`)
+  - Body: sans UI stack proyek
 
-* **Active Theme:** Light editorial spiritual
-* **Visual Style:** Soft gradients, elevated cards, subtle textures
-
-### Typography
-
-* **Headings:** Serif brand styles (`tct-serif`)
-* **Body:** Sans-serif UI stack used throughout the project
-
-## Local Development
+## Pengembangan Lokal
 
 ```bash
 npm install
 npm run dev
 ```
 
-The application will run at:
+Aplikasi akan berjalan di `http://localhost:9002`.
 
-```bash
-http://localhost:9002
-```
+Sebelum menjalankan, siapkan env:
+- Frontend: salin `.env.example` menjadi `.env.local`.
+- Backend Laravel: salin `backend-api/.env.example` menjadi `backend-api/.env`.
 
-Before running the app, prepare the environment files:
-
-* **Frontend:** copy `.env.example` to `.env.local`
-* **Laravel Backend:** copy `backend-api/.env.example` to `backend-api/.env`
-
-The frontend will call Next.js `/api/*` endpoints, which are proxied to Laravel (`LARAVEL_API_BASE_URL`).
+Frontend akan memanggil endpoint Next.js `/api/*` yang diproxy ke Laravel (`LARAVEL_API_BASE_URL`).
 
 ## Firebase Studio
 
-To keep the app running in Firebase Studio (frontend-only mode), use:
+Agar tetap jalan di Firebase Studio (frontend-only), gunakan:
 
 ```bash
 npm install
 npm run dev:studio
 ```
 
-### Notes
-
-* If `LARAVEL_API_BASE_URL` is not yet available, some surfaces can still render using safe fallbacks for local development.
-* For full decoupled production mode, the Laravel backend must be running and `LARAVEL_API_BASE_URL` must point to that backend.
+Catatan:
+- Jika `LARAVEL_API_BASE_URL` belum tersedia, beberapa surface tetap bisa render memakai fallback yang aman untuk pengembangan lokal.
+- Untuk mode production decoupled penuh, backend Laravel harus aktif dan `LARAVEL_API_BASE_URL` harus mengarah ke backend tersebut.
 
 ## Deployment
 
-* **Next.js Frontend:** Tencent Serverless Pages (or another serverless platform)
-* **Laravel Backend:** cPanel (PHP/Apache + MariaDB)
-* **Auth/Realtime:** Firebase
+- **Frontend Next.js**: Tencent Serverless Pages (atau platform serverless lain).
+- **Backend Laravel**: cPanel (PHP/Apache + MariaDB).
+- **Auth/Realtime**: Firebase.
 
-## License
+## Lisensi
 
 MIT
-
----
-
-# E2E Acceptance Environment (Auth + Privacy)
+## E2E Acceptance Env (Auth + Privacy)
 
 To run the acceptance suite (`tests/renungan-versehub-acceptance.spec.ts`) without skips:
 
@@ -90,9 +78,9 @@ To run the acceptance suite (`tests/renungan-versehub-acceptance.spec.ts`) witho
 npm run test:e2e:acceptance
 ```
 
-Set the following environment variables (recommended):
+Set these env vars (recommended):
 
-```env
+```bash
 E2E_ADMIN_EMAIL=
 E2E_ADMIN_PASSWORD=
 E2E_MEMBER_A_EMAIL=
@@ -101,22 +89,8 @@ E2E_MEMBER_B_EMAIL=
 E2E_MEMBER_B_PASSWORD=
 ```
 
-## Supported Aliases / Fallbacks
-
-```env
-E2E_ADMIN_USER_EMAIL
-E2E_ADMIN_USER_PASSWORD
-
-E2E_MEMBER_EMAIL
-E2E_MEMBER_PASSWORD
-
-E2E_MEMBER_SECONDARY_EMAIL
-E2E_MEMBER_SECONDARY_PASSWORD
-```
-
-### Legacy Fallback for Member A
-
-```env
-E2E_AUTH_EMAIL
-E2E_AUTH_PASSWORD
-```
+Supported aliases/fallbacks:
+- `E2E_ADMIN_USER_EMAIL`, `E2E_ADMIN_USER_PASSWORD`
+- `E2E_MEMBER_EMAIL`, `E2E_MEMBER_PASSWORD`
+- `E2E_MEMBER_SECONDARY_EMAIL`, `E2E_MEMBER_SECONDARY_PASSWORD`
+- Legacy fallback for member A: `E2E_AUTH_EMAIL`, `E2E_AUTH_PASSWORD`

@@ -7,13 +7,13 @@ type PageProps = {
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { lang = "en" } = await params;
+  const { lang = "id" } = await params;
   const siteUrl = getPrimarySiteUrl();
   const path = `/versehub/${lang}`;
   const imageUrl = `/api/og/versehub/${lang}/preview`;
   const title = "VerseHub";
   const description =
-    "Read scripture, save verses, and share hope every day with The Chosen Talks.";
+    "Baca firman, simpan ayat, dan bagikan pengharapan setiap hari bersama The Chosen Talks.";
 
   return {
     title,
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
-  const { lang = "en" } = await params;
+  const { lang = "id" } = await params;
 
   return <VersehubReaderPage lang={lang} mode="landing" />;
 }

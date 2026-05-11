@@ -208,17 +208,17 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
 
         {stage === "intro" ? (
           <section className="mx-auto mt-10 max-w-[420px] text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-white/90 shadow-sm ring-1 ring-slate-200/50">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/80 ring-1 ring-sky-100">
               {moodIcon(mood)}
             </div>
-            <h2 className="mt-8 text-[28px] font-bold tracking-tight text-slate-800">{config.title}</h2>
-            <p className="mt-3 text-[17px] leading-[1.4] text-slate-600">{config.introLine1}</p>
-            <p className="mt-1 text-[17px] leading-[1.4] text-slate-600">{config.introLine2}</p>
+            <h2 className="mt-6 text-[44px] font-extrabold tracking-tight text-slate-800">{config.title}</h2>
+            <p className="mt-5 text-[34px] leading-[1.15] text-slate-700">{config.introLine1}</p>
+            <p className="mt-2 text-[34px] leading-[1.15] text-slate-700">{config.introLine2}</p>
 
             <button
               type="button"
               onClick={() => setStage("verse")}
-              className="mt-10 inline-flex h-14 w-full items-center justify-center rounded-[18px] bg-slate-900 text-[16px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(0,0,0,0.3)] transition-all active:scale-[0.98]"
+              className="mt-12 inline-flex h-14 w-full items-center justify-center rounded-xl bg-[linear-gradient(180deg,#4DA2FF,#2A7EDE)] text-[33px] font-bold text-white shadow-[0_22px_45px_-26px_rgba(37,99,235,0.65)]"
             >
               Lanjut
             </button>
@@ -226,15 +226,15 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
         ) : null}
 
         {stage === "verse" ? (
-          <section className="mx-auto mt-8 max-w-[440px] rounded-[32px] bg-white/70 px-6 py-10 text-center shadow-[0_16px_40px_-16px_rgba(0,0,0,0.1)] ring-1 ring-white backdrop-blur-md">
-            <h3 className="text-[14px] font-bold uppercase tracking-widest text-slate-400">{primaryVerse?.reference || primaryFallback.reference}</h3>
-            <p className="mt-6 text-[22px] font-medium leading-[1.45] text-slate-800 tracking-[-0.01em]">"{primaryVerse?.text || primaryFallback.text}"</p>
-            <p className="mt-8 text-[16px] leading-[1.5] text-slate-500">{config.supportLine}</p>
+          <section className="mx-auto mt-8 max-w-[440px] rounded-[26px] bg-white/70 px-6 py-8 text-center shadow-[0_26px_60px_-38px_rgba(15,23,42,0.35)] ring-1 ring-white/80 backdrop-blur-sm">
+            <h3 className="text-[26px] font-bold text-slate-800">{primaryVerse?.reference || primaryFallback.reference}</h3>
+            <p className="mt-5 text-[38px] leading-[1.28] text-slate-800">"{primaryVerse?.text || primaryFallback.text}"</p>
+            <p className="mt-7 text-[31px] leading-[1.2] text-slate-600">{config.supportLine}</p>
 
             <button
               type="button"
               onClick={() => setStage("reflect")}
-              className="mt-10 inline-flex h-14 w-full items-center justify-center rounded-[18px] bg-slate-900 text-[16px] font-semibold text-white shadow-[0_8px_20px_-8px_rgba(0,0,0,0.3)] transition-all active:scale-[0.98]"
+              className="mt-10 inline-flex h-14 w-full items-center justify-center rounded-xl bg-[linear-gradient(180deg,#4DA2FF,#2A7EDE)] text-[33px] font-bold text-white shadow-[0_22px_45px_-26px_rgba(37,99,235,0.65)]"
             >
               Renungkan
             </button>
@@ -242,7 +242,7 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
             <button
               type="button"
               onClick={() => onOpenVerse(config.primaryRef)}
-              className="mt-6 inline-flex items-center justify-center gap-1.5 text-[15px] font-medium text-slate-500 transition-colors hover:text-slate-800"
+              className="mt-4 inline-flex items-center gap-2 text-[15px] font-semibold text-sky-700"
             >
               Buka di VerseHub <ArrowRight className="h-4 w-4" />
             </button>
@@ -250,9 +250,9 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
         ) : null}
 
         {stage === "reflect" ? (
-          <section className="mx-auto mt-6 max-w-[460px] space-y-5">
-            <div className="rounded-[24px] bg-white/80 p-5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.1)] ring-1 ring-white backdrop-blur-md">
-              <p className="text-[17px] font-semibold leading-[1.3] text-slate-800">{config.reflectionQuestion}</p>
+          <section className="mx-auto mt-6 max-w-[460px] space-y-4">
+            <div className="rounded-[18px] bg-white/88 p-4 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/65">
+              <p className="text-[33px] font-semibold leading-[1.15] text-slate-800">{config.reflectionQuestion}</p>
               <textarea
                 value={reflection}
                 onChange={(event) => {
@@ -260,33 +260,33 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
                   if (saved) setSaved(false);
                 }}
                 placeholder="Tulis refleksi..."
-                className="mt-4 min-h-[120px] w-full resize-none rounded-2xl border border-slate-200/60 bg-white px-4 py-3 text-[16px] leading-[1.5] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                className="mt-3 min-h-[92px] w-full resize-none rounded-xl border border-slate-200 bg-[#F8FBFF] px-3 py-2 text-[24px] leading-[1.35] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
               <button
                 type="button"
                 disabled={!canSave}
                 onClick={() => setSaved(true)}
                 className={cn(
-                  "mt-4 inline-flex h-12 w-full items-center justify-center rounded-xl text-[15px] font-semibold text-white transition-all",
-                  canSave ? "bg-slate-900 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.2)] active:scale-[0.98]" : "bg-slate-200 text-slate-400"
+                  "mt-3 inline-flex h-11 w-full items-center justify-center rounded-xl text-[30px] font-bold text-white",
+                  canSave ? "bg-[linear-gradient(180deg,#4DA2FF,#2A7EDE)]" : "bg-slate-300"
                 )}
               >
                 {saved ? "Tersimpan" : "Simpan Refleksi"}
               </button>
             </div>
 
-            <div className="flex flex-col gap-3 pt-4">
-              <h4 className="px-1 text-[13px] font-semibold uppercase tracking-wider text-slate-500">Ayat Lain untukmu</h4>
-              <ul className="flex flex-col gap-3">
+            <div className="rounded-[18px] bg-white/88 p-4 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/65">
+              <h4 className="text-[30px] font-bold text-slate-800">Ayat lain untukmu</h4>
+              <ul className="mt-3 space-y-2">
                 {relatedVerses.map((verse) => (
-                  <li key={verse.ref}>
+                  <li key={verse.ref} className="border-t border-slate-200/80 pt-2 first:border-t-0 first:pt-0">
                     <button
                       type="button"
                       onClick={() => onOpenVerse(verse.ref)}
-                      className="flex w-full flex-col items-start gap-1 rounded-[20px] bg-white/70 p-4 text-left shadow-[0_4px_16px_-8px_rgba(0,0,0,0.05)] ring-1 ring-white backdrop-blur-md transition-all active:scale-[0.98]"
+                      className="w-full text-left"
                     >
-                      <p className="text-[14px] font-bold text-slate-800">{verse.reference}</p>
-                      <p className="line-clamp-2 text-[15px] leading-[1.4] text-slate-600">{verse.text}</p>
+                      <p className="text-[27px] font-semibold text-slate-800">{verse.reference}</p>
+                      <p className="mt-1 line-clamp-2 text-[22px] leading-[1.25] text-slate-600">{verse.text}</p>
                     </button>
                   </li>
                 ))}

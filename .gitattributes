@@ -1,4 +1,4 @@
-# Normalize Newlines
+# Normalize Newlines (Standard for Firebase/Linux)
 * text=auto eol=lf
 *.ps1 text eol=crlf
 *.sh text eol=lf
@@ -18,22 +18,20 @@
 *.woff binary
 *.woff2 binary
 
-# Export Cleanup (exclude non-runtime assets from archive/export)
+# Export Cleanup (Exclude from Zip/Archive)
 docs/ export-ignore
+docs/CORE/architecture/ export-ignore
 node_modules/ export-ignore
 .next/ export-ignore
 .next-stale-*/ export-ignore
 .npm-cache/ export-ignore
 .playwright-mcp/ export-ignore
 .idx/ export-ignore
-.codex/ export-ignore
 tmp/ export-ignore
-tmp-*/ export-ignore
-tmp_*/ export-ignore
+tmp_*.html export-ignore
+tmp_*.json export-ignore
+tmp_*.txt export-ignore
 test-results/ export-ignore
-deliverables/ export-ignore
-backups/ export-ignore
-
 backend-api/vendor/ export-ignore
 backend-api/node_modules/ export-ignore
 backend-api/tests/ export-ignore
@@ -45,11 +43,16 @@ backend-api/public/css/filament/ export-ignore
 backend-api/public/js/filament/ export-ignore
 backend-api/public/hot export-ignore
 backend-api/dist/ export-ignore
-backend-api/.env* export-ignore
+backend-api/package-lock.json export-ignore
+backend-api/package-lock.laravel.json export-ignore
+backend-api/.env export-ignore
+backend-api/.env.testing export-ignore
 backend-api/database/*.sqlite export-ignore
-
 .env export-ignore
-.env.* export-ignore
+.env.local export-ignore
+.env.development.local export-ignore
+.env.test.local export-ignore
+.env.production.local export-ignore
 .vscode/ export-ignore
 .idea/ export-ignore
 .github/ export-ignore
@@ -58,6 +61,6 @@ backend-api/database/*.sqlite export-ignore
 .gemini/ export-ignore
 *.zip export-ignore
 *.rar export-ignore
-*.7z export-ignore
-*.tar.gz export-ignore
-*.vsix export-ignore
+CHANGELOG.md export-ignore
+create_git_zip.py export-ignore
+verify_patch_v5.py export-ignore
