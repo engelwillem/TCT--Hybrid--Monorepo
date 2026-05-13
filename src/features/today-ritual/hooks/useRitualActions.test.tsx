@@ -106,7 +106,7 @@ describe("useRitualActions guest-safe actions", () => {
   it("keeps member-required action guard for bookmark-class flows", () => {
     const { result } = buildHook();
 
-    const allowed = result.current.requireMemberAction();
+    const allowed = result.current.ensureAuthenticatedRitual();
 
     expect(allowed).toBe(false);
     expect(pushMock).toHaveBeenCalledWith("/login?next=/renungan");

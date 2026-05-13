@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const imageUrl = `/api/og/versehub/${lang}/preview`;
   const title = "VerseHub";
   const description =
-    "Baca firman, simpan ayat, dan bagikan pengharapan setiap hari bersama The Chosen Talks.";
+    "Read Scripture, save verses, and share hope every day with The Chosen Talks.";
 
   return {
     title,

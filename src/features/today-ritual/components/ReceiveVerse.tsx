@@ -16,7 +16,7 @@ export default function ReceiveVerse({ verseLabel, openingLine, verseText, verse
   return (
     // section provides a landmark for screen readers to navigate to this reading
     <motion.section
-      aria-label="Ayat Hari Ini"
+      aria-label="Today's Verse"
       variants={m.v.verse}
       initial="hidden"
       animate="visible"

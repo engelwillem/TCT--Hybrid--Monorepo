@@ -80,7 +80,7 @@ services:
       CHOKIDAR_USEPOLLING: ${FRONTEND_USE_POLLING:-false}
       WATCHPACK_POLLING: ${FRONTEND_USE_POLLING:-false}
       NEXT_TELEMETRY_DISABLED: "1"
-      FRONTEND_RUNTIME: ${FRONTEND_RUNTIME:-production}
+      FRONTEND_RUNTIME: ${FRONTEND_RUNTIME:-development}
       FRONTEND_RESET_CACHE: ${FRONTEND_RESET_CACHE:-0}
     volumes:
       - .:/workspace
@@ -93,12 +93,43 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "--max-time", "60", "http://127.0.0.1:9002/api/today/readiness"]
-      start_period: 10m
+      test: ["CMD", "curl", "-fsS", "--max-time", "20", "http://127.0.0.1:9002/login"]
+      start_period: 3m
       interval: 20s
-      timeout: 60s
+      timeout: 20s
       retries: 10
     command: ["bash", "/workspace/docker/frontend/start.sh"]
+
+  wa-dashboard:
+    build:
+      context: .
+      dockerfile: docker/wa-dashboard/Dockerfile
+    container_name: tct-wa-dashboard
+    restart: unless-stopped
+    working_dir: /workspace/apps/wa-dashboard
+    env_file:
+      - ${WA_DASHBOARD_ENV_FILE:-.env.wa-dashboard.docker}
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+      CHOKIDAR_USEPOLLING: ${WA_DASHBOARD_USE_POLLING:-false}
+      WATCHPACK_POLLING: ${WA_DASHBOARD_USE_POLLING:-false}
+    volumes:
+      - .:/workspace
+      - wa_dashboard_node_modules:/workspace/apps/wa-dashboard/node_modules
+      - wa_dashboard_next:/workspace/apps/wa-dashboard/.next
+      - ./${WA_DASHBOARD_ENV_FILE:-.env.wa-dashboard.docker}:/workspace/apps/wa-dashboard/.env.local:ro
+    ports:
+      - "9012:9012"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "--max-time", "20", "http://127.0.0.1:9012/login"]
+      start_period: 3m
+      interval: 20s
+      timeout: 20s
+      retries: 10
+    command: ["bash", "/workspace/docker/wa-dashboard/start.sh"]
 
 volumes:
   mariadb_data:
@@ -106,3 +137,5 @@ volumes:
   backend_vendor:
   frontend_node_modules:
   frontend_next:
+  wa_dashboard_node_modules:
+  wa_dashboard_next:

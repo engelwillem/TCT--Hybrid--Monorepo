@@ -20,11 +20,11 @@ export async function GET(request: Request, { params }: RouteContext) {
   if (snapshot?.status === 'ready' && (snapshot.share_title || snapshot.final_og_image_url)) {
     return generateShareOGImage({
       kind: 'scripture',
-      title: snapshot.share_title || 'Renungan Pribadi',
-      body: snapshot.share_description || 'Renungan dari The Chosen Talks.',
+      title: snapshot.share_title || 'Personal Reflection',
+      body: snapshot.share_description || 'Reflection from The Chosen Talks.',
       meta: snapshot.share_eyebrow || 'The Chosen Talks',
       imageUrl: snapshot.final_og_image_url ?? null,
-      eyebrow: snapshot.share_eyebrow || 'Renungan Share',
+      eyebrow: snapshot.share_eyebrow || 'Reflection Share',
     });
   }
 
@@ -41,10 +41,10 @@ export async function GET(request: Request, { params }: RouteContext) {
 
   return generateShareOGImage({
     kind: 'scripture',
-    title: payload?.verseReference || 'Renungan Pribadi',
-    body: payload?.meditationExcerpt || 'Renungan dari The Chosen Talks.',
+    title: payload?.verseReference || 'Personal Reflection',
+    body: payload?.meditationExcerpt || 'Reflection from The Chosen Talks.',
     meta: payload?.theme || 'The Chosen Talks',
     imageUrl: null,
-    eyebrow: 'Renungan Share',
+    eyebrow: 'Reflection Share',
   });
 }

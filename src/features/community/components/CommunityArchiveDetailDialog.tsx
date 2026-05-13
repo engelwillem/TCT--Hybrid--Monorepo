@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Archive, Repeat2 } from "lucide-react";
+import { Archive, MoreHorizontal, Repeat2, Trash2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { CommunityPost } from "../types";
 import { CommunityImageCarousel } from "./CommunityImageCarousel";
@@ -53,6 +54,9 @@ type CommunityArchiveDetailDialogProps = {
   onRepost: () => void | Promise<void>;
   reposting?: boolean;
   onShare: () => void | Promise<void>;
+  canDelete?: boolean;
+  onDelete?: () => void;
+  canRepost?: boolean;
 };
 
 export function CommunityArchiveDetailDialog({
@@ -65,6 +69,9 @@ export function CommunityArchiveDetailDialog({
   onRepost,
   reposting = false,
   onShare,
+  canDelete = false,
+  onDelete,
+  canRepost = true,
 }: CommunityArchiveDetailDialogProps) {
   const categoryMeta = post
     ? (CATEGORY_STYLES[post.type] ?? {
@@ -99,14 +106,35 @@ export function CommunityArchiveDetailDialog({
               </h3>
               <p className="text-[13px] font-medium text-slate-500">{post.author?.name || "Member"}</p>
             </div>
-            <span
-              className={cn(
-                "mt-0.5 inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] ring-1",
-                categoryMeta.badgeClassName
-              )}
-            >
-              {categoryMeta.label}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "mt-0.5 inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] ring-1",
+                  categoryMeta.badgeClassName
+                )}
+              >
+                {categoryMeta.label}
+              </span>
+              {canDelete && onDelete ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Buka aksi konten"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted/65 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem onClick={onDelete} className="text-rose-600 focus:text-rose-600">
+                      <Trash2 className="h-4 w-4" />
+                      Hapus konten
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+            </div>
           </header>
 
           {mediaList.length > 0 ? (
@@ -140,23 +168,25 @@ export function CommunityArchiveDetailDialog({
               }}
               onBookmark={onBookmark}
             />
-            <button
-              type="button"
-              onClick={() => {
-                void onRepost();
-              }}
-              disabled={reposting}
-              aria-label={reposting ? "Memproses Repost ke Talks" : "Repost ke Talks"}
-              className={cn(
-                "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-[12px] font-semibold transition-colors",
-                reposting
-                  ? "cursor-not-allowed bg-slate-100/90 text-slate-400"
-                  : "bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900"
-              )}
-            >
-              <Repeat2 className="h-4 w-4" />
-              <span>{reposting ? "Memproses..." : "Repost ke Talks"}</span>
-            </button>
+            {canRepost ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void onRepost();
+                }}
+                disabled={reposting}
+                aria-label={reposting ? "Memproses Repost ke Talks" : "Repost ke Talks"}
+                className={cn(
+                  "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-[12px] font-semibold transition-colors",
+                  reposting
+                    ? "cursor-not-allowed bg-slate-100/90 text-slate-400"
+                    : "bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 hover:text-slate-900"
+                )}
+              >
+                <Repeat2 className="h-4 w-4" />
+                <span>{reposting ? "Memproses..." : "Repost ke Talks"}</span>
+              </button>
+            ) : null}
           </div>
         </article>
       </DialogContent>

@@ -16,7 +16,8 @@ import {
     Loader2,
     AlertTriangle,
     RefreshCw,
-    X
+    X,
+    BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MobileAppLayout from '@/layouts/MobileAppLayout';
@@ -73,6 +74,7 @@ type ApiProfilePayload = {
             id?: string | number;
             name?: string;
             email?: string;
+            birth_date?: string | null;
             is_admin?: boolean;
             email_verified_at?: string | null;
             avatar_url?: string | null;
@@ -98,6 +100,31 @@ type FirebaseSyncPayload = {
         };
     };
 };
+
+type NotificationPreferenceData = {
+    email: boolean;
+    in_app: boolean;
+    whatsapp: boolean;
+    timezone: string;
+    quiet_hours_start: string;
+    quiet_hours_end: string;
+    reminder_worship_enabled: boolean;
+    reminder_worship_time: string;
+    reminder_class_enabled: boolean;
+    reminder_class_time: string;
+    reminder_visit_enabled: boolean;
+    reminder_visit_time: string;
+};
+
+type WhatsappVerificationStatusData = {
+    status: string;
+    verified: boolean;
+    verified_at?: string | null;
+    phone?: string | null;
+    normalized_phone?: string | null;
+};
+
+const PROFILE_CACHE_TTL_MS = 30_000;
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -131,6 +158,7 @@ export default function ProfilePage() {
     const [user, setUser] = useState({
         name: profileName || authUser?.displayName || '',
         email: profileEmail || authUser?.email || '',
+        birth_date: '',
         avatarUrl: sessionAvatarUrl || null,
         avatarCandidates: buildAvatarCandidates(sessionAvatarUrl || authUser?.photoURL || null),
         is_admin: false,
@@ -143,9 +171,59 @@ export default function ProfilePage() {
     const [profileData, setProfileData] = useState({
         name: user.name,
         email: user.email,
+        birth_date: user.birth_date,
     });
     const [profileErrors, setProfileErrors] = useState<Record<string, string[]>>({});
     const [profileBusy, setProfileBusy] = useState(false);
+    const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferenceData>({
+        email: true,
+        in_app: true,
+        whatsapp: false,
+        timezone: 'Asia/Makassar',
+        quiet_hours_start: '',
+        quiet_hours_end: '',
+        reminder_worship_enabled: false,
+        reminder_worship_time: '07:00',
+        reminder_class_enabled: false,
+        reminder_class_time: '18:00',
+        reminder_visit_enabled: false,
+        reminder_visit_time: '09:00',
+    });
+    const [notificationBusy, setNotificationBusy] = useState(false);
+    const [whatsappPhone, setWhatsappPhone] = useState('');
+    const [whatsappCode, setWhatsappCode] = useState('');
+    const [whatsappVerification, setWhatsappVerification] = useState<WhatsappVerificationStatusData>({
+        status: 'pending',
+        verified: false,
+    });
+    const [whatsappBusy, setWhatsappBusy] = useState(false);
+    const hasLoadedProfileRef = useRef(false);
+    const hasLoadedNotificationSectionRef = useRef(false);
+
+    const readSessionCache = <T,>(key: string): T | null => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const raw = window.sessionStorage.getItem(key);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw) as { ts?: number; data?: T };
+            if (!parsed?.ts || Date.now() - parsed.ts > PROFILE_CACHE_TTL_MS) {
+                window.sessionStorage.removeItem(key);
+                return null;
+            }
+            return (parsed.data ?? null) as T | null;
+        } catch {
+            return null;
+        }
+    };
+
+    const writeSessionCache = <T,>(key: string, data: T): void => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+        } catch {
+            // ignore cache write errors
+        }
+    };
 
     // Password States
     const [passwordData, setPasswordData] = useState({
@@ -304,6 +382,80 @@ export default function ProfilePage() {
         return response;
     };
 
+    const loadNotificationPreferences = async (force = false) => {
+        const cacheKey = 'tct.profile.notificationPrefs';
+        if (!force) {
+            const cached = readSessionCache<NotificationPreferenceData>(cacheKey);
+            if (cached) {
+                setNotificationPrefs((prev) => ({ ...prev, ...cached }));
+                return;
+            }
+        }
+
+        const response = await fetchWithApiAuth('/api/profile/notification-preferences', {
+            method: 'GET',
+            cache: 'no-store',
+        });
+        if (!response?.ok) return;
+
+        const payload = await response.json().catch(() => null);
+        const data = payload?.data || {};
+        const nextPrefs: NotificationPreferenceData = {
+            email: Boolean(data.email),
+            in_app: Boolean(data.in_app),
+            whatsapp: Boolean(data.whatsapp),
+            timezone: typeof data.timezone === 'string' && data.timezone.trim() !== '' ? data.timezone : notificationPrefs.timezone,
+            quiet_hours_start: typeof data.quiet_hours_start === 'string' ? data.quiet_hours_start.slice(0, 5) : '',
+            quiet_hours_end: typeof data.quiet_hours_end === 'string' ? data.quiet_hours_end.slice(0, 5) : '',
+            reminder_worship_enabled: Boolean(data.reminder_worship_enabled),
+            reminder_worship_time: typeof data.reminder_worship_time === 'string' && data.reminder_worship_time.trim() !== '' ? data.reminder_worship_time.slice(0, 5) : '07:00',
+            reminder_class_enabled: Boolean(data.reminder_class_enabled),
+            reminder_class_time: typeof data.reminder_class_time === 'string' && data.reminder_class_time.trim() !== '' ? data.reminder_class_time.slice(0, 5) : '18:00',
+            reminder_visit_enabled: Boolean(data.reminder_visit_enabled),
+            reminder_visit_time: typeof data.reminder_visit_time === 'string' && data.reminder_visit_time.trim() !== '' ? data.reminder_visit_time.slice(0, 5) : '09:00',
+        };
+        setNotificationPrefs((prev) => ({
+            ...prev,
+            ...nextPrefs,
+        }));
+        writeSessionCache(cacheKey, nextPrefs);
+    };
+
+    const loadWhatsappVerificationStatus = async (force = false) => {
+        const cacheKey = 'tct.profile.whatsappVerification';
+        if (!force) {
+            const cached = readSessionCache<WhatsappVerificationStatusData>(cacheKey);
+            if (cached) {
+                setWhatsappVerification(cached);
+                if (typeof cached.phone === 'string' && cached.phone.trim() !== '') {
+                    setWhatsappPhone(cached.phone);
+                }
+                return;
+            }
+        }
+
+        const response = await fetchWithApiAuth('/api/profile/whatsapp-verification/status', {
+            method: 'GET',
+            cache: 'no-store',
+        });
+        if (!response?.ok) return;
+
+        const payload = await response.json().catch(() => null);
+        const data = payload?.data || {};
+        const nextStatus: WhatsappVerificationStatusData = {
+            status: typeof data.status === 'string' ? data.status : 'pending',
+            verified: Boolean(data.verified),
+            verified_at: data.verified_at || null,
+            phone: data.phone || null,
+            normalized_phone: data.normalized_phone || null,
+        };
+        setWhatsappVerification(nextStatus);
+        if (typeof data.phone === 'string' && data.phone.trim() !== '') {
+            setWhatsappPhone(data.phone);
+        }
+        writeSessionCache(cacheKey, nextStatus);
+    };
+
     useEffect(() => {
         if (authStatus === 'restoring') return;
         if (!isAuthenticated) {
@@ -315,6 +467,8 @@ export default function ProfilePage() {
         if (authStatus === 'restoring') return;
 
         if (!isAuthenticated) {
+            hasLoadedProfileRef.current = false;
+            hasLoadedNotificationSectionRef.current = false;
             setLoading(false);
             return;
         }
@@ -333,6 +487,41 @@ export default function ProfilePage() {
 
         let isActive = true;
         const loadProfile = async () => {
+            const cacheKey = 'tct.profile.main';
+            if (!hasLoadedProfileRef.current) {
+                const cached = readSessionCache<ApiProfilePayload>(cacheKey);
+                const cachedUser = cached?.data?.user;
+                if (cachedUser) {
+                    const avatarCandidates = dedupeCandidates([
+                        ...buildAvatarCandidates(sessionAvatarUrl || null),
+                        ...buildAvatarCandidates(authUser?.photoURL || null),
+                        ...buildAvatarCandidates(cachedUser.avatar_url || null),
+                    ]);
+                    const nextUser = {
+                        name: cachedUser.name || profileName || authUser?.displayName || '',
+                        email: cachedUser.email || profileEmail || authUser?.email || '',
+                        birth_date: cachedUser.birth_date || '',
+                        avatarUrl: avatarCandidates[0] || null,
+                        avatarCandidates,
+                        is_admin: Boolean(cachedUser.is_admin),
+                        email_verified_at: cachedUser.email_verified_at || null,
+                    };
+                    setUser(nextUser);
+                    setProfileData({
+                        name: nextUser.name,
+                        email: nextUser.email,
+                        birth_date: nextUser.birth_date,
+                    });
+                    setTwoFactor({
+                        enabled: Boolean(cached?.data?.twoFactor?.enabled),
+                        recoveryCodesRemaining: cached?.data?.twoFactor?.recoveryCodesRemaining || 0,
+                    });
+                    setOpsGateway(cached?.data?.opsGateway || null);
+                    setSpiritualHighlights(cached?.data?.spiritualHighlights || null);
+                    setLoading(false);
+                }
+            }
+
             try {
                 const response = await fetchWithApiAuth('/api/profile', {
                     method: 'GET',
@@ -353,6 +542,7 @@ export default function ProfilePage() {
                 const nextUser = {
                     name: apiUser.name || profileName || authUser?.displayName || '',
                     email: apiUser.email || profileEmail || authUser?.email || '',
+                    birth_date: apiUser.birth_date || '',
                     avatarUrl: avatarCandidates[0] || null,
                     avatarCandidates,
                     is_admin: Boolean(apiUser.is_admin),
@@ -376,11 +566,14 @@ export default function ProfilePage() {
                 setProfileData({
                     name: nextUser.name,
                     email: nextUser.email,
+                    birth_date: nextUser.birth_date,
                 });
                 setTwoFactor({
                     enabled: Boolean(payload?.data?.twoFactor?.enabled),
                     recoveryCodesRemaining: payload?.data?.twoFactor?.recoveryCodesRemaining || 0
                 });
+                writeSessionCache(cacheKey, payload);
+                hasLoadedProfileRef.current = true;
             } catch {
                 // ignore
             } finally {
@@ -429,9 +622,26 @@ export default function ProfilePage() {
                 if (isActive) setJourneyBadge(total);
             } catch { /* ignore */ }
         };
-        fetchSummary();
-        return () => { isActive = false; };
+        const timer = setTimeout(() => {
+            if (isActive) {
+                void fetchSummary();
+            }
+        }, 250);
+        return () => {
+            isActive = false;
+            clearTimeout(timer);
+        };
     }, []);
+
+    useEffect(() => {
+        if (!isAuthenticated || authStatus === 'restoring') return;
+        if (hasLoadedNotificationSectionRef.current) return;
+        hasLoadedNotificationSectionRef.current = true;
+        void Promise.allSettled([
+            loadNotificationPreferences(),
+            loadWhatsappVerificationStatus(),
+        ]);
+    }, [isAuthenticated, authStatus]);
 
     const logout = async () => {
         try {
@@ -444,6 +654,117 @@ export default function ProfilePage() {
 
         clearAppAccessToken();
         router.push('/login');
+    };
+
+    const handleNotificationPreferenceSave = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setNotificationBusy(true);
+        try {
+            const response = await fetchWithApiAuth('/api/profile/notification-preferences', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify(notificationPrefs),
+            });
+
+            if (!response) {
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
+                return;
+            }
+
+            const payload = await response.json().catch(() => null);
+            if (!response.ok) {
+                showToast(payload?.message || 'Failed to save notification preferences.', 'error');
+                return;
+            }
+
+            showToast('Notification preferences saved.');
+            await loadNotificationPreferences(true);
+        } catch {
+            showToast('A system issue occurred.', 'error');
+        } finally {
+            setNotificationBusy(false);
+        }
+    };
+
+    const handleRequestWhatsappOtp = async () => {
+        if (!whatsappPhone.trim()) {
+            showToast('Please enter your WhatsApp number first.', 'error');
+            return;
+        }
+
+        setWhatsappBusy(true);
+        try {
+            const response = await fetchWithApiAuth('/api/profile/whatsapp-verification/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ phone: whatsappPhone }),
+            });
+
+            if (!response) {
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
+                return;
+            }
+
+            const payload = await response.json().catch(() => null);
+            if (!response.ok) {
+                showToast(payload?.message || 'Failed to send OTP.', 'error');
+                return;
+            }
+
+            showToast('WhatsApp OTP has been sent.');
+            await loadWhatsappVerificationStatus(true);
+        } catch {
+            showToast('A system issue occurred.', 'error');
+        } finally {
+            setWhatsappBusy(false);
+        }
+    };
+
+    const handleVerifyWhatsappOtp = async () => {
+        if (!whatsappPhone.trim() || !whatsappCode.trim()) {
+            showToast('WhatsApp number and OTP are required.', 'error');
+            return;
+        }
+
+        setWhatsappBusy(true);
+        try {
+            const response = await fetchWithApiAuth('/api/profile/whatsapp-verification/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: whatsappPhone,
+                    code: whatsappCode,
+                }),
+            });
+
+            if (!response) {
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
+                return;
+            }
+
+            const payload = await response.json().catch(() => null);
+            if (!response.ok) {
+                showToast(payload?.message || 'Invalid OTP.', 'error');
+                return;
+            }
+
+            showToast('WhatsApp verified successfully.');
+            setWhatsappCode('');
+            await loadWhatsappVerificationStatus(true);
+        } catch {
+            showToast('A system issue occurred.', 'error');
+        } finally {
+            setWhatsappBusy(false);
+        }
     };
 
     const uploadAvatarFile = async (file: File) => {
@@ -485,7 +806,7 @@ export default function ProfilePage() {
             });
             if (!response) {
                 rollbackAvatar();
-                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
                 return;
             }
 
@@ -495,7 +816,7 @@ export default function ProfilePage() {
                 const persistedAvatarRaw = String(payload?.data?.avatar_url || '').trim();
                 if (!persistedAvatarRaw) {
                     rollbackAvatar();
-                    showToast('Upload diterima, tetapi URL avatar belum tersedia. Coba lagi.', 'error');
+                    showToast('Upload was accepted, but avatar URL is not ready yet. Please try again.', 'error');
                 } else {
                     const persistedCandidates = buildAvatarCandidates(persistedAvatarRaw);
                     const mergedCandidates = dedupeCandidates([
@@ -507,7 +828,7 @@ export default function ProfilePage() {
 
                     if (!renderableAvatar) {
                         rollbackAvatar();
-                        showToast('Foto tersimpan, tetapi belum bisa ditampilkan. Periksa storage/public URL avatar.', 'error');
+                        showToast('Photo was saved, but cannot be displayed yet. Please check storage/public avatar URL.', 'error');
                     } else {
                         setUser(prev => ({
                             ...prev,
@@ -523,7 +844,7 @@ export default function ProfilePage() {
                             URL.revokeObjectURL(avatarPreviewBlobRef.current);
                             avatarPreviewBlobRef.current = null;
                         }
-                        showToast('Foto profil diperbarui');
+                        showToast('Profile photo updated.');
                     }
                 }
             } else {
@@ -531,12 +852,12 @@ export default function ProfilePage() {
                 if (payload?.errors?.avatar?.[0]) {
                     showToast(payload.errors.avatar[0], 'error');
                 } else {
-                    showToast(payload?.message || 'Gagal mengupload foto profil', 'error');
+                    showToast(payload?.message || 'Failed to upload profile photo.', 'error');
                 }
             }
         } catch {
             rollbackAvatar();
-            showToast('Terjadi gangguan sistem saat mengupload', 'error');
+            showToast('A system issue occurred during upload.', 'error');
         } finally {
             setSubmittingAvatar(false);
             if (avatarInputRef.current) {
@@ -555,7 +876,7 @@ export default function ProfilePage() {
             setAvatarEditorTransform(DEFAULT_AVATAR_TRANSFORM);
             setAvatarEditorOpen(true);
         } catch {
-            showToast('Gagal membaca file foto.', 'error');
+            showToast('Failed to read image file.', 'error');
             if (avatarInputRef.current) {
                 avatarInputRef.current.value = '';
             }
@@ -593,14 +914,14 @@ export default function ProfilePage() {
             await uploadAvatarFile(croppedFile);
         } catch {
             setAvatarEditorBusy(false);
-            showToast('Gagal memproses crop avatar.', 'error');
+            showToast('Failed to process avatar crop.', 'error');
         }
     };
 
     const handleSaveAvatarTransform = () => {
         saveAvatarTransform(user.email || 'guest', clampTransform(avatarTransform));
         setAvatarTransformDirty(false);
-        showToast('Posisi foto disimpan');
+        showToast('Photo position saved.');
     };
 
     const handleProfileSave = async (event: React.FormEvent) => {
@@ -617,7 +938,7 @@ export default function ProfilePage() {
                 body: JSON.stringify(profileData),
             });
             if (!response) {
-                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
                 return;
             }
 
@@ -626,32 +947,39 @@ export default function ProfilePage() {
                 if (payload.errors) {
                     setProfileErrors(payload.errors);
                 } else {
-                    showToast(payload.message || 'Gagal menyimpan profil', 'error');
+                    showToast(payload.message || 'Failed to save profile.', 'error');
                 }
                 return;
             }
 
             const payload = await response.json();
             const nextAvatarCandidates = buildAvatarCandidates(payload?.data?.avatar_url || user.avatarUrl);
-            showToast('Profil berhasil disimpan');
+            showToast('Profile saved successfully.');
             const nextName = payload?.data?.name ?? user.name;
             const nextEmail = payload?.data?.email ?? user.email;
+            const nextBirthDate = payload?.data?.birth_date ?? user.birth_date ?? '';
             const nextAvatarUrl = nextAvatarCandidates[0] || user.avatarUrl;
             setUser(prev => ({
                 ...prev,
                 name: nextName,
                 email: nextEmail,
+                birth_date: nextBirthDate,
                 email_verified_at: payload?.data?.email_verified_at ?? prev.email_verified_at,
                 avatarUrl: nextAvatarUrl,
                 avatarCandidates: nextAvatarCandidates.length > 0 ? nextAvatarCandidates : prev.avatarCandidates,
             }));
+            setProfileData({
+                name: nextName,
+                email: nextEmail,
+                birth_date: nextBirthDate,
+            });
             setAppAuthUser({
                 name: nextName,
                 email: nextEmail,
                 avatarUrl: nextAvatarUrl,
             });
         } catch {
-            showToast('Terjadi gangguan sistem', 'error');
+            showToast('A system issue occurred.', 'error');
         } finally {
             setProfileBusy(false);
         }
@@ -675,23 +1003,23 @@ export default function ProfilePage() {
                 }),
             });
             if (!response) {
-                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
                 return;
             }
 
             if (response.ok) {
                 setPasswordData({ current: '', new: '', confirm: '' });
-                showToast('Kata sandi berhasil diubah');
+                showToast('Password updated successfully.');
             } else {
                 const payload = await response.json().catch(() => ({}));
                 if (payload.errors) {
                     setPasswordErrors(payload.errors);
                 } else {
-                    showToast(payload.message || 'Gagal mengubah kata sandi', 'error');
+                    showToast(payload.message || 'Failed to update password.', 'error');
                 }
             }
         } catch {
-            showToast('Terjadi gangguan sistem', 'error');
+            showToast('A system issue occurred.', 'error');
         } finally {
             setPasswordBusy(false);
         }
@@ -712,7 +1040,7 @@ export default function ProfilePage() {
                 body: JSON.stringify({ current_password: twoFactorPassword }),
             });
             if (!response) {
-                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorError('Your account session needs to be refreshed. Please sign in again.');
                 return;
             }
 
@@ -724,12 +1052,12 @@ export default function ProfilePage() {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
                     response.status === 401
-                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
-                        : error?.errors?.current_password?.[0] || error.message || 'Password tidak valid'
+                        ? 'Your account session needs to be refreshed. Please sign in again.'
+                        : error?.errors?.current_password?.[0] || error.message || 'Invalid password.'
                 );
             }
         } catch {
-            setTwoFactorError('Terjadi gangguan sistem');
+            setTwoFactorError('A system issue occurred.');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -753,7 +1081,7 @@ export default function ProfilePage() {
                 }),
             });
             if (!response) {
-                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorError('Your account session needs to be refreshed. Please sign in again.');
                 return;
             }
 
@@ -763,17 +1091,17 @@ export default function ProfilePage() {
                 setTwoFactorSetupData(null);
                 setTwoFactorPassword('');
                 setTwoFactorCode('');
-                showToast('2FA Berhasil diaktifkan');
+                showToast('2FA enabled successfully.');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
                     response.status === 401
-                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
-                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode OTP tidak valid'
+                        ? 'Your account session needs to be refreshed. Please sign in again.'
+                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Invalid OTP code.'
                 );
             }
         } catch {
-            setTwoFactorError('Terjadi gangguan sistem');
+            setTwoFactorError('A system issue occurred.');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -796,7 +1124,7 @@ export default function ProfilePage() {
                 }),
             });
             if (!response) {
-                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorError('Your account session needs to be refreshed. Please sign in again.');
                 return;
             }
 
@@ -805,17 +1133,17 @@ export default function ProfilePage() {
                 setTwoFactorStep('idle');
                 setTwoFactorPassword('');
                 setTwoFactorCode('');
-                showToast('2FA Dinonaktifkan');
+                showToast('2FA disabled.');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
                     response.status === 401
-                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
-                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Kode tidak valid'
+                        ? 'Your account session needs to be refreshed. Please sign in again.'
+                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Invalid code.'
                 );
             }
         } catch {
-            setTwoFactorError('Gagal menonaktifkan 2FA');
+            setTwoFactorError('Failed to disable 2FA.');
         } finally {
             setTwoFactorBusy(false);
         }
@@ -839,7 +1167,7 @@ export default function ProfilePage() {
                 }),
             });
             if (!response) {
-                setTwoFactorError('Sesi akun perlu diperbarui. Silakan login ulang.');
+                setTwoFactorError('Your account session needs to be refreshed. Please sign in again.');
                 return;
             }
 
@@ -849,24 +1177,24 @@ export default function ProfilePage() {
                 setTwoFactorStep('idle');
                 setTwoFactorPassword('');
                 setTwoFactorCode('');
-                showToast('Recovery codes baru dibuat');
+                showToast('New recovery codes generated.');
             } else {
                 const error = await response.json().catch(() => ({}));
                 setTwoFactorError(
                     response.status === 401
-                        ? 'Sesi akun perlu diperbarui. Silakan login ulang.'
-                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Gagal mereset codes'
+                        ? 'Your account session needs to be refreshed. Please sign in again.'
+                        : error?.errors?.code?.[0] || error?.errors?.current_password?.[0] || error.message || 'Failed to reset codes.'
                 );
             }
         } catch {
-            setTwoFactorError('Terjadi gangguan sistem');
+            setTwoFactorError('A system issue occurred.');
         } finally {
             setTwoFactorBusy(false);
         }
     };
 
     const handleDeleteAccount = async () => {
-        const password = window.prompt('HAPUS AKUN PERMANEN\n\nTindakan ini tidak bisa dibatalkan!\nMasukkan password Anda untuk meneruskan penghapusan:');
+        const password = window.prompt('PERMANENT ACCOUNT DELETION\n\nThis action cannot be undone!\nEnter your password to continue:');
         if (!password) return;
 
         setDeleteBusy(true);
@@ -880,23 +1208,24 @@ export default function ProfilePage() {
                 body: JSON.stringify({ password }), // Using method spooling proxy logic for current_password mapping if required by backend.
             });
             if (!response) {
-                showToast('Sesi akun perlu diperbarui. Silakan login ulang.', 'error');
+                showToast('Your account session needs to be refreshed. Please sign in again.', 'error');
                 return;
             }
             if (response.ok) {
                 logout(); // Initiates redirect
             } else {
                 const error = await response.json().catch(() => ({}));
-                showToast(error?.errors?.password?.[0] || error?.message || 'Password salah atau proses gagal.', 'error');
+                showToast(error?.errors?.password?.[0] || error?.message || 'Wrong password or process failed.', 'error');
             }
         } catch { 
-            showToast('Terjadi gangguan sistem. Gagal menghubungi server.', 'error');
+            showToast('A system issue occurred. Failed to reach server.', 'error');
         } finally {
             setDeleteBusy(false);
         }
     };
 
     const firstName = user.name.split(' ')[0];
+    const canAccessMainAppsKpi = user.is_admin && user.email.trim().toLowerCase() === 'engel.willem@gmail.com';
     const openSection = (sectionId: string) => {
         if (typeof document === 'undefined') return;
         const target = document.getElementById(sectionId);
@@ -910,7 +1239,7 @@ export default function ProfilePage() {
                 <div className="mx-auto max-w-[640px] px-4 py-10">
                     <div className="rounded-[2rem] border border-border/50 bg-surface/70 p-8 flex items-center gap-3">
                         <Loader2 className="h-5 w-5 animate-spin text-brand" />
-                        <p className="text-sm font-medium text-foreground/80">Memulihkan sesi akun...</p>
+                        <p className="text-sm font-medium text-foreground/80">Restoring account session...</p>
                     </div>
                 </div>
             </MobileAppLayout>
@@ -1012,7 +1341,7 @@ export default function ProfilePage() {
                                     className="flex w-full items-center justify-between gap-3 px-4 py-4"
                                 >
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
-                                        Posisi Foto
+                                        Photo Position
                                     </p>
                                     <ChevronRight
                                         className={cn(
@@ -1033,7 +1362,7 @@ export default function ProfilePage() {
                                                         onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y - 6 }))}
                                                         className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
                                                     >
-                                                        Atas
+                                                        Up
                                                     </button>
                                                     <div />
                                                     <button
@@ -1041,7 +1370,7 @@ export default function ProfilePage() {
                                                         onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x - 6 }))}
                                                         className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
                                                     >
-                                                        Kiri
+                                                        Left
                                                     </button>
                                                     <button
                                                         type="button"
@@ -1055,7 +1384,7 @@ export default function ProfilePage() {
                                                         onClick={() => updateAvatarTransform((prev) => ({ ...prev, x: prev.x + 6 }))}
                                                         className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
                                                     >
-                                                        Kanan
+                                                        Right
                                                     </button>
                                                     <div />
                                                     <button
@@ -1063,7 +1392,7 @@ export default function ProfilePage() {
                                                         onClick={() => updateAvatarTransform((prev) => ({ ...prev, y: prev.y + 6 }))}
                                                         className="rounded-xl border border-border/60 bg-surface py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/80 hover:bg-surface-elevated"
                                                     >
-                                                        Bawah
+                                                        Down
                                                     </button>
                                                     <div />
                                                 </div>
@@ -1104,7 +1433,7 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="mt-4 flex items-center justify-between gap-3">
                                             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                                                {avatarTransformDirty ? 'Perubahan belum disimpan' : 'Posisi foto tersimpan'}
+                                                {avatarTransformDirty ? 'Changes not saved yet' : 'Photo position saved'}
                                             </p>
                                             <Button
                                                 type="button"
@@ -1162,7 +1491,9 @@ export default function ProfilePage() {
                                     </div>
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <Button onClick={() => router.push('/settings/ops-visibility')} className="w-full h-12 bg-foreground text-background font-black text-[11px] uppercase tracking-widest rounded-2xl">Open Ops Triage</Button>
-                                        <Button variant="outline" onClick={() => router.push('/settings/kpi-dashboard')} className="w-full h-12 border-border/50 bg-surface-muted text-foreground font-black text-[11px] uppercase tracking-widest rounded-2xl">KPI Dashboard</Button>
+                                        {canAccessMainAppsKpi ? (
+                                            <Button variant="outline" onClick={() => router.push('/profile/kpi')} className="w-full h-12 border-border/50 bg-surface-muted text-foreground font-black text-[11px] uppercase tracking-widest rounded-2xl">KPI Dashboard</Button>
+                                        ) : null}
                                     </div>
                                 </div>
                             </div>
@@ -1178,7 +1509,7 @@ export default function ProfilePage() {
                             >
                                 <div className="text-left space-y-1">
                                     <p className="text-lg font-black text-foreground tracking-tight">Growth Monitoring</p>
-                                    <p className="text-[11px] text-brand/80 font-bold uppercase tracking-widest leading-relaxed">Lihat seluruh jejak, hafalan, & catatan batin Anda</p>
+                                    <p className="text-[11px] text-brand/80 font-bold uppercase tracking-widest leading-relaxed">View your full trails, memorization, and inner notes</p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     {journeyBadge > 0 && (
@@ -1194,7 +1525,7 @@ export default function ProfilePage() {
                             </button>
                             
                             <p className="text-[10px] px-4 font-medium text-muted-foreground leading-relaxed italic">
-                                * Halaman Journey menyediakan visualisasi progres dan riwayat interaksi Alkitab Anda secara mendalam.
+                                * Journey page provides deep visualization of your progress and Bible interaction history.
                             </p>
                         </div>
                     </AccordionCard>
@@ -1210,14 +1541,14 @@ export default function ProfilePage() {
                                     </p>
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         <span className="rounded-full border border-sky-200/70 bg-sky-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700/90">
-                                            {spiritualHighlights.window_days ?? 7} hari terakhir
+                                            {spiritualHighlights.window_days ?? 7} days recent
                                         </span>
                                         <span className="rounded-full border border-border/60 bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-foreground/60">
-                                            {spiritualHighlights.session_count ?? 0} sesi renungan
+                                            {spiritualHighlights.session_count ?? 0} reflection sessions
                                         </span>
                                         {spiritualHighlights.top_verse_reference ? (
                                             <span className="rounded-full border border-emerald-200/70 bg-emerald-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700/90">
-                                                Ayat: {spiritualHighlights.top_verse_reference}
+                                                Verse: {spiritualHighlights.top_verse_reference}
                                             </span>
                                         ) : null}
                                     </div>
@@ -1225,7 +1556,7 @@ export default function ProfilePage() {
                             ) : (
                                 <div className="rounded-[24px] border border-border/60 bg-surface px-5 py-5 shadow-soft">
                                     <p className="text-[14px] leading-7 text-muted-foreground">
-                                        Belum ada cukup jejak dalam 7 hari terakhir. Lanjutkan renunganmu, lalu highlights rohanimu akan tampil di sini secara bertahap.
+                                        There is not enough data from the last 7 days yet. Keep reflecting and your spiritual highlights will appear here gradually.
                                     </p>
                                 </div>
                             )}
@@ -1233,22 +1564,66 @@ export default function ProfilePage() {
                     </AccordionCard>
                     </div>
 
+                    {canAccessMainAppsKpi ? (
+                    <div id="profile-kpi-dashboard">
+                    <AccordionCard title="Main Apps KPI Dashboard">
+                        <div className="pt-2 space-y-4">
+                            <div className="rounded-[24px] border border-border/60 bg-surface px-5 py-5 shadow-soft">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p className="text-lg font-black text-foreground tracking-tight">Your Main Apps KPI</p>
+                                        <p className="mt-1 text-[11px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
+                                            Track spiritual activity, engagement, and account readiness in one dashboard
+                                        </p>
+                                    </div>
+                                    <div className="h-10 w-10 rounded-2xl bg-surface-muted flex items-center justify-center text-brand">
+                                        <BarChart3 className="h-5 w-5" />
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 grid grid-cols-2 gap-2">
+                                    <span className="rounded-full border border-border/60 bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-foreground/70">
+                                        Journey: {journeyBadge}
+                                    </span>
+                                    <span className="rounded-full border border-sky-200/70 bg-sky-50/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-sky-700/90">
+                                        Reflection: {spiritualHighlights?.session_count ?? 0}
+                                    </span>
+                                </div>
+
+                                <Button
+                                    onClick={() => router.push('/profile/kpi')}
+                                    className="mt-5 w-full h-12 bg-foreground text-background font-black text-[11px] uppercase tracking-widest rounded-2xl"
+                                >
+                                    Open KPI Dashboard
+                                </Button>
+                            </div>
+                        </div>
+                    </AccordionCard>
+                    </div>
+                    ) : null}
+
                     <div id="profile-personal">
-                    <AccordionCard title="Informasi Personal">
+                    <AccordionCard title="Personal Information">
                         <form className="space-y-6 pt-2" onSubmit={handleProfileSave}>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Nama Lengkap</label>
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Full Name</label>
                                 <Input value={profileData.name} onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
                                 {profileErrors.name && profileErrors.name.map((err, i) => <p key={`name-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Alamat Email</label>
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Email Address</label>
                                 <Input type="email" value={profileData.email} onChange={(e) => setProfileData({ ...profileData, email: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
                                 {profileErrors.email && profileErrors.email.map((err, i) => <p key={`email-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Birth Date</label>
+                                <Input type="date" value={profileData.birth_date} onChange={(e) => setProfileData({ ...profileData, birth_date: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl text-[16px] font-bold px-5 text-foreground" disabled={profileBusy} />
+                                <p className="text-[10px] ml-2 text-muted-foreground">Dipakai untuk reminder dan ucapan ulang tahun via WhatsApp.</p>
+                                {profileErrors.birth_date && profileErrors.birth_date.map((err, i) => <p key={`birth-date-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
+                            </div>
                             <div className="pt-2">
                                 <PrimaryCTA 
-                                    label={profileBusy ? 'Menyimpan...' : 'Simpan Perubahan'} 
+                                    label={profileBusy ? 'Saving...' : 'Save Changes'} 
                                     icon={profileBusy ? <Loader2 className="animate-spin h-4 w-4" /> : undefined}
                                     size="md" 
                                     disabled={profileBusy} 
@@ -1258,17 +1633,92 @@ export default function ProfilePage() {
                     </AccordionCard>
                     </div>
 
+                    <div id="profile-notifications">
+                    <AccordionCard title="Notifications & WhatsApp">
+                        <div className="space-y-6 pt-2">
+                            <form className="space-y-4" onSubmit={handleNotificationPreferenceSave}>
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <label className="flex items-center gap-2 rounded-xl border border-border/50 bg-surface-muted px-3 py-2 text-xs font-bold text-foreground">
+                                        <input type="checkbox" checked={notificationPrefs.email} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, email: e.target.checked }))} disabled={notificationBusy} />
+                                        Email
+                                    </label>
+                                    <label className="flex items-center gap-2 rounded-xl border border-border/50 bg-surface-muted px-3 py-2 text-xs font-bold text-foreground">
+                                        <input type="checkbox" checked={notificationPrefs.in_app} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, in_app: e.target.checked }))} disabled={notificationBusy} />
+                                        In-App
+                                    </label>
+                                    <label className="flex items-center gap-2 rounded-xl border border-border/50 bg-surface-muted px-3 py-2 text-xs font-bold text-foreground">
+                                        <input type="checkbox" checked={notificationPrefs.whatsapp} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, whatsapp: e.target.checked }))} disabled={notificationBusy} />
+                                        WhatsApp
+                                    </label>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <Input value={notificationPrefs.timezone} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, timezone: e.target.value }))} placeholder="Timezone (contoh: Asia/Makassar)" disabled={notificationBusy} />
+                                    <Input type="time" value={notificationPrefs.quiet_hours_start} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, quiet_hours_start: e.target.value }))} disabled={notificationBusy} />
+                                    <Input type="time" value={notificationPrefs.quiet_hours_end} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, quiet_hours_end: e.target.value }))} disabled={notificationBusy} />
+                                </div>
+
+                                <div className="rounded-xl border border-border/50 bg-surface-muted p-3 space-y-3">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Routine Reminders</p>
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <label className="flex items-center gap-2 rounded-xl border border-border/50 bg-background px-3 py-2 text-xs font-bold text-foreground">
+                                            <input type="checkbox" checked={notificationPrefs.reminder_worship_enabled} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, reminder_worship_enabled: e.target.checked }))} disabled={notificationBusy} />
+                                            Worship
+                                        </label>
+                                        <label className="flex items-center gap-2 rounded-xl border border-border/50 bg-background px-3 py-2 text-xs font-bold text-foreground">
+                                            <input type="checkbox" checked={notificationPrefs.reminder_class_enabled} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, reminder_class_enabled: e.target.checked }))} disabled={notificationBusy} />
+                                            Class
+                                        </label>
+                                        <label className="flex items-center gap-2 rounded-xl border border-border/50 bg-background px-3 py-2 text-xs font-bold text-foreground">
+                                            <input type="checkbox" checked={notificationPrefs.reminder_visit_enabled} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, reminder_visit_enabled: e.target.checked }))} disabled={notificationBusy} />
+                                            Visit
+                                        </label>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <Input type="time" value={notificationPrefs.reminder_worship_time} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, reminder_worship_time: e.target.value }))} disabled={notificationBusy} />
+                                        <Input type="time" value={notificationPrefs.reminder_class_time} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, reminder_class_time: e.target.value }))} disabled={notificationBusy} />
+                                        <Input type="time" value={notificationPrefs.reminder_visit_time} onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, reminder_visit_time: e.target.value }))} disabled={notificationBusy} />
+                                    </div>
+                                </div>
+
+                                <Button type="submit" disabled={notificationBusy} className="w-full bg-surface-muted hover:bg-surface-elevated text-foreground border border-border/50 h-11 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-soft transition-all active:scale-[0.98]">
+                                    {notificationBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Save Notification Preferences'}
+                                </Button>
+                            </form>
+
+                            <div className="rounded-2xl border border-border/50 bg-surface p-4 space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">WhatsApp Verification</p>
+                                <p className="text-xs font-medium text-foreground/80">
+                                    Status: {whatsappVerification.verified ? 'Verified' : 'Not verified'}
+                                    {whatsappVerification.verified_at ? ` (${new Date(whatsappVerification.verified_at).toLocaleString()})` : ''}
+                                </p>
+
+                                <Input value={whatsappPhone} onChange={(e) => setWhatsappPhone(e.target.value)} placeholder="WhatsApp number (example: 0812xxxxxx)" disabled={whatsappBusy} />
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <Button type="button" onClick={handleRequestWhatsappOtp} disabled={whatsappBusy || !whatsappPhone.trim()} className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest">
+                                        {whatsappBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Request OTP'}
+                                    </Button>
+                                    <Input value={whatsappCode} onChange={(e) => setWhatsappCode(e.target.value)} placeholder="Enter OTP" disabled={whatsappBusy} />
+                                </div>
+                                <Button type="button" variant="outline" onClick={handleVerifyWhatsappOtp} disabled={whatsappBusy || !whatsappPhone.trim() || !whatsappCode.trim()} className="w-full h-11 rounded-xl font-black text-[11px] uppercase tracking-widest">
+                                    Verify OTP
+                                </Button>
+                            </div>
+                        </div>
+                    </AccordionCard>
+                    </div>
+
                     <div id="profile-password">
-                    <AccordionCard title="Keamanan & Password">
+                    <AccordionCard title="Security & Password">
                         <form className="space-y-6 pt-2" onSubmit={handlePasswordUpdate}>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Password Saat Ini</label>
+                                <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Current Password</label>
                                 <Input type="password" value={passwordData.current} onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                 {passwordErrors.current_password && passwordErrors.current_password.map((err, i) => <p key={`curr-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                             </div>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">Password Baru</label>
+                                    <label className="text-[10px] font-black text-foreground/70 uppercase tracking-[0.25em] ml-2">New Password</label>
                                     <Input type="password" value={passwordData.new} onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })} className="h-13 bg-surface-muted border-border/50 rounded-2xl px-5 font-bold text-foreground" disabled={passwordBusy} />
                                     {passwordErrors.password && passwordErrors.password.map((err, i) => <p key={`new-${i}`} className="text-rose-400 text-[10px] font-bold uppercase ml-2">{err}</p>)}
                                 </div>
@@ -1278,7 +1728,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <Button type="submit" disabled={passwordBusy} className="w-full bg-surface-muted hover:bg-surface-elevated text-foreground border border-border/50 h-13 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-soft transition-all active:scale-[0.98]">
-                                {passwordBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Perbarui Kata Sandi'}
+                                {passwordBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Update Password'}
                             </Button>
                         </form>
                     </AccordionCard>
@@ -1318,18 +1768,18 @@ export default function ProfilePage() {
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-[11px] font-black text-brand uppercase tracking-[0.2em]">
                                             {twoFactorStep === 'disable'
-                                                ? 'Nonaktifkan Keamanan'
+                                                ? 'Disable Security'
                                                 : twoFactorStep === 'recovery'
-                                                    ? 'Recovery Codes Baru'
-                                                    : 'Konfigurasi 2FA'}
+                                                    ? 'New Recovery Codes'
+                                                    : '2FA Setup'}
                                         </h4>
                                         <button onClick={() => setTwoFactorStep('idle')} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
                                     </div>
 
                                     {twoFactorStep === 'password' && (
                                         <div className="space-y-4">
-                                            <p className="text-xs text-muted-foreground leading-relaxed font-medium">Langkah 1: Verifikasi identitas Anda untuk membuat kunci rahasia baru.</p>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Masukkan password Anda" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <p className="text-xs text-muted-foreground leading-relaxed font-medium">Step 1: Verify your identity to create a new secret key.</p>
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Enter your password" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
                                             <Button onClick={handleTwoFactorSetup} disabled={twoFactorBusy || !twoFactorPassword} className="w-full h-11 bg-foreground text-background font-bold text-xs rounded-xl">
                                                 {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4" /> : 'Generate QR Code'}
                                             </Button>
@@ -1343,13 +1793,13 @@ export default function ProfilePage() {
                                                     <img src={twoFactorSetupData.qrCodeDataUri} alt="QR Code" className="w-40 h-40" />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Atau Masukkan Manual</p>
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Or Enter Manually</p>
                                                     <code className="text-xs font-mono bg-surface border border-border/50 px-3 py-1 rounded-lg text-brand select-all">{twoFactorSetupData.secret}</code>
                                                 </div>
                                             </div>
 
                                             <div className="space-y-3">
-                                                <p className="text-[10px] font-bold text-brand uppercase tracking-widest text-center">Simpan Recovery Codes (Penting!)</p>
+                                                <p className="text-[10px] font-bold text-brand uppercase tracking-widest text-center">Save Recovery Codes (Important!)</p>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {twoFactorSetupData.recoveryCodes.map(code => (
                                                         <code key={code} className="text-[9px] font-mono bg-surface p-2 rounded-lg text-muted-foreground border border-border/50">{code}</code>
@@ -1358,9 +1808,9 @@ export default function ProfilePage() {
                                             </div>
 
                                             <div className="space-y-3 pt-2">
-                                                <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Masukkan 6 Digit OTP" className="bg-surface border-border/50 rounded-xl text-center tracking-[0.5em] font-black h-12 text-foreground" maxLength={6} disabled={twoFactorBusy} />
+                                                <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Enter 6-digit OTP" className="bg-surface border-border/50 rounded-xl text-center tracking-[0.5em] font-black h-12 text-foreground" maxLength={6} disabled={twoFactorBusy} />
                                                 <Button onClick={handleTwoFactorConfirm} disabled={twoFactorBusy || twoFactorCode.length < 6} className="w-full h-12 bg-brand text-brand-foreground font-black text-[11px] uppercase tracking-widest rounded-xl">
-                                                    {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Aktifkan Sekarang'}
+                                                    {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Enable Now'}
                                                 </Button>
                                             </div>
                                         </div>
@@ -1370,12 +1820,12 @@ export default function ProfilePage() {
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
                                                 <AlertTriangle size={16} className="shrink-0" />
-                                                <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Menonaktifkan 2FA akan mengurangi keamanan akun Anda secara signifikan.</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Disabling 2FA will significantly reduce your account security.</p>
                                             </div>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Current password" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
                                             <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
                                             <Button onClick={handleTwoFactorDisable} disabled={twoFactorBusy || !twoFactorPassword || !twoFactorCode} className="w-full h-11 bg-rose-500 text-white font-bold text-xs rounded-xl">
-                                                {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Konfirmasi Nonaktif'}
+                                                {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Confirm Disable'}
                                             </Button>
                                         </div>
                                     )}
@@ -1384,12 +1834,12 @@ export default function ProfilePage() {
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-3 p-3 rounded-xl bg-brand/10 border border-brand/20 text-brand">
                                                 <RefreshCw size={16} className="shrink-0" />
-                                                <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Masukkan password saat ini dan OTP atau recovery code aktif untuk membuat paket recovery code yang baru.</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">Enter your current password and active OTP or recovery code to generate a new recovery code pack.</p>
                                             </div>
-                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Password saat ini" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
-                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Recovery Code Aktif" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Input type="password" value={twoFactorPassword} onChange={(e) => setTwoFactorPassword(e.target.value)} placeholder="Current password" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
+                                            <Input value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="OTP / Active Recovery Code" className="bg-surface border-border/50 rounded-xl text-foreground" disabled={twoFactorBusy} />
                                             <Button onClick={handleRegenerateCodes} disabled={twoFactorBusy || !twoFactorPassword || !twoFactorCode} className="w-full h-11 bg-brand text-brand-foreground font-bold text-xs rounded-xl">
-                                                {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Buat Recovery Codes Baru'}
+                                                {twoFactorBusy ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : 'Generate New Recovery Codes'}
                                             </Button>
                                         </div>
                                     )}
@@ -1400,7 +1850,7 @@ export default function ProfilePage() {
 
                             {twoFactor.enabled && (
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] ml-2">Manajemen Kunci</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] ml-2">Key Management</label>
                                     <div className="grid gap-2">
                                         <button
                                             onClick={() => {
@@ -1411,14 +1861,14 @@ export default function ProfilePage() {
                                         >
                                             <div className="flex items-center gap-3">
                                                 <RefreshCw size={16} className="text-muted-foreground group-hover:rotate-180 transition-transform duration-700" />
-                                                <span className="text-xs font-bold text-foreground/80">Buat Ulang Recovery Codes</span>
+                                                <span className="text-xs font-bold text-foreground/80">Regenerate Recovery Codes</span>
                                             </div>
                                             <ChevronRight size={14} className="text-muted-foreground" />
                                         </button>
                                     </div>
                                     {newRecoveryCodes && (
                                         <div className="p-5 rounded-3xl bg-brand/5 border border-brand/20 animate-in zoom-in-95">
-                                            <p className="text-[10px] font-black text-brand uppercase tracking-widest mb-3">Recovery Codes Baru Anda</p>
+                                            <p className="text-[10px] font-black text-brand uppercase tracking-widest mb-3">Your New Recovery Codes</p>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {newRecoveryCodes.map(code => <code key={code} className="text-[9px] font-mono bg-surface p-2 rounded-lg text-brand/80">{code}</code>)}
                                             </div>
@@ -1437,7 +1887,7 @@ export default function ProfilePage() {
                             className="group mx-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl border border-rose-500/10 text-rose-500 hover:text-rose-600 transition-all duration-500 disabled:opacity-50 disabled:grayscale hover:bg-rose-500/5"
                         >
                             {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 transition-transform group-hover:scale-110" />}
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">{deleteBusy ? 'Menghapus...' : 'Hapus Akun Permanen'}</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">{deleteBusy ? 'Deleting...' : 'Delete Account Permanently'}</span>
                         </button>
                         
                     </div>
@@ -1447,9 +1897,9 @@ export default function ProfilePage() {
             <Dialog open={avatarEditorOpen} onOpenChange={(open) => (!open ? closeAvatarEditor() : null)}>
                 <DialogContent className="max-w-[720px] rounded-[2rem] border-border/60 bg-background p-0 overflow-hidden">
                     <DialogHeader className="border-b border-border/50 px-6 py-5 text-left">
-                        <DialogTitle className="text-xl font-black tracking-tight text-foreground">Atur Crop Avatar</DialogTitle>
+                        <DialogTitle className="text-xl font-black tracking-tight text-foreground">Adjust Avatar Crop</DialogTitle>
                         <DialogDescription className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                            Geser foto ke area yang Anda inginkan. Hasil crop ini yang akan disimpan sebagai avatar, jadi tidak ada crop otomatis yang memotong bagian penting.
+                            Move your photo to the area you want. This crop result will be saved as your avatar, so no automatic crop will cut important parts.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1497,7 +1947,7 @@ export default function ProfilePage() {
                                 );
                             })()}
                             <p className="text-center text-xs font-medium leading-relaxed text-muted-foreground">
-                                Seluruh foto ditampilkan dulu. Tarik atau zoom hanya jika Anda memang ingin memotong area tertentu.
+                                The full photo is shown first. Drag or zoom only if you want to crop a specific area.
                             </p>
                         </div>
 
@@ -1534,16 +1984,16 @@ export default function ProfilePage() {
                             </div>
 
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Geser Presisi</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Precision Move</p>
                                 <div className="mt-3 grid grid-cols-3 gap-2">
                                     <div />
-                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, y: prev.y - 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Atas</button>
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, y: prev.y - 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Up</button>
                                     <div />
-                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, x: prev.x - 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Kiri</button>
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, x: prev.x - 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Left</button>
                                     <button type="button" onClick={() => setAvatarEditorTransform(DEFAULT_AVATAR_TRANSFORM)} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Reset</button>
-                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, x: prev.x + 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Kanan</button>
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, x: prev.x + 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Right</button>
                                     <div />
-                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, y: prev.y + 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Bawah</button>
+                                    <button type="button" onClick={() => updateAvatarEditorTransform((prev) => ({ ...prev, y: prev.y + 8 }))} className="rounded-xl border border-border/60 bg-background py-2 text-[10px] font-bold uppercase tracking-[0.12em]" disabled={avatarEditorBusy}>Down</button>
                                     <div />
                                 </div>
                             </div>
@@ -1552,11 +2002,11 @@ export default function ProfilePage() {
 
                     <DialogFooter className="border-t border-border/50 bg-background px-6 py-5">
                         <Button type="button" variant="outline" onClick={closeAvatarEditor} disabled={avatarEditorBusy} className="rounded-full">
-                            Batal
+                            Cancel
                         </Button>
                         <Button type="button" onClick={commitAvatarCrop} disabled={avatarEditorBusy || !avatarEditorSource} className="rounded-full">
                             {avatarEditorBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Simpan Crop Avatar
+                            Save Avatar Crop
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1580,3 +2030,4 @@ export default function ProfilePage() {
         </MobileAppLayout>
     );
 }
+

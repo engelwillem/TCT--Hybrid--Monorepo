@@ -10,6 +10,7 @@ import {
   statusLabels,
   type AiosIntegrationHealth,
   type AiosKpiDetailResponse,
+  type AiosRecentRunsResponse,
   type AiosRunStatus,
   type AiosSummaryResponse,
 } from "@/features/aios/demo-data";
@@ -76,6 +77,7 @@ function shouldUseDemoDetail(detail: AiosKpiDetailResponse | null): boolean {
 export default function AiosDashboardPage() {
   const [summary, setSummary] = useState<AiosSummaryResponse | null>(null);
   const [detail, setDetail] = useState<AiosKpiDetailResponse | null>(null);
+  const [recentRuns, setRecentRuns] = useState<AiosRecentRunsResponse | null>(null);
   const [integrationTest, setIntegrationTest] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,25 +89,30 @@ export default function AiosDashboardPage() {
         setLoading(true);
         setError(null);
 
-        const [summaryRes, detailRes] = await Promise.all([
+        const [summaryRes, detailRes, recentRunsRes] = await Promise.all([
           fetch("/api/onboarding/dashboard/summary", { cache: "no-store" }),
           fetch("/api/onboarding/dashboard/kpi-detail?days=30", { cache: "no-store" }),
+          fetch("/api/onboarding/dashboard/recent-runs?limit=10", { cache: "no-store" }),
         ]);
 
         if (!summaryRes.ok) throw new Error(`Summary API failed (${summaryRes.status})`);
         if (!detailRes.ok) throw new Error(`KPI detail API failed (${detailRes.status})`);
+        if (!recentRunsRes.ok) throw new Error(`Recent runs API failed (${recentRunsRes.status})`);
 
         const summaryJson = (await summaryRes.json()) as AiosSummaryResponse;
         const detailJson = (await detailRes.json()) as AiosKpiDetailResponse;
+        const recentRunsJson = (await recentRunsRes.json()) as AiosRecentRunsResponse;
 
         if (!active) return;
         setSummary(summaryJson);
         setDetail(detailJson);
+        setRecentRuns(recentRunsJson);
       } catch (e) {
         if (!active) return;
         setError(e instanceof Error ? e.message : "Failed to load live dashboard metrics.");
         setSummary(demoSummary);
         setDetail(demoKpiDetail);
+        setRecentRuns(null);
       } finally {
         if (active) setLoading(false);
       }
@@ -120,6 +127,7 @@ export default function AiosDashboardPage() {
   const visibleSummary = shouldUseDemoSummary(summary) ? demoSummary : summary;
   const visibleDetail = shouldUseDemoDetail(detail) ? demoKpiDetail : detail;
   const isDemoMode = shouldUseDemoSummary(summary) || shouldUseDemoDetail(detail) || Boolean(error);
+  const liveRecentRuns = recentRuns?.data ?? [];
 
   const successRate = useMemo(() => {
     if (!visibleSummary || visibleSummary.total_leads === 0) return 0;
@@ -148,11 +156,13 @@ export default function AiosDashboardPage() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Demo Mode Ready</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+              {isDemoMode ? "Demo fallback — backend not connected" : "Live backend mode — MVP proof"}
+            </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">AIOS - Financial Advisory Automation Ops</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-              Production-style observability for AI onboarding runs, queue states, integrations, failures, retries,
-              and advisor handoff readiness.
+              MVP observability for onboarding runs, queue states, generic webhook adapter readiness, failures, retries,
+              and advisor handoff readiness. Email is simulated/mock in this MVP; CRM/calendar are not provider-specific.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -180,7 +190,7 @@ export default function AiosDashboardPage() {
             onClick={runIntegrationTest}
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
           >
-            Test CRM/Calendar Integration
+            Test generic CRM/Calendar adapters
           </button>
           <Link
             href={`/aios/runs/${aiosDemoRuns[0].id}`}
@@ -202,6 +212,21 @@ export default function AiosDashboardPage() {
             Live API unavailable: {error}. Showing realistic demo automation runs.
           </p>
         ) : null}
+
+        <section className="mt-6 grid gap-3 md:grid-cols-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">Email status</p>
+            <p className="mt-1">Simulated/mock only — no production email delivery claimed.</p>
+          </div>
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+            <p className="font-semibold">CRM status</p>
+            <p className="mt-1">Generic webhook adapter-ready; skipped safely when no URL is configured.</p>
+          </div>
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+            <p className="font-semibold">Calendar status</p>
+            <p className="mt-1">Generic webhook adapter-ready; no calendar provider integration is claimed.</p>
+          </div>
+        </section>
 
         {visibleSummary && visibleDetail ? (
           <>
@@ -294,6 +319,39 @@ export default function AiosDashboardPage() {
               </div>
             </section>
 
+            {!isDemoMode && liveRecentRuns.length > 0 ? (
+              <section className="mt-8 rounded-lg border border-emerald-200 bg-white">
+                <div className="border-b border-emerald-100 px-4 py-3">
+                  <h2 className="text-sm font-semibold">Live backend recent runs</h2>
+                  <p className="mt-1 text-xs text-slate-500">Demo-safe API response: private lead fields are hidden.</p>
+                </div>
+                <div className="overflow-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-xs text-slate-500">
+                        <th className="px-4 py-3">Correlation ID</th>
+                        <th className="px-4 py-3">Run</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Stage</th>
+                        <th className="px-4 py-3">Error Code</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {liveRecentRuns.map((run) => (
+                        <tr key={run.id} className="border-b border-slate-100">
+                          <td className="px-4 py-3 font-mono text-xs">{run.lead?.correlation_id ?? "-"}</td>
+                          <td className="px-4 py-3">#{run.run_number}</td>
+                          <td className="px-4 py-3">{run.status}</td>
+                          <td className="px-4 py-3">{run.lead?.current_stage ?? "-"}</td>
+                          <td className="px-4 py-3">{run.error_code ?? "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ) : null}
+
             <section className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-slate-200 bg-white p-4">
                 <h2 className="text-sm font-semibold">Stage Distribution</h2>
@@ -319,8 +377,8 @@ export default function AiosDashboardPage() {
                     </li>
                   ))}
                   <li className="flex items-center justify-between gap-4">
-                    <span>AI Provider</span>
-                    <span className="font-semibold">Mocked · portfolio-safe fallback</span>
+                    <span>AI Provider / Email</span>
+                    <span className="font-semibold">AI depends on backend config · email simulated/mock</span>
                   </li>
                 </ul>
               </div>

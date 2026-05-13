@@ -20,7 +20,7 @@
     "docker:logs": "docker compose logs -f",
     "docker:reset": "docker compose down -v",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --incremental false",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",

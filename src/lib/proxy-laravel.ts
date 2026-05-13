@@ -264,21 +264,38 @@ export async function proxyLaravel(
 
   } catch (error) {
     const isAbort = error instanceof Error && error.name === "AbortError";
+    const isTimeout =
+      isAbort ||
+      (error instanceof Error && /timed out|timeout/i.test(error.message));
+    const isConnectionFailure =
+      error instanceof Error &&
+      /ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|fetch failed|network/i.test(error.message);
     const requestId = request.headers.get("x-request-id") || "unknown";
     console.error("[proxy-laravel] error", {
       requestId,
       method: request.method,
       targetPath: targetPath.split("?")[0] || targetPath,
-      type: isAbort ? "timeout" : "proxy_error",
+      type: isTimeout ? "timeout" : "proxy_error",
       errorName: error instanceof Error ? error.name : "UnknownError",
     });
-    
+
+    const status = isTimeout ? 504 : 503;
+    const message = isTimeout
+      ? "Laravel API request timed out."
+      : "Laravel API is unreachable.";
+    const errorCode = isTimeout
+      ? "LARAVEL_API_TIMEOUT"
+      : isConnectionFailure
+        ? "LARAVEL_API_UNREACHABLE"
+        : "LARAVEL_API_PROXY_ERROR";
+
     return NextResponse.json(
       {
-        message: "Laravel API is currently unreachable or timed out.",
+        message,
+        error_code: errorCode,
         detail: error instanceof Error ? error.message : "Unknown connectivity error",
       },
-      { status: 503 }
+      { status }
     );
   }
 }

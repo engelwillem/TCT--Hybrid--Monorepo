@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   experimental: isWindowsHost
     ? {
         webpackBuildWorker: false,
-        cpus: 1,
+        cpus: 4,
       }
     : {},
   images: {

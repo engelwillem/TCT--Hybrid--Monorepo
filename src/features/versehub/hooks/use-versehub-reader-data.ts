@@ -18,7 +18,7 @@ import type {
   VerseData,
 } from "@/features/versehub/types";
 
-const DEFAULT_CHAPTER_REFLECTION_QUESTION = "Apa satu hal yang sedang Tuhan tekankan di hatimu dari bacaan ini?";
+const DEFAULT_CHAPTER_REFLECTION_QUESTION = "What is one thing God is highlighting in your heart through this reading?";
 
 const fetchJsonWithTimeout = async (input: string, timeoutMs = 12000) => {
   const controller = new AbortController();
@@ -43,6 +43,11 @@ const fetchJsonWithTimeout = async (input: string, timeoutMs = 12000) => {
   }
 };
 
+const withBibleQuery = (path: string, bibleLang: "id" | "en"): string => {
+  if (bibleLang !== "en") return path;
+  return `${path}${path.includes("?") ? "&" : "?"}bible_lang=en`;
+};
+
 interface UseVersehubReaderDataArgs {
   authStatus: "restoring" | "guest" | "authenticated";
   identity: {
@@ -53,6 +58,7 @@ interface UseVersehubReaderDataArgs {
   initialVerseRef: string | null;
   isAuthenticated: boolean;
   lang: string;
+  bibleLang: "id" | "en";
   mode: "landing" | "chapter" | "verse";
   overlay: OverlayType;
   setOverlay: Dispatch<SetStateAction<OverlayType>>;
@@ -65,6 +71,7 @@ export function useVersehubReaderData({
   initialVerseRef,
   isAuthenticated,
   lang,
+  bibleLang,
   mode,
   overlay,
   setOverlay,
@@ -121,7 +128,7 @@ export function useVersehubReaderData({
   );
 
   const firstBookCode = books[0]?.code ?? null;
-  const firstBookLabel = books[0]?.label ?? "kitab pertama";
+  const firstBookLabel = books[0]?.label ?? "first book";
   const firstChapterHref = firstBookCode ? `/versehub/${lang}/${firstBookCode}-1` : null;
   const mentorPreviewVerse = selectedVerse ?? verses[0] ?? null;
   const mentorPreviewLabel = (isChapterMode || isVerseMode) && mentorPreviewVerse
@@ -153,7 +160,7 @@ export function useVersehubReaderData({
       setError(null);
 
       try {
-        const booksPayload = await fetchJsonWithTimeout(`/api/versehub/${lang}/books`);
+        const booksPayload = await fetchJsonWithTimeout(withBibleQuery(`/api/versehub/${lang}/books`, bibleLang));
         if (cancelled) return;
 
         const nextBooks = Array.isArray(booksPayload?.books) ? booksPayload.books : [];
@@ -161,7 +168,7 @@ export function useVersehubReaderData({
 
         if (isChapterMode && initialChapterRef) {
           const chapterPayload = (await fetchJsonWithTimeout(
-            `/api/versehub/${lang}/chapter/${initialChapterRef}`
+            withBibleQuery(`/api/versehub/${lang}/chapter/${initialChapterRef}`, bibleLang)
           )) as ChapterPayload;
 
           if (cancelled) return;
@@ -186,9 +193,9 @@ export function useVersehubReaderData({
           setTab(matchedBook?.testament === "nt" ? "nt" : "ot");
         } else if (isVerseMode && initialVerseRef) {
           const [versePayload, chapterPayload] = await Promise.all([
-            fetchJsonWithTimeout(`/api/versehub/${lang}/${initialVerseRef}`),
+            fetchJsonWithTimeout(withBibleQuery(`/api/versehub/${lang}/${initialVerseRef}`, bibleLang)),
             verseBookCode && verseChapterNumber
-              ? fetchJsonWithTimeout(`/api/versehub/${lang}/chapter/${verseBookCode}-${verseChapterNumber}`)
+              ? fetchJsonWithTimeout(withBibleQuery(`/api/versehub/${lang}/chapter/${verseBookCode}-${verseChapterNumber}`, bibleLang))
               : Promise.resolve(null),
           ]);
 
@@ -296,7 +303,9 @@ export function useVersehubReaderData({
   const loadBookChapters = async (bookCode: string) => {
     setActiveBook(bookCode);
     try {
-      const payload = await fetchJsonWithTimeout(`/api/versehub/${lang}/chapters?book=${encodeURIComponent(bookCode)}`);
+      const payload = await fetchJsonWithTimeout(
+        withBibleQuery(`/api/versehub/${lang}/chapters?book=${encodeURIComponent(bookCode)}`, bibleLang)
+      );
       setChapters(Array.isArray(payload?.chapters) ? payload.chapters : []);
     } catch {
       setChapters([]);

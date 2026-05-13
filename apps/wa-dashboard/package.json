@@ -1,0 +1,23 @@
+{
+  "name": "wa-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WA Reminder Dashboard",
+  "scripts": {
+    "dev": "next dev -p 9012",
+    "build": "next build",
+    "start": "next start -p 9012",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.19",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "typescript": "5.9.3"
+  }
+}

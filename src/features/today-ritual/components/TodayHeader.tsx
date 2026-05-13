@@ -22,7 +22,7 @@ interface TodayHeaderProps {
 
 function buildTodayDateLabel(fallback: string): string {
   try {
-    const formatted = new Intl.DateTimeFormat('id-ID', {
+    const formatted = new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -44,7 +44,7 @@ export default function TodayHeader({
 }: TodayHeaderProps) {
   const router = useRouter();
   const m = useMotionConfig();
-  const primaryGreeting = String(greeting || 'Selamat datang kembali,').trim() || 'Selamat datang kembali,';
+  const primaryGreeting = String(greeting || 'Welcome back,').trim() || 'Welcome back,';
   const [liveDateLabel, setLiveDateLabel] = useState(() => buildTodayDateLabel(dateLabel));
   const [guestAccessGate, setGuestAccessGate] = useState<null | 'notification' | 'inbox'>(null);
   const [inboxUnreadDot, setInboxUnreadDot] = useState(false);
@@ -148,7 +148,7 @@ export default function TodayHeader({
                 type="button"
                 onClick={() => setGuestAccessGate('notification')}
                 className={iconButtonClassName}
-                aria-label="Masuk untuk membuka notifikasi"
+                aria-label="Sign in to open notifications"
               >
                 <Bell className={iconClassName} />
               </button>
@@ -164,7 +164,7 @@ export default function TodayHeader({
                 setGuestAccessGate('inbox');
               }}
               className={cn(iconButtonClassName, 'shrink-0 ring-transparent')}
-              aria-label={isAuthenticated ? 'Buka inbox' : 'Masuk untuk membuka inbox'}
+              aria-label={isAuthenticated ? 'Open inbox' : 'Sign in to open inbox'}
             >
               <Inbox className={iconClassName} />
               {isAuthenticated && inboxUnreadDot ? <span className={guestBadgeClassName} aria-hidden="true" /> : null}
@@ -186,24 +186,24 @@ export default function TodayHeader({
 
               <DialogHeader className="space-y-2 text-left">
                 <DialogTitle className="tct-serif text-[29px] leading-tight tracking-tight text-slate-900">
-                  Login atau Daftar
+                  Sign in or Create account
                   <br />
-                  untuk buka notifikasi dan inbox
+                  to unlock notifications and inbox
                 </DialogTitle>
                 <DialogDescription className="max-w-sm text-[14px] leading-relaxed text-slate-600">
-                  Masuk untuk melihat welcome greeting dari admin, membuka inbox, dan menerima update interaksi pada kontenmu.
+                  Sign in to see welcome greetings from admin, open your inbox, and receive engagement updates on your content.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="mt-6 flex flex-col gap-3">
                 <Button asChild className="h-12 rounded-full bg-slate-950 text-white font-semibold shadow-[0_16px_36px_-20px_rgba(15,23,42,0.55)]">
                   <Link href={guestAccessGate === 'inbox' ? '/login?next=/inbox' : '/login?next=/renungan'}>
-                    Login
+                    Sign in
                   </Link>
                 </Button>
                 <Button asChild variant="secondary" className="h-12 rounded-full border border-slate-200 bg-white/88 font-semibold text-slate-800 shadow-none">
                   <Link href={guestAccessGate === 'inbox' ? '/login?intent=signup&next=/inbox' : '/login?intent=signup&next=/renungan'}>
-                    Daftar
+                    Create account
                   </Link>
                 </Button>
                 <button
@@ -211,7 +211,7 @@ export default function TodayHeader({
                   onClick={() => setGuestAccessGate(null)}
                   className="mt-1 text-center text-[12px] font-medium text-slate-500 transition-colors hover:text-slate-800"
                 >
-                  Nanti saja
+                  Maybe later
                 </button>
               </div>
             </div>

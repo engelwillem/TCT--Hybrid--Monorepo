@@ -5,15 +5,15 @@ export function buildArchiveText(
   verseReference: string,
 ): string {
   return [
-    "Renungan Pribadiku",
+    "My Personal Reflection",
     "",
-    "Isi Hati",
+    "Heart Notes",
     reflectionText.trim(),
     "",
-    "Renungan",
+    "Reflection",
     meditation.trim(),
     "",
-    "Ayat",
+    "Verse",
     verseText.trim(),
     verseReference.trim(),
   ]

@@ -40,6 +40,7 @@ backend-api/.phpunit.result.cache
 # Environment and credentials
 .env
 .env.*
+!.env.example
 backend-api/.env
 backend-api/.env.*
 auth.json
