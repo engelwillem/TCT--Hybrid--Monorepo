@@ -46,7 +46,7 @@ Sebelum menjalankan, siapkan env:
 - Frontend: salin `.env.example` menjadi `.env.local`.
 - Backend Laravel: salin `backend-api/.env.example` menjadi `backend-api/.env`.
 
-Frontend akan memanggil endpoint Next.js `/api/*` yang diproxy ke Laravel (`LARAVEL_API_BASE_URL`).
+Frontend akan memanggil endpoint Next.js `/api/*` yang di proxy ke Laravel (`LARAVEL_API_BASE_URL`).
 
 ## Firebase Studio
 
