@@ -1,0 +1,54 @@
+name: WA Frontend Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/ai-automation-blueprint
+    paths:
+      - 'apps/wa-dashboard/**'
+      - '.github/workflows/wa-frontend-deploy.yml'
+
+concurrency:
+  group: wa-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-wa-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check WA app directory
+        id: wa_app
+        shell: bash
+        run: |
+          if [ -d "apps/wa-dashboard" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/wa-dashboard not found; skipping WA deploy scaffold."
+          fi
+
+      - name: Validate deploy scaffold
+        if: steps.wa_app.outputs.exists == 'true'
+        run: |
+          test -f apps/wa-dashboard/package.json
+
+      - name: Trigger Tencent Cloud WA deploy hook
+        if: steps.wa_app.outputs.exists == 'true'
+        env:
+          TENCENT_WA_FRONTEND_DEPLOY_HOOK: ${{ secrets.TENCENT_WA_FRONTEND_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$TENCENT_WA_FRONTEND_DEPLOY_HOOK" ]; then
+            echo "Missing secret: TENCENT_WA_FRONTEND_DEPLOY_HOOK"
+            exit 1
+          fi
+
+          echo "Triggering Tencent WA deploy hook for ref: $GITHUB_REF"
+          curl --fail --show-error --silent \
+            --request POST \
+            "$TENCENT_WA_FRONTEND_DEPLOY_HOOK"
+          echo "Tencent WA deploy hook triggered successfully."

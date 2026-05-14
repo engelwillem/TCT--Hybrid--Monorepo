@@ -1,0 +1,46 @@
+name: Faith Frontend Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/ai-automation-blueprint
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/faith-frontend-deploy.yml'
+
+concurrency:
+  group: faith-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-faith-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate frontend deploy inputs
+        run: |
+          test -f package.json
+
+      - name: Trigger Tencent Cloud frontend deploy hook
+        env:
+          TENCENT_FRONTEND_DEPLOY_HOOK: ${{ secrets.TENCENT_FRONTEND_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$TENCENT_FRONTEND_DEPLOY_HOOK" ]; then
+            echo "Missing secret: TENCENT_FRONTEND_DEPLOY_HOOK"
+            exit 1
+          fi
+
+          echo "Triggering Tencent deploy hook for ref: $GITHUB_REF"
+          curl --fail --show-error --silent \
+            --request POST \
+            "$TENCENT_FRONTEND_DEPLOY_HOOK"
+          echo "Tencent deploy hook triggered successfully."
