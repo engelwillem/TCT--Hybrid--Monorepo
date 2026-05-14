@@ -68,7 +68,6 @@ backend-api/storage/*.key
 # Internal ops and private infrastructure not needed for public recruiter repo
 docker/
 scripts/
-backend-api/
 backups/
 deliverables/
 docs/archive/

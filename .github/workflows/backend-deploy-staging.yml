@@ -1,0 +1,104 @@
+name: Backend Deploy Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      schema_strategy:
+        description: "Schema phase: none|expand|contract"
+        required: true
+        default: "expand"
+        type: choice
+        options:
+          - "none"
+          - "expand"
+          - "contract"
+      run_backfill:
+        description: "Run post-migration backfill command"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      backfill_command:
+        description: "Backfill command (required if run_backfill=true)"
+        required: false
+        default: ""
+        type: string
+      auto_rollback:
+        description: "Run rollback automatically if deploy/smoke fails"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-staging:
+    name: Migrate Staging Schema
+    runs-on: [self-hosted, staging]
+    timeout-minutes: 30
+    env:
+      BACKEND_ENV_FILE: ${{ vars.STAGING_BACKEND_ENV_FILE }}
+      FRONTEND_ENV_FILE: ${{ vars.STAGING_FRONTEND_ENV_FILE }}
+      ALLOW_CONTRACT_MIGRATIONS: ${{ vars.STAGING_ALLOW_CONTRACT_MIGRATIONS }}
+    environment:
+      name: staging
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run staging migration pipeline
+        shell: pwsh
+        run: |
+          $schemaStrategy = "${{ github.event.inputs.schema_strategy }}"
+          $runBackfill = "${{ github.event.inputs.run_backfill }}"
+          $backfillCommand = "${{ github.event.inputs.backfill_command }}"
+
+          if ($runBackfill -eq 'true') {
+            ./scripts/migrate-staging.ps1 -SchemaStrategy $schemaStrategy -RunBackfill -BackfillCommand $backfillCommand
+          }
+          else {
+            ./scripts/migrate-staging.ps1 -SchemaStrategy $schemaStrategy
+          }
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: migrate-staging
+    runs-on: [self-hosted, staging]
+    timeout-minutes: 45
+    env:
+      BACKEND_ENV_FILE: ${{ vars.STAGING_BACKEND_ENV_FILE }}
+      FRONTEND_ENV_FILE: ${{ vars.STAGING_FRONTEND_ENV_FILE }}
+    environment:
+      name: staging
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy staging + smoke
+        shell: pwsh
+        run: |
+          $autoRollback = "${{ github.event.inputs.auto_rollback }}"
+          if ($autoRollback -eq 'true') {
+            ./scripts/deploy-staging.ps1 -AutoRollbackOnFailure
+          }
+          else {
+            ./scripts/deploy-staging.ps1
+          }
+
+      - name: Upload deploy summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-deploy-summary-${{ github.run_id }}
+          path: |
+            docs/monitoring/DevSecOps Report/staging-observability-*.md
+            scripts/*.ps1

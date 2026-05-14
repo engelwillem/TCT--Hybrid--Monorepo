@@ -1,0 +1,192 @@
+name: Backend Deploy Production (Guarded)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "Commit SHA from main to deploy"
+        required: true
+        type: string
+      confirm_phrase:
+        description: "Type APPROVE_PRODUCTION_DEPLOY"
+        required: true
+        type: string
+      schema_strategy:
+        description: "Schema phase: none|expand|contract"
+        required: true
+        default: "expand"
+        type: choice
+        options:
+          - "none"
+          - "expand"
+          - "contract"
+      run_backfill:
+        description: "Run post-migration backfill command"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      backfill_command:
+        description: "Backfill command (required if run_backfill=true)"
+        required: false
+        default: ""
+        type: string
+      contract_confirm_phrase:
+        description: "Type APPROVE_CONTRACT_MIGRATION for contract strategy"
+        required: false
+        default: ""
+        type: string
+      auto_rollback:
+        description: "Run rollback automatically if deploy/smoke fails"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      production_base_url:
+        description: "Production base URL for smoke checks"
+        required: true
+        default: "https://www.thechoosentalks.org"
+        type: string
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  preflight-guardrail:
+    name: Guardrail Preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      deploy_sha: ${{ steps.guard.outputs.deploy_sha }}
+    steps:
+      - name: Validate approval phrase and SHA
+        id: guard
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sourceSha = `${{ github.event.inputs.source_sha }}`.trim();
+            const phrase = `${{ github.event.inputs.confirm_phrase }}`.trim();
+
+            if (phrase !== 'APPROVE_PRODUCTION_DEPLOY') {
+              core.setFailed('Guardrail failed: invalid confirmation phrase.');
+              return;
+            }
+
+            if (!/^[0-9a-f]{40}$/i.test(sourceSha)) {
+              core.setFailed('Guardrail failed: source_sha must be a full 40-char commit SHA.');
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const commit = await github.rest.repos.getCommit({ owner, repo, ref: sourceSha });
+            if (!commit?.data?.sha) {
+              core.setFailed('Guardrail failed: commit not found.');
+              return;
+            }
+
+            const branches = await github.rest.repos.listBranchesForHeadCommit({ owner, repo, commit_sha: sourceSha });
+            const onMain = branches.data.some(b => b.name === 'main');
+            if (!onMain) {
+              core.setFailed('Guardrail failed: commit is not on branch main.');
+              return;
+            }
+
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner,
+              repo,
+              head_sha: sourceSha,
+              per_page: 50,
+            });
+
+            const gateRun = runs.data.workflow_runs.find(r => r.name === 'DevSecOps E2E Gate' && r.conclusion === 'success');
+            if (!gateRun) {
+              core.setFailed('Guardrail failed: no successful DevSecOps E2E Gate found for source_sha.');
+              return;
+            }
+
+            core.setOutput('deploy_sha', sourceSha);
+
+  deploy-production:
+    name: Deploy to Production
+    needs:
+      - preflight-guardrail
+      - migrate-production
+    runs-on: [self-hosted, production]
+    timeout-minutes: 60
+    env:
+      BACKEND_ENV_FILE: ${{ vars.PRODUCTION_BACKEND_ENV_FILE }}
+      FRONTEND_ENV_FILE: ${{ vars.PRODUCTION_FRONTEND_ENV_FILE }}
+    environment:
+      name: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight-guardrail.outputs.deploy_sha }}
+
+      - name: Deploy production + smoke
+        shell: pwsh
+        run: |
+          $autoRollback = '${{ github.event.inputs.auto_rollback }}'
+          $baseUrl = '${{ github.event.inputs.production_base_url }}'
+
+          if ($autoRollback -eq 'true') {
+            ./scripts/deploy-production.ps1 -BaseUrl $baseUrl -AutoRollbackOnFailure
+          }
+          else {
+            ./scripts/deploy-production.ps1 -BaseUrl $baseUrl
+          }
+
+      - name: Upload production deploy summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-deploy-summary-${{ github.run_id }}
+          path: |
+            docs/monitoring/DevSecOps Report/production-smoke-*.md
+            docs/monitoring/DevSecOps Report/production-observability-*.md
+            scripts/deploy-production.ps1
+            scripts/rollback-production.ps1
+
+  migrate-production:
+    name: Migrate Production Schema
+    needs: preflight-guardrail
+    runs-on: [self-hosted, production]
+    timeout-minutes: 40
+    env:
+      BACKEND_ENV_FILE: ${{ vars.PRODUCTION_BACKEND_ENV_FILE }}
+      FRONTEND_ENV_FILE: ${{ vars.PRODUCTION_FRONTEND_ENV_FILE }}
+      ALLOW_CONTRACT_MIGRATIONS: ${{ vars.PRODUCTION_ALLOW_CONTRACT_MIGRATIONS }}
+    environment:
+      name: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight-guardrail.outputs.deploy_sha }}
+
+      - name: Run production migration pipeline
+        shell: pwsh
+        run: |
+          $schemaStrategy = '${{ github.event.inputs.schema_strategy }}'
+          $runBackfill = '${{ github.event.inputs.run_backfill }}'
+          $backfillCommand = '${{ github.event.inputs.backfill_command }}'
+          $contractPhrase = '${{ github.event.inputs.contract_confirm_phrase }}'
+
+          if ($runBackfill -eq 'true') {
+            ./scripts/migrate-production.ps1 -SchemaStrategy $schemaStrategy -RunBackfill -BackfillCommand $backfillCommand -ContractConfirmPhrase $contractPhrase
+          }
+          else {
+            ./scripts/migrate-production.ps1 -SchemaStrategy $schemaStrategy -ContractConfirmPhrase $contractPhrase
+          }
