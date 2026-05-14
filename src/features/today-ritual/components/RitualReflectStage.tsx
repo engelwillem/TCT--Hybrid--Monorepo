@@ -51,15 +51,15 @@ export function RitualReflectStage({
           transition={transitionCalm}
         >
           <ReflectPrompt
-            prompt="Apa satu hal yang sedang kamu rasakan hari ini?"
-            placeholder="Kalau ingin, tulis sedikit apa yang sedang kamu rasakan."
-            ctaLabel="Doakan"
-            sealedLabel="Telah didoakan"
+            prompt="What is one thing you are feeling today?"
+            placeholder="If you want, write a little about what you are feeling."
+            ctaLabel="Pray over this"
+            sealedLabel="Prayed"
             value={activeActionText}
             onChange={onTextChange}
             onContinue={onContinue}
             secondaryAction={{
-              label: "Lewati tulisan, beri satu pegangan",
+              label: "Skip writing, give me one anchor",
               onClick: onSkip,
               disabled: isSubmitting,
             }}
@@ -70,7 +70,7 @@ export function RitualReflectStage({
               <div className="space-y-4">
                 <EmotionalStatePicker value={entryState} onChange={onEntryStateChange} />
                 <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Mode bantuan</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Support mode</p>
                   <div className="flex flex-wrap gap-2">
                     {RENUNGAN_MODE_OPTIONS.map((option) => (
                       <button
@@ -88,7 +88,7 @@ export function RitualReflectStage({
                     ))}
                   </div>
                 </div>
-                <AIToneNotice tone="gentle" text="Boleh singkat. Boleh juga kosong. Kita ambil satu langkah kecil saja." />
+                <AIToneNotice tone="gentle" text="Short is okay. Leaving it blank is okay too. We will just take one small step." />
               </div>
             }
           />

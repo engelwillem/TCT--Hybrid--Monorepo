@@ -137,11 +137,11 @@ export function VersehubReaderView({
                 <div className="mx-auto max-w-4xl pb-[calc(180px+env(safe-area-inset-bottom,24px))]">
                     <section className="overflow-hidden rounded-[32px] bg-white p-5 shadow-sm ring-1 ring-slate-100 md:p-8">
                         <div className="flex flex-col items-center justify-center border-b border-slate-100 pb-10 pt-4 text-center">
-                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Pasal Bacaan</p>
+                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Reading Chapter</p>
                             <h2 className="mt-3 tct-serif text-[42px] leading-[1.15] tracking-[-0.02em] text-slate-800 md:text-[54px]">{chapterLabel}</h2>
                             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                                 <span className="inline-flex items-center rounded-full bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ring-1 ring-slate-200/60">
-                                    {verses.length} Ayat
+                                    {verses.length} Verses
                                 </span>
                             </div>
                         </div>
@@ -156,7 +156,7 @@ export function VersehubReaderView({
                                             key={verse.key}
                                             onClick={() => onOpenVerseMentor(verse, userReflection)}
                                             className="group cursor-pointer inline transition-colors hover:text-slate-900"
-                                            title="Ketuk untuk membuka Mentor"
+                                            title="Tap to open Mentor"
                                         >
                                             <sup className="mr-1.5 inline-block font-sans font-bold text-slate-400 text-[11px] md:text-[12px] select-none group-hover:text-sky-600 transition-colors">
                                                 {verse.verse}

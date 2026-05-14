@@ -48,6 +48,36 @@ Sebelum menjalankan, siapkan env:
 
 Frontend akan memanggil endpoint Next.js `/api/*` yang di proxy ke Laravel (`LARAVEL_API_BASE_URL`).
 
+### Troubleshooting Login Lokal (Laravel API unreachable / timeout)
+
+1. Pastikan backend hidup:
+```bash
+php backend-api/artisan serve --host=127.0.0.1 --port=8000
+```
+2. Pastikan frontend env menunjuk backend lokal:
+```env
+LARAVEL_API_BASE_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_LARAVEL_API_BASE_URL=http://127.0.0.1:8000
+```
+3. Cek health endpoint:
+```bash
+curl http://127.0.0.1:8000/up
+```
+4. Jika login gagal:
+- `422`: kredensial salah / input invalid
+- `401`: unauthenticated/session invalid
+- `503`: backend tidak terjangkau (offline/DNS/refused)
+- `504`: backend timeout
+
+### Bootstrap Admin Lokal
+
+Gunakan command lokal (idempotent, update jika akun sudah ada):
+```bash
+php backend-api/artisan app:ensure-local-admin
+```
+
+Command ini hanya jalan di environment `local/testing` dan tidak mencetak password ke output.
+
 ## Firebase Studio
 
 Agar tetap jalan di Firebase Studio (frontend-only), gunakan:

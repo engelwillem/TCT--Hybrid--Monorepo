@@ -132,7 +132,7 @@ export default function TodayShareActionBar({
           type="button"
           onClick={() => guardMemberAction(onSaveBookmark)}
           disabled={isRestoring || !onBookmark || bookmarked || isSaving}
-          aria-label={bookmarked ? "Bookmarked" : isSaving ? "Menyimpan bookmark" : "Bookmark"}
+          aria-label={bookmarked ? "Bookmarked" : isSaving ? "Saving bookmark" : "Bookmark"}
           aria-pressed={bookmarked}
           className={cn(
             "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
@@ -154,7 +154,7 @@ export default function TodayShareActionBar({
           type="button"
           onClick={() => guardMemberAction(onCopyLink)}
           disabled={isRestoring}
-          aria-label={copied ? "Teks renungan tersalin" : "Salin renungan"}
+          aria-label={copied ? "Reflection text copied" : "Copy reflection"}
           className={cn(
             "tct-pressable inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted/70 text-muted-foreground transition-colors duration-200 hover:bg-surface-muted hover:text-foreground",
             isRestoring ? "opacity-60" : ""
@@ -172,7 +172,7 @@ export default function TodayShareActionBar({
           type="button"
           onClick={() => guardMemberAction(onShareWhatsApp)}
           disabled={isRestoring || isGenerating}
-          aria-label={isGenerating ? "Menyiapkan kartu bagikan..." : "Bagikan renungan ke WhatsApp"}
+          aria-label={isGenerating ? "Preparing share card..." : "Share reflection to WhatsApp"}
           className={cn(
             "tct-pressable relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#eafaf0] text-[#25D366] transition-colors duration-200 hover:bg-[#dcf8e6] hover:text-[#1fa855]",
             (isRestoring || isGenerating) ? "opacity-60" : ""

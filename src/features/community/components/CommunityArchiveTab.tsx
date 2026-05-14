@@ -56,6 +56,9 @@ type CommunityArchiveTabProps = {
   onRepost: (post: CommunityPost) => void | Promise<void>;
   onShare: (postId: string, text?: string | null) => void | Promise<void>;
   shareBusyPostId?: string | null;
+  canDeletePost?: (post: CommunityPost) => boolean;
+  onDeletePost?: (postId: string) => void | Promise<void>;
+  canRepostPost?: (post: CommunityPost) => boolean;
 };
 
 export function CommunityArchiveTab({
@@ -71,6 +74,9 @@ export function CommunityArchiveTab({
   onRepost,
   onShare,
   shareBusyPostId,
+  canDeletePost,
+  onDeletePost,
+  canRepostPost,
 }: CommunityArchiveTabProps) {
   const [archiveCategory, setArchiveCategory] = useState<ArchiveCategory>("all");
   const [archiveSearchQuery, setArchiveSearchQuery] = useState("");
@@ -598,6 +604,9 @@ export function CommunityArchiveTab({
                       reposting={repostBusyPostId === post.id}
                       onShare={() => onShare(post.id, post.text)}
                       shareBusy={shareBusyPostId === post.id}
+                      canDelete={Boolean(canDeletePost?.(post))}
+                      onDelete={onDeletePost ? () => onDeletePost(post.id) : undefined}
+                      canRepost={canRepostPost ? canRepostPost(post) : true}
                     />
                   </div>
                 ))}
@@ -634,6 +643,13 @@ export function CommunityArchiveTab({
           if (!activeArchiveDetailPost?.id) return;
           return onShare(activeArchiveDetailPost.id, activeArchiveDetailPost.text);
         }}
+        canDelete={activeArchiveDetailPost ? Boolean(canDeletePost?.(activeArchiveDetailPost)) : false}
+        onDelete={
+          activeArchiveDetailPost?.id && onDeletePost
+            ? () => onDeletePost(activeArchiveDetailPost.id)
+            : undefined
+        }
+        canRepost={activeArchiveDetailPost ? (canRepostPost ? canRepostPost(activeArchiveDetailPost) : true) : true}
       />
     </div>
   );

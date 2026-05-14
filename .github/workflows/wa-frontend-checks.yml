@@ -1,0 +1,61 @@
+name: WA Frontend Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'apps/wa-dashboard/**'
+      - '.github/workflows/wa-frontend-checks.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/wa-dashboard/**'
+      - '.github/workflows/wa-frontend-checks.yml'
+
+concurrency:
+  group: wa-frontend-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wa-frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check WA app directory
+        id: wa_app
+        shell: bash
+        run: |
+          if [ -d "apps/wa-dashboard" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/wa-dashboard not found; skipping WA checks for now."
+          fi
+
+      - name: Setup Node.js
+        if: steps.wa_app.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: apps/wa-dashboard/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.wa_app.outputs.exists == 'true'
+        working-directory: apps/wa-dashboard
+        run: npm ci
+
+      - name: Typecheck frontend
+        if: steps.wa_app.outputs.exists == 'true'
+        working-directory: apps/wa-dashboard
+        run: npm run typecheck
+
+      - name: Build frontend
+        if: steps.wa_app.outputs.exists == 'true'
+        working-directory: apps/wa-dashboard
+        run: npm run build

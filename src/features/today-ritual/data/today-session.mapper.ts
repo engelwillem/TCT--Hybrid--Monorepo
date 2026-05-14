@@ -27,14 +27,14 @@ function getTrimmedString(value: unknown): string | null {
 
 function deriveGreeting(now = new Date()): string {
   const hour = now.getHours();
-  if (hour < 11) return 'Selamat pagi';
-  if (hour < 15) return 'Selamat siang';
-  if (hour < 19) return 'Selamat sore';
-  return 'Selamat malam';
+  if (hour < 11) return 'Good morning';
+  if (hour < 15) return 'Good afternoon';
+  if (hour < 19) return 'Good evening';
+  return 'Good night';
 }
 
 function deriveDateLabel(now = new Date()): string {
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

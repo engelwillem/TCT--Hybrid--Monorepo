@@ -41,7 +41,7 @@ interface TodayDailyRitualScreenProps {
   parityStatus?: "healthy" | "fallback" | "degraded";
 }
 
-const RENUNGAN_LOADING_LABEL = "Menyiapkan renungan...";
+const RENUNGAN_LOADING_LABEL = "Preparing your reflection...";
 
 export default function TodayDailyRitualScreen({
   sessionContent,
@@ -111,7 +111,7 @@ export default function TodayDailyRitualScreen({
           Accept: "application/json",
         },
         body: JSON.stringify({
-          lang: "id",
+          lang: "en",
           verse_reference: personalRenungan.verseReference,
           verse_text: personalRenungan.verseText,
           meditation_excerpt: personalRenungan.meditation.replace(/\s+/g, " ").trim().slice(0, 260),
@@ -214,7 +214,7 @@ export default function TodayDailyRitualScreen({
 
   const handleBookmarkReflection = async () => {
     if (!isAuthenticated) {
-      setBookmarkError('Login diperlukan untuk menyimpan ke Bookmarks komunitas.');
+      setBookmarkError('Please sign in to save this reflection to your Community bookmarks.');
       return false;
     }
 
@@ -244,7 +244,7 @@ export default function TodayDailyRitualScreen({
                 related_verses: personalRenungan.relatedVerses ?? [],
                 interpretation_summary:
                   personalRenungan.analysis?.primary_theme
-                    ? `Tema: ${personalRenungan.analysis.primary_theme}`
+                    ? `Theme: ${personalRenungan.analysis.primary_theme}`
                     : undefined,
               }
             )
@@ -256,7 +256,7 @@ export default function TodayDailyRitualScreen({
 
       const updatedPost = await CommunityService.toggleBookmark(ensuredPostId);
       if (updatedPost.isBookmarked) {
-        setBookmarkSuccessNote("Memori rohanimu tersimpan. Kamu bisa membacanya kembali di Community > Bookmarks.");
+        setBookmarkSuccessNote("Your spiritual note has been saved. You can revisit it in Community > Bookmarks.");
         void trackFunnelEvent('reflection_bookmark', {
           surface: 'renungan',
           meta: {
@@ -267,7 +267,7 @@ export default function TodayDailyRitualScreen({
       }
       return updatedPost.isBookmarked;
     } catch {
-      setBookmarkError('Belum bisa menyimpan renunganmu ke Bookmarks sekarang.');
+      setBookmarkError('Your reflection could not be bookmarked right now. Please try again.');
       return false;
     }
   };
@@ -424,7 +424,7 @@ export default function TodayDailyRitualScreen({
         className={`relative z-10 w-full max-w-[480px] md:max-w-[620px] mx-auto md:mx-0 min-h-screen bg-transparent ${isHydrating ? 'pointer-events-none' : ''}`}
       >
         <TodayHeader
-          greeting="Selamat datang kembali,"
+          greeting="Welcome back,"
           dateLabel={sessionContent.dateLabel}
           memberName={memberName}
           isAuthenticated={isAuthenticated}
@@ -501,7 +501,7 @@ export default function TodayDailyRitualScreen({
                     <BookOpenText className="h-4 w-4" />
                   </span>
                   <span className="transition-transform duration-400 ease-out group-hover:translate-x-[1.5px]">
-                    Mulai Renungan
+                    Start Reflection
                   </span>
                 </motion.button>
               ) : null}
@@ -546,4 +546,3 @@ export default function TodayDailyRitualScreen({
     </div>
   );
 }
-

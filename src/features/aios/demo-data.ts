@@ -72,6 +72,26 @@ export type AiosKpiDetailResponse = {
   integration_health: Array<{ stage: string; success_count: number; failed_count: number }>;
 };
 
+export type AiosRecentRunsResponse = {
+  data: Array<{
+    id: number;
+    run_number: number;
+    status: string;
+    started_at: string | null;
+    finished_at: string | null;
+    error_code: string | null;
+    has_error_message: boolean;
+    lead: {
+      correlation_id: string;
+      status: string;
+      current_stage: string;
+      source: string;
+      created_at: string | null;
+    } | null;
+  }>;
+  limitations?: Record<string, unknown>;
+};
+
 export const statusLabels: Record<AiosRunStatus | AiosStageStatus, string> = {
   completed: "Completed",
   processing: "Processing",

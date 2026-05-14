@@ -5,7 +5,7 @@ interface VersehubLoadingScreenProps {
 }
 
 export function VersehubLoadingScreen({
-    label = "Menyiapkan ruang baca VerseHub...",
+    label = "Preparing VerseHub reading space...",
 }: VersehubLoadingScreenProps) {
     return (
         <div className="relative flex min-h-[100dvh] overflow-hidden bg-transparent text-foreground">

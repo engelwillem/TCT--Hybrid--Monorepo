@@ -10,7 +10,7 @@ const MISSING_BASE_PLACEHOLDER = "http://missing-laravel-api-base-url.local";
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://api.thechoosentalks.org";
 const DEFAULT_LOCAL_BASES = ["http://127.0.0.1:8000", "http://localhost:8000"];
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
-const DEFAULT_LARAVEL_TIMEOUT_MS = 8000;
+const DEFAULT_LARAVEL_TIMEOUT_MS = 20000;
 
 function getLaravelTimeoutMs(): number {
   const raw = Number(process.env.LARAVEL_API_TIMEOUT_MS);
@@ -75,14 +75,31 @@ function pickConfiguredBaseUrl(): string {
 }
 
 function buildCandidateBaseUrls(): string[] {
-  const explicitCandidates = [
-    process.env.LARAVEL_API_BASE_URL,
+  const primaryServerBase = trimTrailingSlash(String(process.env.LARAVEL_API_BASE_URL || "").trim());
+  const publicCandidates = [
     process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL,
     process.env.NEXT_PUBLIC_API_BASE_URL,
   ]
     .map((value) => String(value || "").trim())
     .filter(Boolean)
     .map(trimTrailingSlash);
+
+  if (primaryServerBase) {
+    // In server runtime (including Docker), always trust the explicit private base first.
+    // Avoid loopback fallbacks that are valid on host-dev but invalid inside containers.
+    const candidates = [primaryServerBase];
+    if ((process.env.NODE_ENV !== "production") && isLoopbackBaseUrl(primaryServerBase)) {
+      for (const localBase of DEFAULT_LOCAL_BASES) {
+        if (!candidates.includes(localBase)) {
+          candidates.push(localBase);
+        }
+      }
+    }
+    return candidates;
+  }
+
+  const uniquePublicCandidates = [...new Set(publicCandidates)];
+  const explicitCandidates = [...uniquePublicCandidates];
 
   if (explicitCandidates.length > 0) {
     const merged = [...explicitCandidates];
@@ -173,6 +190,8 @@ export async function callLaravelApi(path: string, init?: RequestInit): Promise<
         targetPath: targetPathname,
         isLastCandidate: isLast,
         expectedLocalFallback: isExpectedLocalLoopbackBackend(baseUrl),
+        errorName: error instanceof Error ? error.name : "UnknownError",
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
       });
       if (isLast) {
         throw error;

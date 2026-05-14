@@ -13,8 +13,8 @@ export function resolveVersehubUiHints(context: VersehubBridgeContext): Versehub
       showClarifyCard: true,
       defaultActionOrder: ["explain_simple", "practical_meaning", "context", "related_verses", "prayer_from_verse"],
       introLabel: context.entryState
-        ? `Ayat ini dibawa dari keadaan "${context.entryState}". Mari lihat maknanya dengan tenang.`
-        : "Ayat ini dibawa dari Renungan. Mari lihat maknanya dengan tenang.",
+        ? `This verse came from your "${context.entryState}" moment. Let's explore its meaning calmly.`
+        : "This verse came from Reflection. Let's explore its meaning calmly.",
     };
   }
 

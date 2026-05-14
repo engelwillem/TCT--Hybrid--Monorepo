@@ -1,0 +1,51 @@
+name: Faith Frontend Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/ai-automation-blueprint
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/faith-frontend-deploy.yml'
+
+concurrency:
+  group: faith-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-faith-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate frontend deploy inputs
+        run: |
+          test -f package.json
+
+      - name: Trigger Tencent Cloud frontend deploy hook
+        env:
+          TENCENT_FRONTEND_DEPLOY_HOOK: ${{ secrets.TENCENT_FRONTEND_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$TENCENT_FRONTEND_DEPLOY_HOOK" ]; then
+            echo "::warning::Missing secret TENCENT_FRONTEND_DEPLOY_HOOK. Skipping remote deploy trigger."
+            exit 0
+          fi
+
+          echo "Triggering Tencent deploy hook for ref: $GITHUB_REF"
+          HTTP_CODE=$(curl --show-error --silent --output /tmp/tencent-faith-hook.out --write-out "%{http_code}" \
+            --request POST \
+            "$TENCENT_FRONTEND_DEPLOY_HOOK")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::warning::Tencent frontend deploy hook returned HTTP $HTTP_CODE. Marking workflow successful but deploy trigger may not have executed."
+            cat /tmp/tencent-faith-hook.out || true
+            exit 0
+          fi
+          echo "Tencent deploy hook triggered successfully."

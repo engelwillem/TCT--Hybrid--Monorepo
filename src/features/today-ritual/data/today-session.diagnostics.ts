@@ -7,6 +7,11 @@ export type ContentDiagnosticCategory =
   | 'editorial_quality';
 
 export type ContentDiagnosticSeverity = 'info' | 'warn';
+export type TodaySessionSourceStatus =
+  | 'external'
+  | 'external_live'
+  | 'cache_stale'
+  | 'fallback_only';
 
 export interface ContentFieldIssue {
   owner: ContentDiagnosticOwner;
@@ -18,7 +23,7 @@ export interface ContentFieldIssue {
 }
 
 export interface ContentDiagnostics {
-  sourceStatus: 'external' | 'fallback_only';
+  sourceStatus: TodaySessionSourceStatus;
   contractVersionExpected: string;
   contractVersionReceived: string | null;
   missingRequiredFields: string[];

@@ -688,6 +688,11 @@ export function CommunityPage() {
     [currentUserId]
   );
 
+  const canRepostPost = useCallback(
+    (post: CommunityPost) => Boolean(currentUserId && post.author.id === currentUserId),
+    [currentUserId]
+  );
+
   const toggleLike = async (postId: string) => {
     if (isRestoring) return;
     if (!isAuthenticated) {
@@ -837,6 +842,10 @@ export function CommunityPage() {
         return;
       }
       if (repostBusyPostId) return;
+      if (post.author.id !== currentUserId) {
+        showToast("Anda hanya bisa repost konten milik Anda sendiri.", "error");
+        return;
+      }
 
       setRepostBusyPostId(post.id);
       try {
@@ -920,6 +929,7 @@ export function CommunityPage() {
       persistFeedCache,
       posts,
       repostBusyPostId,
+      currentUserId,
       showToast,
     ]
   );
@@ -1214,6 +1224,9 @@ export function CommunityPage() {
               onRepost={handleRepostFromArchive}
               onShare={handleShare}
               shareBusyPostId={shareBusyPostId}
+              canDeletePost={canDeletePost}
+              onDeletePost={handleDeletePost}
+              canRepostPost={canRepostPost}
             />
           </TabsContent>
 

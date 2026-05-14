@@ -161,7 +161,7 @@ export function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error || new Error("Gagal membaca file."));
+    reader.onerror = () => reject(reader.error || new Error("Failed to read file."));
     reader.readAsDataURL(file);
   });
 }
@@ -174,7 +174,7 @@ export function loadImageDimensions(source: string): Promise<AvatarImageSize> {
         width: img.naturalWidth || img.width,
         height: img.naturalHeight || img.height,
       });
-    img.onerror = () => reject(new Error("Gagal memuat dimensi gambar."));
+    img.onerror = () => reject(new Error("Failed to load image dimensions."));
     img.src = source;
   });
 }
@@ -188,7 +188,7 @@ export async function cropAvatarFile(
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Gagal memuat gambar untuk crop."));
+    img.onerror = () => reject(new Error("Failed to load image for cropping."));
     img.src = source;
   });
 
@@ -198,7 +198,7 @@ export async function cropAvatarFile(
   canvas.height = outputSize;
 
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas crop tidak tersedia.");
+  if (!ctx) throw new Error("Canvas crop is not available.");
 
   const naturalWidth = imageSize?.width || image.naturalWidth;
   const naturalHeight = imageSize?.height || image.naturalHeight;
@@ -217,7 +217,7 @@ export async function cropAvatarFile(
     canvas.toBlob(resolve, "image/jpeg", 0.92);
   });
 
-  if (!blob) throw new Error("Gagal membuat hasil crop avatar.");
+  if (!blob) throw new Error("Failed to create avatar crop result.");
 
   const safeBaseName = fileName.replace(/\.[^.]+$/, "") || "avatar";
   return new File([blob], `${safeBaseName}-avatar.jpg`, { type: "image/jpeg" });

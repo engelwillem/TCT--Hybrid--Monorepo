@@ -74,6 +74,23 @@ export default function LoginPage() {
       const data = isJson ? await res.json() : null;
 
       if (!res.ok) {
+        if (res.status === 503 || res.status === 504) {
+          const code = typeof data?.error_code === "string" ? data.error_code : "";
+          if (res.status === 504 || code === "LARAVEL_API_TIMEOUT") {
+            setErrorMessage("Koneksi ke backend timeout. Pastikan Laravel lokal aktif lalu coba lagi.");
+          } else {
+            setErrorMessage("Backend Laravel tidak terjangkau. Periksa LARAVEL_API_BASE_URL dan server lokal.");
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        if (res.status === 401) {
+          setErrorMessage(data?.message || "Sesi tidak valid. Silakan login ulang.");
+          setIsLoading(false);
+          return;
+        }
+
         if (data?.errors) {
           const field = Object.keys(data.errors)[0];
           const firstError = field ? data.errors[field]?.[0] : null;

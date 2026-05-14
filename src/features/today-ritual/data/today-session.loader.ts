@@ -1,6 +1,6 @@
 import { todaySessionMock } from '../content/today-session.mock';
 import type { TodaySessionContent } from '../content/today-session.types';
-import type { ContentFieldIssue } from './today-session.diagnostics';
+import type { ContentFieldIssue, TodaySessionSourceStatus } from './today-session.diagnostics';
 import { summarizeDiagnostics } from './today-session.diagnostics';
 import { FetchBoundaryError } from './fetch-json';
 import { mapRawToTodaySessionContentWithDiagnostics } from './today-session.mapper';
@@ -15,7 +15,7 @@ type LoadTodaySessionContentOptions = {
 export type LoadedTodaySession = {
   content: TodaySessionContent;
   diagnostics: {
-    sourceStatus: 'external' | 'fallback_only';
+    sourceStatus: TodaySessionSourceStatus;
     hasOfflineFallback: boolean;
     warnCount: number;
     recommendedActions: string[];

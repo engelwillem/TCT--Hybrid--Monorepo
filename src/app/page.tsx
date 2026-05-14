@@ -5,27 +5,27 @@ import { TCTLogo } from '@/components/brand/TCTLogo';
 import LandingAnimationShell from '@/app/LandingAnimationShell';
 
 export const metadata: Metadata = {
-  title: 'Renungan Harian Kristen untuk Menerima Firman dan Berdoa',
-  description: 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman The Chosen Talks.',
+  title: 'Daily Christian Reflection for Scripture and Prayer',
+  description: 'Start your day with living Scripture. Receive a verse, reflect on its meaning, and grow with The Chosen Talks faith community.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'The Chosen Talks — Renungan Harian Kristen',
-    description: 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman setiap hari.',
+    title: 'The Chosen Talks — Daily Christian Reflection',
+    description: 'Start your day with living Scripture. Receive a verse, reflect on its meaning, and grow in faith every day.',
     images: [
       {
         url: '/api/og/home',
         width: 1200,
         height: 630,
-        alt: 'The Chosen Talks — Renungan Harian',
+        alt: 'The Chosen Talks — Daily Reflection',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'The Chosen Talks — Renungan Harian Kristen',
-    description: 'Mulai harimu dengan firman yang hidup. Terima ayat, renungkan maknanya, dan bertumbuh bersama komunitas iman setiap hari.',
+    title: 'The Chosen Talks — Daily Christian Reflection',
+    description: 'Start your day with living Scripture. Receive a verse, reflect on its meaning, and grow in faith every day.',
     images: ['/api/og/home'],
   },
 };
@@ -75,9 +75,9 @@ export default function HomePage() {
             data-animate="headline"
             className="tct-serif mb-5 text-[40px] leading-[1.1] tracking-tight text-foreground/90"
           >
-            Renungan harian
+            Daily reflection
             <br />
-            sebelum memulai hari.
+            before your day begins.
           </h1>
 
           {/* Tagline — animates third */}
@@ -85,9 +85,9 @@ export default function HomePage() {
             data-animate="tagline"
             className="mb-14 text-[16px] font-medium italic leading-[1.6] text-foreground/55"
           >
-            Terima Firman, Renungkan ayat harian,
+            Receive the Word, reflect on today&apos;s verse,
             <br />
-            Berdoa &amp; Diskusi Iman Dengan Komunitas.
+            Pray &amp; discuss your faith with the community.
           </p>
 
           {/* CTA — animates fourth */}
@@ -99,7 +99,7 @@ export default function HomePage() {
               meta={{ target: '/renungan' }}
               className="w-full max-w-[300px] rounded-full bg-black py-[17px] text-[16px] font-bold tracking-tight text-white shadow-2xl shadow-black/20 transition-all hover:bg-black/90 active:scale-[0.98]"
             >
-              Mulai Renungan Hari Ini
+              Start Today&apos;s Reflection
             </TrackedLink>
 
             <LandingAuthLinks />

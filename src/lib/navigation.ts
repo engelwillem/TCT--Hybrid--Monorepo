@@ -11,7 +11,7 @@ export type UiNavItem = {
 };
 
 export const uiNavItems: UiNavItem[] = [
-    { id: 'today', label: 'Renungan', icon: House, href: '/renungan' },
+    { id: 'today', label: 'Today', icon: House, href: '/renungan' },
     { id: 'versehub', label: 'VerseHub', icon: BookOpenText, href: '/versehub/id' },
     { id: 'community', label: 'Community', icon: Users, href: '/community' },
     { id: 'profile', label: 'Profile', icon: Settings, href: '/profile' },

@@ -8,23 +8,23 @@ export const readerContentPadding = "calc(180px + env(safe-area-inset-bottom, 24
 export const SANCTUARY_SCENES: SanctuaryScene[] = [
     {
         eyebrow: "VerseHub",
-        quote: "\"Janganlah kita jemu-jemu berbuat baik...\"",
-        invitation: "Masuk sebentar, tenangkan hati, lalu buka firman dengan ritme yang lebih hening dan lebih dalam.",
-        reflection: "VerseHub bukan sekadar daftar pasal. Ini ruang baca yang membantu firman terasa dekat, terarah, dan layak ditinggali lebih lama.",
+        quote: "\"Let us not grow weary in doing good...\"",
+        invitation: "Step in for a moment, steady your heart, then open Scripture with a quieter and deeper rhythm.",
+        reflection: "VerseHub is more than a chapter list. It is a reading space that makes Scripture feel close, clear, and worth dwelling in.",
         moodTag: "hopeful",
         suggestedRoute: "explore",
     },
     {
-        eyebrow: "Daily Mana",
-        quote: "\"Firman-Mu itu pelita bagi kakiku...\"",
-        invitation: "Mulai dari satu langkah kecil. Pilih mood, buka kitab, lalu lanjutkan perjalanan tanpa kehilangan konteks.",
-        reflection: "Ketika Anda belum tahu harus mulai dari mana, VerseHub memberi pintu masuk yang lembut, bukan kebisingan pilihan.",
+        eyebrow: "Daily Manna",
+        quote: "\"Your word is a lamp to my feet...\"",
+        invitation: "Start with one small step. Choose your mood, open a book, and continue without losing context.",
+        reflection: "When you are unsure where to begin, VerseHub offers a gentle starting point instead of noisy choices.",
         moodTag: "anxious",
         suggestedRoute: "explore",
     },
     {
-        eyebrow: "Ruang Doa Digital",
-        quote: "\"Tinggallah di dalam Aku...\"",
+        eyebrow: "Digital Prayer Room",
+        quote: "\"Abide in Me...\"",
         invitation: "",
         reflection: "",
         moodTag: "weary",
@@ -35,24 +35,24 @@ export const SANCTUARY_SCENES: SanctuaryScene[] = [
 export const MOOD_QUICK_STARTS: MoodQuickStartOption[] = [
     {
         key: "anxious",
-        label: "Cemas",
-        description: "Buka jalur yang lebih menenangkan.",
+        label: "Anxious",
+        description: "Open a calmer reading path.",
     },
     {
         key: "grateful",
-        label: "Bersyukur",
-        description: "Masuk ke bacaan syukur dan pujian.",
+        label: "Grateful",
+        description: "Enter readings for gratitude and praise.",
     },
     {
         key: "weary",
-        label: "Butuh Kekuatan",
-        description: "Temukan pasal yang memulihkan tenaga batin.",
+        label: "Need Strength",
+        description: "Find chapters that restore inner strength.",
     },
 ];
 
 export function buildTodayDateLabel(): string {
     try {
-        return new Intl.DateTimeFormat("id-ID", {
+        return new Intl.DateTimeFormat("en-US", {
             weekday: "long",
             day: "numeric",
             month: "long",
@@ -60,6 +60,6 @@ export function buildTodayDateLabel(): string {
             timeZone: "Asia/Jakarta",
         }).format(new Date()).toUpperCase();
     } catch {
-        return "HARI INI";
+        return "TODAY";
     }
 }

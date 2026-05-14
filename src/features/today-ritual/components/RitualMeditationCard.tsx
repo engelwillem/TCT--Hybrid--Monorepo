@@ -57,8 +57,8 @@ export function RitualMeditationCard({
           <BookOpenText className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#0ea5e9]">Renungan Pribadi</p>
-          <p className="mt-1 text-[13px] font-medium text-foreground/45">Disusun dari isi hati yang baru saja kamu doakan.</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#0ea5e9]">Personal Reflection</p>
+          <p className="mt-1 text-[13px] font-medium text-foreground/45">Composed from what you just prayed through.</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export function RitualMeditationCard({
 
       {personalRenungan.prayerPrompt ? (
         <div className="mt-6 rounded-2xl border border-sky-100/70 bg-sky-50/65 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700/80">Doa singkat untuk dibawa</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700/80">Short prayer to carry</p>
           <p className="mt-2 text-[14px] leading-7 text-foreground/72">{personalRenungan.prayerPrompt}</p>
         </div>
       ) : null}
@@ -90,7 +90,7 @@ export function RitualMeditationCard({
             disabled={isGeneratingRenungan}
             className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
           >
-            Jadikan doa
+            Turn into a prayer
           </button>
         ) : null}
         {showSmallStepAction ? (
@@ -100,13 +100,13 @@ export function RitualMeditationCard({
             disabled={isGeneratingRenungan}
             className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-60"
           >
-            Beri langkah kecil
+            Give one small step
           </button>
         ) : null}
         {showVersehubAction ? (
           <SurfaceBridgeAction
             target="versehub"
-            label="Lihat makna ayat ini"
+            label="See this verse deeper"
             href={buildVersehubClarifyUrl({
               verseRef: personalRenungan.verseReference,
               source: "renungan",
@@ -125,7 +125,7 @@ export function RitualMeditationCard({
               mentorFeedback === "helpful" ? "bg-emerald-100 text-emerald-700" : "bg-white text-slate-700 hover:bg-emerald-50"
             }`}
           >
-            Ini membantu
+            This helps
           </button>
           <button
             type="button"
@@ -134,7 +134,7 @@ export function RitualMeditationCard({
               mentorFeedback === "not_helpful" ? "bg-rose-100 text-rose-700" : "bg-white text-slate-700 hover:bg-rose-50"
             }`}
           >
-            Belum pas
+            Not quite yet
           </button>
           {hasFollowUpQuestion ? (
             <button
@@ -142,14 +142,14 @@ export function RitualMeditationCard({
               onClick={onOpenFollowUp}
               className="rounded-full bg-white px-3.5 py-1.5 text-[12px] font-semibold text-sky-700 transition-colors hover:bg-sky-50"
             >
-              Lanjut refleksi
+              Continue reflection
             </button>
           ) : null}
         </div>
 
         {showFollowUpQuestion ? (
           <div className="mt-3 rounded-xl border border-sky-100/90 bg-white px-3.5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-700/80">Pertanyaan lanjutan</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-700/80">Follow-up question</p>
             <p className="mt-1.5 text-[14px] leading-7 text-foreground/75">{personalRenungan.followUpQuestion}</p>
           </div>
         ) : null}

@@ -1,5 +1,13 @@
 
 import { NextRequest } from "next/server";
+import {
+  buildReferenceFromSlug,
+  englishBibleErrorResponse,
+  fetchEnglishVerseBySlug,
+  isEnglishBibleLang,
+  wantsEnglishBibleFromQuery,
+} from "@/lib/english-bible-api";
+import { callLaravelApi } from "@/lib/laravel-api";
 import { proxyLaravel } from "@/lib/proxy-laravel";
 
 interface RouteContext {
@@ -14,6 +22,34 @@ interface RouteContext {
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { lang, slug } = await params;
   const search = request.nextUrl.search;
+  const useEnglishApi = isEnglishBibleLang(lang) || (lang === "id" && wantsEnglishBibleFromQuery(request));
+
+  if (useEnglishApi) {
+    try {
+      const sourceLang = lang === "id" ? "id" : "en";
+      const baseResponse = await callLaravelApi(`/versehub/${sourceLang}/${slug}${search}`);
+      const basePayload = baseResponse.ok
+        ? ((await baseResponse.json()) as Record<string, unknown>)
+        : null;
+      const payload = await fetchEnglishVerseBySlug(slug);
+
+      const text = String(payload.text || "").trim();
+      const reference = String(payload.reference || buildReferenceFromSlug(slug)).trim();
+      const translationName = String(payload.translation_name || payload.translation_id || "World English Bible");
+
+      return Response.json({
+        ref: basePayload?.ref ?? slug,
+        reference,
+        text,
+        translation_name: translationName,
+        provider: "bible-api.com",
+        og_image_url: basePayload?.og_image_url ?? "",
+        canonical_url: basePayload?.canonical_url ?? `/versehub/${lang}/${slug}`,
+      });
+    } catch (error) {
+      return englishBibleErrorResponse(error);
+    }
+  }
   
   const segments = slug.split(/[-_.]/);
   

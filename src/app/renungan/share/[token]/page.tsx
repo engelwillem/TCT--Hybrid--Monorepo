@@ -27,37 +27,37 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!payload) {
     return {
-      title: "Renungan Pribadi",
-      description: "Renungan dari The Chosen Talks.",
+      title: "Personal Reflection",
+      description: "Reflection from The Chosen Talks.",
       alternates: { canonical: sharePath },
       openGraph: {
-        title: "Renungan Pribadi",
-        description: "Renungan dari The Chosen Talks.",
+        title: "Personal Reflection",
+        description: "Reflection from The Chosen Talks.",
         url: `${siteUrl}${sharePath}`,
-        images: [{ url: imageUrl, width: 1200, height: 630, alt: "Renungan Pribadi" }],
+        images: [{ url: imageUrl, width: 1200, height: 630, alt: "Personal Reflection" }],
       },
       twitter: {
         card: "summary_large_image",
-        title: "Renungan Pribadi",
-        description: "Renungan dari The Chosen Talks.",
+        title: "Personal Reflection",
+        description: "Reflection from The Chosen Talks.",
         images: [imageUrl],
       },
     };
   }
 
   return {
-    title: `${payload.verseReference} · Renungan`,
+    title: `${payload.verseReference} · Reflection`,
     description: payload.meditationExcerpt,
     alternates: { canonical: sharePath },
     openGraph: {
-      title: `${payload.verseReference} · Renungan`,
+      title: `${payload.verseReference} · Reflection`,
       description: payload.meditationExcerpt,
       url: `${siteUrl}${sharePath}`,
       images: [{ url: imageUrl, width: 1200, height: 630, alt: payload.verseReference }],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${payload.verseReference} · Renungan`,
+      title: `${payload.verseReference} · Reflection`,
       description: payload.meditationExcerpt,
       images: [imageUrl],
     },
@@ -82,7 +82,7 @@ export default async function RenunganSharePage({ params }: PageProps) {
     <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center px-6 py-16">
       <div className="rounded-[32px] border border-border/50 bg-background/90 p-6 shadow-soft">
         <p className="text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground">
-          Renungan Share
+          Reflection Share
         </p>
         <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground">{payload.verseReference}</h1>
         <p className="mt-4 text-lg leading-relaxed text-foreground/80">"{payload.verseText}"</p>
@@ -92,7 +92,7 @@ export default async function RenunganSharePage({ params }: PageProps) {
             href="/renungan"
             className="rounded-full bg-foreground px-5 py-3 text-sm font-bold text-background"
           >
-            Buka Renungan
+            Open Reflection
           </Link>
         </div>
       </div>

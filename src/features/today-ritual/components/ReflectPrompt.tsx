@@ -36,7 +36,7 @@ export default function ReflectPrompt({
   onContinue,
   isDone,
   isSubmitting = false,
-  submittingLabel = "Mendoakan...",
+  submittingLabel = "Praying...",
   beforeInputSlot,
   secondaryAction,
 }: ReflectPromptProps) {
@@ -57,7 +57,7 @@ export default function ReflectPrompt({
         </h2>
       ) : (
         <span id={`${textareaId}-heading`} className="sr-only">
-          Renungan
+          Reflection
         </span>
       )}
 
@@ -95,7 +95,7 @@ export default function ReflectPrompt({
                 disabled={!isFilled || isSubmitting}
                 onClick={onContinue}
                 // Explicit aria-label provides full context for screen reader users
-                aria-label={isFilled ? `${ctaLabel} refleksiku` : ctaLabel}
+                aria-label={isFilled ? `${ctaLabel} my reflection` : ctaLabel}
                 className={`group rounded-full px-6 py-[10px] text-[14px] font-medium transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   isFilled && !isSubmitting
                     ? 'bg-black text-white shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-[1px] hover:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(14,165,233,0.78))] hover:shadow-[0_22px_44px_-24px_rgba(14,165,233,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/45 active:scale-95'
