@@ -184,14 +184,25 @@ export function MemberPostCard({
       shareBusy={shareBusy}
     />
   );
+  const hasHeaderMenuActions =
+    canEdit ||
+    canEditPreview ||
+    canEditBookmarkCategory ||
+    canDelete ||
+    Boolean(canModerate && onAdminHide);
+
   const headerMenu = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted/60 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground">
+        <button
+          type="button"
+          aria-label="Open content actions"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted/70 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+        >
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="z-[120] w-52">
         {canEdit ? (
           <DropdownMenuItem onClick={onEditText}>
             <PencilLine className="h-4 w-4" />
@@ -326,7 +337,7 @@ export function MemberPostCard({
                 {followBusy ? "..." : isFollowingAuthor ? "Following" : "Follow"}
               </button>
             ) : null}
-            {headerMenu}
+            {hasHeaderMenuActions ? headerMenu : null}
           </div>
         </div>
       </CardHeader>

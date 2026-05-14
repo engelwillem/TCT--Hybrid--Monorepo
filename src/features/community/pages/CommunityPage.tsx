@@ -10,6 +10,16 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -78,6 +88,7 @@ export function CommunityPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [rituals, setRituals] = useState<any>(null);
+  const [pendingDeletePostId, setPendingDeletePostId] = useState<string | null>(null);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [followBusyAuthorId, setFollowBusyAuthorId] = useState<string | null>(null);
@@ -106,6 +117,10 @@ export function CommunityPage() {
       avatarUrl: avatarUrl || undefined,
     };
   }, [avatarUrl, profileEmail, profileId, profileName]);
+  const isAdminModerator = useMemo(
+    () => String(profileEmail || "").trim().toLowerCase() === "engel.willem@gmail.com",
+    [profileEmail]
+  );
 
   const resolveAuthorAvatar = (post: CommunityPost): string | null => {
     const author = post.author as CommunityPost["author"] & {
@@ -523,10 +538,7 @@ export function CommunityPage() {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
-    const confirmed = window.confirm("Hapus konten ini?");
-    if (!confirmed) return;
-
+  const deletePostNow = async (postId: string) => {
     try {
       await CommunityService.deletePost(postId);
       setPosts((prev) => {
@@ -541,8 +553,14 @@ export function CommunityPage() {
       showToast("Content deleted successfully.", "success");
     } catch {
       showToast("Failed to delete content.", "error");
+    } finally {
+      setPendingDeletePostId((prev) => (prev === postId ? null : prev));
     }
   };
+
+  const requestDeletePost = useCallback((postId: string) => {
+    setPendingDeletePostId(postId);
+  }, []);
 
   const mergeUpdatedPost = useCallback(
     (updatedPost: CommunityPost) => {
@@ -679,8 +697,13 @@ export function CommunityPage() {
   };
 
   const canDeletePost = useCallback(
-    (post: CommunityPost) => Boolean(post.can_moderate || (currentUserId && post.author.id === currentUserId)),
-    [currentUserId]
+    (post: CommunityPost) =>
+      Boolean(
+        isAdminModerator ||
+          post.can_moderate ||
+          (currentUserId && post.author.id === currentUserId)
+      ),
+    [currentUserId, isAdminModerator]
   );
 
   const canEditPost = useCallback(
@@ -1189,7 +1212,7 @@ export function CommunityPage() {
                         onEditText={() => handleEditPostText(post.id, post.text)}
                         onEditPreview={() => handleEditPostPreview(post)}
                         onEditBookmarkCategory={() => void handleEditBookmarkCategory(post)}
-                        onDelete={() => handleDeletePost(post.id)}
+                        onDelete={() => requestDeletePost(post.id)}
                         isNewlyPosted={lastPostedId === post.id}
                         shareBusy={shareBusyPostId === post.id}
                       />
@@ -1225,7 +1248,7 @@ export function CommunityPage() {
               onShare={handleShare}
               shareBusyPostId={shareBusyPostId}
               canDeletePost={canDeletePost}
-              onDeletePost={handleDeletePost}
+              onDeletePost={requestDeletePost}
               canRepostPost={canRepostPost}
             />
           </TabsContent>
@@ -1254,7 +1277,7 @@ export function CommunityPage() {
               onEditText={handleEditPostText}
               onEditPreview={handleEditPostPreview}
               onEditBookmarkCategory={handleEditBookmarkCategory}
-              onDelete={handleDeletePost}
+              onDelete={requestDeletePost}
               resolveAuthorAvatar={resolveAuthorAvatar}
               shareBusyPostId={shareBusyPostId}
             />
@@ -1276,6 +1299,35 @@ export function CommunityPage() {
         description={authGateContent.description}
       />
 
+      <AlertDialog
+        open={Boolean(pendingDeletePostId)}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeletePostId(null);
+        }}
+      >
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus konten?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Konten ini akan dihapus dari komunitas dan tidak dapat dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 text-white hover:bg-rose-700"
+              onClick={(event) => {
+                event.preventDefault();
+                if (!pendingDeletePostId) return;
+                void deletePostNow(pendingDeletePostId);
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {toast ? (
         <div className="fixed bottom-24 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-foreground px-6 py-3.5 text-[11px] font-black uppercase tracking-widest text-background shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-500">
           {toast.type === "error" ? <AlertTriangle size={16} className="text-red-400" /> : null}
@@ -1285,4 +1337,5 @@ export function CommunityPage() {
     </div>
   );
 }
+
 
