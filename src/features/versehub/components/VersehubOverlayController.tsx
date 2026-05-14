@@ -154,7 +154,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
       setShareBusyId(null);
     }
 
-    const shareText = `Renungkan Firman di VerseHub: ${url}`;
+    const shareText = `Reflect on Scripture in VerseHub: ${url}`;
     const waUrl = buildWhatsAppShareUrl(shareText);
     window.open(waUrl, "_blank", "noopener,noreferrer");
   };
@@ -181,8 +181,8 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
               </div>
             </div>
             <div className="text-center space-y-2">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">AI Sedang Mempersiapkan</h4>
-              <p className="text-sm font-medium text-white/50">Meningkatkan kualitas visual untuk dibagikan...</p>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">AI is preparing</h4>
+              <p className="text-sm font-medium text-white/50">Enhancing visual quality for sharing...</p>
             </div>
             
             <motion.button
@@ -190,7 +190,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
               onClick={handleCancelShare}
               className="mt-4 px-6 py-2 rounded-full border border-white/20 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all"
             >
-              Batal
+              Cancel
             </motion.button>
           </motion.div>
         )}
@@ -218,7 +218,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">VerseHub</p>
-                  <h3 className="mt-2 text-2xl tct-serif tracking-tight text-slate-800">Masuk ke firman tanpa kehilangan rasa heningnya.</h3>
+                  <h3 className="mt-2 text-2xl tct-serif tracking-tight text-slate-800">Enter Scripture without losing the silence.</h3>
                 </div>
                 <button
                   type="button"
@@ -232,13 +232,13 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
               <p className="mt-4 text-[15px] leading-relaxed text-slate-500">{activeScene.reflection}</p>
 
               <div className="mt-8 flex flex-col items-center gap-4 py-4">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#91A0C7] mb-4">Pilih Mood Saat Ini</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#91A0C7] mb-4">Choose Your Current Mood</p>
                   <div className="relative flex flex-wrap justify-center gap-2 p-1.5 rounded-[28px] bg-slate-100/60 ring-1 ring-slate-200/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] mb-6">
                     {[
-                      { key: "hopeful", label: "Cahaya" },
-                      { key: "anxious", label: "Ketenangan" },
-                      { key: "weary", label: "Lelah" },
-                      { key: "grateful", label: "Syukur" },
+                      { key: "hopeful", label: "Light" },
+                      { key: "anxious", label: "Calm" },
+                      { key: "weary", label: "Tired" },
+                      { key: "grateful", label: "Gratitude" },
                     ].map((mood) => {
                       const isActive = activeMood === mood.key;
                       return (
@@ -276,7 +276,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                       }}
                       className="flex-1 rounded-full bg-slate-900 px-6 py-[16px] text-center text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(15,23,42,0.18)] transition-all hover:bg-slate-800 disabled:opacity-50"
                     >
-                      Baca {firstBookLabel} 1
+                      Read {firstBookLabel} 1
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
@@ -284,7 +284,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                       onClick={() => setOverlay("picker")}
                       className="flex-1 rounded-full bg-slate-50 px-6 py-[16px] text-center text-[14px] font-bold text-slate-600 ring-1 ring-slate-200/60 transition-all hover:bg-slate-100"
                     >
-                      Koleksi Kitab
+                      Books Collection
                     </motion.button>
                   </div>
               </div>
@@ -314,7 +314,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
               <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#91A0C7]">VerseHub</p>
-                  <h3 className="mt-1 text-xl font-black tracking-tight text-[var(--vh-text-primary)]">Koleksi Kitab</h3>
+                  <h3 className="mt-1 text-xl font-black tracking-tight text-[var(--vh-text-primary)]">Books Collection</h3>
                 </div>
                 <button
                   type="button"
@@ -348,7 +348,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                           />
                         )}
-                        {item === "ot" ? "Perjanjian Lama" : "Perjanjian Baru"}
+                        {item === "ot" ? "Old Testament" : "New Testament"}
                       </motion.button>
                   )})}
                 </div>
@@ -377,7 +377,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
 
                 <div className="min-h-0 overflow-y-auto p-5">
                   <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--vh-text-muted)]">
-                    {activeBookLabel ? `Pilih Pasal ${activeBookLabel}` : "Pilih Pasal"}
+                    {activeBookLabel ? `Choose Chapter ${activeBookLabel}` : "Choose Chapter"}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {chapters.map((chapter) => (
@@ -398,7 +398,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                         </button>
                         <button
                           type="button"
-                          aria-label={`Bagikan ${activeBookLabel ?? "ayat"} pasal ${chapter}`}
+                          aria-label={`Share ${activeBookLabel ?? "verse"} chapter ${chapter}`}
                           disabled={shareBusyId === `${activeBook}-${chapter}`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -422,7 +422,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                         </button>
                         <button
                           type="button"
-                          aria-label={`WhatsApp ${activeBookLabel ?? "ayat"} pasal ${chapter}`}
+                          aria-label={`WhatsApp ${activeBookLabel ?? "verse"} chapter ${chapter}`}
                           disabled={shareBusyId === `${activeBook}-${chapter}`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -441,7 +441,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
                       </div>
                     ))}
                     {chapters.length === 0 && (
-                      <p className="text-sm text-[var(--vh-text-secondary)]">Pilih kitab terlebih dahulu untuk melihat daftar pasal.</p>
+                      <p className="text-sm text-[var(--vh-text-secondary)]">Choose a book first to view chapter list.</p>
                     )}
                   </div>
                 </div>
@@ -481,7 +481,7 @@ const [shareBusyId, setShareBusyId] = useState<string | null>(null);
       {error && isLandingMode && (
         <div className="pointer-events-none absolute left-1/2 top-24 z-40 -translate-x-1/2 px-4">
           <div className="rounded-full bg-[var(--vh-surface)]/85 px-4 py-2 text-[11px] font-bold text-[var(--vh-text-secondary)] shadow-sm ring-1 ring-[var(--vh-border)] backdrop-blur-xl">
-            Koneksi kitab sedang tidak stabil, tetapi sanctuary VerseHub tetap siap dipakai.
+            Scripture connection is unstable, but VerseHub sanctuary is still ready.
           </div>
         </div>
       )}

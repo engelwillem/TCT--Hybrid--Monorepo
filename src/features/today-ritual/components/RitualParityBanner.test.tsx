@@ -9,9 +9,9 @@ describe("RitualParityBanner trust tone", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("renders nothing for degraded-but-usable mode", () => {
+  it("renders sync notice for degraded mode", () => {
     const { container } = render(createElement(RitualParityBanner, { parityStatus: "degraded" }));
-    expect(container).toBeEmptyDOMElement();
+    expect(container.textContent).toContain("Some content is still syncing");
   });
 
   it("renders nothing for fallback mode", () => {

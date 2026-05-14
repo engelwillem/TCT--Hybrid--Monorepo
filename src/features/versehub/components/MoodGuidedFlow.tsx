@@ -26,80 +26,80 @@ type MoodFlowConfig = {
 const FALLBACK_VERSES: Record<string, { reference: string; text: string }> = {
   "mat-6-34": {
     reference: "Matius 6:34",
-    text: "Sebab itu janganlah khawatir tentang hari besok, karena hari besok mempunyai kesusahannya sendiri. Kesusahan sehari cukuplah untuk sehari.",
+    text: "Therefore do not worry about tomorrow, for tomorrow will worry about itself. Each day has enough trouble of its own.",
   },
   "flp-4-6": {
     reference: "Filipi 4:6",
-    text: "Janganlah hendaknya kamu khawatir tentang apa pun juga.",
+    text: "Do not be anxious about anything.",
   },
   "mzm-56-3": {
     reference: "Mazmur 56:3",
-    text: "Waktu aku takut, aku ini percaya kepada-Mu.",
+    text: "When I am afraid, I put my trust in You.",
   },
   "yes-41-10": {
     reference: "Yesaya 41:10",
-    text: "Janganlah takut, sebab Aku menyertai engkau.",
+    text: "Do not fear, for I am with you.",
   },
   "mzm-103-1": {
     reference: "Mazmur 103:1",
-    text: "Pujilah TUHAN, hai jiwaku!",
+    text: "Praise the LORD, my soul!",
   },
   "1tes-5-18": {
     reference: "1 Tesalonika 5:18",
-    text: "Mengucap syukurlah dalam segala hal.",
+    text: "Give thanks in all circumstances.",
   },
   "yak-1-17": {
     reference: "Yakobus 1:17",
-    text: "Setiap pemberian yang baik dan setiap anugerah yang sempurna datangnya dari atas.",
+    text: "Every good and perfect gift is from above.",
   },
   "kol-3-15": {
     reference: "Kolose 3:15",
-    text: "Hendaklah damai sejahtera Kristus memerintah dalam hatimu. Dan bersyukurlah.",
+    text: "Let the peace of Christ rule in your hearts. And be thankful.",
   },
   "yes-40-31": {
     reference: "Yesaya 40:31",
-    text: "Orang-orang yang menanti-nantikan TUHAN mendapat kekuatan baru.",
+    text: "Those who hope in the LORD will renew their strength.",
   },
   "mat-11-28": {
     reference: "Matius 11:28",
-    text: "Marilah kepada-Ku, semua yang letih lesu dan berbeban berat, Aku akan memberi kelegaan kepadamu.",
+    text: "Come to me, all who are weary and burdened, and I will give you rest.",
   },
   "mzm-46-2": {
     reference: "Mazmur 46:2",
-    text: "Allah itu bagi kita tempat perlindungan dan kekuatan.",
+    text: "God is our refuge and strength.",
   },
   "2kor-12-9": {
     reference: "2 Korintus 12:9",
-    text: "Cukuplah kasih karunia-Ku bagimu, sebab justru dalam kelemahanlah kuasa-Ku menjadi sempurna.",
+    text: "My grace is sufficient for you, for my power is made perfect in weakness.",
   },
 };
 
 const FLOW_CONFIGS: Record<MoodFlowKey, MoodFlowConfig> = {
   anxious: {
-    title: "Cemas",
-    introLine1: "Kami melihat hatimu hari ini.",
-    introLine2: "Mari kita datang kepada Tuhan.",
+    title: "Anxious",
+    introLine1: "We see your heart today.",
+    introLine2: "Let us come to the Lord.",
     primaryRef: "mat-6-34",
-    supportLine: "Tuhan mengingatkan untuk percaya, bukan khawatir.",
-    reflectionQuestion: "Apa yang membuatmu cemas hari ini?",
+    supportLine: "The Lord calls us to trust, not to worry.",
+    reflectionQuestion: "What is making you anxious today?",
     relatedRefs: ["flp-4-6", "mzm-56-3", "yes-41-10"],
   },
   grateful: {
-    title: "Bersyukur",
-    introLine1: "Syukurmu adalah doa yang hidup.",
-    introLine2: "Mari kita bawa pujian ini kepada Tuhan.",
+    title: "Grateful",
+    introLine1: "Your gratitude is a living prayer.",
+    introLine2: "Let us bring this praise to the Lord.",
     primaryRef: "mzm-103-1",
-    supportLine: "Hati yang bersyukur menjaga langkah tetap lembut dan kuat.",
-    reflectionQuestion: "Hal apa yang paling kamu syukuri hari ini?",
+    supportLine: "A grateful heart keeps your steps gentle and strong.",
+    reflectionQuestion: "What are you most thankful for today?",
     relatedRefs: ["1tes-5-18", "yak-1-17", "kol-3-15"],
   },
   weary: {
-    title: "Butuh Kekuatan",
-    introLine1: "Kami tahu kamu sedang lelah.",
-    introLine2: "Mari terima kekuatan baru dari firman Tuhan.",
+    title: "Need Strength",
+    introLine1: "We know you are tired.",
+    introLine2: "Receive new strength through God’s word.",
     primaryRef: "yes-40-31",
-    supportLine: "Saat tenaga habis, firman Tuhan meneguhkan kembali langkahmu.",
-    reflectionQuestion: "Di bagian mana kamu paling merasa lemah hari ini?",
+    supportLine: "When your energy is low, God’s word steadies your steps.",
+    reflectionQuestion: "Where do you feel weakest today?",
     relatedRefs: ["mat-11-28", "mzm-46-2", "2kor-12-9"],
   },
 };
@@ -136,7 +136,7 @@ async function fetchVerseByRef(lang: string, ref: string): Promise<VersePayload>
   } catch {
     const fallback = FALLBACK_VERSES[ref] || {
       reference: ref.toUpperCase(),
-      text: "Ayat sedang dimuat.",
+      text: "Verse is loading.",
     };
 
     return {
@@ -201,7 +201,7 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
           type="button"
           onClick={onBack}
           className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-500 ring-1 ring-slate-200/70 backdrop-blur-sm"
-          aria-label="Kembali"
+          aria-label="Back"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -220,7 +220,7 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
               onClick={() => setStage("verse")}
               className="mt-12 inline-flex h-14 w-full items-center justify-center rounded-xl bg-[linear-gradient(180deg,#4DA2FF,#2A7EDE)] text-[33px] font-bold text-white shadow-[0_22px_45px_-26px_rgba(37,99,235,0.65)]"
             >
-              Lanjut
+              Continue
             </button>
           </section>
         ) : null}
@@ -236,7 +236,7 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
               onClick={() => setStage("reflect")}
               className="mt-10 inline-flex h-14 w-full items-center justify-center rounded-xl bg-[linear-gradient(180deg,#4DA2FF,#2A7EDE)] text-[33px] font-bold text-white shadow-[0_22px_45px_-26px_rgba(37,99,235,0.65)]"
             >
-              Renungkan
+              Reflect
             </button>
 
             <button
@@ -259,7 +259,7 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
                   setReflection(event.target.value);
                   if (saved) setSaved(false);
                 }}
-                placeholder="Tulis refleksi..."
+                placeholder="Write your reflection..."
                 className="mt-3 min-h-[92px] w-full resize-none rounded-xl border border-slate-200 bg-[#F8FBFF] px-3 py-2 text-[24px] leading-[1.35] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
               <button
@@ -271,12 +271,12 @@ export function MoodGuidedFlow({ lang, mood, onBack, onOpenVerse }: MoodGuidedFl
                   canSave ? "bg-[linear-gradient(180deg,#4DA2FF,#2A7EDE)]" : "bg-slate-300"
                 )}
               >
-                {saved ? "Tersimpan" : "Simpan Refleksi"}
+                {saved ? "Saved" : "Save Reflection"}
               </button>
             </div>
 
             <div className="rounded-[18px] bg-white/88 p-4 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/65">
-              <h4 className="text-[30px] font-bold text-slate-800">Ayat lain untukmu</h4>
+              <h4 className="text-[30px] font-bold text-slate-800">More verses for you</h4>
               <ul className="mt-3 space-y-2">
                 {relatedVerses.map((verse) => (
                   <li key={verse.ref} className="border-t border-slate-200/80 pt-2 first:border-t-0 first:pt-0">

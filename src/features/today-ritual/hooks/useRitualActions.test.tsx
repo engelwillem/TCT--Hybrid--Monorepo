@@ -57,15 +57,15 @@ function buildHook() {
 }
 
 describe("useRitualActions guest-safe actions", () => {
-  it("allows guest to start renungan without auth redirect", () => {
+  it("redirects guest to login when starting renungan", () => {
     const { result } = buildHook();
 
     result.current.handleStartRenungan();
 
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(pushMock).toHaveBeenCalledWith("/login?next=/renungan");
   });
 
-  it("allows guest to complete prayer without auth redirect", () => {
+  it("blocks guest from completing prayer and redirects to login", () => {
     const completePrayer = vi.fn();
     const { result } = renderHook(() =>
       useRitualActions({
@@ -99,8 +99,8 @@ describe("useRitualActions guest-safe actions", () => {
 
     result.current.handleCompletePrayer();
 
-    expect(completePrayer).toHaveBeenCalledTimes(1);
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(completePrayer).not.toHaveBeenCalled();
+    expect(pushMock).toHaveBeenCalledWith("/login?next=/renungan");
   });
 
   it("keeps member-required action guard for bookmark-class flows", () => {

@@ -31,16 +31,16 @@ function toMonthKey(value?: string | null): string {
 }
 
 function toMonthLabel(value?: string | null): string {
-  if (!value) return "Tanpa tanggal";
+  if (!value) return "No date";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Tanpa tanggal";
+  if (Number.isNaN(date.getTime())) return "No date";
   return new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(date);
 }
 
 function getArchiveSortLabel(sort: ArchiveSort): string {
-  if (sort === "popular") return "Terpopuler";
-  if (sort === "relevant") return "Paling relevan";
-  return "Terbaru";
+  if (sort === "popular") return "Most popular";
+  if (sort === "relevant") return "Most relevant";
+  return "Newest";
 }
 
 type CommunityArchiveTabProps = {
@@ -253,68 +253,68 @@ export function CommunityArchiveTab({
 
   const archiveResultLabel = useMemo(() => {
     if (deferredArchiveSearchQuery.trim()) {
-      return `Hasil untuk "${deferredArchiveSearchQuery.trim()}"`;
+      return `Results for "${deferredArchiveSearchQuery.trim()}"`;
     }
 
     const activeCategory = COMMUNITY_ARCHIVE_CATEGORIES.find((item) => item.key === archiveCategory);
-    return activeCategory?.label || "Semua";
+    return activeCategory?.label || "All";
   }, [archiveCategory, deferredArchiveSearchQuery]);
 
   const archiveEmptyCopy = useMemo(() => {
     const query = deferredArchiveSearchQuery.trim();
     const hasQuery = query.length > 0;
     const activeCategory = COMMUNITY_ARCHIVE_CATEGORIES.find((item) => item.key === archiveCategory);
-    const activeCategoryLabel = activeCategory?.label || "Semua";
+    const activeCategoryLabel = activeCategory?.label || "All";
     const activeSortLabel = getArchiveSortLabel(archiveSort);
 
     if (!hasQuery && archiveCategory === "all" && archiveSort === "newest") {
       return {
-        title: "Arsip belum tersedia",
+        title: "Archive is not available yet",
         description: "",
       };
     }
 
     if (hasQuery) {
       return {
-        title: `Tidak ada hasil untuk "${query}"`,
+        title: `Tidak ada Results for "${query}"`,
         description:
           archiveCategory === "all"
-            ? `Coba kata kunci lain atau ubah urutan dari ${activeSortLabel}.`
-            : `Tidak ada hasil di kategori ${activeCategoryLabel}. Coba kata kunci lain atau ubah urutan.`,
+            ? `Try another keyword or change sort from ${activeSortLabel}.`
+            : `No results in category ${activeCategoryLabel}. Coba kata kunci lain atau ubah urutan.`,
       };
     }
 
     if (archiveCategory !== "all") {
       return {
-        title: `Belum ada konten di ${activeCategoryLabel}`,
-        description: `Kategori ini kosong untuk urutan ${activeSortLabel}.`,
+        title: `No content yet in ${activeCategoryLabel}`,
+        description: `This category is empty for sort ${activeSortLabel}.`,
       };
     }
 
     return {
-      title: "Arsip belum tersedia",
-      description: `Belum ada konten untuk urutan ${activeSortLabel}.`,
+      title: "Archive is not available yet",
+      description: `No content yet for sort ${activeSortLabel}.`,
     };
   }, [archiveCategory, archiveSort, deferredArchiveSearchQuery]);
 
   const archiveStateTone = useMemo(() => {
     if (fetchError === "Unauthorized") {
       return {
-        title: "Masuk untuk melihat arsip komunitasmu.",
-        description: "Beberapa konten hanya tersedia saat sesi akunmu aktif kembali.",
+        title: "Sign in to view your community archive.",
+        description: "Some content is available only when your account session is active again.",
       };
     }
 
     if (fetchError === "Server Unavailable") {
       return {
-        title: "Arsip sedang istirahat sejenak.",
-        description: "Coba muat ulang beberapa saat lagi. Konten cached tetap kami tampilkan bila tersedia.",
+        title: "Archive is temporarily resting.",
+        description: "Try reloading in a moment. Cached content will still be shown when available.",
       };
     }
 
     return {
-      title: "Belum ada hasil yang cocok.",
-      description: "Coba ganti kata kunci atau pilih kategori lain agar pencarian terasa lebih luas.",
+      title: "No matching results yet.",
+      description: "Try a different keyword or category to broaden your search.",
     };
   }, [fetchError]);
 
@@ -329,13 +329,13 @@ export function CommunityArchiveTab({
             <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(250px,320px)] xl:items-end">
               <div className="min-w-0 space-y-1">
                 <h2 className="tct-serif text-[28px] leading-tight tracking-tight text-slate-900">
-                  Galeri Talks Komunitas
+                  Community Talks Gallery
                 </h2>
-                <p className="text-[13px] font-medium text-slate-500">Postingan lama Talks ada di sini</p>
+                <p className="text-[13px] font-medium text-slate-500">Older Talks posts are listed here</p>
               </div>
 
               <div className="min-w-0 rounded-[22px] bg-slate-950/[0.045] px-4 py-3 text-left">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Hasil terlihat</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Visible results</p>
                 <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{filteredArchivePosts.length}</p>
                 <p className="mt-1 truncate text-sm text-slate-500">{archiveResultLabel}</p>
               </div>
@@ -350,16 +350,16 @@ export function CommunityArchiveTab({
                     const nextValue = event.target.value;
                     startTransition(() => setArchiveSearchQuery(nextValue));
                   }}
-                  placeholder="Cari judul, isi singkat, atau kategori..."
+                  placeholder="Search title, summary, or category..."
                   className="w-full bg-transparent text-[15px] text-slate-800 outline-none placeholder:text-slate-400"
-                  aria-label="Cari konten GALERY"
+                  aria-label="Search GALLERY content"
                 />
                 {archiveSearchQuery ? (
                   <button
                     type="button"
                     onClick={() => startTransition(() => setArchiveSearchQuery(""))}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/70 hover:text-slate-700"
-                    aria-label="Hapus pencarian"
+                    aria-label="Clear search"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -368,17 +368,17 @@ export function CommunityArchiveTab({
 
               <label className="flex min-h-12 min-w-0 items-center gap-2 rounded-[18px] border border-slate-200/80 bg-white px-3.5">
                 <span className="shrink-0 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-                  Urutkan
+                  Sort
                 </span>
                 <select
                   value={archiveSort}
                   onChange={(event) => setArchiveSort(event.target.value as ArchiveSort)}
                   className="min-w-0 w-full bg-transparent pr-1 text-[13px] font-semibold text-slate-800 outline-none"
-                  aria-label="Urutkan konten GALERY"
+                  aria-label="Sort konten GALERY"
                 >
-                  <option value="newest">Terbaru</option>
-                  <option value="popular">Terpopuler</option>
-                  <option value="relevant">Paling relevan</option>
+                  <option value="newest">Newest</option>
+                  <option value="popular">Most popular</option>
+                  <option value="relevant">Most relevant</option>
                 </select>
               </label>
             </div>
@@ -406,7 +406,7 @@ export function CommunityArchiveTab({
                       : "opacity-80 scale-[0.96]",
                     canLoopArchiveCategories ? "" : "pointer-events-none border-slate-200/70 text-slate-300 shadow-none",
                   )}
-                  aria-label="Geser kategori ke kiri"
+                  aria-label="Scroll categories left"
                 >
                   <ChevronLeft className="h-4 w-4 md:h-[18px] md:w-[18px]" />
                 </button>
@@ -422,7 +422,7 @@ export function CommunityArchiveTab({
                       : "opacity-80 scale-[0.96]",
                     canLoopArchiveCategories ? "" : "pointer-events-none border-slate-200/70 text-slate-300 shadow-none",
                   )}
-                  aria-label="Geser kategori ke kanan"
+                  aria-label="Scroll categories right"
                 >
                   <ChevronRight className="h-4 w-4 md:h-[18px] md:w-[18px]" />
                 </button>
@@ -654,3 +654,4 @@ export function CommunityArchiveTab({
     </div>
   );
 }
+

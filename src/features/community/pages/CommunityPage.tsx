@@ -87,8 +87,8 @@ export function CommunityPage() {
   const [lastPostedId, setLastPostedId] = useState<string | null>(null);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [authGateContent, setAuthGateContent] = useState<{ title: string; description: string }>({
-    title: "Tulisanmu sudah siap.",
-    description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
+    title: "Your post is ready.",
+    description: "Sign up or log in to share it. You can continue writing without losing your draft.",
   });
   const discussionPostRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrolledToLastPostedRef = useRef<string | null>(null);
@@ -162,13 +162,13 @@ export function CommunityPage() {
   const openAuthGate = useCallback((mode: "share" | "interact") => {
     if (mode === "share") {
       setAuthGateContent({
-        title: "Tulisanmu sudah siap.",
-        description: "Daftar atau masuk untuk membagikannya. Kamu bisa lanjut menulis tanpa kehilangan draft.",
+        title: "Your post is ready.",
+        description: "Sign up or log in to share it. You can continue writing without losing your draft.",
       });
     } else {
       setAuthGateContent({
-        title: "Lanjutkan langkahmu.",
-        description: "Masuk atau daftar untuk ikut berinteraksi dengan komunitas.",
+        title: "Continue your journey.",
+        description: "Log in or sign up to interact with the community.",
       });
     }
 
@@ -350,7 +350,7 @@ export function CommunityPage() {
         return {
           ok: false,
           kind: "auth",
-          message: "Masuk dulu untuk membagikan tulisanmu.",
+          message: "Please log in first to share your post.",
           status: 401,
         };
       }
@@ -358,7 +358,7 @@ export function CommunityPage() {
       return {
         ok: false,
         kind: "network",
-        message: "Sesi akun belum siap. Coba lagi beberapa detik.",
+        message: "Your account session is not ready yet. Try again in a few seconds.",
       };
     }
 
@@ -432,7 +432,7 @@ export function CommunityPage() {
         return {
           ok: false,
           kind: "auth",
-          message: "Sesi akun berakhir. Silakan masuk lagi.",
+          message: "Your session has ended. Please sign in again.",
           status,
           diagnostics: imageDiagnostics,
         };
@@ -459,7 +459,7 @@ export function CommunityPage() {
         return {
           ok: false,
           kind: "validation",
-          message: "Ukuran total unggahan terlalu besar. Kurangi jumlah atau ukuran gambar.",
+          message: "Total upload size is too large. Reduce the number or size of images.",
           status,
           diagnostics: imageDiagnostics,
         };
@@ -516,7 +516,7 @@ export function CommunityPage() {
       return {
         ok: false,
         kind: "unknown",
-        message: "Gagal membagikan post. Coba lagi.",
+        message: "Failed to share post. Please try again.",
         status,
         diagnostics: imageDiagnostics,
       };
@@ -538,9 +538,9 @@ export function CommunityPage() {
         });
         return nextPosts;
       });
-      showToast("Konten berhasil dihapus.", "success");
+      showToast("Content deleted successfully.", "success");
     } catch {
-      showToast("Gagal menghapus konten.", "error");
+      showToast("Failed to delete content.", "error");
     }
   };
 
@@ -575,9 +575,9 @@ export function CommunityPage() {
     try {
       const updatedPost = await CommunityService.updatePostText(postId, trimmed);
       mergeUpdatedPost(updatedPost);
-      showToast("Teks berhasil diperbarui.", "success");
+      showToast("Text updated successfully.", "success");
     } catch {
-      showToast("Gagal memperbarui teks.", "error");
+      showToast("Failed to update text.", "error");
     }
   };
 
@@ -595,7 +595,7 @@ export function CommunityPage() {
     const fallbackChoice = String(currentIndex + 1);
     const optionsLabel = media.map((_, idx) => `${idx + 1}`).join(", ");
     const nextSelection = window.prompt(
-      `Pilih nomor gambar untuk preview WA (${optionsLabel}):`,
+      `Choose image number for WhatsApp preview (${optionsLabel}):`,
       fallbackChoice
     );
     if (nextSelection === null) return;
@@ -612,15 +612,15 @@ export function CommunityPage() {
     try {
       const updatedPost = await CommunityService.updatePostPreview(post.id, nextIndex);
       mergeUpdatedPost(updatedPost);
-      showToast("Preview share berhasil diperbarui.", "success");
+      showToast("Share preview updated successfully.", "success");
     } catch {
-      showToast("Gagal memperbarui preview share.", "error");
+      showToast("Failed to update share preview.", "error");
     }
   };
 
   const handleEditBookmarkCategory = async (post: CommunityPost) => {
     if (!post.isBookmarked) {
-      showToast("Konten ini belum masuk bookmarks.", "error");
+      showToast("This content is not in bookmarks yet.", "error");
       return;
     }
 
@@ -632,7 +632,7 @@ export function CommunityPage() {
 
     const options = categories.map((item, index) => `${index + 1}. ${item.name}`).join("\n");
     const userInput = window.prompt(
-      `Pilih kategori bookmark untuk konten ini:\n${options}\n\nKetik nomor kategori, atau ketik nama kategori baru.`,
+      `Choose bookmark category for this content:\n${options}\n\nType category number, or type a new category name.`,
       ""
     );
     if (userInput === null) return;
@@ -658,7 +658,7 @@ export function CommunityPage() {
           targetCategoryId = created.id;
           showToast(`Kategori "${created.name}" dibuat.`, "success");
         } catch {
-          showToast("Gagal membuat kategori bookmark baru.", "error");
+          showToast("Failed to create a new bookmark category.", "error");
           return;
         }
       }
@@ -674,7 +674,7 @@ export function CommunityPage() {
       await loadBookmarkData();
       showToast("Bookmark dipindahkan ke kategori baru.", "success");
     } catch {
-      showToast("Gagal memindahkan bookmark.", "error");
+      showToast("Failed to move bookmark.", "error");
     }
   };
 
@@ -783,7 +783,7 @@ export function CommunityPage() {
       });
 
       void loadBookmarkData();
-      showToast(updatedPost.isBookmarked ? "Disimpan ke Bookmarks" : "Dihapus dari Bookmarks", "success");
+      showToast(updatedPost.isBookmarked ? "Saved to Bookmarks" : "Removed from Bookmarks", "success");
     } catch {
       setPosts(originalPosts);
       setArchivePosts(originalArchivePosts);
@@ -793,7 +793,7 @@ export function CommunityPage() {
   const handleShare = async (postId: string, text?: string | null) => {
     if (shareBusyPostId) return;
 
-    const shortText = text ? `${text.substring(0, 100)}...` : "Bagikan pos inspirasi ini.";
+    const shortText = text ? `${text.substring(0, 100)}...` : "Share this inspiring post.";
 
     setShareBusyPostId(postId);
     try {
@@ -913,7 +913,7 @@ export function CommunityPage() {
         }
         const rawMessage = error instanceof Error ? error.message : "";
         if (rawMessage.includes("401") || rawMessage.includes("403")) {
-          showToast("Sesi akun berakhir. Silakan masuk lagi.", "error");
+          showToast("Your session has ended. Please sign in again.", "error");
         } else {
           showToast("Repost belum berpindah ke Talks. Coba muat ulang.", "error");
         }
@@ -966,7 +966,7 @@ export function CommunityPage() {
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload?.ok !== true) {
-          showToast(payload?.message || "Gagal memperbarui follow.", "error");
+          showToast(payload?.message || "Failed to update follow.", "error");
           return;
         }
 
@@ -997,7 +997,7 @@ export function CommunityPage() {
 
         showToast(nextFollowing ? "Berhasil follow member." : "Follow dilepas.", "success");
       } catch {
-        showToast("Gagal memperbarui follow.", "error");
+        showToast("Failed to update follow.", "error");
       } finally {
         setFollowBusyAuthorId(null);
       }
@@ -1015,7 +1015,7 @@ export function CommunityPage() {
       showToast(`Kategori ${created.name} siap dipakai.`, "success");
       await loadBookmarkData();
     } catch {
-      showToast("Gagal membuat kategori bookmark.", "error");
+      showToast("Failed to create bookmark category.", "error");
     }
   }, [loadBookmarkData, showToast]);
 
@@ -1030,7 +1030,7 @@ export function CommunityPage() {
           ritualVerse.cta_href ||
           `/versehub/id?ref=${encodeURIComponent(slugifyRef(ritualVerse.reference || ""))}`,
         text: ritualVerse.text || ritualVerse.quote,
-        reference: ritualVerse.reference || "Ayat Hari Ini",
+        reference: ritualVerse.reference || "Verse of the Day",
         imageUrl: ritualVerse.image_url || ritualVerse.imageUrl || undefined,
       };
     }
@@ -1108,7 +1108,7 @@ export function CommunityPage() {
                   Kalau mulai terasa penuh, kamu bisa lanjut dulu di ruang privat.
                 </p>
                 <div className="mt-2">
-                  <SurfaceBridgeAction target="renungan" label="Lanjut privat di Renungan" href="/renungan?source=community&intent=regulate" />
+                  <SurfaceBridgeAction target="renungan" label="Continue privately in Reflection" href="/renungan?source=community&intent=regulate" />
                 </div>
               </div>
 
@@ -1285,3 +1285,4 @@ export function CommunityPage() {
     </div>
   );
 }
+

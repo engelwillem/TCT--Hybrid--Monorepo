@@ -77,16 +77,16 @@ export default function LoginPage() {
         if (res.status === 503 || res.status === 504) {
           const code = typeof data?.error_code === "string" ? data.error_code : "";
           if (res.status === 504 || code === "LARAVEL_API_TIMEOUT") {
-            setErrorMessage("Koneksi ke backend timeout. Pastikan Laravel lokal aktif lalu coba lagi.");
+            setErrorMessage("Backend connection timed out. Ensure local Laravel is running, then try again.");
           } else {
-            setErrorMessage("Backend Laravel tidak terjangkau. Periksa LARAVEL_API_BASE_URL dan server lokal.");
+            setErrorMessage("Laravel backend is unreachable. Check LARAVEL_API_BASE_URL and local server status.");
           }
           setIsLoading(false);
           return;
         }
 
         if (res.status === 401) {
-          setErrorMessage(data?.message || "Sesi tidak valid. Silakan login ulang.");
+          setErrorMessage(data?.message || "Invalid session. Please sign in again.");
           setIsLoading(false);
           return;
         }
@@ -94,18 +94,18 @@ export default function LoginPage() {
         if (data?.errors) {
           const field = Object.keys(data.errors)[0];
           const firstError = field ? data.errors[field]?.[0] : null;
-          setErrorMessage(firstError || data?.message || "Input belum valid. Mohon periksa kembali.");
+          setErrorMessage(firstError || data?.message || "Input is invalid. Please review and try again.");
         } else if (data?.message) {
           setErrorMessage(data.message);
         } else {
-          setErrorMessage("Server mengembalikan respons tidak valid. Periksa konfigurasi backend.");
+          setErrorMessage("Server returned an invalid response. Check backend configuration.");
         }
         setIsLoading(false);
         return;
       }
 
       if (!data) {
-        setErrorMessage("Proses gagal karena respons backend bukan JSON.");
+        setErrorMessage("Request failed because backend response is not JSON.");
         setIsLoading(false);
         return;
       }
@@ -145,7 +145,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error("Auth Client Error:", error);
-      setErrorMessage("Tidak dapat terhubung ke server. Silahkan coba lagi nanti.");
+      setErrorMessage("Cannot connect to the server. Please try again later.");
       setIsLoading(false);
     }
   }
@@ -156,29 +156,29 @@ export default function LoginPage() {
         <section className="hidden rounded-[2.25rem] border border-white/70 bg-white/70 p-8 shadow-soft backdrop-blur-xl lg:block">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">TheChosenTalks</p>
           <h2 className="mt-4 tct-serif text-4xl font-bold leading-[1.05] tracking-tight text-slate-900">
-            Platform rohani modern untuk pengalaman imanmu.
+            A modern faith platform for your daily spiritual journey.
           </h2>
           <p className="mt-5 text-sm font-medium leading-relaxed text-slate-600">
             {isSignup
-              ? "Mulai akunmu untuk menyimpan refleksi, menata perjalanan firman, dan bertumbuh bersama komunitas."
-              : "Login untuk menggunakan fitur platform, dan bertumbuh konsisten bersama komunitas."}
+              ? "Create your account to save reflections, organize your Bible journey, and grow with the community."
+              : "Sign in to access platform features and grow consistently with the community."}
           </p>
         </section>
 
         <section className="w-full max-w-xl justify-self-center rounded-[2.25rem] border border-[#c7d5e6] bg-[#02113a] px-6 py-8 text-white shadow-[0_24px_80px_-24px_rgba(2,17,58,0.55)] sm:px-8 sm:py-10">
           <div className="text-center space-y-2">
             <h1 className="tct-serif text-4xl font-bold tracking-tight text-white">
-              {isSignup ? "Mulai Akun" : "Welcome Back"}
+              {isSignup ? "Create Account" : "Welcome Back"}
             </h1>
             <p className="text-sm font-medium text-cyan-100/75">
-              {isSignup ? "Daftar untuk mulai perjalanan rohani harianmu." : "Lanjutkan perjalanan rohani harianmu."}
+              {isSignup ? "Sign up to begin your daily spiritual journey." : "Continue your daily spiritual journey."}
             </p>
           </div>
 
           {errorMessage && (
             <Alert variant="destructive" className="mt-6 border-rose-400/35 bg-rose-500/15 text-rose-100">
               <ShieldAlert className="h-4 w-4" />
-              <AlertTitle>{isSignup ? "Gagal Daftar" : "Gagal Login"}</AlertTitle>
+              <AlertTitle>{isSignup ? "Sign Up Failed" : "Login Failed"}</AlertTitle>
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
@@ -187,7 +187,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {isSignup && (
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-cyan-50/90">Nama Lengkap</Label>
+                  <Label htmlFor="name" className="text-cyan-50/90">Full Name</Label>
                   <Input
                     id="name"
                     type="text"
@@ -195,7 +195,7 @@ export default function LoginPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoComplete="name"
-                    placeholder="Nama kamu"
+                    placeholder="Your full name"
                     className="h-12 rounded-2xl border-white/30 bg-slate-100/95 text-slate-900 placeholder:text-slate-500 focus-visible:ring-cyan-400/50"
                   />
                 </div>
@@ -220,7 +220,7 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-cyan-50/90">Password</Label>
                   {!isSignup && (
                     <Link href="/forgot-password" className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 transition-colors">
-                      Lupa Sandi?
+                      Forgot password?
                     </Link>
                   )}
                 </div>
@@ -238,7 +238,7 @@ export default function LoginPage() {
 
               {isSignup && (
                 <div className="space-y-2">
-                  <Label htmlFor="passwordConfirmation" className="text-cyan-50/90">Konfirmasi Password</Label>
+                  <Label htmlFor="passwordConfirmation" className="text-cyan-50/90">Confirm Password</Label>
                   <Input
                     id="passwordConfirmation"
                     type="password"
@@ -262,7 +262,7 @@ export default function LoginPage() {
                     className="rounded border-white/30 bg-white/10 text-cyan-400 focus:ring-cyan-400 focus:ring-offset-[#02113a]"
                   />
                   <Label htmlFor="remember" className="text-sm text-cyan-100/80 cursor-pointer">
-                    Tetap Login
+                    Keep me signed in
                   </Label>
                 </div>
               )}
@@ -275,12 +275,12 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {isSignup ? "Membuat akun..." : "Mengontentikasi..."}
+                    {isSignup ? "Creating account..." : "Authenticating..."}
                   </>
                 ) : (
                   <>
                     {isSignup ? <UserPlus className="mr-2 h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />}
-                    {isSignup ? "Daftar" : "Login"}
+                    {isSignup ? "Sign Up" : "Login"}
                   </>
                 )}
               </Button>
@@ -290,16 +290,16 @@ export default function LoginPage() {
           <div className="pt-6 text-center space-y-2">
             {isSignup ? (
               <Link href="/login" className="inline-flex items-center text-sm font-medium text-cyan-100/80 hover:text-cyan-100 transition-colors">
-                Sudah punya akun? Login
+                Already have an account? Login
               </Link>
             ) : (
               <Link href="/login?intent=signup" className="inline-flex items-center text-sm font-medium text-cyan-100/80 hover:text-cyan-100 transition-colors">
-                Belum punya akun? Daftar
+                Don’t have an account? Sign up
               </Link>
             )}
             <div>
               <Link href="/" className="inline-flex items-center text-sm font-medium text-cyan-100/70 hover:text-cyan-100 transition-colors">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Depan
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
               </Link>
             </div>
           </div>

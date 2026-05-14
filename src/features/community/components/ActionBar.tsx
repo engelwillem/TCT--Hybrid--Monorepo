@@ -43,11 +43,11 @@ export function ActionBar({
         void action();
     };
 
-    const prayActionLabel = ariaLabelContext === 'archive' ? 'Doakan arsip' : 'Pray';
-    const commentActionLabel = ariaLabelContext === 'archive' ? 'Komentari arsip' : 'Comment';
-    const shareActionLabel = ariaLabelContext === 'archive' ? 'Bagikan arsip' : 'Share';
-    const bookmarkActionLabel = ariaLabelContext === 'archive' ? 'Simpan arsip' : 'Bookmark';
-    const finalShareActionLabel = shareBusy ? 'Menyiapkan...' : shareActionLabel;
+    const prayActionLabel = ariaLabelContext === 'archive' ? 'Pray for archive' : 'Pray';
+    const commentActionLabel = ariaLabelContext === 'archive' ? 'Comment on archive' : 'Comment';
+    const shareActionLabel = ariaLabelContext === 'archive' ? 'Share archive' : 'Share';
+    const bookmarkActionLabel = ariaLabelContext === 'archive' ? 'Save archive' : 'Bookmark';
+    const finalShareActionLabel = shareBusy ? 'Preparing...' : shareActionLabel;
 
     return (
         <div className={cn('flex items-center gap-2 text-sm', splitSave ? 'w-full' : '', className)}>
@@ -126,3 +126,4 @@ export function ActionBar({
         </div>
     );
 }
+

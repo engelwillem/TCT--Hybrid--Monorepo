@@ -88,7 +88,7 @@ describe('today-session.mapper', () => {
 
     const { content, diagnostics } = mapRawToTodaySessionContentWithDiagnostics(rawPayload, todaySessionMock);
 
-    expect(content.greeting).toBe('Selamat pagi');
+    expect(content.greeting).toBe('Good morning');
     expect(content.avatarInitial).toBe('A');
     expect(content.dateLabel.length).toBeGreaterThan(0);
     expect(diagnostics.metrics.derivedCount).toBeGreaterThanOrEqual(3);

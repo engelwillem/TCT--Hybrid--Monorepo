@@ -41,9 +41,9 @@ export default function DailyVerseHeroCard({
             return chapterFixed;
         }
     }, [verse?.cta_href, verse?.ref]);
-    const heroRefLabel = verse?.reference ?? 'Ayat Hari Ini';
+    const heroRefLabel = verse?.reference ?? 'Verse of the Day';
     const heroQuote = verse?.quote?.trim() || 'Firman hari ini sedang disiapkan.';
-    const heroCtaLabel = verse?.cta_label?.trim() || 'Baca Alkitab';
+    const heroCtaLabel = verse?.cta_label?.trim() || 'Read the Bible';
     
     // Safety check for window.location in SSR
     const [origin, setOrigin] = useState('');
@@ -54,7 +54,7 @@ export default function DailyVerseHeroCard({
     const canonicalUrl = verse?.ref ? getVerseShareUrl('id', verse.ref) : `${origin}${heroRefHref}`;
     const quoteHeadline = heroQuote;
     const quoteSubline = 'Tetap kuat, tetap berharap, dan terus berjalan bersama Tuhan.';
-    const refLine = `${heroRefLabel} • Ayat hari ini`;
+    const refLine = `${heroRefLabel} • Verse of the day`;
 
     const reactionKey = useMemo(
         () => `tct:today:welcome-verse:${verse?.ref ?? 'none'}`,
@@ -287,7 +287,7 @@ export default function DailyVerseHeroCard({
                         `}
                         style={revealStyle(0)}
                     >
-                        <CardTitle className="inline-flex items-center text-xs font-semibold text-foreground"><Book className="h-4 w-4 mr-1.5 text-brand" /> Ayat Kekuatanku</CardTitle>
+                        <CardTitle className="inline-flex items-center text-xs font-semibold text-foreground"><Book className="h-4 w-4 mr-1.5 text-brand" /> My Strength Verse</CardTitle>
                     </div>
                 </div>
             </CardHeader>
@@ -334,7 +334,7 @@ export default function DailyVerseHeroCard({
                 </div>
 
                 <div className={`mt-4 flex items-center justify-between md:mt-5 ${revealClass(6)}`} style={revealStyle(6)}>
-                    <p className="tct-kicker">Bagikan atau simpan</p>
+                    <p className="tct-kicker">Share or save</p>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"

@@ -10,7 +10,7 @@ vi.mock("@/features/today-ritual/data/today-session.loader", () => ({
 }));
 
 describe("GET /api/today/readiness", () => {
-  it("reports stale-but-safe as infra stale with no UX risk", async () => {
+  it("returns readiness payload when fallback content is active", async () => {
     const { GET } = await import("./route");
     loadTodaySessionContentWithDiagnosticsMock.mockResolvedValue({
       content: {},
@@ -31,11 +31,12 @@ describe("GET /api/today/readiness", () => {
 
     expect(response.status).toBe(200);
     expect(body.sourceStatus).toBe("cache_stale");
-    expect(body.experienceState).toBe("healthy");
-    expect(body.experienceAtRisk).toBe(false);
+    expect(body.ok).toBe(true);
+    expect(body.hasOfflineFallback).toBe(false);
+    expect(body.message).toContain("fallback");
   });
 
-  it("reports fallback_only as user-facing risk", async () => {
+  it("returns readiness payload with fallback flags", async () => {
     const { GET } = await import("./route");
     loadTodaySessionContentWithDiagnosticsMock.mockResolvedValue({
       content: {},
@@ -55,20 +56,42 @@ describe("GET /api/today/readiness", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.experienceAtRisk).toBe(true);
+    expect(body.ok).toBe(true);
     expect(body.hasOfflineFallback).toBe(true);
   });
 
-  it("rejects anonymous warm requests in production", async () => {
+  it("returns 503 when loader fails", async () => {
+    const { GET } = await import("./route");
+    loadTodaySessionContentWithDiagnosticsMock.mockRejectedValue(new Error("network down"));
+
+    const request = new NextRequest("http://localhost:9002/api/today/readiness?warm=1");
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body.ok).toBe(false);
+    expect(body.message).toContain("network down");
+  });
+
+  it("returns 503 in strict mode when fallback is active", async () => {
     vi.stubEnv("NODE_ENV", "production");
     try {
       const { GET } = await import("./route");
-      const request = new NextRequest("http://localhost:9002/api/today/readiness?warm=1");
+      loadTodaySessionContentWithDiagnosticsMock.mockResolvedValue({
+        content: {},
+        diagnostics: {
+          sourceStatus: "fallback_only",
+          hasOfflineFallback: true,
+        },
+      });
+      const request = new NextRequest("http://localhost:9002/api/today/readiness?strict=1");
       const response = await GET(request);
       const body = await response.json();
 
-      expect(response.status).toBe(403);
-      expect(body.warmRequested).toBe(true);
+      expect(response.status).toBe(503);
+      expect(body.ok).toBe(false);
+      expect(body.strict).toBe(true);
+      expect(body.sourceStatus).toBe("fallback_only");
     } finally {
       vi.unstubAllEnvs();
     }
