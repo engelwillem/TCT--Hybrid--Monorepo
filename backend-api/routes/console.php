@@ -32,6 +32,10 @@ Schedule::command('wa:process-due-reminders --limit=50')
     ->everyMinute()
     ->withoutOverlapping();
 
+Schedule::command('wa:sync-sheet-reminders --limit=500')
+    ->everyMinute()
+    ->withoutOverlapping();
+
 Schedule::command('wa:queue-birthday-reminders --limit=500')
     ->dailyAt('00:05')
     ->withoutOverlapping();

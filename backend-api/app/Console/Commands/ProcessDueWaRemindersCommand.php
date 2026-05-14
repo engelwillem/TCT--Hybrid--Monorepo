@@ -14,6 +14,7 @@ use App\Services\Automation\AutomationWorkflowGate;
 use App\Services\Engagement\SystemAccountService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -61,21 +62,48 @@ class ProcessDueWaRemindersCommand extends Command
 
         $processed = 0;
         foreach ($candidateIds as $id) {
-            DB::transaction(function () use ($id, &$processed, $now): void {
-                $reminder = WaReminder::query()
-                    ->with('client')
-                    ->lockForUpdate()
-                    ->find($id);
+            $lock = Cache::lock("wa:process-due:{$id}", 60);
+            if (! $lock->get()) {
+                Log::warning('WA reminder lock not acquired, skipping parallel run', [
+                    'reminder_id' => $id,
+                ]);
+                continue;
+            }
+
+            try {
+                DB::transaction(function () use ($id, &$processed, $now): void {
+                    $reminder = WaReminder::query()
+                        ->with('client')
+                        ->lockForUpdate()
+                        ->find($id);
 
                 if (! $reminder) {
                     return;
                 }
 
                 if (! in_array($reminder->status, ['Pending', 'Gagal'], true)) {
+                    Log::info('WA reminder skipped because status is not retryable', [
+                        'reminder_id' => $reminder->id,
+                        'status' => $reminder->status,
+                    ]);
                     return;
                 }
 
                 if ($reminder->fonnte_message_id) {
+                    Log::info('WA reminder skipped because send id already exists', [
+                        'reminder_id' => $reminder->id,
+                        'fonnte_message_id' => $reminder->fonnte_message_id,
+                    ]);
+                    return;
+                }
+
+                if ($this->isAlreadyCompleted($reminder)) {
+                    Log::info('WA reminder skipped because row is already completed', [
+                        'reminder_id' => $reminder->id,
+                        'status' => $reminder->status,
+                        'sent_at' => $reminder->sent_at?->toIso8601String(),
+                        'fonnte_message_id' => $reminder->fonnte_message_id,
+                    ]);
                     return;
                 }
 
@@ -144,6 +172,10 @@ class ProcessDueWaRemindersCommand extends Command
                 }
                 $clientToken = trim((string) $client->fonnte_token);
                 if ($clientToken === '') {
+                    $clientToken = $this->syncClientTokenFromEnv($client);
+                }
+
+                if ($clientToken === '') {
                     $reminder->status = 'Skip';
                     $reminder->last_error = 'client token missing';
                     $reminder->save();
@@ -161,18 +193,26 @@ class ProcessDueWaRemindersCommand extends Command
                 }
 
                 try {
-                    $response = Http::asForm()
-                        ->timeout(30)
-                        ->withHeaders([
-                            'Authorization' => $clientToken,
-                        ])
-                        ->post('https://api.fonnte.com/send', [
-                            'target' => $reminder->phone,
-                            'message' => $reminder->message_final,
-                        ]);
+                    $response = $this->sendToFonnte($clientToken, $reminder->phone, $reminder->message_final);
 
                     $decoded = $this->decodeResponseBody((string) $response->body());
                     $isSuccess = $this->isSuccessfulFonnteResponse($response->status(), $decoded);
+
+                    if (! $isSuccess && $this->shouldRefreshTokenFromEnv($response->status(), $decoded)) {
+                        $refreshedToken = $this->syncClientTokenFromEnv($client);
+                        if ($refreshedToken !== '' && $refreshedToken !== $clientToken) {
+                            $clientToken = $refreshedToken;
+                            $response = $this->sendToFonnte($clientToken, $reminder->phone, $reminder->message_final);
+                            $decoded = $this->decodeResponseBody((string) $response->body());
+                            $isSuccess = $this->isSuccessfulFonnteResponse($response->status(), $decoded);
+                            Log::warning('WA token refreshed from env after provider auth error', [
+                                'wa_client_id' => $client->id,
+                                'reminder_id' => $reminder->id,
+                                'http_status' => $response->status(),
+                            ]);
+                        }
+                    }
+
                     $messageId = $this->extractMessageId($decoded);
 
                     if ($isSuccess) {
@@ -182,6 +222,11 @@ class ProcessDueWaRemindersCommand extends Command
                         $reminder->status = 'Terkirim';
                         $reminder->fonnte_message_id = $messageId;
                         $reminder->sent_at = $sentAtLocal->copy()->utc();
+                        $reminder->tanggal = $sentAtLocal->format('Y-m-d');
+                        $reminder->jam = $sentAtLocal->format('H:i:s');
+                        $reminder->scheduled_at = $sentAtLocal->copy()->utc();
+                        $reminder->zona_waktu = $reminder->zona_waktu ?: $timezone;
+                        $reminder->timezone = $timezone;
                         $reminder->response = $this->encodeResponse([
                             'http_status' => $response->status(),
                             'body' => $decoded,
@@ -268,8 +313,11 @@ class ProcessDueWaRemindersCommand extends Command
                     );
                 }
 
-                $processed++;
-            });
+                    $processed++;
+                });
+            } finally {
+                optional($lock)->release();
+            }
         }
 
         $this->info("Processed {$processed} reminder(s).");
@@ -386,6 +434,66 @@ class ProcessDueWaRemindersCommand extends Command
     {
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         return is_string($encoded) ? $encoded : '{}';
+    }
+
+    private function sendToFonnte(string $token, string $phone, ?string $message): \Illuminate\Http\Client\Response
+    {
+        return Http::asForm()
+            ->timeout(30)
+            ->withHeaders([
+                'Authorization' => $token,
+            ])
+            ->post('https://api.fonnte.com/send', [
+                'target' => $phone,
+                'message' => (string) $message,
+            ]);
+    }
+
+    private function shouldRefreshTokenFromEnv(int $statusCode, mixed $decoded): bool
+    {
+        if (in_array($statusCode, [401, 403], true)) {
+            return true;
+        }
+
+        if (! is_array($decoded)) {
+            return false;
+        }
+
+        $reason = strtolower(trim((string) ($decoded['reason'] ?? '')));
+        $message = strtolower(trim((string) ($decoded['message'] ?? '')));
+
+        return str_contains($reason, 'invalid token')
+            || str_contains($message, 'invalid token')
+            || str_contains($reason, 'unauthorized')
+            || str_contains($message, 'unauthorized');
+    }
+
+    private function syncClientTokenFromEnv(\App\Models\WaClient $client): string
+    {
+        $envToken = trim((string) env('FONNTE_TOKEN', ''));
+        if ($envToken === '') {
+            return '';
+        }
+
+        if (! hash_equals(trim((string) $client->fonnte_token), $envToken)) {
+            $client->fonnte_token = $envToken;
+            $client->save();
+            Log::info('WA client token auto-synced from env', [
+                'wa_client_id' => $client->id,
+            ]);
+        }
+
+        return $envToken;
+    }
+
+    private function isAlreadyCompleted(WaReminder $reminder): bool
+    {
+        if (strcasecmp((string) $reminder->status, 'Terkirim') !== 0) {
+            return false;
+        }
+
+        return $reminder->sent_at !== null
+            && trim((string) $reminder->fonnte_message_id) !== '';
     }
 
     private function normalizeOwnerName(?string $name): string

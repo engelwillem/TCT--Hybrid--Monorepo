@@ -54,6 +54,9 @@ Route::prefix('v1')->group(function (): void {
 
     Route::post('/auth/firebase/sync', [FirebaseAuthSyncController::class, 'sync']);
     Route::get('/avatar/{user}', [ProfileController::class, 'avatar']);
+    Route::post('/wa/reminders/send', [WaReminderController::class, 'sendReminder']);
+    Route::post('/wa/reminders/sync', [WaReminderController::class, 'syncReminders']);
+    Route::post('/wa/reminders/status', [WaReminderController::class, 'reminderStatus']);
 
     Route::get('/community/posts', [CommunityApiController::class, 'index']);
     Route::get('/community/media/{path}', [CommunityApiController::class, 'media'])->where('path', '.*');
