@@ -10,6 +10,7 @@ import { VersehubLoadingScreen } from "@/features/versehub/components/VersehubLo
 import { VersehubOverlayController } from "@/features/versehub/components/VersehubOverlayController";
 import { VersehubReaderView } from "@/features/versehub/components/VersehubReaderView";
 import { MoodGuidedFlow } from "@/features/versehub/components/MoodGuidedFlow";
+import { BibleLanguageSwitcher } from "@/features/versehub/components/BibleLanguageSwitcher";
 import { useAuthSession } from "@/auth/use-auth-session";
 import { useVersehubReaderActions } from "@/features/versehub/hooks/use-versehub-reader-actions";
 import { useVersehubReaderChrome } from "@/features/versehub/hooks/use-versehub-reader-chrome";
@@ -119,6 +120,7 @@ export function VersehubReaderPage({
     overlay,
     setOverlay,
   });
+  const showBibleLanguageSwitcher = lang === "id" && (isChapterMode || isVerseMode);
 
   const {
     audioMenuOpen,
@@ -238,37 +240,21 @@ export function VersehubReaderPage({
       "relative flex min-h-[100dvh] flex-col text-slate-800 selection:bg-sky-100",
       isLandingMode ? "overflow-visible bg-transparent" : "h-[100dvh] overflow-hidden bg-[#FAFCFF]",
     )}>
-      {lang === "id" ? (
-        <div className="fixed right-4 top-4 z-[60] flex items-center gap-1 rounded-full border border-slate-200 bg-white/90 p-1 shadow-sm backdrop-blur">
-          <button
-            type="button"
-            onClick={() => {
+      {showBibleLanguageSwitcher ? (
+        <div className="fixed right-3 z-[60] top-[calc(env(safe-area-inset-top,0px)+10px)] md:right-4 md:top-4">
+          <BibleLanguageSwitcher
+            current={bibleLang}
+            onChange={(nextLang) => {
               const next = new URLSearchParams(searchParams?.toString() ?? "");
-              next.delete("bible");
+              if (nextLang === "id") {
+                next.delete("bible");
+              } else {
+                next.set("bible", "en");
+              }
               const query = next.toString();
-              router.replace(query ? `${pathname}?${query}` : pathname);
+              router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
             }}
-            className={cn(
-              "rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
-              bibleLang === "id" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-            )}
-          >
-            ID Bible (DB)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const next = new URLSearchParams(searchParams?.toString() ?? "");
-              next.set("bible", "en");
-              router.replace(`${pathname}?${next.toString()}`);
-            }}
-            className={cn(
-              "rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
-              bibleLang === "en" ? "bg-sky-600 text-white" : "text-slate-600 hover:bg-slate-100"
-            )}
-          >
-            EN Bible (API)
-          </button>
+          />
         </div>
       ) : null}
       {!isLandingMode ? (
