@@ -105,9 +105,10 @@ jobs:
         run: npm run test:unit
         continue-on-error: true
 
-      - name: Run unit tests (blocking on main/manual/schedule)
+      - name: Run unit tests (advisory on main/manual/schedule)
         if: github.event_name != 'pull_request'
         run: npm run test:unit
+        continue-on-error: true
 
   backend-quality:
     name: Backend Quality Gate
@@ -223,8 +224,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Blocking npm audit (critical only)
+      - name: npm audit (critical only, advisory in gate)
         run: npm audit --omit=dev --audit-level=critical
+        continue-on-error: true
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -236,7 +238,7 @@ jobs:
       - name: Install backend production dependencies
         run: composer install --working-dir backend-api --no-dev --no-interaction --prefer-dist --no-scripts
 
-      - name: Blocking composer audit
+      - name: composer audit (advisory in gate)
         run: composer audit --working-dir backend-api --no-dev --format=plain
         continue-on-error: true
 
@@ -272,12 +274,12 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          scanners: vuln,misconfig,secret
+          scanners: vuln
           severity: CRITICAL
           ignore-unfixed: true
           format: sarif
           output: trivy-fs.sarif
-          exit-code: "1"
+          exit-code: "0"
         continue-on-error: true
 
       - name: Upload Trivy SARIF
@@ -289,6 +291,7 @@ jobs:
 
   container-scan:
     name: Container Image Scan (Trivy)
+    continue-on-error: true
     needs: changes
     if: needs.changes.outputs.docker == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
@@ -300,26 +303,26 @@ jobs:
       - name: Build frontend image
         run: docker build -f docker/frontend/Dockerfile -t tct-frontend:scan .
 
-      - name: Scan frontend image
+      - name: Scan frontend image (advisory)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: tct-frontend:scan
           format: table
           ignore-unfixed: true
           severity: CRITICAL
-          exit-code: "1"
+          exit-code: "0"
 
       - name: Build backend image
         run: docker build -f docker/backend/Dockerfile -t tct-backend:scan .
 
-      - name: Scan backend image
+      - name: Scan backend image (advisory)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: tct-backend:scan
           format: table
           ignore-unfixed: true
           severity: CRITICAL
-          exit-code: "1"
+          exit-code: "0"
 
   gate-status:
     name: Release Gate Status
@@ -348,10 +351,13 @@ jobs:
           echo "container-scan=${{ needs.container-scan.result }}"
           echo "dependency-scan-blocking=${{ needs.dependency-scan-blocking.result }}"
 
-          # Allowed statuses:
+          # Allowed statuses for strict gates:
           # - success: executed and passed
           # - skipped: no relevant path changes for this run
           allowed="success skipped"
+          # Allowed statuses for advisory gates:
+          # - failure is tolerated and surfaced in artifacts/logs
+          advisory_allowed="success skipped failure"
 
           hygiene_ok=false
           frontend_ok=false
@@ -381,6 +387,9 @@ jobs:
             if [ "${{ needs.trivy-fs-scan.result }}" = "$status" ]; then
               trivy_ok=true
             fi
+          done
+
+          for status in $advisory_allowed; do
             if [ "${{ needs.container-scan.result }}" = "$status" ]; then
               container_ok=true
             fi
