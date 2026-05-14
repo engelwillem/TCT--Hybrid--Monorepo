@@ -36,13 +36,13 @@ Owner: Engel Willem
 ## 5) Deployment Method Validation (Secure Pull-Based)
 - Backend deployment executed via cPanel SSH using server-side `deploy.sh` pull from GitHub `main` (no direct artifact shipping).
 - Live build-info (production) after deploy:
-  - `commit_sha`: `7597ad810280d2048e2e8fea12a693a2c02ac15f`
+  - `commit_sha`: `b0da4e5cea636cb6038c0b46b0e650c394695f44`
   - `branch`: `main`
-  - `release_timestamp`: `20260514042705`
+  - `release_timestamp`: `20260514042909`
 
 ## 6) Commit Parity Proof (Local vs Production)
-- Local `main` HEAD: `7597ad810280d2048e2e8fea12a693a2c02ac15f`
-- Production backend live commit: `7597ad810280d2048e2e8fea12a693a2c02ac15f`
+- Local `main` HEAD: `b0da4e5cea636cb6038c0b46b0e650c394695f44`
+- Production backend live commit: `b0da4e5cea636cb6038c0b46b0e650c394695f44`
 - Parity status: **MATCHED**
 
 ## 7) Functional Smoke Confirmation
