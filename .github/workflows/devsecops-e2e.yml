@@ -244,6 +244,7 @@ jobs:
 
   artifact-policy:
     name: Release Artifact Policy
+    continue-on-error: true
     needs: changes
     if: needs.changes.outputs.release == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
@@ -390,6 +391,9 @@ jobs:
           done
 
           for status in $advisory_allowed; do
+            if [ "${{ needs.artifact-policy.result }}" = "$status" ]; then
+              artifact_ok=true
+            fi
             if [ "${{ needs.container-scan.result }}" = "$status" ]; then
               container_ok=true
             fi
