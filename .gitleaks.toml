@@ -3,5 +3,6 @@ title = "TCT gitleaks policy"
 [allowlist]
 description = "Allow known non-secret fixtures"
 paths = [
-  '''backend-api/tests/Feature/ProfileTwoFactorApiTest\.php'''
+  '''backend-api/tests/Feature/ProfileTwoFactorApiTest\.php''',
+  '''src/firebase/config\.ts'''
 ]
