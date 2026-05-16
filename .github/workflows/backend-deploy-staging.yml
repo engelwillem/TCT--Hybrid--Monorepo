@@ -53,7 +53,7 @@ jobs:
       name: staging
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run staging migration pipeline
         shell: pwsh
@@ -81,7 +81,7 @@ jobs:
       name: staging
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Deploy staging + smoke
         shell: pwsh
