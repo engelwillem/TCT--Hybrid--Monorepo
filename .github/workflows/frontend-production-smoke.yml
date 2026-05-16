@@ -14,13 +14,16 @@ concurrency:
   group: frontend-production-smoke
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   smoke-production:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Resolve base URL
         id: vars
@@ -61,7 +64,7 @@ jobs:
           fi
 
       - name: Upload smoke report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-production-smoke-report

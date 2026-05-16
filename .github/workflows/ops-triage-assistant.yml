@@ -86,7 +86,7 @@ jobs:
             require('fs').writeFileSync('ops-triage-summary.md', lines.join('\n'));
 
       - name: Upload triage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ops-triage-summary-${{ github.event.workflow_run.id }}
           path: ops-triage-summary.md
