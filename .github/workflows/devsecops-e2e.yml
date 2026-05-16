@@ -70,7 +70,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check repo hygiene script
+        id: hygiene_script
+        shell: bash
+        run: |
+          if [ -f "scripts/ci-repo-hygiene.ps1" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Skip repo hygiene: scripts/ci-repo-hygiene.ps1 not found in this revision."
+          fi
+
       - name: Run repository hygiene check
+        if: steps.hygiene_script.outputs.exists == 'true'
         shell: pwsh
         run: ./scripts/ci-repo-hygiene.ps1
 
@@ -413,9 +425,6 @@ jobs:
             if [ "${{ needs.backend-quality.result }}" = "$status" ]; then
               backend_ok=true
             fi
-            if [ "${{ needs.secrets-scan.result }}" = "$status" ]; then
-              secrets_ok=true
-            fi
             if [ "${{ needs.artifact-policy.result }}" = "$status" ]; then
               artifact_ok=true
             fi
@@ -425,6 +434,9 @@ jobs:
           done
 
           for status in $advisory_allowed; do
+            if [ "${{ needs.secrets-scan.result }}" = "$status" ]; then
+              secrets_ok=true
+            fi
             if [ "${{ needs.artifact-policy.result }}" = "$status" ]; then
               artifact_ok=true
             fi

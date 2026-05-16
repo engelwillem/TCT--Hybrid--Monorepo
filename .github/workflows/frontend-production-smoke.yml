@@ -33,14 +33,32 @@ jobs:
           fi
 
       - name: Run production smoke checks
-        shell: pwsh
+        shell: bash
         run: |
-          $scriptPath = Join-Path "${{ github.workspace }}" "scripts/smoke-production.ps1"
-          if (-not (Test-Path $scriptPath)) {
-            "Smoke script not found: $scriptPath" | Out-File -FilePath "production-smoke-report.md" -Encoding utf8
-            throw "Missing smoke script at $scriptPath"
-          }
-          & $scriptPath -BaseUrl "${{ steps.vars.outputs.base_url }}" -OutFile "production-smoke-report.md" -TimeoutSec 20
+          BASE_URL="${{ steps.vars.outputs.base_url }}"
+          {
+            echo "# Frontend Production Smoke Report"
+            echo
+            echo "- Base URL: ${BASE_URL}"
+            echo "- UTC Time: $(date -u +"%Y-%m-%d %H:%M:%S")"
+            echo
+          } > production-smoke-report.md
+
+          root_code=$(curl -L -s -o /dev/null -w "%{http_code}" --max-time 20 "${BASE_URL}/")
+          login_code=$(curl -L -s -o /dev/null -w "%{http_code}" --max-time 20 "${BASE_URL}/login")
+
+          echo "- GET / => ${root_code}" >> production-smoke-report.md
+          echo "- GET /login => ${login_code}" >> production-smoke-report.md
+
+          if [ "${root_code}" != "200" ] && [ "${root_code}" != "301" ] && [ "${root_code}" != "302" ]; then
+            echo "Smoke failed: unexpected status for / (${root_code})" >> production-smoke-report.md
+            exit 1
+          fi
+
+          if [ "${login_code}" != "200" ] && [ "${login_code}" != "301" ] && [ "${login_code}" != "302" ]; then
+            echo "Smoke failed: unexpected status for /login (${login_code})" >> production-smoke-report.md
+            exit 1
+          fi
 
       - name: Upload smoke report
         uses: actions/upload-artifact@v4
