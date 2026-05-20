@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
@@ -15,6 +15,20 @@ interface ClientAppProvidersProps {
 export function ClientAppProviders({ children }: ClientAppProvidersProps) {
   const pathname = usePathname();
   const shouldHydrateAppSession = requiresAppSession(pathname);
+
+  // Standalone pages that should NOT use AppShell
+  const standalonePaths = ['/seneco-n8n-test-willem'];
+  const isStandalone = standalonePaths.some(path => pathname?.startsWith(path));
+
+  if (isStandalone) {
+    return (
+      <>
+        <DataMutationAutoRefresh />
+        {children}
+      </>
+    );
+  }
+
   const shell = (
     <>
       <DataMutationAutoRefresh />

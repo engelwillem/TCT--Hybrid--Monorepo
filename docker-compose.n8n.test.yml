@@ -1,0 +1,8 @@
+services:
+  n8n:
+    environment:
+      EXECUTIONS_MODE: regular
+      N8N_RUNNERS_ENABLED: "false"
+
+  n8n-worker:
+    profiles: ["queue-only"]

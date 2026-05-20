@@ -63,6 +63,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [mounted, pathname]);
 
+  if (pathname === "/seneco-n8n-test-willem" || pathname.startsWith("/seneco-n8n-test-willem/")) {
+    return <>{children}</>;
+  }
+
   if (!mounted) return <div className="tct-global-background min-h-screen" />;
 
   if (!requiresAppSession(pathname)) {

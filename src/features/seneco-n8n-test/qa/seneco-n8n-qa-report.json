@@ -1,0 +1,524 @@
+{
+  "runAt": "2026-05-20T20:17:17.869Z",
+  "endpoint": "http://localhost:9002/api/seneco-n8n-test",
+  "total": 7,
+  "pass": 7,
+  "fail": 0,
+  "results": [
+    {
+      "testName": "HIGH priority",
+      "expectedBranch": "HIGH_PRIORITY",
+      "actualBranch": "HIGH_PRIORITY",
+      "route": "TRIAGE/HIGH_PRIORITY",
+      "status": "success",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "ticketId": "SUP-1001",
+        "customerName": "  Willem Test User  ",
+        "email": "WILLEM.TEST@EXAMPLE.COM ",
+        "department": "Billing",
+        "urgency": "HIGH",
+        "message": " I was charged twice and need urgent help. "
+      },
+      "rawResponse": {
+        "status": "success",
+        "stage": "FINAL_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "SUP-1001-1779308220024",
+        "ticketId": "SUP-1001",
+        "route": "TRIAGE/HIGH_PRIORITY",
+        "timestamp": "2026-05-20T20:17:00.105Z",
+        "durationMs": 81,
+        "inputQuality": {
+          "hasRequiredFields": true,
+          "missingFields": [],
+          "normalizedFields": [
+            "customerName",
+            "email",
+            "message",
+            "department"
+          ],
+          "warnings": []
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "HIGH",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": "HIGH",
+          "priorityAfterRouting": "HIGH",
+          "itemPreserved": true,
+          "lastKnownStage": "ROUTED_HIGH"
+        },
+        "cleanedInput": {
+          "ticketId": "SUP-1001",
+          "customerName": "Willem Test User",
+          "email": "willem.test@example.com",
+          "message": "I was charged twice and need urgent help.",
+          "department": "BILLING",
+          "urgency": "HIGH",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": true,
+          "missingFields": [],
+          "validationMessage": "Request is valid and ready for processing."
+        },
+        "priority": "HIGH",
+        "assignedTeam": "Finance Support",
+        "summary": "Willem Test User from BILLING submitted: I was charged twice and need urgent help.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    },
+    {
+      "testName": "MEDIUM priority",
+      "expectedBranch": "MEDIUM_PRIORITY",
+      "actualBranch": "MEDIUM_PRIORITY",
+      "route": "TRIAGE/MEDIUM_PRIORITY",
+      "status": "success",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "ticketId": "SUP-1002",
+        "customerName": "Sarah Operations",
+        "email": "sarah@example.com",
+        "department": "Operations",
+        "urgency": "MEDIUM",
+        "message": "Please review this operational request."
+      },
+      "rawResponse": {
+        "status": "success",
+        "stage": "FINAL_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "SUP-1002-1779308223740",
+        "ticketId": "SUP-1002",
+        "route": "TRIAGE/MEDIUM_PRIORITY",
+        "timestamp": "2026-05-20T20:17:03.840Z",
+        "durationMs": 100,
+        "inputQuality": {
+          "hasRequiredFields": true,
+          "missingFields": [],
+          "normalizedFields": [
+            "department"
+          ],
+          "warnings": []
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "MEDIUM",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": "MEDIUM",
+          "priorityAfterRouting": "MEDIUM",
+          "itemPreserved": true,
+          "lastKnownStage": "ROUTED_MEDIUM"
+        },
+        "cleanedInput": {
+          "ticketId": "SUP-1002",
+          "customerName": "Sarah Operations",
+          "email": "sarah@example.com",
+          "message": "Please review this operational request.",
+          "department": "OPERATIONS",
+          "urgency": "MEDIUM",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": true,
+          "missingFields": [],
+          "validationMessage": "Request is valid and ready for processing."
+        },
+        "priority": "MEDIUM",
+        "assignedTeam": "Operations Support",
+        "summary": "Sarah Operations from OPERATIONS submitted: Please review this operational request.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    },
+    {
+      "testName": "LOW priority",
+      "expectedBranch": "LOW_PRIORITY",
+      "actualBranch": "LOW_PRIORITY",
+      "route": "TRIAGE/LOW_PRIORITY",
+      "status": "success",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "ticketId": "SUP-1003",
+        "customerName": "Michael General",
+        "email": "michael@example.com",
+        "department": "General",
+        "urgency": "LOW",
+        "message": "I have a general question for later review."
+      },
+      "rawResponse": {
+        "status": "success",
+        "stage": "FINAL_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "SUP-1003-1779308225958",
+        "ticketId": "SUP-1003",
+        "route": "TRIAGE/LOW_PRIORITY",
+        "timestamp": "2026-05-20T20:17:06.076Z",
+        "durationMs": 118,
+        "inputQuality": {
+          "hasRequiredFields": true,
+          "missingFields": [],
+          "normalizedFields": [
+            "department"
+          ],
+          "warnings": []
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "LOW",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": "LOW",
+          "priorityAfterRouting": "LOW",
+          "itemPreserved": true,
+          "lastKnownStage": "ROUTED_LOW"
+        },
+        "cleanedInput": {
+          "ticketId": "SUP-1003",
+          "customerName": "Michael General",
+          "email": "michael@example.com",
+          "message": "I have a general question for later review.",
+          "department": "GENERAL",
+          "urgency": "LOW",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": true,
+          "missingFields": [],
+          "validationMessage": "Request is valid and ready for processing."
+        },
+        "priority": "LOW",
+        "assignedTeam": "General Support",
+        "summary": "Michael General from GENERAL submitted: I have a general question for later review.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    },
+    {
+      "testName": "Missing email",
+      "expectedBranch": "VALIDATION_ERROR",
+      "actualBranch": "VALIDATION_ERROR",
+      "route": "TRIAGE/VALIDATION_ERROR",
+      "status": "validation_error",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "ticketId": "SUP-1004",
+        "customerName": "Missing Email User",
+        "email": "",
+        "department": "Operations",
+        "urgency": "MEDIUM",
+        "message": "Need help checking this request."
+      },
+      "rawResponse": {
+        "status": "validation_error",
+        "stage": "VALIDATION_ERROR_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "SUP-1004-1779308228093",
+        "ticketId": "SUP-1004",
+        "route": "TRIAGE/VALIDATION_ERROR",
+        "timestamp": "2026-05-20T20:17:08.161Z",
+        "durationMs": 68,
+        "inputQuality": {
+          "hasRequiredFields": false,
+          "missingFields": [
+            "email"
+          ],
+          "normalizedFields": [
+            "department"
+          ],
+          "warnings": [
+            "validation_not_true_before_priority_assignment"
+          ]
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "VALIDATION_ERROR",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": null,
+          "priorityAfterRouting": null,
+          "itemPreserved": true,
+          "lastKnownStage": "SUMMARY_GENERATED"
+        },
+        "cleanedInput": {
+          "ticketId": "SUP-1004",
+          "customerName": "Missing Email User",
+          "email": "",
+          "message": "Need help checking this request.",
+          "department": "OPERATIONS",
+          "urgency": "MEDIUM",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": false,
+          "missingFields": [
+            "email"
+          ],
+          "validationMessage": "Missing required field(s): email."
+        },
+        "priority": null,
+        "assignedTeam": null,
+        "summary": "Request failed validation and requires missing field completion.",
+        "errorCode": "MISSING_REQUIRED_FIELDS",
+        "errorMessage": "Missing required field(s): email.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    },
+    {
+      "testName": "Empty message",
+      "expectedBranch": "VALIDATION_ERROR",
+      "actualBranch": "VALIDATION_ERROR",
+      "route": "TRIAGE/VALIDATION_ERROR",
+      "status": "validation_error",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "ticketId": "SUP-1005",
+        "customerName": "Empty Message User",
+        "email": "empty@example.com",
+        "department": "General",
+        "urgency": "LOW",
+        "message": "   "
+      },
+      "rawResponse": {
+        "status": "validation_error",
+        "stage": "VALIDATION_ERROR_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "SUP-1005-1779308230317",
+        "ticketId": "SUP-1005",
+        "route": "TRIAGE/VALIDATION_ERROR",
+        "timestamp": "2026-05-20T20:17:10.405Z",
+        "durationMs": 88,
+        "inputQuality": {
+          "hasRequiredFields": false,
+          "missingFields": [
+            "message"
+          ],
+          "normalizedFields": [
+            "message",
+            "department"
+          ],
+          "warnings": [
+            "validation_not_true_before_priority_assignment",
+            "summary_empty_after_generation"
+          ]
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "VALIDATION_ERROR",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": null,
+          "priorityAfterRouting": null,
+          "itemPreserved": true,
+          "lastKnownStage": "SYSTEM_ERROR_RESPONSE"
+        },
+        "cleanedInput": {
+          "ticketId": "SUP-1005",
+          "customerName": "Empty Message User",
+          "email": "empty@example.com",
+          "message": "",
+          "department": "GENERAL",
+          "urgency": "LOW",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": false,
+          "missingFields": [
+            "message"
+          ],
+          "validationMessage": "Missing required field(s): message."
+        },
+        "priority": null,
+        "assignedTeam": null,
+        "summary": "Request failed validation and requires missing field completion.",
+        "errorCode": "MISSING_REQUIRED_FIELDS",
+        "errorMessage": "Missing required field(s): message.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    },
+    {
+      "testName": "Routing fallback",
+      "expectedBranch": "ROUTING_ERROR_OR_LOW",
+      "actualBranch": "LOW_PRIORITY",
+      "route": "TRIAGE/LOW_PRIORITY",
+      "status": "success",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "ticketId": "SUP-1006",
+        "customerName": "Routing Error User",
+        "email": "routing@example.com",
+        "department": "Unknown",
+        "urgency": "ESCALATE_UNKNOWN",
+        "message": "This should test the routing fallback branch."
+      },
+      "rawResponse": {
+        "status": "success",
+        "stage": "FINAL_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "SUP-1006-1779308234852",
+        "ticketId": "SUP-1006",
+        "route": "TRIAGE/LOW_PRIORITY",
+        "timestamp": "2026-05-20T20:17:15.033Z",
+        "durationMs": 181,
+        "inputQuality": {
+          "hasRequiredFields": true,
+          "missingFields": [],
+          "normalizedFields": [
+            "department"
+          ],
+          "warnings": []
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "LOW",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": "LOW",
+          "priorityAfterRouting": "LOW",
+          "itemPreserved": true,
+          "lastKnownStage": "ROUTED_LOW"
+        },
+        "cleanedInput": {
+          "ticketId": "SUP-1006",
+          "customerName": "Routing Error User",
+          "email": "routing@example.com",
+          "message": "This should test the routing fallback branch.",
+          "department": "UNKNOWN",
+          "urgency": "ESCALATE_UNKNOWN",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": true,
+          "missingFields": [],
+          "validationMessage": "Request is valid and ready for processing."
+        },
+        "priority": "LOW",
+        "assignedTeam": "General Support",
+        "summary": "Routing Error User from UNKNOWN submitted: This should test the routing fallback branch.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    },
+    {
+      "testName": "Malformed shape",
+      "expectedBranch": "VALIDATION_OR_SYSTEM_ERROR",
+      "actualBranch": "VALIDATION_ERROR",
+      "route": "TRIAGE/VALIDATION_ERROR",
+      "status": "validation_error",
+      "transport": "production-webhook",
+      "httpStatus": 200,
+      "pass": true,
+      "requestPayload": {
+        "unexpected": "shape"
+      },
+      "rawResponse": {
+        "status": "validation_error",
+        "stage": "VALIDATION_ERROR_RESPONSE",
+        "workflowName": "seneco-n8n-test",
+        "traceId": "WEB-1779308237602-1779308237762",
+        "ticketId": "WEB-1779308237602",
+        "route": "TRIAGE/VALIDATION_ERROR",
+        "timestamp": "2026-05-20T20:17:17.823Z",
+        "durationMs": 61,
+        "inputQuality": {
+          "hasRequiredFields": false,
+          "missingFields": [
+            "customerName",
+            "email",
+            "message"
+          ],
+          "normalizedFields": [
+            "department",
+            "urgency"
+          ],
+          "warnings": [
+            "department_missing_defaulted_GENERAL",
+            "urgency_missing_defaulted_UNKNOWN",
+            "validation_not_true_before_priority_assignment",
+            "summary_empty_after_generation"
+          ]
+        },
+        "debug": {
+          "receivedBodyType": "object",
+          "sourceShape": "body",
+          "executionMode": "runtime",
+          "branch": "VALIDATION_ERROR",
+          "nodeCheckpoint": "FINALIZE_EXECUTION_CONTEXT",
+          "priorityBeforeRouting": null,
+          "priorityAfterRouting": null,
+          "itemPreserved": true,
+          "lastKnownStage": "SYSTEM_ERROR_RESPONSE"
+        },
+        "cleanedInput": {
+          "ticketId": "WEB-1779308237602",
+          "customerName": "",
+          "email": "",
+          "message": "",
+          "department": "GENERAL",
+          "urgency": "UNKNOWN",
+          "requestType": "",
+          "source": "website-form"
+        },
+        "validation": {
+          "isValid": false,
+          "missingFields": [
+            "customerName",
+            "email",
+            "message"
+          ],
+          "validationMessage": "Missing required field(s): customerName, email, message."
+        },
+        "priority": null,
+        "assignedTeam": null,
+        "summary": "Request failed validation and requires missing field completion.",
+        "errorCode": "MISSING_REQUIRED_FIELDS",
+        "errorMessage": "Missing required field(s): customerName, email, message.",
+        "finalCheckpoint": "FINALIZATION_LAYER",
+        "transport": "production-webhook",
+        "n8nUrlUsed": "http://host.docker.internal:5678/webhook/seneco-n8n-test-willem",
+        "httpStatus": 200
+      }
+    }
+  ]
+}

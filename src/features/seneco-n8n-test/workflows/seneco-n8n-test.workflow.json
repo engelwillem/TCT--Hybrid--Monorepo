@@ -1,0 +1,454 @@
+{
+  "name": "seneco-n8n-test",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "seneco-n8n-test-willem",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst rawRoot = $input.first().json ?? {};\nlet input = rawRoot?.body ?? rawRoot;\nconst receivedBodyType = Array.isArray(input) ? 'array' : typeof input;\nconst sourceShape = rawRoot?.body !== undefined ? 'body' : (rawRoot && typeof rawRoot === 'object' ? 'root' : 'unknown');\n\nif (typeof input === 'string') {\n  try {\n    input = JSON.parse(input);\n  } catch {\n    input = {};\n  }\n}\nif (!input || typeof input !== 'object' || Array.isArray(input)) input = {};\n\nconst normalizedFields = [];\nconst warnings = [];\nconst normalizeText = (value) => (typeof value === 'string' ? value.trim() : '');\nconst normalizeSpaces = (value) => (typeof value === 'string' ? value.replace(/\\s+/g, ' ').trim() : '');\n\nconst rawTicketId = normalizeText(input.ticketId);\nconst ticketId = rawTicketId || `AUTO-${now.getTime()}`;\nif (!rawTicketId) warnings.push('ticketId_missing_fallback_applied');\n\nconst customerName = normalizeSpaces(normalizeText(input.customerName ?? input.requesterName));\nif (customerName !== (input.customerName ?? input.requesterName ?? '')) normalizedFields.push('customerName');\n\nconst email = normalizeText(input.email ?? input.requesterEmail).toLowerCase();\nif (email !== (input.email ?? input.requesterEmail ?? '')) normalizedFields.push('email');\n\nconst message = normalizeSpaces(normalizeText(input.message));\nif (message !== (input.message ?? '')) normalizedFields.push('message');\n\nconst deptRaw = normalizeText(input.department).toUpperCase();\nconst department = deptRaw || 'GENERAL';\nif (!deptRaw) warnings.push('department_missing_defaulted_GENERAL');\nif (department !== (input.department ?? '')) normalizedFields.push('department');\n\nconst urgencyRaw = normalizeText(input.urgency).toUpperCase();\nconst urgency = urgencyRaw || 'UNKNOWN';\nif (!urgencyRaw) warnings.push('urgency_missing_defaulted_UNKNOWN');\nif (urgency !== (input.urgency ?? '')) normalizedFields.push('urgency');\n\nconst requestType = normalizeText(input.requestType);\nconst source = normalizeText(input.source).toLowerCase() || 'website-form';\n\nconst traceId = `${ticketId}-${now.getTime()}`;\n\nconst cleanedInput = {\n  ticketId,\n  customerName,\n  email,\n  message,\n  department,\n  urgency,\n  requestType,\n  source\n};\n\nreturn [{\n  json: {\n    ...$json,\n    workflowName: 'seneco-n8n-test',\n    traceId,\n    startTimestamp: now.toISOString(),\n    timestamp: now.toISOString(),\n    stage: 'CLEANED_INPUT',\n    cleanedInput,\n    inputQuality: {\n      hasRequiredFields: false,\n      missingFields: [],\n      normalizedFields,\n      warnings\n    },\n    validation: { isValid: false, missingFields: [], validationMessage: 'Validation pending.' },\n    priority: null,\n    assignedTeam: null,\n    summary: '',\n    debug: {\n      receivedBodyType,\n      sourceShape,\n      executionMode: 'runtime',\n      branch: 'PRE_VALIDATION',\n      nodeCheckpoint: 'RECEIVED_WEBHOOK',\n      priorityBeforeRouting: null,\n      priorityAfterRouting: null,\n      itemPreserved: true,\n      lastKnownStage: 'RECEIVED_WEBHOOK'\n    }\n  }\n}];"
+      },
+      "id": "2",
+      "name": "Clean Input Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1060,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = { ...$json };\nconst cleanedInput = base.cleanedInput;\nconst startTimestamp = base.startTimestamp || new Date().toISOString();\nconst now = new Date().toISOString();\n\nif (!cleanedInput || typeof cleanedInput !== 'object') {\n  return [{\n    json: {\n      ...base,\n      status: 'system_error',\n      stage: 'SYSTEM_ERROR_RESPONSE',\n      errorCode: 'INTERNAL_WORKFLOW_STATE_ERROR',\n      errorMessage: 'Workflow state became invalid before final response.',\n      route: 'TRIAGE/SYSTEM_ERROR',\n      timestamp: now,\n      durationMs: Math.max(0, Date.now() - Date.parse(startTimestamp)),\n      inputQuality: {\n        hasRequiredFields: false,\n        missingFields: ['customerName', 'email', 'message'],\n        normalizedFields: base.inputQuality?.normalizedFields || [],\n        warnings: [...(base.inputQuality?.warnings || []), 'cleanedInput_missing_before_validation']\n      },\n      cleanedInput: {},\n      validation: { isValid: false, missingFields: ['customerName', 'email', 'message'], validationMessage: 'Validation failed due to invalid workflow state.' },\n      hasMissingRequiredData: true,\n      priority: null,\n      assignedTeam: null,\n      summary: 'System error occurred before final response.',\n      debug: {\n        ...(base.debug || {}),\n        branch: 'SYSTEM_ERROR',\n        nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE',\n        failedCheckpoint: 'VALIDATED_INPUT',\n        reason: 'cleanedInput_missing',\n        lastKnownStage: base.stage || 'CLEANED_INPUT',\n        itemPreserved: false\n      }\n    }\n  }];\n}\n\nconst requiredFields = ['customerName', 'email', 'message'];\nconst missingFields = requiredFields.filter((field) => {\n  const value = cleanedInput[field];\n  return value === null || value === undefined || String(value).trim().length === 0;\n});\n\nconst isValid = missingFields.length === 0;\nconst missingFieldsCount = missingFields.length;\nconst hasMissingRequiredData = missingFieldsCount > 0;\n\nconst validation = {\n  isValid,\n  missingFields,\n  validationMessage: isValid\n    ? 'Request is valid and ready for processing.'\n    : `Missing required field(s): ${missingFields.join(', ')}.`\n};\n\nreturn [{\n  json: {\n    ...base,\n    validation,\n    hasMissingRequiredData,\n    missingFieldsCount,\n    inputQuality: {\n      hasRequiredFields: isValid,\n      missingFields,\n      normalizedFields: base.inputQuality?.normalizedFields || [],\n      warnings: base.inputQuality?.warnings || []\n    },\n    stage: 'VALIDATED_INPUT',\n    timestamp: now,\n    startTimestamp,\n    debug: {\n      ...(base.debug || {}),\n      branch: hasMissingRequiredData ? 'VALIDATION_ERROR' : 'VALID_BRANCH',\n      nodeCheckpoint: 'VALIDATED_INPUT',\n      itemPreserved: !!cleanedInput.ticketId,\n      lastKnownStage: 'VALIDATED_INPUT'\n    }\n  }\n}];"
+      },
+      "id": "3",
+      "name": "Validate Required Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ Boolean($json.hasMissingRequiredData) }}",
+              "operation": "isTrue"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4",
+      "name": "IF Missing Required Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -620,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst now = new Date().toISOString();\nconst start = b.startTimestamp || now;\nconst cleanedInput = b.cleanedInput || {};\nconst validation = b.validation || { isValid: false, missingFields: ['customerName', 'email', 'message'], validationMessage: 'Validation unavailable.' };\nconst missingFields = Array.isArray(validation.missingFields) ? validation.missingFields : [];\n\nif (validation.isValid === true && missingFields.length === 0) {\n  return [{\n    json: {\n      ...b,\n      status: 'system_error',\n      stage: 'SYSTEM_ERROR_RESPONSE',\n      workflowName: 'seneco-n8n-test',\n      errorCode: 'INVALID_VALIDATION_BRANCH',\n      errorMessage: 'Valid request was incorrectly routed to validation error branch.',\n      ticketId: cleanedInput.ticketId || null,\n      route: 'TRIAGE/SYSTEM_ERROR',\n      timestamp: now,\n      durationMs: Math.max(0, Date.now() - Date.parse(start)),\n      cleanedInput,\n      validation,\n      priority: null,\n      assignedTeam: null,\n      summary: 'System error occurred before final response.',\n      inputQuality: {\n        hasRequiredFields: true,\n        missingFields: [],\n        normalizedFields: b.inputQuality?.normalizedFields || [],\n        warnings: [...(b.inputQuality?.warnings || []), 'valid_request_entered_validation_error_branch']\n      },\n      debug: {\n        ...(b.debug || {}),\n        branch: 'SYSTEM_ERROR',\n        nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE',\n        failedCheckpoint: 'BUILD_VALIDATION_ERROR_CONTEXT',\n        reason: 'invalid_validation_branch_routing',\n        lastKnownStage: b.stage || 'VALIDATED_INPUT',\n        priorityBeforeRouting: null,\n        priorityAfterRouting: null,\n        itemPreserved: false\n      }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...b,\n    status: 'validation_error',\n    stage: 'VALIDATION_ERROR_RESPONSE',\n    workflowName: 'seneco-n8n-test',\n    errorCode: 'MISSING_REQUIRED_FIELDS',\n    errorMessage: validation.validationMessage || 'Missing required fields.',\n    ticketId: cleanedInput.ticketId || null,\n    route: 'TRIAGE/VALIDATION_ERROR',\n    timestamp: now,\n    durationMs: Math.max(0, Date.now() - Date.parse(start)),\n    cleanedInput,\n    validation: {\n      isValid: false,\n      missingFields,\n      validationMessage: validation.validationMessage || (missingFields.length ? 'Missing required fields.' : 'Missing required fields.')\n    },\n    priority: null,\n    assignedTeam: null,\n    summary: 'Request failed validation and requires missing field completion.',\n    inputQuality: {\n      hasRequiredFields: false,\n      missingFields,\n      normalizedFields: b.inputQuality?.normalizedFields || [],\n      warnings: b.inputQuality?.warnings || []\n    },\n    debug: {\n      ...(b.debug || {}),\n      branch: 'VALIDATION_ERROR',\n      nodeCheckpoint: 'VALIDATION_ERROR_RESPONSE',\n      lastKnownStage: b.stage || 'VALIDATED_INPUT',\n      priorityBeforeRouting: null,\n      priorityAfterRouting: null,\n      itemPreserved: !!cleanedInput.ticketId\n    }\n  }\n}];"
+      },
+      "id": "5",
+      "name": "Build Validation Error Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst cleanedInput = b.cleanedInput || {};\nconst validation = b.validation || { isValid: false, missingFields: ['internal_state'] };\nconst now = new Date().toISOString();\n\nif (validation.isValid !== true) {\n  return [{\n    json: {\n      ...b,\n      status: 'system_error',\n      stage: 'SYSTEM_ERROR_RESPONSE',\n      workflowName: 'seneco-n8n-test',\n      errorCode: 'INTERNAL_WORKFLOW_STATE_ERROR',\n      errorMessage: 'Workflow state became invalid before final response.',\n      ticketId: cleanedInput.ticketId || null,\n      traceId: b.traceId || `TRACE-${Date.now()}`,\n      route: 'TRIAGE/SYSTEM_ERROR',\n      timestamp: now,\n      durationMs: Math.max(0, Date.now() - Date.parse(b.startTimestamp || now)),\n      inputQuality: {\n        hasRequiredFields: false,\n        missingFields: validation.missingFields || [],\n        normalizedFields: b.inputQuality?.normalizedFields || [],\n        warnings: [...(b.inputQuality?.warnings || []), 'validation_not_true_before_priority_assignment']\n      },\n      cleanedInput,\n      validation,\n      priority: null,\n      assignedTeam: null,\n      summary: 'System error occurred before final response.',\n      debug: {\n        ...(b.debug || {}),\n        branch: 'SYSTEM_ERROR',\n        nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE',\n        failedCheckpoint: 'PRIORITY_ASSIGNED',\n        reason: 'validation_is_not_true',\n        lastKnownStage: b.stage || 'VALIDATED_INPUT',\n        itemPreserved: false\n      }\n    }\n  }];\n}\n\nconst urgency = (cleanedInput.urgency || '').toUpperCase();\nconst message = (cleanedInput.message || '').toLowerCase();\nconst department = (cleanedInput.department || '').toUpperCase();\nconst context = `${message} ${department}`;\n\nlet priority = 'LOW';\nif (urgency === 'HIGH') priority = 'HIGH';\nelse if (urgency === 'MEDIUM') priority = 'MEDIUM';\nelse if (urgency === 'LOW') priority = 'LOW';\nelse if (/(urgent|charged twice|billing|payment|refund)/i.test(context)) priority = 'HIGH';\nelse if (/(operations|operational|request|review)/i.test(context)) priority = 'MEDIUM';\n\nlet assignedTeam = 'General Support';\nif (priority === 'HIGH' && /(BILLING|FINANCE|PAYMENT|REFUND|INVOICE)/i.test(context)) assignedTeam = 'Finance Support';\nelse if (priority === 'HIGH' && /(TECH|SYSTEM|API|ERROR)/i.test(context)) assignedTeam = 'Technical Support';\nelse if (priority === 'MEDIUM') assignedTeam = 'Operations Support';\n\nreturn [{\n  json: {\n    ...b,\n    priority,\n    assignedTeam,\n    stage: 'PRIORITY_ASSIGNED',\n    timestamp: now,\n    debug: {\n      ...(b.debug || {}),\n      branch: 'ROUTING_CANDIDATE',\n      nodeCheckpoint: 'PRIORITY_ASSIGNED',\n      priorityBeforeRouting: priority,\n      priorityAfterRouting: null,\n      itemPreserved: !!(cleanedInput.ticketId && Array.isArray(validation.missingFields)),\n      lastKnownStage: 'PRIORITY_ASSIGNED'\n    }\n  }\n}];"
+      },
+      "id": "6",
+      "name": "Assign Priority & Team",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst cleanedInput = b.cleanedInput || {};\nconst now = new Date().toISOString();\nconst msg = String(cleanedInput.message || '').trim();\nconst summary = msg.length > 0\n  ? `${cleanedInput.customerName || 'Unknown requester'} from ${cleanedInput.department || 'GENERAL'} submitted: ${msg.length > 96 ? msg.slice(0,93) + '...' : msg}`\n  : '';\n\nif (!summary) {\n  return [{\n    json: {\n      ...b,\n      status: 'system_error',\n      stage: 'SYSTEM_ERROR_RESPONSE',\n      workflowName: 'seneco-n8n-test',\n      errorCode: 'INTERNAL_WORKFLOW_STATE_ERROR',\n      errorMessage: 'Workflow state became invalid before final response.',\n      ticketId: cleanedInput.ticketId || null,\n      route: 'TRIAGE/SYSTEM_ERROR',\n      timestamp: now,\n      durationMs: Math.max(0, Date.now() - Date.parse(b.startTimestamp || now)),\n      inputQuality: {\n        hasRequiredFields: false,\n        missingFields: b.validation?.missingFields || [],\n        normalizedFields: b.inputQuality?.normalizedFields || [],\n        warnings: [...(b.inputQuality?.warnings || []), 'summary_empty_after_generation']\n      },\n      cleanedInput,\n      validation: b.validation || { isValid: false, missingFields: ['message'] },\n      priority: null,\n      assignedTeam: null,\n      summary: 'System error occurred before final response.',\n      debug: {\n        ...(b.debug || {}),\n        branch: 'SYSTEM_ERROR',\n        nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE',\n        failedCheckpoint: 'SUMMARY_GENERATED',\n        reason: 'summary_empty',\n        lastKnownStage: b.stage || 'PRIORITY_ASSIGNED',\n        itemPreserved: false\n      }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...b,\n    summary,\n    stage: 'SUMMARY_GENERATED',\n    timestamp: now,\n    debug: {\n      ...(b.debug || {}),\n      nodeCheckpoint: 'SUMMARY_GENERATED',\n      itemPreserved: true,\n      lastKnownStage: 'SUMMARY_GENERATED'\n    }\n  }\n}];"
+      },
+      "id": "7",
+      "name": "Generate Request Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "HIGH",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "MEDIUM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": "LOW",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "8",
+      "name": "Route Ticket by Priority",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        40,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst now = new Date().toISOString();\nconst start = b.startTimestamp || now;\nconst criticalOk = !!(b.cleanedInput?.ticketId && b.validation && Array.isArray(b.validation.missingFields) && b.summary);\nif (!criticalOk) {\n  return [{ json: { ...b, status: 'system_error', stage: 'SYSTEM_ERROR_RESPONSE', workflowName: 'seneco-n8n-test', errorCode: 'INTERNAL_WORKFLOW_STATE_ERROR', errorMessage: 'Workflow state became invalid before final response.', route: 'TRIAGE/SYSTEM_ERROR', timestamp: now, durationMs: Math.max(0, Date.now() - Date.parse(start)), inputQuality: { hasRequiredFields: false, missingFields: b.validation?.missingFields || [], normalizedFields: b.inputQuality?.normalizedFields || [], warnings: [...(b.inputQuality?.warnings || []), 'critical_field_missing_on_high_branch'] }, priority: null, assignedTeam: null, summary: 'System error occurred before final response.', debug: { ...(b.debug || {}), branch: 'SYSTEM_ERROR', nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE', failedCheckpoint: 'ROUTED_HIGH', reason: 'critical_field_missing', lastKnownStage: b.stage || 'SUMMARY_GENERATED', itemPreserved: false } } }];\n}\nreturn [{ json: { ...b, status: 'success', stage: 'FINAL_RESPONSE', workflowName: 'seneco-n8n-test', ticketId: b.cleanedInput.ticketId, route: 'TRIAGE/HIGH_PRIORITY', priority: 'HIGH', timestamp: now, durationMs: Math.max(0, Date.now() - Date.parse(start)), inputQuality: b.inputQuality, debug: { ...(b.debug || {}), branch: 'HIGH', nodeCheckpoint: 'FINAL_RESPONSE', priorityAfterRouting: 'HIGH', lastKnownStage: 'ROUTED_HIGH', itemPreserved: true } } }];"
+      },
+      "id": "9",
+      "name": "Build HIGH Priority Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst now = new Date().toISOString();\nconst start = b.startTimestamp || now;\nconst criticalOk = !!(b.cleanedInput?.ticketId && b.validation && Array.isArray(b.validation.missingFields) && b.summary);\nif (!criticalOk) {\n  return [{ json: { ...b, status: 'system_error', stage: 'SYSTEM_ERROR_RESPONSE', workflowName: 'seneco-n8n-test', errorCode: 'INTERNAL_WORKFLOW_STATE_ERROR', errorMessage: 'Workflow state became invalid before final response.', route: 'TRIAGE/SYSTEM_ERROR', timestamp: now, durationMs: Math.max(0, Date.now() - Date.parse(start)), inputQuality: { hasRequiredFields: false, missingFields: b.validation?.missingFields || [], normalizedFields: b.inputQuality?.normalizedFields || [], warnings: [...(b.inputQuality?.warnings || []), 'critical_field_missing_on_medium_branch'] }, priority: null, assignedTeam: null, summary: 'System error occurred before final response.', debug: { ...(b.debug || {}), branch: 'SYSTEM_ERROR', nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE', failedCheckpoint: 'ROUTED_MEDIUM', reason: 'critical_field_missing', lastKnownStage: b.stage || 'SUMMARY_GENERATED', itemPreserved: false } } }];\n}\nreturn [{ json: { ...b, status: 'success', stage: 'FINAL_RESPONSE', workflowName: 'seneco-n8n-test', ticketId: b.cleanedInput.ticketId, route: 'TRIAGE/MEDIUM_PRIORITY', priority: 'MEDIUM', timestamp: now, durationMs: Math.max(0, Date.now() - Date.parse(start)), inputQuality: b.inputQuality, debug: { ...(b.debug || {}), branch: 'MEDIUM', nodeCheckpoint: 'FINAL_RESPONSE', priorityAfterRouting: 'MEDIUM', lastKnownStage: 'ROUTED_MEDIUM', itemPreserved: true } } }];"
+      },
+      "id": "10",
+      "name": "Build MEDIUM Priority Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst now = new Date().toISOString();\nconst start = b.startTimestamp || now;\nconst criticalOk = !!(b.cleanedInput?.ticketId && b.validation && Array.isArray(b.validation.missingFields) && b.summary);\nif (!criticalOk) {\n  return [{ json: { ...b, status: 'system_error', stage: 'SYSTEM_ERROR_RESPONSE', workflowName: 'seneco-n8n-test', errorCode: 'INTERNAL_WORKFLOW_STATE_ERROR', errorMessage: 'Workflow state became invalid before final response.', route: 'TRIAGE/SYSTEM_ERROR', timestamp: now, durationMs: Math.max(0, Date.now() - Date.parse(start)), inputQuality: { hasRequiredFields: false, missingFields: b.validation?.missingFields || [], normalizedFields: b.inputQuality?.normalizedFields || [], warnings: [...(b.inputQuality?.warnings || []), 'critical_field_missing_on_low_branch'] }, priority: null, assignedTeam: null, summary: 'System error occurred before final response.', debug: { ...(b.debug || {}), branch: 'SYSTEM_ERROR', nodeCheckpoint: 'SYSTEM_ERROR_RESPONSE', failedCheckpoint: 'ROUTED_LOW', reason: 'critical_field_missing', lastKnownStage: b.stage || 'SUMMARY_GENERATED', itemPreserved: false } } }];\n}\nreturn [{ json: { ...b, status: 'success', stage: 'FINAL_RESPONSE', workflowName: 'seneco-n8n-test', ticketId: b.cleanedInput.ticketId, route: 'TRIAGE/LOW_PRIORITY', priority: 'LOW', timestamp: now, durationMs: Math.max(0, Date.now() - Date.parse(start)), inputQuality: b.inputQuality, debug: { ...(b.debug || {}), branch: 'LOW', nodeCheckpoint: 'FINAL_RESPONSE', priorityAfterRouting: 'LOW', lastKnownStage: 'ROUTED_LOW', itemPreserved: true } } }];"
+      },
+      "id": "11",
+      "name": "Build LOW Priority Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst now = new Date().toISOString();\nconst start = b.startTimestamp || now;\nconst validation = b.validation || { isValid: false, missingFields: [] };\nconst missingFields = Array.isArray(validation.missingFields) ? validation.missingFields : [];\nconst isValidFlag = validation.isValid === true || String(validation.isValid).toLowerCase() === 'true';\n\nif (!isValidFlag && missingFields.length > 0) {\n  return [{\n    json: {\n      ...b,\n      status: 'validation_error',\n      stage: 'VALIDATION_ERROR_RESPONSE',\n      workflowName: 'seneco-n8n-test',\n      errorCode: 'MISSING_REQUIRED_FIELDS',\n      errorMessage: validation.validationMessage || 'Missing required fields.',\n      ticketId: b.cleanedInput?.ticketId || null,\n      route: 'TRIAGE/VALIDATION_ERROR',\n      timestamp: now,\n      durationMs: Math.max(0, Date.now() - Date.parse(start)),\n      inputQuality: {\n        hasRequiredFields: false,\n        missingFields,\n        normalizedFields: b.inputQuality?.normalizedFields || [],\n        warnings: b.inputQuality?.warnings || []\n      },\n      priority: null,\n      assignedTeam: null,\n      summary: 'Request failed validation and requires missing field completion.',\n      debug: {\n        ...(b.debug || {}),\n        branch: 'VALIDATION_ERROR',\n        nodeCheckpoint: 'VALIDATION_ERROR_RESPONSE',\n        priorityBeforeRouting: b.priority ?? null,\n        priorityAfterRouting: null,\n        lastKnownStage: b.stage || 'SUMMARY_GENERATED',\n        itemPreserved: !!b.cleanedInput\n      }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...b,\n    status: 'routing_error',\n    stage: 'ROUTING_ERROR_RESPONSE',\n    workflowName: 'seneco-n8n-test',\n    errorCode: 'UNKNOWN_PRIORITY',\n    errorMessage: 'Priority value did not match HIGH, MEDIUM, or LOW.',\n    ticketId: b.cleanedInput?.ticketId || null,\n    route: 'TRIAGE/ROUTING_ERROR',\n    timestamp: now,\n    durationMs: Math.max(0, Date.now() - Date.parse(start)),\n    inputQuality: b.inputQuality || { hasRequiredFields: false, missingFields: [], normalizedFields: [], warnings: [] },\n    debug: {\n      ...(b.debug || {}),\n      branch: 'ROUTING_ERROR',\n      nodeCheckpoint: 'ROUTING_ERROR_RESPONSE',\n      priorityBeforeRouting: b.priority ?? null,\n      priorityAfterRouting: null,\n      lastKnownStage: b.stage || 'SUMMARY_GENERATED',\n      itemPreserved: !!b.cleanedInput\n    },\n    priority: b.priority ?? null,\n    assignedTeam: b.assignedTeam ?? null,\n    summary: b.summary || 'Priority value did not match HIGH, MEDIUM, or LOW.'\n  }\n}];"
+      },
+      "id": "12",
+      "name": "Build Routing Error Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = { ...$json };\nconst now = new Date().toISOString();\nconst start = b.startTimestamp || now;\n\nconst ensured = {\n  status: b.status ?? 'system_error',\n  stage: b.stage ?? 'SYSTEM_ERROR_RESPONSE',\n  workflowName: b.workflowName ?? 'seneco-n8n-test',\n  traceId: b.traceId ?? `TRACE-${Date.now()}`,\n  ticketId: b.ticketId ?? b.cleanedInput?.ticketId ?? null,\n  route: b.route ?? 'TRIAGE/SYSTEM_ERROR',\n  timestamp: b.timestamp ?? now,\n  durationMs: Number.isFinite(Number(b.durationMs)) ? Number(b.durationMs) : Math.max(0, Date.now() - Date.parse(start)),\n  inputQuality: {\n    hasRequiredFields: b.inputQuality?.hasRequiredFields ?? false,\n    missingFields: Array.isArray(b.inputQuality?.missingFields) ? b.inputQuality.missingFields : [],\n    normalizedFields: Array.isArray(b.inputQuality?.normalizedFields) ? b.inputQuality.normalizedFields : [],\n    warnings: Array.isArray(b.inputQuality?.warnings) ? b.inputQuality.warnings : []\n  },\n  debug: {\n    receivedBodyType: b.debug?.receivedBodyType ?? 'unknown',\n    sourceShape: b.debug?.sourceShape ?? 'unknown',\n    executionMode: b.debug?.executionMode ?? 'runtime',\n    branch: b.debug?.branch ?? 'UNKNOWN',\n    nodeCheckpoint: 'FINALIZE_EXECUTION_CONTEXT',\n    priorityBeforeRouting: b.debug?.priorityBeforeRouting ?? b.priority ?? null,\n    priorityAfterRouting: b.debug?.priorityAfterRouting ?? b.priority ?? null,\n    itemPreserved: b.debug?.itemPreserved ?? true,\n    lastKnownStage: b.debug?.lastKnownStage ?? b.stage ?? 'UNKNOWN'\n  },\n  cleanedInput: b.cleanedInput ?? {},\n  validation: b.validation ?? { isValid: false, missingFields: ['internal_state'], validationMessage: 'Validation unavailable.' },\n  priority: b.priority ?? null,\n  assignedTeam: b.assignedTeam ?? null,\n  summary: b.summary ?? 'System error occurred before final response.'\n};\n\nif (b.errorCode) ensured.errorCode = b.errorCode;\nif (b.errorMessage) ensured.errorMessage = b.errorMessage;\n\nconst finalMissingFields = Array.isArray(ensured.validation?.missingFields) ? ensured.validation.missingFields : [];\nconst contradiction = ensured.status === 'validation_error' && ensured.validation?.isValid === true && finalMissingFields.length === 0;\n\nif (contradiction) {\n  ensured.status = 'system_error';\n  ensured.stage = 'SYSTEM_ERROR_RESPONSE';\n  ensured.errorCode = 'CONTRADICTORY_VALIDATION_STATE';\n  ensured.errorMessage = 'Response status was validation_error but validation state is valid.';\n  ensured.route = 'TRIAGE/SYSTEM_ERROR';\n  ensured.inputQuality = {\n    ...ensured.inputQuality,\n    hasRequiredFields: true,\n    missingFields: []\n  };\n  ensured.debug = {\n    ...ensured.debug,\n    branch: 'SYSTEM_ERROR',\n    failedCheckpoint: 'FINALIZE_EXECUTION_CONTEXT',\n    reason: 'contradictory_validation_state',\n    itemPreserved: false\n  };\n}\n\nensured.finalCheckpoint = 'FINALIZATION_LAYER';\n\nreturn [{ json: ensured }];"
+      },
+      "id": "18",
+      "name": "Finalize Execution Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "19",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Clean Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Input Data": {
+      "main": [
+        [
+          {
+            "node": "Validate Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Required Fields": {
+      "main": [
+        [
+          {
+            "node": "IF Missing Required Data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Missing Required Data?": {
+      "main": [
+        [
+          {
+            "node": "Assign Priority & Team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Validation Error Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Validation Error Context": {
+      "main": [
+        [
+          {
+            "node": "Finalize Execution Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Priority & Team": {
+      "main": [
+        [
+          {
+            "node": "Generate Request Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Request Summary": {
+      "main": [
+        [
+          {
+            "node": "Route Ticket by Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Ticket by Priority": {
+      "main": [
+        [
+          {
+            "node": "Build HIGH Priority Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build MEDIUM Priority Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build LOW Priority Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Routing Error Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HIGH Priority Context": {
+      "main": [
+        [
+          {
+            "node": "Finalize Execution Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build MEDIUM Priority Context": {
+      "main": [
+        [
+          {
+            "node": "Finalize Execution Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build LOW Priority Context": {
+      "main": [
+        [
+          {
+            "node": "Finalize Execution Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Routing Error Context": {
+      "main": [
+        [
+          {
+            "node": "Finalize Execution Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Execution Context": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "templateId": null
+  },
+  "active": false,
+  "id": "oZJcDm7VMNRhOQJS"
+}

@@ -48,6 +48,46 @@ Sebelum menjalankan, siapkan env:
 
 Frontend akan memanggil endpoint Next.js `/api/*` yang di proxy ke Laravel (`LARAVEL_API_BASE_URL`).
 
+## Seneco n8n Web Demo
+
+- Demo page: `/seneco-n8n-test-willem`
+- API route: `POST /api/seneco-n8n-test`
+- QA runner script: `npm run qa:seneco`
+
+### Env for Seneco demo
+
+Set di `.env.local`:
+
+```env
+N8N_SENECO_REGISTERED_WEBHOOK_URL=http://localhost:5678/webhook/oZJcDm7VMNRhOQJS/webhook/seneco-n8n-test-willem
+N8N_SENECO_PRODUCTION_WEBHOOK_URL=http://localhost:5678/webhook/seneco-n8n-test-willem
+N8N_SENECO_TEST_WEBHOOK_URL=http://localhost:5678/webhook-test/seneco-n8n-test-willem
+N8N_SENECO_TIMEOUT_MS=15000
+```
+
+Prioritas transport API:
+1. `N8N_SENECO_REGISTERED_WEBHOOK_URL`
+2. `N8N_SENECO_PRODUCTION_WEBHOOK_URL`
+3. `N8N_SENECO_TEST_WEBHOOK_URL`
+
+### Jika webhook-test dipakai
+
+1. Buka n8n UI (`http://localhost:5678`)
+2. Buka workflow `seneco-n8n-test`
+3. Klik **Execute workflow**
+4. Kembali ke page demo dan jalankan tombol test/QA
+
+### Menjalankan QA matrix
+
+1. Jalankan frontend (`npm run dev`)
+2. Jalankan:
+```bash
+npm run qa:seneco
+```
+3. Evidence report:
+- `src/features/seneco-n8n-test/qa/seneco-n8n-qa-report.json`
+- `docs/seneco-n8n-qa-report.md`
+
 ### Troubleshooting Login Lokal (Laravel API unreachable / timeout)
 
 1. Pastikan backend hidup:

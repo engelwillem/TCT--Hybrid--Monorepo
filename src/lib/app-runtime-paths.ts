@@ -17,6 +17,7 @@ export function isVersehubPath(pathname: string): boolean {
 export function requiresAppSession(pathname: string): boolean {
   if (isLandingPath(pathname)) return false;
   if (isAuthSurfacePath(pathname)) return false;
+  if (pathname === "/seneco-n8n-test-willem" || pathname.startsWith("/seneco-n8n-test-willem/")) return false;
   if (pathname.startsWith("/legal")) return false;
   if (pathname === "/library" || pathname === "/visitors" || pathname === "/gate-updates") return false;
   return true;

@@ -10,6 +10,7 @@
 .gemini/
 .vscode/
 .idea/
+.mcp.local.json
 
 # Dependencies and package caches
 node_modules/
@@ -34,6 +35,12 @@ tmp-*/
 *.tmp
 *.log
 *.tsbuildinfo
+/.tmp-*.json
+/.tmp-*.zip
+/tmp-*.json
+/seneco-*.json
+/database.sqlite
+/.runtime-backup/
 .phpunit.result.cache
 backend-api/.phpunit.result.cache
 
@@ -90,3 +97,4 @@ docs/release/
 public/renungan/
 
 
+src/features/seneco-n8n-test/workflows/TEST_REPORT.md
